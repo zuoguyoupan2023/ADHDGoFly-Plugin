@@ -612,6 +612,14 @@ class PopupController {
                directLink.href = response.alternativeDownloads.direct;
              }
              
+             // 设置联系信息
+             if (response.contactInfo) {
+               const contactInfoElement = document.querySelector('.contact-info');
+               if (contactInfoElement) {
+                 contactInfoElement.textContent = response.contactInfo;
+               }
+             }
+             
              updateNotice.style.display = 'block';
            }
          } else {

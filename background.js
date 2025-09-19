@@ -31,7 +31,8 @@ class SimpleVersionChecker {
           baidu: 'https://pan.baidu.com/s/example_link',
           gitee: 'https://gitee.com/example/releases',
           direct: 'https://example.com/direct_download'
-        }
+        },
+        contactInfo: '如果这些链接都不可用，请联系 WeChat: zuoguyoupan2023'
       };
     } catch (error) {
       console.error('检查版本失败:', error);
