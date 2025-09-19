@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node build.js",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "public",
   "installCommand": "npm install archiver"
 }

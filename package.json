@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "ADHDGoFly - 智能阅读助手浏览器插件",
   "scripts": {
-    "build": "node build.js",
+    "build": "node cloudflare-build.js",
+    "build:vercel": "node build.js",
     "build:win": "node build.js",
     "clean": "rm -f *.zip *.7z",
     "version:patch": "npm version patch --no-git-tag-version && npm run sync-version",
