@@ -427,22 +427,19 @@ function createZipFile(zipName, includeFiles) {
         
         archive.pipe(output);
         
-        // 排除的文件模式
-        const excludePatterns = [
-            '*.md', '*.html', 'test*', '.vscode/**', '.git*', 
-            'index.html', 'build.sh', 'build.js', '*.zip', '*.7z', 
-            'package.json', 'node_modules/**', 'cloudflare-pages-config.md'
-        ];
-        
         // 添加文件和目录
         includeFiles.forEach(item => {
             if (fs.existsSync(item)) {
                 const stat = fs.statSync(item);
                 if (stat.isDirectory()) {
+                    console.log(`📁 添加目录: ${item}`);
                     archive.directory(item, item);
                 } else {
+                    console.log(`📄 添加文件: ${item}`);
                     archive.file(item, { name: item });
                 }
+            } else {
+                console.warn(`⚠️  文件不存在，跳过: ${item}`);
             }
         });
         
