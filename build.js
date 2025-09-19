@@ -13,109 +13,104 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const archiver = require('archiver');
 
-// 检查运行环境
+// 检查运行环境 - 移除zip命令依赖
 function checkEnvironment() {
-    try {
-        execSync('zip --version', { stdio: 'pipe' });
-    } catch (error) {
-        console.error('❌ 错误: 系统缺少 zip 命令');
-        console.error('💡 解决方案: 请安装 zip 工具或在支持的环境中运行');
+    // 不再检查zip命令，使用Node.js原生archiver库
+    console.log('✅ 环境检查通过，使用Node.js原生压缩');
+}
+
+// 主函数
+async function main() {
+    console.log('🚀 开始构建 ADHDGoFly 插件发布包...');
+    
+    // 检查运行环境
+    checkEnvironment();
+    
+    // 检查必要文件
+    if (!fs.existsSync('manifest.json')) {
+        console.error('❌ 错误: 找不到 manifest.json 文件');
         process.exit(1);
     }
-}
-
-console.log('🚀 开始构建 ADHDGoFly 插件发布包...');
-
-// 检查运行环境
-checkEnvironment();
-
-// 检查必要文件
-if (!fs.existsSync('manifest.json')) {
-    console.error('❌ 错误: 找不到 manifest.json 文件');
-    process.exit(1);
-}
-
-// 读取 manifest.json
-let manifest;
-try {
-    const manifestContent = fs.readFileSync('manifest.json', 'utf8');
-    manifest = JSON.parse(manifestContent);
-} catch (error) {
-    console.error('❌ 错误: 无法解析 manifest.json 文件:', error.message);
-    process.exit(1);
-}
-
-// 提取版本号和项目信息
-const version = manifest.version;
-const projectName = 'ADHDGoFly-Plugin';
-const zipName = `${projectName}-v${version}.zip`;
-
-console.log(`📦 项目名称: ${projectName}`);
-console.log(`🏷️  版本号: ${version}`);
-console.log(`📁 输出文件: ${zipName}`);
-
-// 清理旧的构建文件
-try {
-    const oldFiles = fs.readdirSync('.').filter(file => 
-        file.endsWith('.zip') || file.endsWith('.7z')
-    );
-    oldFiles.forEach(file => {
-        fs.unlinkSync(file);
-        console.log(`🧹 删除旧文件: ${file}`);
-    });
-} catch (error) {
-    console.log('🧹 清理旧文件 (无旧文件)');
-}
-
-// 定义要包含的文件和目录
-const includeFiles = [
-    'manifest.json',
-    'background.js',
-    'content.js',
-    'popup.html',
-    'popup.js',
-    'styles.css',
-    'content/',
-    'dictionaries/'
-];
-
-// 检查所有必要文件是否存在
-const missingFiles = includeFiles.filter(file => !fs.existsSync(file));
-if (missingFiles.length > 0) {
-    console.error('❌ 错误: 缺少必要文件:', missingFiles.join(', '));
-    process.exit(1);
-}
-
-// 创建 zip 文件
-console.log('📦 正在打包插件文件...');
-try {
-    // 构建 zip 命令
-    const zipCommand = `zip -r "${zipName}" ${includeFiles.join(' ')} -x '*.md' '*.html' 'test*' '.vscode/*' '.git*' 'index.html' 'build.sh' 'build.js' '*.zip' '*.7z' 'package.json' 'node_modules/*'`;
     
-    execSync(zipCommand, { stdio: 'pipe' });
-    
-    // 检查文件是否创建成功
-    if (!fs.existsSync(zipName)) {
-        throw new Error('ZIP 文件创建失败');
+    // 读取 manifest.json
+    let manifest;
+    try {
+        const manifestContent = fs.readFileSync('manifest.json', 'utf8');
+        manifest = JSON.parse(manifestContent);
+    } catch (error) {
+        console.error('❌ 错误: 无法解析 manifest.json 文件:', error.message);
+        process.exit(1);
     }
     
-    const stats = fs.statSync(zipName);
-    const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
+    // 提取版本号和项目信息
+    const version = manifest.version;
+    const projectName = 'ADHDGoFly-Plugin';
+    const zipName = `${projectName}-v${version}.zip`;
     
-    console.log('✅ 构建成功！');
-    console.log(`📁 输出文件: ${zipName}`);
-    console.log(`📊 文件大小: ${fileSizeMB}MB`);
-    
-} catch (error) {
-    console.error('❌ 打包失败:', error.message);
-    process.exit(1);
-}
-
-// 生成动态的 index.html
-console.log('🔄 生成动态 landing page...');
-try {
-    const indexTemplate = `<!DOCTYPE html>
+    console.log(`📦 项目名称: ${projectName}`);
+     console.log(`🏷️  版本号: ${version}`);
+     console.log(`📁 输出文件: ${zipName}`);
+     
+     // 清理旧的构建文件
+     try {
+         const oldFiles = fs.readdirSync('.').filter(file => 
+             file.endsWith('.zip') || file.endsWith('.7z')
+         );
+         oldFiles.forEach(file => {
+             fs.unlinkSync(file);
+             console.log(`🧹 删除旧文件: ${file}`);
+         });
+     } catch (error) {
+         console.log('🧹 清理旧文件 (无旧文件)');
+     }
+     
+     // 定义要包含的文件和目录
+     const includeFiles = [
+         'manifest.json',
+         'background.js',
+         'content.js',
+         'popup.html',
+         'popup.js',
+         'styles.css',
+         'content/',
+         'dictionaries/'
+     ];
+     
+     // 检查所有必要文件是否存在
+     const missingFiles = includeFiles.filter(file => !fs.existsSync(file));
+     if (missingFiles.length > 0) {
+         console.error('❌ 错误: 缺少必要文件:', missingFiles.join(', '));
+         process.exit(1);
+     }
+      
+      // 创建 zip 文件 - 使用Node.js原生方法
+      console.log('📦 正在打包插件文件...');
+      try {
+          await createZipFile(zipName, includeFiles);
+          
+          // 检查文件是否创建成功
+          if (!fs.existsSync(zipName)) {
+              throw new Error('ZIP 文件创建失败');
+          }
+          
+          const stats = fs.statSync(zipName);
+          const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
+          
+          console.log('✅ 构建成功！');
+          console.log(`📁 输出文件: ${zipName}`);
+          console.log(`📊 文件大小: ${fileSizeMB}MB`);
+          
+      } catch (error) {
+          console.error('❌ 打包失败:', error.message);
+          process.exit(1);
+      }
+       
+       // 生成动态的 index.html
+        console.log('🔄 生成动态 landing page...');
+        try {
+            const indexTemplate = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -392,18 +387,65 @@ try {
 </body>
 </html>`;
     
-    fs.writeFileSync('index.html', indexTemplate);
-    console.log('✅ Landing page 生成完成');
-    
-} catch (error) {
-    console.error('❌ 生成 landing page 失败:', error.message);
-    process.exit(1);
+            fs.writeFileSync('index.html', indexTemplate);
+            console.log('✅ Landing page 生成完成');
+            
+        } catch (error) {
+            console.error('❌ 生成 landing page 失败:', error.message);
+            process.exit(1);
+        }
+        
+        console.log('');
+        console.log('🎉 构建完成！可以部署到 Cloudflare Pages 了');
+        console.log('📋 部署文件列表:');
+        console.log(`   - index.html (landing page)`);
+        console.log(`   - ${zipName} (插件包)`);
+        console.log('');
+        console.log('🚀 Cloudflare Pages 将自动部署这些文件');
 }
 
-console.log('');
-console.log('🎉 构建完成！可以部署到 Cloudflare Pages 了');
-console.log('📋 部署文件列表:');
-console.log(`   - index.html (landing page)`);
-console.log(`   - ${zipName} (插件包)`);
-console.log('');
-console.log('🚀 Cloudflare Pages 将自动部署这些文件');
+// 运行主函数
+main().catch(error => {
+    console.error('❌ 构建失败:', error.message);
+    process.exit(1);
+});
+
+// Node.js原生压缩函数
+function createZipFile(zipName, includeFiles) {
+    return new Promise((resolve, reject) => {
+        const output = fs.createWriteStream(zipName);
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        
+        output.on('close', () => {
+            console.log(`📦 压缩完成: ${archive.pointer()} bytes`);
+            resolve();
+        });
+        
+        archive.on('error', (err) => {
+            reject(err);
+        });
+        
+        archive.pipe(output);
+        
+        // 排除的文件模式
+        const excludePatterns = [
+            '*.md', '*.html', 'test*', '.vscode/**', '.git*', 
+            'index.html', 'build.sh', 'build.js', '*.zip', '*.7z', 
+            'package.json', 'node_modules/**', 'cloudflare-pages-config.md'
+        ];
+        
+        // 添加文件和目录
+        includeFiles.forEach(item => {
+            if (fs.existsSync(item)) {
+                const stat = fs.statSync(item);
+                if (stat.isDirectory()) {
+                    archive.directory(item, item);
+                } else {
+                    archive.file(item, { name: item });
+                }
+            }
+        });
+        
+        archive.finalize();
+    });
+}
