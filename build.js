@@ -96,8 +96,6 @@ async function main() {
          'popup.html',
          'popup.js',
          'styles.css',
-         'settings.js',
-         'settings.css',
          'content/',
          'dictionaries/'
      ];
