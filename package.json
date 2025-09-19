@@ -1,0 +1,35 @@
+{
+  "name": "adhdgofly-plugin",
+  "version": "0.1.0",
+  "description": "ADHDGoFly - 智能阅读助手浏览器插件",
+  "scripts": {
+    "build": "./build.sh",
+    "build:win": "bash build.sh",
+    "clean": "rm -f *.zip *.7z",
+    "version:patch": "npm version patch --no-git-tag-version && npm run sync-version",
+    "version:minor": "npm version minor --no-git-tag-version && npm run sync-version",
+    "version:major": "npm version major --no-git-tag-version && npm run sync-version",
+    "sync-version": "node -e \"const pkg = require('./package.json'); const manifest = require('./manifest.json'); manifest.version = pkg.version; require('fs').writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));\"",
+    "prebuild": "npm run clean",
+    "deploy": "npm run build && echo '✅ 构建完成，可以推送到 GitHub 进行 Cloudflare Pages 部署'"
+  },
+  "keywords": [
+    "browser-extension",
+    "reading-assistant",
+    "text-highlighting",
+    "language-learning",
+    "adhd",
+    "accessibility"
+  ],
+  "author": "ADHDGoFly Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/burenweiye/ADHDGoFly-Plugin.git"
+  },
+  "homepage": "https://adhdgofly.pages.dev",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
