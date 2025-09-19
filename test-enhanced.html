@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADHD文本高亮器增强测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007AFF;
+            background: #f8f9fa;
+        }
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 150px;
+        }
+        .test-btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border: 1px solid #007AFF;
+            border-radius: 4px;
+            background: white;
+            color: #007AFF;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .test-btn:hover {
+            background: #007AFF;
+            color: white;
+        }
+        .highlight-demo {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h4 style="margin: 0 0 10px 0; font-size: 14px;">测试控制</h4>
+        <button class="test-btn" onclick="testFontSize()">测试字号调整</button>
+        <button class="test-btn" onclick="testLetterSpacing()">测试字间距</button>
+        <button class="test-btn" onclick="testLineHeight()">测试行间距</button>
+        <button class="test-btn" onclick="testParagraphSpacing()">测试段间距</button>
+        <button class="test-btn" onclick="resetStyles()">重置样式</button>
+    </div>
+
+    <div class="container">
+        <h1>ADHD文本高亮器增强测试页面</h1>
+        
+        <div class="section">
+            <h2>中文测试段落</h2>
+            <div class="highlight-demo">
+                <p>这是一个测试段落，包含了各种词性的词汇。学生们在学校里认真学习，老师耐心地教导他们。美丽的花园里开满了鲜艳的花朵，蝴蝶在花丛中翩翩起舞。</p>
+                <p>科技发展迅速，人工智能正在改变我们的生活方式。智能手机、电脑和互联网让信息传播变得更加便捷。现代教育注重培养学生的创新思维和实践能力。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>English Test Paragraph</h2>
+            <div class="highlight-demo">
+                <p>This is a comprehensive test paragraph containing various parts of speech. Students study diligently in school while teachers patiently guide them through complex subjects. The beautiful garden blooms with colorful flowers, and butterflies dance gracefully among the blossoms.</p>
+                <p>Technology advances rapidly, and artificial intelligence is transforming our way of life. Smartphones, computers, and the internet make information sharing more convenient and accessible to everyone around the world.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>混合语言测试 (Mixed Language Test)</h2>
+            <div class="highlight-demo">
+                <p>现代社会中，English和中文经常混合使用。Many people speak multiple languages fluently. 这种multilingual的能力在global communication中非常重要。International business requires effective cross-cultural communication skills.</p>
+                <p>在technology领域，很多terms都是English的。Software development, artificial intelligence, machine learning这些概念已经成为日常用语。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>文本样式测试说明</h2>
+            <ul>
+                <li><strong>字号测试</strong>：观察文字大小的变化，从80%到150%</li>
+                <li><strong>字间距测试</strong>：注意字符之间间距的调整，0px到3px</li>
+                <li><strong>行间距测试</strong>：查看行与行之间距离的变化，1.0到2.5倍</li>
+                <li><strong>段间距测试</strong>：观察段落之间空隙的调整，0px到20px</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>功能测试步骤</h2>
+            <ol>
+                <li>点击浏览器扩展图标打开控制面板</li>
+                <li>点击"开启高亮"按钮激活文本高亮功能</li>
+                <li>观察页面中的词汇是否被正确高亮（名词蓝色、动词红色、形容词绿色）</li>
+                <li>切换到"文"页面测试文本样式设置</li>
+                <li>使用右侧测试按钮快速测试各项功能</li>
+                <li>切换到🤖页面查看AI分析功能的统计结果</li>
+                <li>测试不同的颜色方案（默认、暖色、冷色、柔和、高对比度）</li>
+            </ol>
+        </div>
+        
+        <div class="section">
+            <h2>预期效果</h2>
+            <p><strong>高亮效果</strong>：名词应显示为蓝色背景，动词为红色背景，形容词为绿色背景。</p>
+            <p><strong>文本样式</strong>：字号、字间距、行间距、段间距应能实时调整并立即生效。</p>
+            <p><strong>AI分析</strong>：应显示中英文比例、词性分布、高亮统计，并提供智能推荐。</p>
+        </div>
+        
+        <div class="section">
+            <h2>词性示例</h2>
+            <p><strong>名词示例</strong>：学生、老师、花园、蝴蝶、科技、手机、computer、technology、students、flowers</p>
+            <p><strong>动词示例</strong>：学习、教导、开满、起舞、发展、改变、study、guide、dance、advance、transform</p>
+            <p><strong>形容词示例</strong>：认真、耐心、美丽、鲜艳、智能、便捷、beautiful、colorful、rapid、effective</p>
+        </div>
+    </div>
+
+    <script>
+        // 测试函数
+        function testFontSize() {
+            console.log('测试字号调整...');
+            document.body.style.fontSize = '120%';
+            setTimeout(() => {
+                document.body.style.fontSize = '';
+                console.log('字号测试完成');
+            }, 2000);
+        }
+        
+        function testLetterSpacing() {
+            console.log('测试字间距调整...');
+            document.body.style.letterSpacing = '2px';
+            setTimeout(() => {
+                document.body.style.letterSpacing = '';
+                console.log('字间距测试完成');
+            }, 2000);
+        }
+        
+        function testLineHeight() {
+            console.log('测试行间距调整...');
+            document.body.style.lineHeight = '2.0';
+            setTimeout(() => {
+                document.body.style.lineHeight = '';
+                console.log('行间距测试完成');
+            }, 2000);
+        }
+        
+        function testParagraphSpacing() {
+            console.log('测试段间距调整...');
+            const paragraphs = document.querySelectorAll('p');
+            paragraphs.forEach(p => p.style.marginBottom = '15px');
+            setTimeout(() => {
+                paragraphs.forEach(p => p.style.marginBottom = '');
+                console.log('段间距测试完成');
+            }, 2000);
+        }
+        
+        function resetStyles() {
+            console.log('重置所有样式...');
+            document.body.style.fontSize = '';
+            document.body.style.letterSpacing = '';
+            document.body.style.lineHeight = '';
+            const paragraphs = document.querySelectorAll('p');
+            paragraphs.forEach(p => p.style.marginBottom = '');
+            console.log('样式重置完成');
+        }
+        
+        // 页面加载完成后的提示
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('ADHD文本高亮器测试页面加载完成');
+            console.log('请打开浏览器扩展进行测试');
+        });
+    </script>
+</body>
+</html>

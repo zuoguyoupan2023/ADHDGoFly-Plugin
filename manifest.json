@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "ADHD Text Highlighter",
+  "version": "0.1.0",
+  "description": "Text highlighting for better reading",
+  "permissions": ["activeTab", "storage"],
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": [
+      "content/dictionary-manager.js",
+      "content/language-detector.js",
+      "content/text-segmenter.js",
+      "content/page-processor.js",
+      "content/main.js"
+    ],
+    "css": ["styles.css"],
+    "run_at": "document_end"
+  }],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": [{
+    "resources": ["dictionaries/*.json"],
+    "matches": ["<all_urls>"]
+  }]
+}

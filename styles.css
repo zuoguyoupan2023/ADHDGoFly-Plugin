@@ -1,0 +1,64 @@
+/* 词性高亮样式 */
+.adhd-n {
+  color: #0066cc !important;
+  background-color: rgba(0, 102, 204, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+.adhd-v {
+  color: #cc0000 !important;
+  background-color: rgba(204, 0, 0, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+.adhd-a {
+  color: #009933 !important;
+  background-color: rgba(0, 153, 51, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+/* 确保样式优先级 */
+.adhd-processed span {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  font-weight: inherit !important;
+  text-decoration: inherit !important;
+}
+
+/* 悬停效果 */
+.adhd-n:hover {
+  background-color: rgba(0, 102, 204, 0.2) !important;
+}
+
+.adhd-v:hover {
+  background-color: rgba(204, 0, 0, 0.2) !important;
+}
+
+.adhd-a:hover {
+  background-color: rgba(0, 153, 51, 0.2) !important;
+}
+
+/* 其他词性样式 */
+.adhd-other {
+  color: #666666 !important;
+  background-color: rgba(102, 102, 102, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+.adhd-other:hover {
+  background-color: rgba(102, 102, 102, 0.2) !important;
+}
+
+/* 确保不影响页面布局 */
+.adhd-processed {
+  display: inline !important;
+}

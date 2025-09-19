@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body { 
+      width: 320px;
+      height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      background: #f8f9fa;
+    }
+    
+    /* 主内容区域 */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h3 {
+      margin: 0;
+      color: #333;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .status { 
+      text-align: center; 
+      margin: 15px 0; 
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .status.enabled {
+      background-color: #E8F5E8;
+      color: #2D7D32;
+      border: 1px solid #C8E6C9;
+    }
+    
+    .status.disabled {
+      background-color: #FFEBEE;
+      color: #C62828;
+      border: 1px solid #FFCDD2;
+    }
+    
+    .toggle-btn {
+      width: 100%; 
+      padding: 14px; 
+      margin: 10px 0; 
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background-color: #007AFF;
+      color: white;
+    }
+    
+    .toggle-btn:hover {
+      background-color: #0056CC;
+      transform: translateY(-1px);
+    }
+    
+    .toggle-btn.disabled {
+      background-color: #FF3B30;
+    }
+    
+    .toggle-btn.disabled:hover {
+      background-color: #D70015;
+    }
+    
+    .legend {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .legend h4 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 13px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+      padding: 4px 0;
+    }
+    
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      margin-right: 10px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .legend-noun { background-color: rgba(0, 102, 204, 0.3); }
+    .legend-verb { background-color: rgba(204, 0, 0, 0.3); }
+    .legend-adj { background-color: rgba(0, 153, 51, 0.3); }
+    
+    /* 右侧侧边栏 */
+    .sidebar {
+      width: 60px;
+      background: #f0f0f0;
+      border-left: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: white;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .sidebar-btn:hover {
+      background: #f8f9fa;
+      border-color: #007AFF;
+      color: #007AFF;
+      transform: translateY(-1px);
+    }
+    
+    .sidebar-btn.active {
+      background: #007AFF;
+      border-color: #007AFF;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+    }
+    
+    .sidebar-btn span {
+      font-size: 18px;
+    }
+    
+    /* 页面切换 */
+    .page {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .page.active {
+      display: flex;
+    }
+    
+    /* 词典管理页面样式 */
+    .dict-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .dict-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #007AFF;
+    }
+    
+    .dict-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .dict-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .dict-item {
+      margin-bottom: 4px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+    
+    .dict-item:hover {
+      border-color: #007AFF;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+    }
+    
+    .dict-label {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .dict-label input[type="checkbox"] {
+      display: none;
+    }
+    
+    .checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d0d0;
+      border-radius: 3px;
+      margin-right: 10px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .dict-label input[type="checkbox"]:checked + .checkmark {
+      background-color: #007AFF;
+      border-color: #007AFF;
+    }
+    
+    .dict-label input[type="checkbox"]:checked + .checkmark::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .dict-info-text {
+      flex: 1;
+    }
+    
+    .dict-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+      display: block;
+    }
+    
+    .dict-desc {
+      font-size: 11px;
+      color: #666;
+      margin-top: 1px;
+      display: block;
+    }
+    
+    .dict-actions {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .save-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background-color: #28a745;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .save-btn:hover {
+      background-color: #218838;
+      transform: translateY(-1px);
+    }
+    
+    /* 颜色管理页面样式 */
+    .colors-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .colors-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #007AFF;
+    }
+    
+    .colors-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .color-schemes {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .scheme-item {
+      margin-bottom: 8px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .scheme-item:hover {
+      border-color: #007AFF;
+      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
+    }
+    
+    .scheme-item.active {
+      border-color: #007AFF;
+      background: #f0f8ff;
+    }
+    
+    .scheme-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .scheme-header input[type="radio"] {
+      margin-right: 8px;
+    }
+    
+    .scheme-header label {
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+    }
+    
+    .scheme-preview {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .preview-word {
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    /* 默认方案预览 */
+    .noun-default { color: #0066cc; background-color: rgba(0, 102, 204, 0.15); }
+    .verb-default { color: #cc0000; background-color: rgba(204, 0, 0, 0.15); }
+    .adj-default { color: #009933; background-color: rgba(0, 153, 51, 0.15); }
+    
+    /* 暖色方案预览 */
+    .noun-warm { color: #8b4513; background-color: rgba(139, 69, 19, 0.15); }
+    .verb-warm { color: #dc143c; background-color: rgba(220, 20, 60, 0.15); }
+    .adj-warm { color: #ff8c00; background-color: rgba(255, 140, 0, 0.15); }
+    
+    /* 冷色方案预览 */
+    .noun-cool { color: #191970; background-color: rgba(25, 25, 112, 0.15); }
+    .verb-cool { color: #008b8b; background-color: rgba(0, 139, 139, 0.15); }
+    .adj-cool { color: #9370db; background-color: rgba(147, 112, 219, 0.15); }
+    
+    /* 柔和方案预览 */
+    .noun-pastel { color: #da70d6; background-color: rgba(218, 112, 214, 0.15); }
+    .verb-pastel { color: #20b2aa; background-color: rgba(32, 178, 170, 0.15); }
+    .adj-pastel { color: #f0e68c; background-color: rgba(240, 230, 140, 0.15); }
+    
+    /* 高对比度方案预览 */
+    .noun-high-contrast { color: #000080; background-color: rgba(0, 0, 128, 0.2); }
+    .verb-high-contrast { color: #8b0000; background-color: rgba(139, 0, 0, 0.2); }
+    .adj-high-contrast { color: #228b22; background-color: rgba(34, 139, 34, 0.2); }
+    
+    .colors-actions {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    /* 文本样式管理页面样式 */
+    .text-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .text-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #007AFF;
+    }
+    
+    .text-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .text-controls {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    
+    .control-group {
+      margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+    }
+    
+    .control-label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .control-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    
+    .control-input input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    .control-input input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #007AFF;
+      cursor: pointer;
+    }
+    
+    .control-input input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #007AFF;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .control-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #007AFF;
+      min-width: 50px;
+      text-align: right;
+    }
+    
+    .control-desc {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .text-preview {
+      margin-bottom: 15px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    
+    .text-preview h4 {
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .preview-content {
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .preview-content p {
+      margin: 0;
+    }
+    
+    .preview-content p + p {
+      margin-top: 0;
+    }
+    
+    .text-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .reset-btn {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #6c757d;
+      border-radius: 6px;
+      background-color: white;
+      color: #6c757d;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .reset-btn:hover {
+      background-color: #6c757d;
+      color: white;
+      transform: translateY(-1px);
+    }
+    
+    /* AI分析页面样式 */
+    .ai-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .ai-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #007AFF;
+    }
+    
+    .ai-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .analysis-section {
+      margin-bottom: 20px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+    }
+    
+    .analysis-section h4 {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 6px;
+    }
+    
+    .stat-group, .recommendation-group {
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #fafafa;
+      border-radius: 4px;
+    }
+    
+    .stat-title, .rec-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    
+    .stat-content, .rec-content {
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .loading {
+      color: #999;
+      font-style: italic;
+    }
+    
+    .stat-bar {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+    
+    .stat-label {
+      width: 40px;
+      font-size: 10px;
+      color: #666;
+    }
+    
+    .stat-progress {
+      flex: 1;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      margin: 0 6px;
+      overflow: hidden;
+    }
+    
+    .stat-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .stat-value {
+      font-size: 10px;
+      font-weight: 600;
+      color: #333;
+      min-width: 30px;
+      text-align: right;
+    }
+    
+    .recommendation-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      margin: 4px 0;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    .rec-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .rec-reason {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+    
+    .rec-apply {
+      padding: 4px 8px;
+      border: 1px solid #007AFF;
+      border-radius: 3px;
+      background: white;
+      color: #007AFF;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .rec-apply:hover {
+      background: #007AFF;
+      color: white;
+    }
+    
+    .ai-actions {
+      margin-top: auto;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .refresh-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #007AFF;
+      border-radius: 6px;
+      background: white;
+      color: #007AFF;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .refresh-btn:hover {
+      background: #007AFF;
+      color: white;
+      transform: translateY(-1px);
+    }
+    
+    /* 统计图表颜色 */
+    .lang-zh .stat-fill { background: #ff6b6b; }
+    .lang-en .stat-fill { background: #4ecdc4; }
+    .lang-fr .stat-fill { background: #45b7d1; }
+    .lang-ru .stat-fill { background: #f9ca24; }
+    .lang-es .stat-fill { background: #6c5ce7; }
+    .lang-ja .stat-fill { background: #fd79a8; }
+    
+    .pos-n .stat-fill { background: #0066cc; }
+    .pos-v .stat-fill { background: #cc0000; }
+    .pos-a .stat-fill { background: #009933; }
+    
+    /* AI助手页面样式 */
+    .ai-assistant-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* AI配置区域样式 */
+    .ai-config-section {
+      margin-bottom: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+    }
+    
+    .config-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: all 0.2s ease;
+    }
+    
+    .config-header:hover {
+      background: #f8f9fa;
+    }
+    
+    .config-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .config-toggle {
+      font-size: 12px;
+      color: #666;
+      transition: transform 0.2s ease;
+    }
+    
+    .config-toggle.expanded {
+      transform: rotate(90deg);
+    }
+    
+    .config-content {
+      padding: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    /* 配置页面样式 */
+    .config-section {
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    
+    .config-section h4 {
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #333;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
+    }
+    
+    /* AI功能区域样式 */
+    .ai-functions-container {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      overflow: hidden;
+    }
+    
+    .ai-function-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .panel-header h4 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .panel-content {
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    
+    .function-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    
+    .ai-provider-list {
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    
+    .provider-item {
+      margin-bottom: 6px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+    
+    .provider-item:hover {
+      border-color: #007AFF;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+    }
+    
+    .provider-label {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .provider-label input[type="radio"] {
+      display: none;
+    }
+    
+    .provider-checkmark {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #d0d0d0;
+      border-radius: 50%;
+      margin-right: 10px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .provider-label input[type="radio"]:checked + .provider-checkmark {
+      background-color: #007AFF;
+      border-color: #007AFF;
+    }
+    
+    .provider-label input[type="radio"]:checked + .provider-checkmark::after {
+      content: '';
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+    }
+    
+    .provider-info {
+      flex: 1;
+    }
+    
+    .provider-name {
+      font-weight: 600;
+      font-size: 12px;
+      color: #333;
+      display: block;
+      margin-bottom: 1px;
+    }
+    
+    .provider-desc {
+      font-size: 10px;
+      color: #666;
+      display: block;
+    }
+    
+    /* 模型选择样式 */
+    .model-selector {
+      margin-top: 8px;
+    }
+    
+    .model-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      background: white;
+      font-size: 12px;
+      color: #333;
+      cursor: pointer;
+    }
+    
+    .model-select:focus {
+      outline: none;
+      border-color: #007AFF;
+      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+    }
+    
+    /* API密钥输入样式 */
+    .apikey-input-group {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      background: white;
+    }
+    
+    .apikey-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      color: #333;
+    }
+    
+    .apikey-input:focus {
+      outline: none;
+    }
+    
+    .apikey-input-group:focus-within {
+      border-color: #007AFF;
+      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+    }
+    
+    .toggle-visibility-btn {
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .toggle-visibility-btn:hover {
+      color: #007AFF;
+    }
+    
+    .apikey-status {
+      margin-top: 6px;
+      font-size: 11px;
+    }
+    
+    .status-text {
+      color: #666;
+    }
+    
+    .status-text.configured {
+      color: #28a745;
+    }
+    
+    .status-text.error {
+      color: #dc3545;
+    }
+    
+    /* 功能按钮样式 */
+    .function-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 11px;
+    }
+    
+    .function-btn:hover {
+      border-color: #007AFF;
+      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+      transform: translateY(-1px);
+    }
+    
+    .function-btn:active {
+      transform: translateY(0);
+    }
+    
+    .function-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .function-btn.compact {
+      padding: 6px 8px;
+    }
+    
+    .function-icon {
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    
+    .function-name {
+      font-weight: 500;
+      font-size: 11px;
+      color: #333;
+    }
+    
+    .function-info {
+      flex: 1;
+      text-align: left;
+    }
+    
+    .function-desc {
+      font-size: 10px;
+      color: #666;
+      display: block;
+      margin-top: 1px;
+    }
+    
+    /* 选中状态样式 */
+    .selection-status {
+      padding: 12px;
+      text-align: center;
+      border: 1px dashed #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    
+    .status-message {
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .selection-status.has-selection {
+      border-color: #007AFF;
+      background: #f0f8ff;
+    }
+    
+    .selection-status.has-selection .status-message {
+      color: #007AFF;
+    }
+    
+    /* AI结果样式 */
+    .ai-result {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    
+    .ai-result h5 {
+      margin: 0 0 6px 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .result-content {
+      padding: 6px 8px;
+      background: white;
+      border-radius: 3px;
+      border: 1px solid #e0e0e0;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #333;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    
+    .result-content.loading {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .result-content.error {
+      color: #dc3545;
+      background: #fff5f5;
+    }
+    
+    /* 响应式调整 */
+    @media (max-height: 450px) {
+      body {
+        height: 350px;
+      }
+      
+      .main-content {
+        padding: 15px;
+      }
+      
+      .sidebar {
+        padding: 10px 0;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 主内容区域 -->
+  <div class="main-content">
+    <!-- 主页面 -->
+    <div class="page active" id="home-page">
+      <div class="header">
+        <h3>ADHDGoFly</h3>
+      </div>
+      
+      <div class="status" id="status">状态检查中...</div>
+      
+      <button id="toggle" class="toggle-btn">切换高亮</button>
+      
+      <div class="legend">
+        <h4>词性颜色</h4>
+        <div class="legend-item">
+          <div class="legend-color legend-noun"></div>
+          <span>名词</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color legend-verb"></div>
+          <span>动词</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color legend-adj"></div>
+          <span>形容词</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 词典管理页面 -->
+    <div class="page" id="dict-page">
+      <div class="header">
+        <h3>词典管理</h3>
+      </div>
+      
+      <div class="dict-content">
+        <div class="dict-info">
+          <p>选择要使用的语言词典</p>
+        </div>
+        
+        <div class="dict-list">
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-zh" checked>
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">ZH</span>
+                <span class="dict-desc">中文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-en" checked>
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">EN</span>
+                <span class="dict-desc">英文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-fr">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">FR</span>
+                <span class="dict-desc">法文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-ru">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">RU</span>
+                <span class="dict-desc">俄文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-es">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">ES</span>
+                <span class="dict-desc">西班牙文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-ja">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">JA</span>
+                <span class="dict-desc">日文词典</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <div class="dict-actions">
+          <button class="save-btn" id="save-dict-btn">保存设置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 颜色管理页面 -->
+    <div class="page" id="colors-page">
+      <div class="header">
+        <h3>颜色方案</h3>
+      </div>
+      
+      <div class="colors-content">
+        <div class="colors-info">
+          <p>选择高亮颜色方案</p>
+        </div>
+        
+        <div class="color-schemes">
+          <div class="scheme-item active" data-scheme="default">
+            <div class="scheme-header">
+              <input type="radio" name="colorScheme" id="scheme-default" checked>
+              <label for="scheme-default">默认方案</label>
+            </div>
+            <div class="scheme-preview">
+              <span class="preview-word noun-default">名词</span>
+              <span class="preview-word verb-default">动词</span>
+              <span class="preview-word adj-default">形容词</span>
+            </div>
+          </div>
+          
+          <div class="scheme-item" data-scheme="warm">
+            <div class="scheme-header">
+              <input type="radio" name="colorScheme" id="scheme-warm">
+              <label for="scheme-warm">暖色方案</label>
+            </div>
+            <div class="scheme-preview">
+              <span class="preview-word noun-warm">名词</span>
+              <span class="preview-word verb-warm">动词</span>
+              <span class="preview-word adj-warm">形容词</span>
+            </div>
+          </div>
+          
+          <div class="scheme-item" data-scheme="cool">
+            <div class="scheme-header">
+              <input type="radio" name="colorScheme" id="scheme-cool">
+              <label for="scheme-cool">冷色方案</label>
+            </div>
+            <div class="scheme-preview">
+              <span class="preview-word noun-cool">名词</span>
+              <span class="preview-word verb-cool">动词</span>
+              <span class="preview-word adj-cool">形容词</span>
+            </div>
+          </div>
+          
+          <div class="scheme-item" data-scheme="pastel">
+            <div class="scheme-header">
+              <input type="radio" name="colorScheme" id="scheme-pastel">
+              <label for="scheme-pastel">柔和方案</label>
+            </div>
+            <div class="scheme-preview">
+              <span class="preview-word noun-pastel">名词</span>
+              <span class="preview-word verb-pastel">动词</span>
+              <span class="preview-word adj-pastel">形容词</span>
+            </div>
+          </div>
+          
+          <div class="scheme-item" data-scheme="high-contrast">
+            <div class="scheme-header">
+              <input type="radio" name="colorScheme" id="scheme-high-contrast">
+              <label for="scheme-high-contrast">高对比度</label>
+            </div>
+            <div class="scheme-preview">
+              <span class="preview-word noun-high-contrast">名词</span>
+              <span class="preview-word verb-high-contrast">动词</span>
+              <span class="preview-word adj-high-contrast">形容词</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="colors-actions">
+          <button class="save-btn" id="save-colors-btn">应用方案</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文本样式管理页面 -->
+    <div class="page" id="text-page">
+      <div class="header">
+        <h3>文本样式</h3>
+      </div>
+      
+      <div class="text-content">
+        <div class="text-info">
+          <p>调整页面文本的显示样式</p>
+        </div>
+        
+        <div class="text-controls">
+          <!-- 字号设置 -->
+          <div class="control-group">
+            <label class="control-label">字号大小</label>
+            <div class="control-input">
+              <input type="range" id="fontSize" min="80" max="150" step="5" value="100">
+              <span class="control-value" id="fontSizeValue">100%</span>
+            </div>
+            <div class="control-desc">调整页面文字大小</div>
+          </div>
+          
+          <!-- 字间距设置 -->
+          <div class="control-group">
+            <label class="control-label">字间距</label>
+            <div class="control-input">
+              <input type="range" id="letterSpacing" min="0" max="3" step="0.1" value="0">
+              <span class="control-value" id="letterSpacingValue">0px</span>
+            </div>
+            <div class="control-desc">调整字符之间的间距</div>
+          </div>
+          
+          <!-- 行间距设置 -->
+          <div class="control-group">
+            <label class="control-label">行间距</label>
+            <div class="control-input">
+              <input type="range" id="lineHeight" min="1.0" max="2.5" step="0.1" value="1.5">
+              <span class="control-value" id="lineHeightValue">1.5</span>
+            </div>
+            <div class="control-desc">调整行与行之间的间距</div>
+          </div>
+          
+          <!-- 段间距设置 -->
+          <div class="control-group">
+            <label class="control-label">段间距</label>
+            <div class="control-input">
+              <input type="range" id="paragraphSpacing" min="0" max="20" step="1" value="0">
+              <span class="control-value" id="paragraphSpacingValue">0px</span>
+            </div>
+            <div class="control-desc">调整段落之间的间距</div>
+          </div>
+        </div>
+        
+        <!-- 预览区域 -->
+        <div class="text-preview">
+          <h4>预览效果</h4>
+          <div class="preview-content" id="textPreview">
+            <p>这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.</p>
+            <p>第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect.</p>
+          </div>
+        </div>
+        
+        <div class="text-actions">
+          <button class="save-btn" id="save-text-btn">应用样式</button>
+          <button class="reset-btn" id="reset-text-btn">重置默认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI分析页面 -->
+    <div class="page" id="ai-page">
+      <div class="header">
+        <h3>智能分析</h3>
+      </div>
+      
+      <div class="ai-content">
+        <div class="ai-info">
+          <p>基于当前页面内容的智能分析和推荐</p>
+        </div>
+        
+        <!-- 页面统计信息 -->
+        <div class="analysis-section">
+          <h4>📊 页面统计</h4>
+          
+          <!-- 语言分布 -->
+          <div class="stat-group">
+            <div class="stat-title">语言分布</div>
+            <div class="stat-content" id="languageStats">
+              <div class="loading">分析中...</div>
+            </div>
+          </div>
+          
+          <!-- 词性分布 -->
+          <div class="stat-group">
+            <div class="stat-title">词性分布</div>
+            <div class="stat-content" id="posStats">
+              <div class="loading">分析中...</div>
+            </div>
+          </div>
+          
+          <!-- 高亮统计 -->
+          <div class="stat-group">
+            <div class="stat-title">高亮统计</div>
+            <div class="stat-content" id="highlightStats">
+              <div class="loading">分析中...</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI推荐 -->
+        <div class="analysis-section">
+          <h4>🔍 分析</h4>
+          
+          <!-- 颜色方案推荐 -->
+          <div class="recommendation-group">
+            <div class="rec-title">推荐颜色方案</div>
+            <div class="rec-content" id="colorRecommendation">
+              <div class="loading">分析中...</div>
+            </div>
+          </div>
+          
+          <!-- 文本样式推荐 -->
+          <div class="recommendation-group">
+            <div class="rec-title">推荐文本样式</div>
+            <div class="rec-content" id="textRecommendation">
+              <div class="loading">分析中...</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ai-actions">
+          <button class="refresh-btn" id="refresh-analysis-btn">🔄 刷新分析</button>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+  
+  <!-- 右侧侧边栏 -->
+  <div class="sidebar">
+    <button class="sidebar-btn active" id="home-btn" title="主页">
+      <span>🏠</span>
+    </button>
+    
+    <button class="sidebar-btn" id="dict-btn" title="词典">
+      <span>📚</span>
+    </button>
+    
+    <button class="sidebar-btn" id="colors-btn" title="颜色">
+      <span>🎨</span>
+    </button>
+    
+    <button class="sidebar-btn" id="text-btn" title="文本">
+      <span>文</span>
+    </button>
+    
+
+    
+    <button class="sidebar-btn" id="settings-btn" title="设置">
+      <span>⚙️</span>
+    </button>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
