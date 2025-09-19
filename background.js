@@ -18,12 +18,20 @@ class SimpleVersionChecker {
       const release = await response.json();
       const latestVersion = release.tag_name.replace(/^v/, ''); // 移除 'v' 前缀
       
+      // 临时演示：模拟检测到0.1.1版本
+      const demoLatestVersion = '0.1.1';
+      
       return {
         success: true,
         currentVersion: this.currentVersion,
-        latestVersion: latestVersion,
-        hasUpdate: this.isNewerVersion(latestVersion, this.currentVersion),
-        releaseUrl: release.html_url
+        latestVersion: demoLatestVersion,
+        hasUpdate: this.isNewerVersion(demoLatestVersion, this.currentVersion),
+        releaseUrl: release.html_url,
+        alternativeDownloads: {
+          baidu: 'https://pan.baidu.com/s/example_link',
+          gitee: 'https://gitee.com/example/releases',
+          direct: 'https://example.com/direct_download'
+        }
       };
     } catch (error) {
       console.error('检查版本失败:', error);

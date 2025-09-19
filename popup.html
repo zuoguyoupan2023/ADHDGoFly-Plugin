@@ -90,21 +90,101 @@
     }
     
     .version-update {
-      text-align: center;
       margin-top: 8px;
-      padding-top: 8px;
+      padding: 12px;
       border-top: 1px solid #E0E0E0;
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      border-radius: 6px;
+      border: 1px solid #BBDEFB;
     }
     
-    .update-link {
-      color: #1976D2;
-      text-decoration: none;
+    .update-title {
       font-weight: 600;
-      font-size: 12px;
+      font-size: 13px;
+      color: #1565C0;
+      text-align: center;
+      margin-bottom: 6px;
     }
     
-    .update-link:hover {
-      text-decoration: underline;
+    .update-description {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .download-options {
+      margin-bottom: 8px;
+    }
+    
+    .download-section {
+      margin-bottom: 8px;
+    }
+    
+    .download-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .alternative-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .download-link {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .github-link {
+      background-color: #24292e;
+      color: white;
+    }
+    
+    .github-link:hover {
+      background-color: #1a1e22;
+    }
+    
+    .baidu-link {
+      background-color: #2932E1;
+      color: white;
+    }
+    
+    .baidu-link:hover {
+      background-color: #1f28b8;
+    }
+    
+    .gitee-link {
+      background-color: #C71D23;
+      color: white;
+    }
+    
+    .gitee-link:hover {
+      background-color: #a0171c;
+    }
+    
+    .direct-link {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .direct-link:hover {
+      background-color: #45a049;
+    }
+    
+    .update-note {
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      font-style: italic;
     }
     
     .toggle-btn {
@@ -1194,7 +1274,23 @@
           <span class="version-value" id="latestVersion">检查中...</span>
         </div>
         <div class="version-update" id="updateNotice" style="display: none;">
-          <a href="#" id="updateLink" target="_blank" class="update-link">发现新版本，点击下载</a>
+          <div class="update-title">🎉 发现新版本！</div>
+          <div class="update-description">建议更新以获得最新功能和修复</div>
+          <div class="download-options">
+            <div class="download-section">
+              <div class="download-label">官方下载：</div>
+              <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
+            </div>
+            <div class="download-section">
+              <div class="download-label">国内镜像：</div>
+              <div class="alternative-links">
+                <a href="#" id="baiduLink" target="_blank" class="download-link baidu-link">百度网盘</a>
+                <a href="#" id="giteeLink" target="_blank" class="download-link gitee-link">Gitee</a>
+                <a href="#" id="directLink" target="_blank" class="download-link direct-link">直链下载</a>
+              </div>
+            </div>
+          </div>
+          <div class="update-note">💡 提示：如果GitHub访问较慢，建议使用国内镜像</div>
         </div>
       </div>
       

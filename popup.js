@@ -589,24 +589,38 @@ class PopupController {
       document.getElementById('currentVersion').textContent = currentVersion;
       
       // 请求后台检查最新版本
-      chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
-        if (response && response.success) {
-          document.getElementById('latestVersion').textContent = response.latestVersion;
-          
-          if (response.hasUpdate) {
-            // 显示更新提示
-            const updateNotice = document.getElementById('updateNotice');
-            const updateLink = document.getElementById('updateLink');
-            updateLink.href = response.releaseUrl;
-            updateNotice.style.display = 'block';
-          }
-        } else {
-          document.getElementById('latestVersion').textContent = '检查失败';
-          if (response && response.error) {
-            console.error('版本检查失败:', response.error);
-          }
-        }
-      });
+       chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+         if (response && response.success) {
+           document.getElementById('latestVersion').textContent = response.latestVersion;
+           
+           if (response.hasUpdate) {
+             // 显示更新提示
+             const updateNotice = document.getElementById('updateNotice');
+             
+             // 设置官方GitHub链接
+             const githubLink = document.getElementById('githubLink');
+             githubLink.href = response.releaseUrl;
+             
+             // 设置替代下载链接
+             if (response.alternativeDownloads) {
+               const baiduLink = document.getElementById('baiduLink');
+               const giteeLink = document.getElementById('giteeLink');
+               const directLink = document.getElementById('directLink');
+               
+               baiduLink.href = response.alternativeDownloads.baidu;
+               giteeLink.href = response.alternativeDownloads.gitee;
+               directLink.href = response.alternativeDownloads.direct;
+             }
+             
+             updateNotice.style.display = 'block';
+           }
+         } else {
+           document.getElementById('latestVersion').textContent = '检查失败';
+           if (response && response.error) {
+             console.error('版本检查失败:', response.error);
+           }
+         }
+       });
     } catch (error) {
       console.error('版本检测失败:', error);
       document.getElementById('currentVersion').textContent = '未知';
