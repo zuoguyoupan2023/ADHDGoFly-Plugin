@@ -123,8 +123,10 @@ class PopupController {
         break;
 
       case 'settings-btn':
-        console.log('切换到设置页');
-        // 这里将来可以切换到设置视图
+        // 打开独立的设置页面
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('settings.html')
+        });
         break;
     }
   }

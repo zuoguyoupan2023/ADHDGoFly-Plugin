@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="settings-container">
+    <div class="settings-header">
+      <button class="back-btn" id="back-btn">← 返回</button>
+      <h2>设置</h2>
+    </div>
+    
+    <div class="settings-content">
+      <!-- 关于我们 -->
+      <div class="settings-section">
+        <h3>📖 关于我们</h3>
+        <div class="about-content">
+          <div class="app-info">
+            <div class="app-icon">🎯</div>
+            <div class="app-details">
+              <h4>ADHDGoFly</h4>
+              <p class="version">版本 0.1.1</p>
+              <p class="description">ADHDGoFly - 点亮你的视野</p>
+            </div>
+          </div>
+          
+          <div class="features-list">
+            <h5>核心功能</h5>
+            <ul>
+              <li>🎯 智能词性标注 - 自动识别并高亮显示不同词性</li>
+              <li>🌍 多语言支持 - 支持中文、英文、日文、法文、西班牙文、俄文</li>
+              <li>⚡ 实时处理 - 页面加载时自动处理文本</li>
+              <li>🎨 个性化设置 - 可自定义颜色方案和功能开关</li>
+              <li>🔄 自动更新 - 内置版本检测功能</li>
+              <li>🚀 轻量高效 - 优化算法，不影响浏览速度</li>
+            </ul>
+          </div>
+          
+          <div class="contact-info">
+            <h5>联系我们</h5>
+            <p>🐙 GitHub: <a href="https://github.com/zuoguyoupan2023/ADHDGoFly-Plugin" target="_blank">ADHDGoFly-Plugin</a></p>
+            <p>💬 wechat: zuoguyoupan2023</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 词典来源 -->
+      <div class="settings-section">
+        <h3>📚 词典来源</h3>
+        <div class="dictionary-content">
+          <p class="dictionary-intro">本插件使用以下开源词典和语言处理工具，感谢这些项目的贡献：</p>
+          
+          <div class="dictionary-list">
+            <div class="dictionary-item">
+              <div class="dict-header">
+                <h4>Jieba</h4>
+                <span class="license">MIT License</span>
+              </div>
+              <p class="dict-description">中文分词工具，用于中文文本的智能分词和词性标注</p>
+              <a href="https://github.com/fxsjy/jieba" target="_blank" class="dict-link">🔗 访问项目</a>
+            </div>
+            
+            <div class="dictionary-item">
+              <div class="dict-header">
+                <h4>WordNet</h4>
+                <span class="license">WordNet 3.0 License</span>
+              </div>
+              <p class="dict-description">英语词汇数据库，提供词汇关系和语义信息</p>
+              <a href="https://wordnet.princeton.edu/" target="_blank" class="dict-link">🔗 访问项目</a>
+            </div>
+            
+            <div class="dictionary-item">
+              <div class="dict-header">
+                <h4>Apertium</h4>
+                <span class="license">GPL 2.0 License</span>
+              </div>
+              <p class="dict-description">开源机器翻译平台，提供多语言词性标注功能</p>
+              <a href="https://github.com/apertium/apertium" target="_blank" class="dict-link">🔗 访问项目</a>
+            </div>
+            
+            <div class="dictionary-item">
+              <div class="dict-header">
+                <h4>Morphalou</h4>
+                <span class="license">Free License</span>
+              </div>
+              <p class="dict-description">法语形态学词典，用于法语文本的词性分析</p>
+              <a href="https://www.ortolang.fr/market/item/morphalou/3.0" target="_blank" class="dict-link">🔗 访问项目</a>
+            </div>
+          </div>
+          
+          <div class="license-notice">
+            <h5>📄 许可声明</h5>
+            <p>本插件严格遵守上述开源项目的许可协议。如果您在使用过程中发现任何许可相关问题，请及时联系我们。</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 其他设置 -->
+      <div class="settings-section">
+        <h3>⚙️ 其他设置</h3>
+        <div class="other-settings">
+          <div class="setting-item">
+            <label class="setting-label">
+              <input type="checkbox" id="auto-update" checked>
+              <span class="checkmark"></span>
+              自动检查更新
+            </label>
+            <p class="setting-desc">启用后将自动检查插件更新</p>
+          </div>
+          
+          <div class="setting-item">
+            <label class="setting-label">
+              <input type="checkbox" id="analytics" checked>
+              <span class="checkmark"></span>
+              匿名使用统计
+            </label>
+            <p class="setting-desc">帮助我们改进产品（不收集个人信息）</p>
+          </div>
+          
+          <div class="setting-item">
+            <button class="reset-btn" id="reset-settings">🔄 重置所有设置</button>
+            <p class="setting-desc">将所有设置恢复为默认值</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="settings.js"></script>
+</body>
+</html>
