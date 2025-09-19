@@ -169,16 +169,23 @@ async function main() {
        // 生成动态的 index.html
         console.log('🔄 生成动态 landing page...');
         try {
-            // 生成下载链接HTML
-            const downloadLinksHtml = buildResults.map(result => `
+            // 生成下载链接HTML - 基于版本号自动匹配
+         const downloadLinksHtml = buildResults.map(result => {
+             const browserDisplayName = result.browser === 'chrome' ? 'Chrome' : 'Edge';
+             const versionedFileName = `${projectName}-v${version}-${result.browser}.zip`;
+             return `
                     <div class="download-item">
-                        <h3>${result.browser.toUpperCase()} 版本</h3>
-                        <p>文件大小: ${result.size}MB</p>
-                        <a href="./${result.zipName}" class="download-btn" download>
+                        <h3>${browserDisplayName} 版本</h3>
+                        <p>版本: v${version} | 大小: ${result.size}MB</p>
+                        <a href="./${versionedFileName}" class="download-btn" download>
                             <span class="icon">📦</span>
-                            下载 ${result.browser.toUpperCase()} 版本
+                            下载 ${browserDisplayName} v${version}
                         </a>
-                    </div>`).join('');
+                        <div class="version-info">
+                            <small>文件名: ${versionedFileName}</small>
+                        </div>
+                    </div>`;
+         }).join('');
             
             const indexTemplate = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -335,10 +342,22 @@ async function main() {
         }
         
         .download-item p {
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }
+             color: rgba(255,255,255,0.8);
+             margin-bottom: 15px;
+             font-size: 0.9rem;
+         }
+         
+         .version-info {
+             margin-top: 10px;
+             padding-top: 10px;
+             border-top: 1px solid rgba(255,255,255,0.1);
+         }
+         
+         .version-info small {
+             color: rgba(255,255,255,0.6);
+             font-size: 0.8rem;
+             font-family: monospace;
+         }
         
         .download-btn {
             display: inline-block;
@@ -472,11 +491,14 @@ async function main() {
                 </div>
                 
                 <div class="browser-downloads">
-                    <h3 style="color: white; margin: 30px 0 20px 0;">选择浏览器版本:</h3>
-                    <div class="download-grid">
-                        ${downloadLinksHtml}
-                    </div>
-                </div>
+                     <h3 style="color: white; margin: 30px 0 20px 0;">选择适合您浏览器的版本:</h3>
+                     <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; text-align: center;">
+                         当前版本: <strong>v${version}</strong> | 发布时间: ${new Date().toLocaleDateString('zh-CN')}
+                     </p>
+                     <div class="download-grid">
+                         ${downloadLinksHtml}
+                     </div>
+                 </div>
                 
                 <div class="contact-info">
                     <p>如果下载链接都不可用，请联系 WeChat: zuoguyoupan2023</p>
