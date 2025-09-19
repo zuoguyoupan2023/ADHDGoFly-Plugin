@@ -1,9 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "ADHD Text Highlighter",
+  "name": "ADHDGoFly, Highlight Your Page",
   "version": "0.1.0",
   "description": "Text highlighting for better reading",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "notifications", "tabs"],
+  "host_permissions": ["https://api.github.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": [
