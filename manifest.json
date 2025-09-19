@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "ADHD Text Highlighter",
+  "name": "ADHDGoFly, 点亮你的视野",
   "version": "0.1.0",
   "description": "Text highlighting for better reading",
   "permissions": ["activeTab", "storage"],

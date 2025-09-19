@@ -57,6 +57,9 @@ class PopupController {
     
     // 检查状态
     await this.checkStatus();
+    
+    // 检查版本
+    await this.checkVersion();
   }
 
   bindEvents() {
@@ -576,6 +579,39 @@ class PopupController {
     this.updateTextUI();
     
     console.log('文本设置已重置');
+  }
+
+  async checkVersion() {
+    try {
+      // 显示当前版本
+      const manifest = chrome.runtime.getManifest();
+      const currentVersion = manifest.version;
+      document.getElementById('currentVersion').textContent = currentVersion;
+      
+      // 请求后台检查最新版本
+      chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+        if (response && response.success) {
+          document.getElementById('latestVersion').textContent = response.latestVersion;
+          
+          if (response.hasUpdate) {
+            // 显示更新提示
+            const updateNotice = document.getElementById('updateNotice');
+            const updateLink = document.getElementById('updateLink');
+            updateLink.href = response.releaseUrl;
+            updateNotice.style.display = 'block';
+          }
+        } else {
+          document.getElementById('latestVersion').textContent = '检查失败';
+          if (response && response.error) {
+            console.error('版本检查失败:', response.error);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('版本检测失败:', error);
+      document.getElementById('currentVersion').textContent = '未知';
+      document.getElementById('latestVersion').textContent = '检查失败';
+    }
   }
 
 

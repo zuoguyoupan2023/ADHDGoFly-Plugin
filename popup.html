@@ -59,6 +59,54 @@
       border: 1px solid #FFCDD2;
     }
     
+    /* 版本信息样式 */
+    .version-info {
+      background-color: #F5F5F5;
+      border: 1px solid #E0E0E0;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+    
+    .version-current, .version-latest {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    
+    .version-latest {
+      margin-bottom: 8px;
+    }
+    
+    .version-label {
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .version-value {
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .version-update {
+      text-align: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #E0E0E0;
+    }
+    
+    .update-link {
+      color: #1976D2;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    
+    .update-link:hover {
+      text-decoration: underline;
+    }
+    
     .toggle-btn {
       width: 100%; 
       padding: 14px; 
@@ -1134,6 +1182,21 @@
       </div>
       
       <div class="status" id="status">状态检查中...</div>
+      
+      <!-- 版本信息区域 -->
+      <div class="version-info" id="versionInfo">
+        <div class="version-current">
+          <span class="version-label">当前版本:</span>
+          <span class="version-value" id="currentVersion">检查中...</span>
+        </div>
+        <div class="version-latest">
+          <span class="version-label">最新版本:</span>
+          <span class="version-value" id="latestVersion">检查中...</span>
+        </div>
+        <div class="version-update" id="updateNotice" style="display: none;">
+          <a href="#" id="updateLink" target="_blank" class="update-link">发现新版本，点击下载</a>
+        </div>
+      </div>
       
       <button id="toggle" class="toggle-btn">切换高亮</button>
       
