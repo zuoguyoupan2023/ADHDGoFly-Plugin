@@ -897,6 +897,165 @@
       border-top: 1px solid #f0f0f0;
     }
     
+    /* 设置页面样式 */
+    .settings-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    
+    .settings-section {
+      margin-bottom: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: white;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .section-header h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .section-content {
+      padding: 15px;
+    }
+    
+    .about-info p {
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #555;
+    }
+    
+    .version-info {
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .version-info p {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .dictionary-sources {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .source-item {
+      padding: 10px;
+      border: 1px solid #f0f0f0;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    
+    .source-item h5 {
+      margin: 0 0 6px 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .source-item p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #666;
+    }
+    
+    .setting-item {
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .setting-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .setting-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .setting-label input[type="checkbox"] {
+      display: none;
+    }
+    
+    .checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d0d0;
+      border-radius: 3px;
+      margin-right: 10px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .setting-label input[type="checkbox"]:checked + .checkmark {
+      background: #007AFF;
+      border-color: #007AFF;
+    }
+    
+    .setting-label input[type="checkbox"]:checked + .checkmark::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .setting-desc {
+      margin: 0;
+      font-size: 11px;
+      color: #888;
+      line-height: 1.3;
+      margin-left: 26px;
+    }
+    
+    .setting-actions {
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .reset-btn {
+      padding: 8px 16px;
+      border: 1px solid #dc3545;
+      border-radius: 4px;
+      background: white;
+      color: #dc3545;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .reset-btn:hover {
+      background: #dc3545;
+      color: white;
+    }
+
     /* 配置页面样式 */
     .config-section {
       margin-bottom: 12px;
@@ -1610,6 +1769,94 @@
         
         <div class="ai-actions">
           <button class="refresh-btn" id="refresh-analysis-btn">🔄 刷新分析</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div class="page" id="settings-page">
+      <div class="header">
+        <h3>设置</h3>
+      </div>
+      
+      <div class="settings-content">
+        <!-- 关于我们 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>关于我们</h4>
+          </div>
+          <div class="section-content">
+            <div class="about-info">
+              <p><strong>ADHDGoFly</strong> 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。</p>
+              <div class="version-info">
+                <p><strong>版本：</strong>0.1.1</p>
+                <p><strong>开发者：</strong>ADHDGoFly Team</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 词典来源 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>词典来源</h4>
+          </div>
+          <div class="section-content">
+            <div class="dictionary-sources">
+              <div class="source-item">
+                <h5>中文词典 (ZH)</h5>
+                <p>基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。</p>
+              </div>
+              <div class="source-item">
+                <h5>英文词典 (EN)</h5>
+                <p>基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。</p>
+              </div>
+              <div class="source-item">
+                <h5>法语词典 (FR)</h5>
+                <p>来源于开源法语语言资源，包含基础词汇的词性信息。</p>
+              </div>
+              <div class="source-item">
+                <h5>俄语词典 (RU)</h5>
+                <p>基于开源俄语词典项目，提供基本的词性标注功能。</p>
+              </div>
+              <div class="source-item">
+                <h5>西班牙语词典 (ES)</h5>
+                <p>来源于公开的西班牙语语言学资源，支持常用词汇识别。</p>
+              </div>
+              <div class="source-item">
+                <h5>日语词典 (JA)</h5>
+                <p>基于开源日语词典，包含假名和汉字的词性信息。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他设置 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>其他设置</h4>
+          </div>
+          <div class="section-content">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="auto-update" checked>
+                <span class="checkmark"></span>
+                自动检查更新
+              </label>
+              <p class="setting-desc">启用后将自动检查插件更新</p>
+            </div>
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="analytics" checked>
+                <span class="checkmark"></span>
+                匿名使用统计
+              </label>
+              <p class="setting-desc">帮助我们改进产品（不收集个人信息）</p>
+            </div>
+            <div class="setting-actions">
+              <button class="reset-btn" id="reset-settings">重置所有设置</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

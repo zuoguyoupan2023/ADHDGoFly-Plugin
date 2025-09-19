@@ -80,12 +80,14 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
-
+    // 设置页面事件
+    this.bindSettingsEvents();
     
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
+    this.loadSettingsData();
 
   }
 
@@ -123,10 +125,7 @@ class PopupController {
         break;
 
       case 'settings-btn':
-        // 打开独立的设置页面
-        chrome.tabs.create({
-          url: chrome.runtime.getURL('settings.html')
-        });
+        this.showPage('settings');
         break;
     }
   }
@@ -581,6 +580,90 @@ class PopupController {
     this.updateTextUI();
     
     console.log('文本设置已重置');
+  }
+
+  bindSettingsEvents() {
+    const autoUpdateCheckbox = document.getElementById('auto-update');
+    const analyticsCheckbox = document.getElementById('analytics');
+    const resetBtn = document.getElementById('reset-settings');
+    
+    if (autoUpdateCheckbox) {
+      autoUpdateCheckbox.addEventListener('change', () => {
+        this.saveSettingsData();
+      });
+    }
+    
+    if (analyticsCheckbox) {
+      analyticsCheckbox.addEventListener('change', () => {
+        this.saveSettingsData();
+      });
+    }
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (confirm('确定要重置所有设置吗？此操作不可撤销。')) {
+          this.resetAllSettings();
+        }
+      });
+    }
+  }
+
+  async loadSettingsData() {
+    try {
+      const result = await chrome.storage.sync.get({
+        autoUpdate: true,
+        analytics: true
+      });
+      
+      const autoUpdateCheckbox = document.getElementById('auto-update');
+      const analyticsCheckbox = document.getElementById('analytics');
+      
+      if (autoUpdateCheckbox) {
+        autoUpdateCheckbox.checked = result.autoUpdate;
+      }
+      if (analyticsCheckbox) {
+        analyticsCheckbox.checked = result.analytics;
+      }
+    } catch (error) {
+      console.error('加载设置失败:', error);
+    }
+  }
+
+  async saveSettingsData() {
+    try {
+      const autoUpdateCheckbox = document.getElementById('auto-update');
+      const analyticsCheckbox = document.getElementById('analytics');
+      
+      const settings = {
+        autoUpdate: autoUpdateCheckbox ? autoUpdateCheckbox.checked : true,
+        analytics: analyticsCheckbox ? analyticsCheckbox.checked : true
+      };
+      
+      await chrome.storage.sync.set(settings);
+      console.log('设置已保存');
+    } catch (error) {
+      console.error('保存设置失败:', error);
+    }
+  }
+
+  async resetAllSettings() {
+    try {
+      // 清除所有存储的设置
+      await chrome.storage.sync.clear();
+      await chrome.storage.local.clear();
+      
+      // 重新加载默认设置
+      await this.loadDictSettings();
+      await this.loadColorSettings();
+      await this.loadTextSettings();
+      await this.loadSettingsData();
+      
+      console.log('所有设置已重置为默认值');
+      alert('所有设置已重置为默认值');
+    } catch (error) {
+      console.error('重置设置失败:', error);
+      alert('重置设置失败，请重试');
+    }
   }
 
   async checkVersion() {
