@@ -358,6 +358,69 @@ async function main() {
              font-size: 0.8rem;
              font-family: monospace;
          }
+         
+         .installation-guide {
+             margin-top: 50px;
+             padding: 30px;
+             background: rgba(255,255,255,0.05);
+             border-radius: 20px;
+             border: 1px solid rgba(255,255,255,0.1);
+         }
+         
+         .guide-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+             gap: 30px;
+             margin-bottom: 30px;
+         }
+         
+         .guide-item {
+             background: rgba(255,255,255,0.08);
+             padding: 25px;
+             border-radius: 15px;
+             border: 1px solid rgba(255,255,255,0.1);
+         }
+         
+         .guide-item h4 {
+             color: white;
+             margin-bottom: 15px;
+             font-size: 1.1rem;
+         }
+         
+         .guide-item ol {
+             color: rgba(255,255,255,0.9);
+             padding-left: 20px;
+             line-height: 1.8;
+         }
+         
+         .guide-item li {
+             margin-bottom: 8px;
+         }
+         
+         .guide-item code {
+             background: rgba(0,0,0,0.3);
+             padding: 2px 6px;
+             border-radius: 4px;
+             font-family: monospace;
+             color: #ffd700;
+         }
+         
+         .tips-section {
+             background: rgba(255,215,0,0.1);
+             padding: 20px;
+             border-radius: 10px;
+             border: 1px solid rgba(255,215,0,0.2);
+         }
+         
+         .tips-section ul {
+             color: rgba(255,255,255,0.9);
+             padding-left: 20px;
+             line-height: 1.6;
+         }
+         
+         .tips-section li {
+             margin-bottom: 5px;
+         }
         
         .download-btn {
             display: inline-block;
@@ -500,9 +563,48 @@ async function main() {
                      </div>
                  </div>
                 
-                <div class="contact-info">
-                    <p>如果下载链接都不可用，请联系 WeChat: zuoguyoupan2023</p>
-                </div>
+                <div class="installation-guide">
+                     <h3 style="color: white; margin: 40px 0 20px 0;">📖 安装指南</h3>
+                     <div class="guide-grid">
+                         <div class="guide-item">
+                             <h4>🌐 Chrome 浏览器安装</h4>
+                             <ol>
+                                 <li>下载对应的 Chrome 版本 zip 文件</li>
+                                 <li>解压缩到任意文件夹</li>
+                                 <li>打开 Chrome，进入 <code>chrome://extensions/</code></li>
+                                 <li>开启右上角的"开发者模式"</li>
+                                 <li>点击"加载已解压的扩展程序"</li>
+                                 <li>选择解压后的文件夹</li>
+                                 <li>插件安装完成！🎉</li>
+                             </ol>
+                         </div>
+                         <div class="guide-item">
+                             <h4>🔷 Edge 浏览器安装</h4>
+                             <ol>
+                                 <li>下载对应的 Edge 版本 zip 文件</li>
+                                 <li>解压缩到任意文件夹</li>
+                                 <li>打开 Edge，进入 <code>edge://extensions/</code></li>
+                                 <li>开启左下角的"开发人员模式"</li>
+                                 <li>点击"加载解压缩的扩展"</li>
+                                 <li>选择解压后的文件夹</li>
+                                 <li>插件安装完成！🎉</li>
+                             </ol>
+                         </div>
+                     </div>
+                     <div class="tips-section">
+                         <h4 style="color: #ffd700; margin: 20px 0 10px 0;">💡 安装小贴士</h4>
+                         <ul>
+                             <li>确保下载的版本与您的浏览器匹配</li>
+                             <li>解压后请保留文件夹，删除会导致插件失效</li>
+                             <li>首次安装可能需要重启浏览器</li>
+                             <li>如遇问题，请检查浏览器版本是否支持 Manifest V3</li>
+                         </ul>
+                     </div>
+                 </div>
+                 
+                 <div class="contact-info">
+                     <p>如果下载链接都不可用，请联系 WeChat: zuoguyoupan2023</p>
+                 </div>
             </section>
         </main>
         
