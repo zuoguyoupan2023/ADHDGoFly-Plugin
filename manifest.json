@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ADHDGoFly, 点亮你的视野",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Text highlighting for better reading",
   "permissions": ["activeTab", "storage"],
   "host_permissions": ["https://api.github.com/*"],

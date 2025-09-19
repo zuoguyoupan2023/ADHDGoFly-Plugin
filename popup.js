@@ -80,8 +80,6 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
-
-    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
@@ -123,8 +121,11 @@ class PopupController {
         break;
 
       case 'settings-btn':
-        console.log('切换到设置页');
-        // 这里将来可以切换到设置视图
+        this.showPage('settings');
+        // 初始化设置页面
+        if (typeof initSettings === 'function') {
+          initSettings();
+        }
         break;
     }
   }
@@ -580,6 +581,8 @@ class PopupController {
     
     console.log('文本设置已重置');
   }
+
+
 
   async checkVersion() {
     try {

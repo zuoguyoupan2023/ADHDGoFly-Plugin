@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="settings.css">
   <style>
     * {
       margin: 0;
@@ -897,6 +898,8 @@
       border-top: 1px solid #f0f0f0;
     }
     
+
+
     /* 配置页面样式 */
     .config-section {
       margin-bottom: 12px;
@@ -1282,16 +1285,14 @@
               <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
             </div>
             <div class="download-section">
-              <div class="download-label">国内镜像：</div>
+              <div class="download-label">国内链接：</div>
               <div class="alternative-links">
-                <a href="#" id="baiduLink" target="_blank" class="download-link baidu-link">百度网盘</a>
-                <a href="#" id="giteeLink" target="_blank" class="download-link gitee-link">Gitee</a>
-                <a href="#" id="directLink" target="_blank" class="download-link direct-link">直链下载</a>
+                 <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link">直链下载</a>
               </div>
             </div>
           </div>
-          <div class="update-note">💡 提示：如果GitHub访问较慢，建议使用国内镜像</div>
-          <div class="contact-info">如果这些链接都不可用，请联系 WeChat: zuoguyoupan2023</div>
+          <div class="update-note">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
+          <div class="contact-info">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
         </div>
       </div>
       
@@ -1614,6 +1615,94 @@
       </div>
     </div>
 
+    <!-- 设置页面 -->
+    <div class="page" id="settings-page">
+      <div class="header">
+        <h3>设置</h3>
+      </div>
+      
+      <div class="settings-content">
+        <!-- 关于我们 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>关于我们</h4>
+          </div>
+          <div class="section-content">
+            <div class="about-info">
+              <p><strong>ADHDGoFly</strong> 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。</p>
+              <div class="version-info">
+                <p><strong>版本：</strong>0.1.1</p>
+                <p><strong>开发者：</strong>ADHDGoFly Team</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 词典来源 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>词典来源</h4>
+          </div>
+          <div class="section-content">
+            <div class="dictionary-sources">
+              <div class="source-item">
+                <h5>中文词典 (ZH)</h5>
+                <p>基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。</p>
+              </div>
+              <div class="source-item">
+                <h5>英文词典 (EN)</h5>
+                <p>基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。</p>
+              </div>
+              <div class="source-item">
+                <h5>法语词典 (FR)</h5>
+                <p>来源于开源法语语言资源，包含基础词汇的词性信息。</p>
+              </div>
+              <div class="source-item">
+                <h5>俄语词典 (RU)</h5>
+                <p>基于开源俄语词典项目，提供基本的词性标注功能。</p>
+              </div>
+              <div class="source-item">
+                <h5>西班牙语词典 (ES)</h5>
+                <p>来源于公开的西班牙语语言学资源，支持常用词汇识别。</p>
+              </div>
+              <div class="source-item">
+                <h5>日语词典 (JA)</h5>
+                <p>基于开源日语词典，包含假名和汉字的词性信息。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他设置 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4>其他设置</h4>
+          </div>
+          <div class="section-content">
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="auto-update" checked>
+                <span class="checkmark"></span>
+                自动检查更新
+              </label>
+              <p class="setting-desc">启用后将自动检查插件更新</p>
+            </div>
+            <div class="setting-item">
+              <label class="setting-label">
+                <input type="checkbox" id="analytics" checked>
+                <span class="checkmark"></span>
+                匿名使用统计
+              </label>
+              <p class="setting-desc">帮助我们改进产品（不收集个人信息）</p>
+            </div>
+            <div class="setting-actions">
+              <button class="reset-btn" id="reset-settings">重置所有设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
   </div>
   
@@ -1637,11 +1726,12 @@
     
 
     
-    <button class="sidebar-btn" id="settings-btn" title="设置">
+    <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings">
       <span>⚙️</span>
     </button>
   </div>
   
+  <script src="settings.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
