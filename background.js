@@ -19,13 +19,13 @@ class SimpleVersionChecker {
       const latestVersion = release.tag_name.replace(/^v/, ''); // 移除 'v' 前缀
       
       // 临时演示：模拟检测到0.1.1版本
-      const demoLatestVersion = '0.1.1';
+      //const demoLatestVersion = '0.1.1';
       
       return {
         success: true,
         currentVersion: this.currentVersion,
-        latestVersion: demoLatestVersion,
-        hasUpdate: this.isNewerVersion(demoLatestVersion, this.currentVersion),
+        latestVersion: release.tag_name,
+        hasUpdate: this.isNewerVersion(release.tag_name, this.currentVersion),
         releaseUrl: release.html_url,
         alternativeDownloads: {
           baidu: 'https://pan.baidu.com/s/example_link',
