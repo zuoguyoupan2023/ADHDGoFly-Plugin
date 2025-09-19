@@ -46,6 +46,13 @@ async function main() {
     // 检查运行环境
     checkEnvironment();
     
+    // 创建public输出目录
+    const outputDir = 'public';
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+        console.log('📁 创建输出目录: public/');
+    }
+    
     // 检查必要文件
     if (!fs.existsSync('manifest.json')) {
         console.error('❌ 错误: 找不到 manifest.json 文件');
@@ -122,8 +129,8 @@ async function main() {
              ...includeFiles
          ];
          
-         // 生成zip文件名
-         const zipName = `${projectName}-v${version}-${config.suffix}.zip`;
+         // 生成zip文件名（输出到public目录）
+         const zipName = path.join(outputDir, `${projectName}-v${version}-${config.suffix}.zip`);
          console.log(`📁 输出文件: ${zipName}`);
          
          try {
@@ -617,7 +624,8 @@ async function main() {
 </body>
 </html>`;
     
-            fs.writeFileSync('index.html', indexTemplate);
+            const indexPath = path.join(outputDir, 'index.html');
+            fs.writeFileSync(indexPath, indexTemplate);
             console.log('✅ Landing page 生成完成');
             
         } catch (error) {
