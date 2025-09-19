@@ -21,9 +21,27 @@ function checkEnvironment() {
     console.log('✅ 环境检查通过，使用Node.js原生压缩');
 }
 
+// 浏览器配置
+const browserConfigs = {
+    chrome: {
+        suffix: 'chrome',
+        manifestChanges: {
+            name: 'ADHDGoFly, 点亮你的视野 (Chrome)',
+            description: 'Text highlighting for better reading - Chrome Edition'
+        }
+    },
+    edge: {
+        suffix: 'edge', 
+        manifestChanges: {
+            name: 'ADHDGoFly, 点亮你的视野 (Edge)',
+            description: 'Text highlighting for better reading - Edge Edition'
+        }
+    }
+};
+
 // 主函数
 async function main() {
-    console.log('🚀 开始构建 ADHDGoFly 插件发布包...');
+    console.log('🚀 开始构建 ADHDGoFly 插件发布包 (多浏览器版本)...');
     
     // 检查运行环境
     checkEnvironment();
@@ -35,23 +53,21 @@ async function main() {
     }
     
     // 读取 manifest.json
-    let manifest;
+    let baseManifest;
     try {
         const manifestContent = fs.readFileSync('manifest.json', 'utf8');
-        manifest = JSON.parse(manifestContent);
+        baseManifest = JSON.parse(manifestContent);
     } catch (error) {
         console.error('❌ 错误: 无法解析 manifest.json 文件:', error.message);
         process.exit(1);
     }
     
     // 提取版本号和项目信息
-    const version = manifest.version;
+    const version = baseManifest.version;
     const projectName = 'ADHDGoFly-Plugin';
-    const zipName = `${projectName}-v${version}.zip`;
     
     console.log(`📦 项目名称: ${projectName}`);
      console.log(`🏷️  版本号: ${version}`);
-     console.log(`📁 输出文件: ${zipName}`);
      
      // 清理旧的构建文件
      try {
@@ -68,7 +84,6 @@ async function main() {
      
      // 定义要包含的文件和目录
      const includeFiles = [
-         'manifest.json',
          'background.js',
          'content.js',
          'popup.html',
@@ -84,38 +99,93 @@ async function main() {
          console.error('❌ 错误: 缺少必要文件:', missingFiles.join(', '));
          process.exit(1);
      }
-      
-      // 创建 zip 文件 - 使用Node.js原生方法
-      console.log('📦 正在打包插件文件...');
-      try {
-          await createZipFile(zipName, includeFiles);
-          
-          // 检查文件是否创建成功
-          if (!fs.existsSync(zipName)) {
-              throw new Error('ZIP 文件创建失败');
-          }
-          
-          const stats = fs.statSync(zipName);
-          const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
-          
-          console.log('✅ 构建成功！');
-          console.log(`📁 输出文件: ${zipName}`);
-          console.log(`📊 文件大小: ${fileSizeMB}MB`);
-          
-      } catch (error) {
-          console.error('❌ 打包失败:', error.message);
-          process.exit(1);
-      }
+     
+     // 为每个浏览器构建版本
+     const buildResults = [];
+     
+     for (const [browserName, config] of Object.entries(browserConfigs)) {
+         console.log(`\n🌐 构建 ${browserName.toUpperCase()} 版本...`);
+         
+         // 创建浏览器特定的manifest
+         const browserManifest = {
+             ...baseManifest,
+             ...config.manifestChanges
+         };
+         
+         // 生成临时manifest文件
+         const tempManifestPath = `manifest-${browserName}.json`;
+         fs.writeFileSync(tempManifestPath, JSON.stringify(browserManifest, null, 2));
+         
+         // 创建包含文件列表（包含临时manifest）
+         const browserIncludeFiles = [
+             tempManifestPath,
+             ...includeFiles
+         ];
+         
+         // 生成zip文件名
+         const zipName = `${projectName}-v${version}-${config.suffix}.zip`;
+         console.log(`📁 输出文件: ${zipName}`);
+         
+         try {
+             await createZipFile(zipName, browserIncludeFiles, browserName, tempManifestPath);
+             
+             // 检查文件是否创建成功
+             if (!fs.existsSync(zipName)) {
+                 throw new Error(`${browserName} ZIP 文件创建失败`);
+             }
+             
+             const stats = fs.statSync(zipName);
+             const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
+             
+             buildResults.push({
+                 browser: browserName,
+                 zipName,
+                 size: fileSizeMB
+             });
+             
+             console.log(`✅ ${browserName.toUpperCase()} 版本构建完成: ${fileSizeMB}MB`);
+             
+         } catch (error) {
+             console.error(`❌ ${browserName.toUpperCase()} 版本构建失败:`, error.message);
+             throw error;
+         } finally {
+             // 清理临时manifest文件
+             if (fs.existsSync(tempManifestPath)) {
+                 fs.unlinkSync(tempManifestPath);
+             }
+         }
+     }
+     
+     // 显示构建总结
+     console.log('\n🎉 多浏览器构建完成!');
+     buildResults.forEach(result => {
+         console.log(`   📦 ${result.browser.toUpperCase()}: ${result.zipName} (${result.size}MB)`);
+     });
+     
+     const totalSize = buildResults.reduce((sum, result) => sum + parseFloat(result.size), 0).toFixed(1);
+     console.log(`📊 总大小: ${totalSize}MB`);
+     console.log('✅ 多浏览器构建成功！');
        
        // 生成动态的 index.html
         console.log('🔄 生成动态 landing page...');
         try {
+            // 生成下载链接HTML
+            const downloadLinksHtml = buildResults.map(result => `
+                    <div class="download-item">
+                        <h3>${result.browser.toUpperCase()} 版本</h3>
+                        <p>文件大小: ${result.size}MB</p>
+                        <a href="./${result.zipName}" class="download-btn" download>
+                            <span class="icon">📦</span>
+                            下载 ${result.browser.toUpperCase()} 版本
+                        </a>
+                    </div>`).join('');
+            
             const indexTemplate = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADHDGoFly - 智能阅读助手插件</title>
+    <title>ADHDGoFly - 智能阅读助手插件 (多浏览器版本)</title>
     <style>
         * {
             margin: 0;
@@ -235,7 +305,39 @@ async function main() {
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             max-width: 800px;
+            margin: 0 auto 30px auto;
+        }
+        
+        .browser-downloads {
+            margin-top: 30px;
+        }
+        
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 800px;
             margin: 0 auto;
+        }
+        
+        .download-item {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .download-item h3 {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .download-item p {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
         }
         
         .download-btn {
@@ -367,9 +469,13 @@ async function main() {
                     <a href="#" class="download-btn baidu" onclick="alert('百度网盘链接：\\n链接: https://pan.baidu.com/s/example\\n提取码: abcd')">
                         ☁️ 百度网盘下载
                     </a>
-                    <a href="./${zipName}" class="download-btn direct" download>
-                        ⬇️ 直接下载 (ZIP)
-                    </a>
+                </div>
+                
+                <div class="browser-downloads">
+                    <h3 style="color: white; margin: 30px 0 20px 0;">选择浏览器版本:</h3>
+                    <div class="download-grid">
+                        ${downloadLinksHtml}
+                    </div>
                 </div>
                 
                 <div class="contact-info">
@@ -397,11 +503,14 @@ async function main() {
         
         console.log('');
         console.log('🎉 构建完成！可以部署到 Cloudflare Pages 了');
-        console.log('📋 部署文件列表:');
-        console.log(`   - index.html (landing page)`);
-        console.log(`   - ${zipName} (插件包)`);
-        console.log('');
-        console.log('🚀 Cloudflare Pages 将自动部署这些文件');
+         console.log('📋 部署文件列表:');
+         console.log(`   - index.html (多浏览器下载页面)`);
+         buildResults.forEach(result => {
+             console.log(`   - ${result.zipName} (${result.browser.toUpperCase()} 版本, ${result.size}MB)`);
+         });
+         console.log('');
+         console.log('🚀 Cloudflare Pages 将自动部署这些文件');
+         console.log('🌐 用户可以选择下载适合的浏览器版本');
 }
 
 // 运行主函数
@@ -411,7 +520,7 @@ main().catch(error => {
 });
 
 // Node.js原生压缩函数
-function createZipFile(zipName, includeFiles) {
+function createZipFile(zipName, includeFiles, browserName, tempManifestPath) {
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(zipName);
         const archive = archiver('zip', { zlib: { level: 9 } });
@@ -436,7 +545,9 @@ function createZipFile(zipName, includeFiles) {
                     archive.directory(item, item);
                 } else {
                     console.log(`📄 添加文件: ${item}`);
-                    archive.file(item, { name: item });
+                    // 如果是临时manifest文件，重命名为manifest.json
+                    const fileName = item === tempManifestPath ? 'manifest.json' : item;
+                    archive.file(item, { name: fileName });
                 }
             } else {
                 console.warn(`⚠️  文件不存在，跳过: ${item}`);
