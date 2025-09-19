@@ -189,7 +189,7 @@ async function main() {
                             下载 ${browserDisplayName} v${version}
                         </a>
                         <div class="version-info">
-                            <small>文件名: ${versionedFileName}</small>
+                            <small style="color: #333;">文件名: ${versionedFileName}</small>
                         </div>
                     </div>`;
          }).join('');
@@ -602,7 +602,7 @@ async function main() {
                          <h4 style="color: #ffd700; margin: 20px 0 10px 0;">💡 安装小贴士</h4>
                          <ul>
                              <li>确保下载的版本与您的浏览器匹配</li>
-                             <li>解压后请保留文件夹，删除会导致插件失效</li>
+                             <li><strong>⚠️ 重要：解压后请保留文件夹，删除会导致插件失效！</strong></li>
                              <li>首次安装可能需要重启浏览器</li>
                              <li>如遇问题，请检查浏览器版本是否支持 Manifest V3</li>
                          </ul>
