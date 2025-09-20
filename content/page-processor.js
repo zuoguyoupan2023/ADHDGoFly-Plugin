@@ -104,7 +104,9 @@ class PageProcessor {
     }
     
     // 检查类名
-    const className = parent.className || '';
+    const className = (parent.className && typeof parent.className === 'string') 
+      ? parent.className 
+      : (parent.className ? parent.className.toString() : '');
     if (this.options.excludedClasses.some(cls => className.includes(cls))) {
       return false;
     }
