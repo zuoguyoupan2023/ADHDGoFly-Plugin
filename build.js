@@ -555,9 +555,7 @@ async function main() {
                     <a href="https://github.com/zuoguyoupan2023/ADHDGoFly-Plugin/releases/latest" class="download-btn github" target="_blank">
                         📦 GitHub Release
                     </a>
-                    <a href="#" class="download-btn baidu" onclick="alert('百度网盘链接：\\n链接: https://pan.baidu.com/s/example\\n提取码: abcd')">
-                        ☁️ 百度网盘下载
-                    </a>
+                    
                 </div>
                 
                 <div class="browser-downloads">
