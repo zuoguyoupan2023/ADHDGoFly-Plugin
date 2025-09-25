@@ -72,7 +72,10 @@
       "paragraphSpacingDesc": "Adjust spacing between paragraphs",
       "previewTitle": "Preview Effect",
       "previewText1": "This is sample text for previewing font style effects. 这是一段示例文本，用于预览字体样式效果。",
-      "previewText2": "Second paragraph to show paragraph spacing effect. 第二段文本，可以看到段落间距的效果。"
+      "previewText2": "Second paragraph to show paragraph spacing effect. 第二段文本，可以看到段落间距的效果。",
+      "preview": "Preview Effect",
+      "apply": "Apply Settings",
+      "reset": "Reset Default"
     },
     "ai": {
       "title": "Smart Analysis",
@@ -88,26 +91,31 @@
     },
     "settings": {
       "title": "Settings",
-      "about": "About Us",
-      "aboutDescription": "is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
-      "version": "Version:",
-      "developer": "Developer:",
-      "dictSources": "Dictionary Sources",
-      "dictSourcesDesc": {
-        "zh": "Based on open-source Chinese word segmentation dictionaries, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
-        "en": "Based on WordNet and other open-source English dictionaries, providing accurate part-of-speech classification. Licensed under Creative Commons.",
-        "fr": "Sourced from open-source French language resources, containing basic vocabulary part-of-speech information.",
-        "ru": "Based on open-source Russian dictionary projects, providing basic part-of-speech annotation functionality.",
-        "es": "Sourced from public Spanish linguistic resources, supporting common vocabulary recognition.",
-        "ja": "Based on open-source Japanese dictionaries, containing part-of-speech information for kana and kanji."
+      "about": {
+        "title": "About Us",
+        "description": "ADHDGoFly is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
+        "version": "0.1.1",
+        "developer": "ADHDGoFly Team"
       },
-      "otherSettings": "Other Settings",
-      "autoUpdate": "Auto-check updates",
-      "autoUpdateDesc": "Automatically check for plugin updates when enabled",
-      "analytics": "Anonymous usage statistics",
-      "analyticsDesc": "Help us improve the product (no personal information collected)",
-      "language": "Interface Language",
-      "languageDesc": "Select plugin interface display language"
+      "dictionaries": {
+         "title": "Dictionary Sources",
+         "descriptions": {
+           "zh": "Based on open-source Chinese word segmentation dictionaries, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
+           "en": "Based on WordNet and other open-source English dictionaries, providing accurate part-of-speech classification. Licensed under Creative Commons.",
+           "fr": "Sourced from open-source French language resources, containing basic vocabulary part-of-speech information.",
+           "ru": "Based on open-source Russian dictionary projects, providing basic part-of-speech annotation functionality.",
+           "es": "Sourced from public Spanish linguistic resources, supporting common vocabulary recognition.",
+           "ja": "Based on open-source Japanese dictionaries, containing part-of-speech information for kana and kanji."
+         }
+       },
+      "other": {
+        "title": "Other Settings",
+        "autoUpdate": "Auto-check updates",
+        "autoUpdateDesc": "Automatically check for plugin updates when enabled",
+        "analytics": "Anonymous usage statistics",
+        "analyticsDesc": "Help us improve the product (no personal information collected)",
+        "reset": "Reset All Settings"
+      }
     }
   },
   "sidebar": {
@@ -115,7 +123,9 @@
     "dict": "Dictionary",
     "colors": "Colors",
     "text": "Text",
-    "settings": "Settings"
+    "ai": "AI",
+    "settings": "Settings",
+    "language": "Switch Language"
   },
   "languages": {
     "zh": "中文",
