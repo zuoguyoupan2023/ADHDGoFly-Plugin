@@ -176,7 +176,9 @@ class I18nManager {
       'dict-btn': 'sidebar.dict',
       'colors-btn': 'sidebar.colors',
       'text-btn': 'sidebar.text',
-      'settings-btn': 'sidebar.settings'
+      'ai-btn': 'sidebar.ai',
+      'settings-btn': 'sidebar.settings',
+      'languageToggle': 'sidebar.language'
     };
 
     Object.entries(sidebarButtons).forEach(([id, key]) => {

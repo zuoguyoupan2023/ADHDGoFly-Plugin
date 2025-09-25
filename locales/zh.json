@@ -119,11 +119,11 @@
     }
   },
   "sidebar": {
-    "home": "主页",
+    "home": "首页",
     "dict": "词典",
     "colors": "颜色",
     "text": "文本",
-    "ai": "AI",
+    "ai": "AI分析",
     "settings": "设置",
     "language": "切换语言"
   },

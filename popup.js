@@ -102,14 +102,14 @@ class PopupController {
     
     // 监听语言变化事件
     document.addEventListener('languageChanged', (event) => {
-      this.updateLanguageUI(event.detail.language);
+      this.updateLanguageUI(event.detail.newLanguage);
     });
   }
   
   async toggleLanguage() {
     const currentLang = this.i18nManager.getCurrentLanguage();
     const newLang = currentLang === 'zh' ? 'en' : 'zh';
-    await this.i18nManager.setLanguage(newLang);
+    await this.i18nManager.switchLanguage(newLang);
   }
   
   updateLanguageUI(language) {
