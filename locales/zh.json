@@ -1,0 +1,124 @@
+{
+  "appName": "ADHDGoFly",
+  "status": {
+    "checking": "状态检查中...",
+    "enabled": "高亮已启用",
+    "disabled": "高亮已禁用"
+  },
+  "version": {
+    "current": "当前版本:",
+    "latest": "最新版本:",
+    "checking": "检查中...",
+    "updateTitle": "🎉 发现新版本！",
+    "updateDescription": "建议更新以获得最新功能和修复",
+    "officialDownload": "官方下载：",
+    "domesticLinks": "国内链接：",
+    "directDownload": "直链下载",
+    "updateNote": "💡 提示：如果GitHub访问较慢，建议使用国内链接",
+    "contactInfo": "如果都不可用，请联系 WeChat: zuoguyoupan2023"
+  },
+  "buttons": {
+    "toggle": "切换高亮",
+    "enable": "启用高亮",
+    "disable": "禁用高亮",
+    "retry": "重试",
+    "save": "保存设置",
+    "apply": "应用方案",
+    "applyStyle": "应用样式",
+    "reset": "重置默认",
+    "refresh": "🔄 刷新分析",
+    "resetAll": "重置所有设置"
+  },
+  "legend": {
+    "title": "词性颜色",
+    "noun": "名词",
+    "verb": "动词",
+    "adjective": "形容词"
+  },
+  "pages": {
+    "dict": {
+      "title": "词典管理",
+      "description": "选择要使用的语言词典",
+      "languages": {
+        "zh": "中文词典",
+        "en": "英文词典",
+        "fr": "法文词典",
+        "ru": "俄文词典",
+        "es": "西班牙文词典",
+        "ja": "日文词典"
+      }
+    },
+    "colors": {
+      "title": "颜色方案",
+      "description": "选择高亮颜色方案",
+      "schemes": {
+        "default": "默认方案",
+        "warm": "暖色方案",
+        "cool": "冷色方案",
+        "pastel": "柔和方案",
+        "highContrast": "高对比度"
+      }
+    },
+    "text": {
+      "title": "文本样式",
+      "description": "调整页面文本的显示样式",
+      "fontSize": "字号大小",
+      "fontSizeDesc": "调整页面文字大小",
+      "letterSpacing": "字间距",
+      "letterSpacingDesc": "调整字符之间的间距",
+      "lineHeight": "行间距",
+      "lineHeightDesc": "调整行与行之间的间距",
+      "paragraphSpacing": "段间距",
+      "paragraphSpacingDesc": "调整段落之间的间距",
+      "previewTitle": "预览效果",
+      "previewText1": "这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.",
+      "previewText2": "第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect."
+    },
+    "ai": {
+      "title": "智能分析",
+      "description": "基于当前页面内容的智能分析和推荐",
+      "pageStats": "📊 页面统计",
+      "languageDistribution": "语言分布",
+      "posDistribution": "词性分布",
+      "highlightStats": "高亮统计",
+      "analysis": "🔍 分析",
+      "colorRecommendation": "推荐颜色方案",
+      "textRecommendation": "推荐文本样式",
+      "analyzing": "分析中..."
+    },
+    "settings": {
+      "title": "设置",
+      "about": "关于我们",
+      "aboutDescription": "是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。",
+      "version": "版本：",
+      "developer": "开发者：",
+      "dictSources": "词典来源",
+      "dictSourcesDesc": {
+        "zh": "基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
+        "en": "基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。",
+        "fr": "来源于开源法语语言资源，包含基础词汇的词性信息。",
+        "ru": "基于开源俄语词典项目，提供基本的词性标注功能。",
+        "es": "来源于公开的西班牙语语言学资源，支持常用词汇识别。",
+        "ja": "基于开源日语词典，包含假名和汉字的词性信息。"
+      },
+      "otherSettings": "其他设置",
+      "autoUpdate": "自动检查更新",
+      "autoUpdateDesc": "启用后将自动检查插件更新",
+      "analytics": "匿名使用统计",
+      "analyticsDesc": "帮助我们改进产品（不收集个人信息）",
+      "language": "界面语言",
+      "languageDesc": "选择插件界面显示语言"
+    }
+  },
+  "sidebar": {
+    "home": "主页",
+    "dict": "词典",
+    "colors": "颜色",
+    "text": "文本",
+    "settings": "设置"
+  },
+  "languages": {
+    "zh": "中文",
+    "en": "English"
+  }
+}

@@ -3,6 +3,7 @@ class PopupController {
   constructor() {
     this.currentStatus = null;
     this.currentPage = 'home';
+    this.i18nManager = new I18nManager();
     this.dictSettings = {
       zh: true,
       en: true,
@@ -52,6 +53,9 @@ class PopupController {
   async init() {
     console.log('初始化Popup控制器...');
     
+    // 初始化i18n
+    await this.i18nManager.init();
+    
     // 绑定事件
     this.bindEvents();
     
@@ -80,11 +84,41 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
+    // 绑定语言切换事件
+    this.bindLanguageEvents();
+    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
 
+  }
+
+  bindLanguageEvents() {
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      languageToggle.addEventListener('click', () => this.toggleLanguage());
+    }
+    
+    // 监听语言变化事件
+    document.addEventListener('languageChanged', (event) => {
+      this.updateLanguageUI(event.detail.language);
+    });
+  }
+  
+  async toggleLanguage() {
+    const currentLang = this.i18nManager.getCurrentLanguage();
+    const newLang = currentLang === 'zh' ? 'en' : 'zh';
+    await this.i18nManager.setLanguage(newLang);
+  }
+  
+  updateLanguageUI(language) {
+    // 更新语言切换按钮的提示
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      const title = language === 'zh' ? 'Switch to English' : '切换到中文';
+      languageToggle.setAttribute('title', title);
+    }
   }
 
   bindSidebarEvents() {
@@ -280,7 +314,7 @@ class PopupController {
     if (status.error) {
       statusDiv.textContent = status.error;
       statusDiv.className = 'status disabled';
-      toggleBtn.textContent = '重试';
+      toggleBtn.textContent = this.i18nManager.t('buttons.retry');
       toggleBtn.className = 'toggle-btn';
       return;
     }
@@ -288,11 +322,11 @@ class PopupController {
     const enabled = status.enabled;
     
     // 更新状态显示
-    statusDiv.textContent = enabled ? '高亮已开启' : '高亮已关闭';
+    statusDiv.textContent = enabled ? this.i18nManager.t('status.enabled') : this.i18nManager.t('status.disabled');
     statusDiv.className = enabled ? 'status enabled' : 'status disabled';
     
     // 更新按钮
-    toggleBtn.textContent = enabled ? '关闭高亮' : '开启高亮';
+    toggleBtn.textContent = enabled ? this.i18nManager.t('buttons.disable') : this.i18nManager.t('buttons.enable');
     toggleBtn.className = enabled ? 'toggle-btn disabled' : 'toggle-btn';
     
     // 显示统计信息（如果有）
