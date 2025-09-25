@@ -101,25 +101,28 @@
       "textRecommendation": "Recommended Text Style",
       "analyzing": "Analyzing..."
     },
-    "settings": {
-      "title": "Settings",
+    "about": {
+      "title": "About",
       "about": {
         "title": "About Us",
         "description": "ADHDGoFly is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
-        "version": "0.1.1",
-        "developer": "ADHDGoFly Team"
+        "version": "Version:",
+        "developer": "Developer:"
       },
       "dictionaries": {
-         "title": "Dictionary Sources",
-         "descriptions": {
-           "zh": "Based on open-source Chinese word segmentation dictionaries, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
-           "en": "Based on WordNet and other open-source English dictionaries, providing accurate part-of-speech classification. Licensed under Creative Commons.",
-           "fr": "Sourced from open-source French language resources, containing basic vocabulary part-of-speech information.",
-           "ru": "Based on open-source Russian dictionary projects, providing basic part-of-speech annotation functionality.",
-           "es": "Sourced from public Spanish linguistic resources, supporting common vocabulary recognition.",
-           "ja": "Based on open-source Japanese dictionaries, containing part-of-speech information for kana and kanji."
-         }
-       },
+        "title": "Dictionary Sources",
+        "descriptions": {
+          "zh": "Based on open-source Chinese word segmentation dictionaries, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
+          "en": "Based on WordNet and other open-source English dictionaries, providing accurate part-of-speech classification. Licensed under Creative Commons.",
+          "fr": "Sourced from open-source French language resources, containing basic vocabulary part-of-speech information.",
+          "ru": "Based on open-source Russian dictionary projects, providing basic part-of-speech annotation functionality.",
+          "es": "Sourced from public Spanish linguistic resources, supporting common vocabulary recognition.",
+          "ja": "Based on open-source Japanese dictionaries, containing part-of-speech information for kana and kanji."
+        }
+      }
+    },
+    "settings": {
+      "title": "Settings",
       "other": {
         "title": "Other Settings",
         "autoUpdate": "Auto-check updates",
@@ -136,6 +139,7 @@
     "colors": "Colors",
     "text": "Text",
     "ai": "AI Analysis",
+    "about": "About",
     "settings": "Settings",
     "language": "Switch Language"
   },

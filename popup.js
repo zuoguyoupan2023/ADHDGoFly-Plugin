@@ -174,7 +174,12 @@ class PopupController {
       case 'text-btn':
         this.showPage('text');
         break;
-
+      case 'ai-btn':
+        this.showPage('ai');
+        break;
+      case 'about-btn':
+        this.showPage('about');
+        break;
       case 'settings-btn':
         this.showPage('settings');
         // 初始化设置页面
