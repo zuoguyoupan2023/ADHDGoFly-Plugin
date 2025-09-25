@@ -4,6 +4,7 @@ class PopupController {
     this.currentStatus = null;
     this.currentPage = 'home';
     this.i18nManager = new I18nManager();
+    this.userDictionaryUI = new UserDictionaryUI(this.i18nManager);
     this.dictSettings = {
       zh: true,
       en: true,
@@ -64,6 +65,9 @@ class PopupController {
     
     // 检查版本
     await this.checkVersion();
+    
+    // 初始化用户词典UI
+    await this.initUserDictionaryUI();
   }
 
   bindEvents() {
@@ -616,7 +620,12 @@ class PopupController {
     console.log('文本设置已重置');
   }
 
-
+  async initUserDictionaryUI() {
+    // 初始化用户词典UI管理器
+    if (this.userDictionaryUI) {
+      await this.userDictionaryUI.init();
+    }
+  }
 
   async checkVersion() {
     try {

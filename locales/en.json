@@ -29,6 +29,45 @@
     "refresh": "🔄 Refresh Analysis",
     "resetAll": "Reset All Settings"
   },
+  "userDictionary": {
+    "title": "User Dictionary",
+    "addWord": "Add Word",
+    "editWord": "Edit Word",
+    "deleteWord": "Delete Word",
+    "importDict": "Import Dictionary",
+    "exportDict": "Export Dictionary",
+    "searchPlaceholder": "Search words...",
+    "allLanguages": "All Languages",
+    "empty": "No custom words yet",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "wordInput": "Word",
+    "languageSelect": "Language",
+    "posSelect": "Part of Speech",
+    "notesInput": "Notes",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "confirmDelete": "Are you sure you want to delete this word?",
+    "importSuccess": "Dictionary imported successfully",
+    "importError": "Failed to import dictionary",
+    "exportSuccess": "Dictionary exported successfully",
+    "addSuccess": "Word added successfully",
+    "editSuccess": "Word edited successfully",
+    "deleteSuccess": "Word deleted successfully",
+    "wordExists": "This word already exists",
+    "invalidData": "Invalid data format"
+  },
+  "pos": {
+    "noun": "Noun",
+    "verb": "Verb",
+    "adjective": "Adjective",
+    "adverb": "Adverb",
+    "preposition": "Preposition",
+    "conjunction": "Conjunction",
+    "pronoun": "Pronoun",
+    "numeral": "Numeral",
+    "interjection": "Interjection"
+  },
   "legend": {
     "title": "Part of Speech Colors",
     "noun": "Noun",
@@ -88,6 +127,9 @@
     },
     "settings": {
       "title": "Settings",
+      "userDictionary": {
+        "title": "User Dictionary"
+      },
       "about": "About Us",
       "aboutDescription": "is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
       "version": "Version:",

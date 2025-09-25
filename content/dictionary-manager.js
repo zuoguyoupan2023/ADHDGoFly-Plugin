@@ -12,6 +12,8 @@ class DictionaryManager {
       es: false,
       ja: false
     };
+    // 初始化用户词典管理器
+    this.userDictionaryManager = new UserDictionaryManager();
   }
 
   /**
@@ -24,6 +26,8 @@ class DictionaryManager {
     }
     
     this.loadPromise = this.loadDictionaries();
+    // 同时初始化用户词典
+    await this.userDictionaryManager.initialize();
     return await this.loadPromise;
   }
 
@@ -167,6 +171,15 @@ class DictionaryManager {
    * @returns {string|null} 词性或null
    */
   lookupWord(word, language) {
+    // 优先查找用户词典
+    if (this.userDictionaryManager.isReady()) {
+      const userResult = this.userDictionaryManager.lookupWord(language, word);
+      if (userResult) {
+        return userResult;
+      }
+    }
+    
+    // 如果用户词典中没有，再查找内置词典
     const dictionary = this.getDictionary(language);
     return dictionary[word] || null;
   }
@@ -195,6 +208,14 @@ class DictionaryManager {
    */
   getEnabledLanguages() {
     return Object.keys(this.enabledLanguages).filter(lang => this.enabledLanguages[lang]);
+  }
+
+  /**
+   * 获取用户词典管理器
+   * @returns {UserDictionaryManager} 用户词典管理器实例
+   */
+  getUserDictionaryManager() {
+    return this.userDictionaryManager;
   }
 }
 

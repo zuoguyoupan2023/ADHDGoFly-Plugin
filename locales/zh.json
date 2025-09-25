@@ -29,6 +29,45 @@
     "refresh": "🔄 刷新分析",
     "resetAll": "重置所有设置"
   },
+  "userDictionary": {
+    "title": "用户词典",
+    "addWord": "添加词汇",
+    "editWord": "编辑词汇",
+    "deleteWord": "删除词汇",
+    "importDict": "导入词典",
+    "exportDict": "导出词典",
+    "searchPlaceholder": "搜索词汇...",
+    "allLanguages": "所有语言",
+    "empty": "暂无自定义词汇",
+    "prevPage": "上一页",
+    "nextPage": "下一页",
+    "wordInput": "词汇",
+    "languageSelect": "语言",
+    "posSelect": "词性",
+    "notesInput": "备注",
+    "saveButton": "保存",
+    "cancelButton": "取消",
+    "confirmDelete": "确定要删除这个词汇吗？",
+    "importSuccess": "词典导入成功",
+    "importError": "词典导入失败",
+    "exportSuccess": "词典导出成功",
+    "addSuccess": "词汇添加成功",
+    "editSuccess": "词汇编辑成功",
+    "deleteSuccess": "词汇删除成功",
+    "wordExists": "该词汇已存在",
+    "invalidData": "数据格式无效"
+  },
+  "pos": {
+    "noun": "名词",
+    "verb": "动词",
+    "adjective": "形容词",
+    "adverb": "副词",
+    "preposition": "介词",
+    "conjunction": "连词",
+    "pronoun": "代词",
+    "numeral": "数词",
+    "interjection": "感叹词"
+  },
   "legend": {
     "title": "词性颜色",
     "noun": "名词",
@@ -115,6 +154,7 @@
     "dict": "词典",
     "colors": "颜色",
     "text": "文本",
+    "userDictionary": "用户词典",
     "settings": "设置"
   },
   "languages": {
