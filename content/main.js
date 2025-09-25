@@ -420,6 +420,10 @@ class ADHDHighlighter {
       // 处理页面
       await this.pageProcessor.processPage();
       
+      // 应用颜色方案和文本设置
+      this.applyColorScheme();
+      this.applyTextSettings();
+      
       this.enabled = true;
       
       // 保存状态
@@ -569,6 +573,10 @@ class ADHDHighlighter {
     
     // 重新处理
     await this.pageProcessor.processPage();
+    
+    // 重新应用样式设置
+    this.applyColorScheme();
+    this.applyTextSettings();
     
     console.log('页面重新处理完成');
   }
