@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <link rel="stylesheet" href="settings.css">
   <script src="i18n.js"></script>
-  <script src="user-dictionary-ui.js"></script>
   <script src="popup.js"></script>
   <style>
     * {
@@ -1655,46 +1654,6 @@
           </div>
         </div>
 
-        <!-- 用户词典管理 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.settings.userDictionary.title">用户词典</h4>
-          </div>
-          <div class="section-content">
-            <div class="user-dict-controls">
-              <div class="dict-actions">
-                <button class="action-btn primary" id="add-word-btn" data-i18n="userDictionary.addWord">添加词汇</button>
-                <button class="action-btn" id="import-dict-btn" data-i18n="userDictionary.importDict">导入词典</button>
-                <button class="action-btn" id="export-dict-btn" data-i18n="userDictionary.exportDict">导出词典</button>
-              </div>
-              <div class="dict-search">
-                <input type="text" id="dict-search-input" placeholder="搜索词汇..." data-i18n-placeholder="userDictionary.searchPlaceholder">
-                <select id="dict-language-filter">
-                  <option value="" data-i18n="userDictionary.allLanguages">所有语言</option>
-                  <option value="zh">中文</option>
-                  <option value="en">English</option>
-                  <option value="fr">Français</option>
-                  <option value="ru">Русский</option>
-                  <option value="es">Español</option>
-                  <option value="ja">日本語</option>
-                </select>
-              </div>
-            </div>
-            
-            <!-- 词汇列表 -->
-            <div class="user-dict-list" id="user-dict-list">
-              <div class="dict-empty" id="dict-empty-state" data-i18n="userDictionary.empty">暂无自定义词汇</div>
-            </div>
-            
-            <!-- 分页控件 -->
-            <div class="dict-pagination" id="dict-pagination" style="display: none;">
-              <button class="page-btn" id="prev-page-btn" data-i18n="userDictionary.prevPage">上一页</button>
-              <span class="page-info" id="page-info">1 / 1</span>
-              <button class="page-btn" id="next-page-btn" data-i18n="userDictionary.nextPage">下一页</button>
-            </div>
-          </div>
-        </div>
-
         <!-- 词典来源 -->
         <div class="settings-section">
           <div class="section-header">
@@ -1796,87 +1755,6 @@
       </button>
     </div>
   </div>
-  
-  <!-- 词汇编辑模态框 -->
-  <div class="modal" id="word-edit-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 id="modal-title" data-i18n="userDictionary.addWord">添加词汇</h4>
-        <button class="close-btn" id="close-modal-btn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="word-edit-form">
-          <div class="form-group">
-            <label for="word-input" data-i18n="userDictionary.wordInput">词汇</label>
-            <input type="text" id="word-input" required>
-          </div>
-          <div class="form-group">
-            <label for="language-select" data-i18n="userDictionary.languageSelect">语言</label>
-            <select id="language-select" required>
-              <option value="zh">中文</option>
-              <option value="en">English</option>
-              <option value="fr">Français</option>
-              <option value="ru">Русский</option>
-              <option value="es">Español</option>
-              <option value="ja">日本語</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="userDictionary.posSelect">词性</label>
-            <div class="pos-checkboxes">
-              <label class="pos-checkbox">
-                <input type="checkbox" value="n">
-                <span data-i18n="pos.noun">名词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="v">
-                <span data-i18n="pos.verb">动词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="adj">
-                <span data-i18n="pos.adjective">形容词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="adv">
-                <span data-i18n="pos.adverb">副词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="prep">
-                <span data-i18n="pos.preposition">介词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="conj">
-                <span data-i18n="pos.conjunction">连词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="pron">
-                <span data-i18n="pos.pronoun">代词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="num">
-                <span data-i18n="pos.numeral">数词</span>
-              </label>
-              <label class="pos-checkbox">
-                <input type="checkbox" value="int">
-                <span data-i18n="pos.interjection">感叹词</span>
-              </label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="notes-input" data-i18n="userDictionary.notesInput">备注</label>
-            <textarea id="notes-input" rows="3"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn secondary" id="cancel-btn" data-i18n="userDictionary.cancelButton">取消</button>
-        <button type="submit" class="btn primary" id="save-word-btn" data-i18n="userDictionary.saveButton">保存</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 文件输入（隐藏） -->
-  <input type="file" id="import-file-input" accept=".json" style="display: none;">
   
   <script src="settings.js"></script>
 </body>
