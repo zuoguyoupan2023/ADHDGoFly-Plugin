@@ -4,6 +4,7 @@ class PopupController {
     this.currentStatus = null;
     this.currentPage = 'home';
     this.i18nManager = new I18nManager();
+    this.versionInfo = null; // 缓存版本信息
     this.dictSettings = {
       zh: true,
       en: true,
@@ -56,6 +57,12 @@ class PopupController {
     // 初始化i18n
     await this.i18nManager.init();
     
+    // 设置初始状态文本
+    const statusDiv = document.getElementById('status');
+    if (statusDiv) {
+      statusDiv.textContent = this.i18nManager.t('status.checking');
+    }
+    
     // 绑定事件
     this.bindEvents();
     
@@ -103,6 +110,20 @@ class PopupController {
     // 监听语言变化事件
     document.addEventListener('languageChanged', (event) => {
       this.updateLanguageUI(event.detail.newLanguage);
+      // 重新应用当前状态的翻译
+      if (this.currentStatus) {
+        this.updateUI(this.currentStatus);
+      } else {
+          // 如果还在检查状态，更新检查中的文本
+          const statusDiv = document.getElementById('status');
+          if (statusDiv && (statusDiv.textContent.includes('Checking') || statusDiv.textContent.includes('检查中'))) {
+            statusDiv.textContent = this.i18nManager.t('status.checking');
+          }
+        }
+      // 重新应用版本信息的翻译
+      if (this.versionInfo) {
+        this.updateVersionUI();
+      }
     });
   }
   
@@ -257,7 +278,7 @@ class PopupController {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        this.updateUI({ enabled: false, error: '无法获取当前标签页' });
+        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.noTab') });
         return;
       }
 
@@ -267,11 +288,11 @@ class PopupController {
         this.currentStatus = response;
         this.updateUI(response);
       } else {
-        this.updateUI({ enabled: false, error: '插件未加载或初始化失败' });
+        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.notLoaded') });
       }
     } catch (error) {
       console.error('检查状态失败:', error);
-      this.updateUI({ enabled: false, error: '连接失败' });
+      this.updateUI({ enabled: false, error: this.i18nManager.t('errors.connectionFailed') });
     }
   }
 
@@ -280,15 +301,15 @@ class PopupController {
     const statusDiv = document.getElementById('status');
     
     // 显示加载状态
-    toggleBtn.textContent = '处理中...';
+    toggleBtn.textContent = this.i18nManager.t('status.processing');
     toggleBtn.disabled = true;
-    statusDiv.textContent = '正在切换状态...';
+    statusDiv.textContent = this.i18nManager.t('status.switching');
     statusDiv.className = 'status';
     
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        throw new Error('无法获取当前标签页');
+        throw new Error(this.i18nManager.t('errors.noTab'));
       }
 
       const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle' });
@@ -297,7 +318,7 @@ class PopupController {
         this.currentStatus = { ...this.currentStatus, enabled: response.enabled, statistics: response.stats };
         this.updateUI(this.currentStatus);
       } else {
-        throw new Error(response?.error || '操作失败');
+        throw new Error(response?.error || this.i18nManager.t('errors.operationFailed'));
       }
     } catch (error) {
       console.error('切换失败:', error);
@@ -623,53 +644,103 @@ class PopupController {
       // 显示当前版本
       const manifest = chrome.runtime.getManifest();
       const currentVersion = manifest.version;
-      document.getElementById('currentVersion').textContent = currentVersion;
+      
+      // 初始化版本信息缓存
+      this.versionInfo = {
+        currentVersion: currentVersion,
+        latestVersion: null,
+        isChecking: true,
+        hasUpdate: false,
+        error: null,
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      
+      // 更新UI显示
+      this.updateVersionUI();
       
       // 请求后台检查最新版本
        chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+         this.versionInfo.isChecking = false;
+         
          if (response && response.success) {
-           document.getElementById('latestVersion').textContent = response.latestVersion;
-           
-           if (response.hasUpdate) {
-             // 显示更新提示
-             const updateNotice = document.getElementById('updateNotice');
-             
-             // 设置官方GitHub链接
-             const githubLink = document.getElementById('githubLink');
-             githubLink.href = response.releaseUrl;
-             
-             // 设置替代下载链接
-             if (response.alternativeDownloads) {
-               const baiduLink = document.getElementById('baiduLink');
-               const giteeLink = document.getElementById('giteeLink');
-               const directLink = document.getElementById('directLink');
-               
-               baiduLink.href = response.alternativeDownloads.baidu;
-               giteeLink.href = response.alternativeDownloads.gitee;
-               directLink.href = response.alternativeDownloads.direct;
-             }
-             
-             // 设置联系信息
-             if (response.contactInfo) {
-               const contactInfoElement = document.querySelector('.contact-info');
-               if (contactInfoElement) {
-                 contactInfoElement.textContent = response.contactInfo;
-               }
-             }
-             
-             updateNotice.style.display = 'block';
-           }
+           this.versionInfo.latestVersion = response.latestVersion;
+           this.versionInfo.hasUpdate = response.hasUpdate;
+           this.versionInfo.releaseUrl = response.releaseUrl;
+           this.versionInfo.alternativeDownloads = response.alternativeDownloads;
+           this.versionInfo.contactInfo = response.contactInfo;
          } else {
-           document.getElementById('latestVersion').textContent = '检查失败';
-           if (response && response.error) {
-             console.error('版本检查失败:', response.error);
-           }
+           this.versionInfo.error = response?.error || 'Unknown error';
          }
+         
+         // 更新UI显示
+         this.updateVersionUI();
        });
     } catch (error) {
       console.error('版本检测失败:', error);
-      document.getElementById('currentVersion').textContent = '未知';
-      document.getElementById('latestVersion').textContent = '检查失败';
+      this.versionInfo = {
+        currentVersion: '未知',
+        latestVersion: null,
+        isChecking: false,
+        hasUpdate: false,
+        error: error.message,
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      this.updateVersionUI();
+    }
+  }
+  
+  updateVersionUI() {
+    if (!this.versionInfo) return;
+    
+    // 更新当前版本显示
+    document.getElementById('currentVersion').textContent = this.versionInfo.currentVersion;
+    
+    // 更新最新版本显示
+     const latestVersionElement = document.getElementById('latestVersion');
+     if (this.versionInfo.isChecking) {
+       latestVersionElement.textContent = this.i18nManager.t('version.checking');
+     } else if (this.versionInfo.error) {
+       latestVersionElement.textContent = this.i18nManager.t('version.checkFailed');
+     } else {
+       latestVersionElement.textContent = this.versionInfo.latestVersion;
+     }
+    
+    // 处理更新提示
+    if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
+      const updateNotice = document.getElementById('updateNotice');
+      
+      // 设置官方GitHub链接
+      const githubLink = document.getElementById('githubLink');
+      if (githubLink && this.versionInfo.releaseUrl) {
+        githubLink.href = this.versionInfo.releaseUrl;
+      }
+      
+      // 设置替代下载链接
+      if (this.versionInfo.alternativeDownloads) {
+        const baiduLink = document.getElementById('baiduLink');
+        const giteeLink = document.getElementById('giteeLink');
+        const directLink = document.getElementById('directLink');
+        
+        if (baiduLink) baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
+        if (giteeLink) giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
+        if (directLink) directLink.href = this.versionInfo.alternativeDownloads.direct;
+      }
+      
+      // 设置联系信息
+      if (this.versionInfo.contactInfo) {
+        const contactInfoElement = document.querySelector('.contact-info');
+        if (contactInfoElement) {
+          contactInfoElement.textContent = this.versionInfo.contactInfo;
+        }
+      }
+      
+      if (updateNotice) {
+        updateNotice.style.display = 'block';
+      }
     }
   }
 

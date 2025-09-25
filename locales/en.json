@@ -3,7 +3,19 @@
   "status": {
     "checking": "Checking status...",
     "enabled": "Highlighting enabled",
-    "disabled": "Highlighting disabled"
+    "disabled": "Highlighting disabled",
+    "processing": "Processing...",
+    "switching": "Switching status..."
+  },
+  "version": {
+    "checking": "Checking...",
+    "checkFailed": "Check failed"
+  },
+  "errors": {
+    "noTab": "Unable to get current tab",
+    "notLoaded": "Extension not loaded or initialization failed",
+    "connectionFailed": "Connection failed",
+    "operationFailed": "Operation failed"
   },
   "version": {
     "current": "Current version:",
