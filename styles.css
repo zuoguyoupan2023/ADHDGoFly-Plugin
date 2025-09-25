@@ -26,8 +26,6 @@
 /* 确保样式优先级 */
 .adhd-processed span {
   font-family: inherit !important;
-  font-size: inherit !important;
-  line-height: inherit !important;
   font-weight: inherit !important;
   text-decoration: inherit !important;
 }

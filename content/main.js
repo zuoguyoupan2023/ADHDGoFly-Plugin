@@ -16,7 +16,7 @@ class ADHDHighlighter {
     
     // 文本样式设置
     this.textSettings = {
-      fontSize: 100,
+      fontSize: 115,  // 默认字号增大15%
       letterSpacing: 0,
       lineHeight: 1.5,
       paragraphSpacing: 0
@@ -333,7 +333,7 @@ class ADHDHighlighter {
   }
 
   /**
-   * 应用文本设置到页面
+   * 应用文本设置到页面 - 只影响高亮词汇
    */
   applyTextSettings() {
     // 移除旧的文本样式
@@ -348,53 +348,43 @@ class ADHDHighlighter {
     
     const { fontSize, letterSpacing, lineHeight, paragraphSpacing } = this.textSettings;
     
+    // 将百分比转换为倍数
+    const fontSizeMultiplier = fontSize / 100;
+    
     style.textContent = `
-      /* ADHD文本样式设置 */
-      body {
-        font-size: ${fontSize}% !important;
-        letter-spacing: ${letterSpacing}px !important;
-        line-height: ${lineHeight} !important;
-      }
-      
-      /* 段落间距 */
-      p, div, article, section {
-        margin-bottom: ${paragraphSpacing}px !important;
-      }
-      
-      /* 确保高亮文本继承样式 */
-      .adhd-processed {
-        font-size: inherit !important;
-        letter-spacing: inherit !important;
-        line-height: inherit !important;
-      }
-      
+      /* ADHD文本样式设置 - 只应用到高亮词汇 */
       .adhd-n, .adhd-v, .adhd-a, .adhd-other {
-        font-size: inherit !important;
-        letter-spacing: inherit !important;
-        line-height: inherit !important;
-      }
-      
-      /* 特殊元素调整 */
-      h1, h2, h3, h4, h5, h6 {
+        font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
-        line-height: ${Math.max(lineHeight, 1.2)} !important;
-        margin-bottom: ${Math.max(paragraphSpacing, 10)}px !important;
+        line-height: ${lineHeight} !important;
+        display: inline !important;
       }
       
-      /* 列表项间距 */
-      li {
-        margin-bottom: ${Math.floor(paragraphSpacing / 2)}px !important;
-      }
-      
-      /* 表格单元格 */
-      td, th {
+      /* 确保span元素也应用样式 */
+      .adhd-processed span.adhd-n,
+      .adhd-processed span.adhd-v,
+      .adhd-processed span.adhd-a,
+      .adhd-processed span.adhd-other {
+        font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
       }
+      
+      /* 高亮词汇容器样式 */
+      .adhd-processed {
+        display: inline !important;
+      }
+      
+      /* 段落间距 - 使用更兼容的选择器 */
+      ${paragraphSpacing > 0 ? `
+      .adhd-processed {
+        margin-bottom: ${paragraphSpacing}px !important;
+      }` : ''}
     `;
     
     document.head.appendChild(style);
-    console.log('文本设置已应用:', this.textSettings);
+    console.log('文本设置已应用到高亮词汇:', this.textSettings);
+    console.log('字号倍数:', fontSizeMultiplier + 'em');
   }
 
   /**

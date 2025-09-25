@@ -42,7 +42,7 @@ class PopupController {
     };
     this.currentColorScheme = 'default';
     this.textSettings = {
-      fontSize: 100,        // 字号百分比
+      fontSize: 115,        // 字号百分比 - 默认增大15%
       letterSpacing: 0,     // 字间距 px
       lineHeight: 1.5,      // 行间距倍数
       paragraphSpacing: 0   // 段间距 px
@@ -625,7 +625,7 @@ class PopupController {
   resetTextSettings() {
     // 重置为默认值
     this.textSettings = {
-      fontSize: 100,
+      fontSize: 115,  // 默认增大15%
       letterSpacing: 0,
       lineHeight: 1.5,
       paragraphSpacing: 0
