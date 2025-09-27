@@ -530,25 +530,8 @@ class ADHDHighlighter {
   async updateDictSettings(dictSettings) {
     console.log('更新词典设置:', dictSettings);
     
-    // 分离语言词典设置和独立词典设置
-    const languageSettings = {};
-    const independentDictSettings = {};
-    
-    const supportedLanguages = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
-    
-    Object.keys(dictSettings).forEach(key => {
-      if (supportedLanguages.includes(key)) {
-        languageSettings[key] = dictSettings[key];
-      } else {
-        independentDictSettings[key] = dictSettings[key];
-      }
-    });
-    
-    // 更新语言词典设置
-    this.dictionaryManager.updateEnabledLanguages(languageSettings);
-    
-    // 更新独立词典设置
-    this.dictionaryManager.updateDictSettings(independentDictSettings);
+    // 保存词典设置到词典管理器
+    this.dictionaryManager.updateEnabledLanguages(dictSettings);
     
     // 如果当前已启用高亮，重新处理页面
     if (this.enabled) {
