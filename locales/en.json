@@ -31,8 +31,8 @@
   },
   "buttons": {
     "toggle": "Toggle Highlighting",
-    "enable": "Enable Highlight",
-    "disable": "Disable Highlight",
+    "enable": "Open",
+    "disable": "Close",
     "retry": "Retry",
     "save": "Save Settings",
     "apply": "Apply Scheme",

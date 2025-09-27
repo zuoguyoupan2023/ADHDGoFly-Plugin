@@ -31,8 +31,8 @@
   },
   "buttons": {
     "toggle": "切换高亮",
-    "enable": "启用高亮",
-    "disable": "禁用高亮",
+    "enable": "开启",
+    "disable": "关闭",
     "retry": "重试",
     "save": "保存设置",
     "apply": "应用方案",
