@@ -58,24 +58,6 @@
         "ru": "俄文词典",
         "es": "西班牙文词典",
         "ja": "日文词典"
-      },
-      "localDict": {
-        "title": "本地词典",
-        "languageType": "语言类型",
-        "wordSpacing": "词汇分隔方式",
-        "noSpace": "无空格分隔（如中文、日文）",
-        "withSpace": "空格分隔（如拉丁语系）",
-        "noun": "名词",
-        "verb": "动词",
-        "adjective": "形容词",
-        "add": "添加",
-        "preview": "词典预览",
-        "save": "保存本地词典",
-        "saved": "已保存:",
-        "addWordsFirst": "请先添加词汇！",
-        "wordExists": "该词汇已存在！",
-        "saveFailed": "保存词典失败！",
-        "saveSuccess": "词典保存成功！"
       }
     },
     "colors": {

@@ -58,24 +58,6 @@
         "ru": "Russian Dictionary",
         "es": "Spanish Dictionary",
         "ja": "Japanese Dictionary"
-      },
-      "localDict": {
-        "title": "Local Dictionary",
-        "languageType": "Language Type",
-        "wordSpacing": "Word Spacing",
-        "noSpace": "No space (like Chinese, Japanese)",
-        "withSpace": "With space (like Latin languages)",
-        "noun": "Noun",
-        "verb": "Verb",
-        "adjective": "Adjective",
-        "add": "Add",
-        "preview": "Dictionary Preview",
-        "save": "Save Local Dictionary",
-        "saved": "Saved:",
-        "addWordsFirst": "Please add words first!",
-        "wordExists": "This word already exists!",
-        "saveFailed": "Failed to save dictionary!",
-        "saveSuccess": "Dictionary saved successfully!"
       }
     },
     "colors": {
