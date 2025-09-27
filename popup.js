@@ -1133,12 +1133,11 @@ class PopupController {
       const localDicts = [];
        for (const [key, value] of Object.entries(result)) {
          if (key.startsWith('localDict_') && key !== 'localDictTemp') {
-           const dictName = key.replace('localDict_', '');
            localDicts.push({
-             key: dictName, // 使用不带前缀的名称作为key
-             name: dictName,
+             key: key,
+             name: key.replace('localDict_', ''),
              data: value,
-             selected: this.dictSettings.localDicts[dictName] || false // 应用已保存的选择状态
+             selected: this.dictSettings.localDicts[key] || false // 应用已保存的选择状态
            });
          }
        }
@@ -1176,8 +1175,9 @@ class PopupController {
     item.className = 'local-dict-item';
     item.dataset.dictKey = dict.key;
     
-    // 计算词汇总数 - 从words对象中统计
-    const totalWords = dict.data.words ? Object.keys(dict.data.words).length : 0;
+    const totalWords = (dict.data.nouns?.length || 0) + 
+                      (dict.data.verbs?.length || 0) + 
+                      (dict.data.adjectives?.length || 0);
     
     const languageMap = {
       'zh': '中文',
@@ -1276,22 +1276,21 @@ class PopupController {
   // 重命名本地词典
   async renameLocalDict(oldKey, newName) {
     try {
-      const oldStorageKey = `localDict_${oldKey}`;
       const result = await new Promise((resolve) => {
-        chrome.storage.local.get([oldStorageKey], resolve);
+        chrome.storage.local.get([oldKey], resolve);
       });
       
-      if (result[oldStorageKey]) {
-        const newStorageKey = `localDict_${newName}`;
+      if (result[oldKey]) {
+        const newKey = `localDict_${newName}`;
         
         // 保存新键值
         await new Promise((resolve) => {
-          chrome.storage.local.set({ [newStorageKey]: result[oldStorageKey] }, resolve);
+          chrome.storage.local.set({ [newKey]: result[oldKey] }, resolve);
         });
         
         // 删除旧键值
         await new Promise((resolve) => {
-          chrome.storage.local.remove([oldStorageKey], resolve);
+          chrome.storage.local.remove([oldKey], resolve);
         });
         
         // 重新加载列表
@@ -1309,9 +1308,8 @@ class PopupController {
     }
     
     try {
-      const storageKey = `localDict_${dictKey}`;
       await new Promise((resolve) => {
-        chrome.storage.local.remove([storageKey], resolve);
+        chrome.storage.local.remove([dictKey], resolve);
       });
       
       // 重新加载列表

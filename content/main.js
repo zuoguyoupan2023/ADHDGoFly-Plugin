@@ -199,7 +199,7 @@ class ADHDHighlighter {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
-        await this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
+        this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
       }
     } catch (error) {
       console.error('加载词典设置失败:', error);
@@ -531,7 +531,7 @@ class ADHDHighlighter {
     console.log('更新词典设置:', dictSettings);
     
     // 保存词典设置到词典管理器
-    await this.dictionaryManager.updateEnabledLanguages(dictSettings);
+    this.dictionaryManager.updateEnabledLanguages(dictSettings);
     
     // 如果当前已启用高亮，重新处理页面
     if (this.enabled) {
