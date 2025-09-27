@@ -1254,6 +1254,285 @@
       background: #fff5f5;
     }
     
+    /* 笔记页面样式 */
+    .note-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .create-dict-section {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      background: #fafafa;
+    }
+    
+    .create-dict-section h4 {
+      margin: 0 0 15px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .form-group select,
+    .form-group input[type="text"],
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    
+    .word-input-section {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    
+    .word-input-section .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    
+    .word-input-section .form-group:last-child {
+      flex: 0 0 auto;
+    }
+    
+    .add-word-btn {
+      padding: 8px 12px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .add-word-btn:hover {
+      background: #0056b3;
+    }
+    
+    .word-list {
+      max-height: 100px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 8px;
+      background: white;
+      margin-top: 5px;
+    }
+    
+    .word-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 11px;
+    }
+    
+    .word-item:last-child {
+      border-bottom: none;
+    }
+    
+    .word-info {
+      flex: 1;
+    }
+    
+    .word-text {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .word-pos {
+      color: #666;
+      margin-left: 8px;
+    }
+    
+    .remove-word-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    
+    .remove-word-btn:hover {
+      background: #c82333;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .save-btn {
+      flex: 1;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .save-btn:hover {
+      background: #218838;
+    }
+    
+    .clear-btn {
+      flex: 1;
+      padding: 10px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .clear-btn:hover {
+      background: #5a6268;
+    }
+    
+    .saved-dicts-section {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      background: #fafafa;
+    }
+    
+    .saved-dicts-section h4 {
+      margin: 0 0 15px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .saved-dict-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .dict-item {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 12px;
+      transition: box-shadow 0.2s;
+    }
+    
+    .dict-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .dict-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .dict-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .dict-language {
+      font-size: 11px;
+      color: #666;
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    
+    .dict-info {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    
+    .dict-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .dict-action-btn {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 3px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .edit-btn {
+      background: #007AFF;
+      color: white;
+    }
+    
+    .edit-btn:hover {
+      background: #0056b3;
+    }
+    
+    .export-btn {
+      background: #28a745;
+      color: white;
+    }
+    
+    .export-btn:hover {
+      background: #218838;
+    }
+    
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    
+    .empty-state {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      padding: 20px;
+      font-style: italic;
+    }
+    
     /* 响应式调整 */
     @media (max-height: 450px) {
       body {
@@ -1642,6 +1921,79 @@
       </div>
     </div>
 
+    <!-- 笔记页面 -->
+    <div class="page" id="note-page">
+      <div class="header">
+        <h3 data-i18n="pages.note.title">笔记词典</h3>
+      </div>
+      
+      <div class="note-content">
+        <!-- 创建新词典区域 -->
+        <div class="create-dict-section">
+          <h4 data-i18n="pages.note.create.title">创建新词典</h4>
+          
+          <div class="form-group">
+            <label data-i18n="pages.note.create.language">语言:</label>
+            <select id="dict-language">
+              <option value="en">English (EN)</option>
+              <option value="zh">中文 (ZH)</option>
+              <option value="fr">Français (FR)</option>
+              <option value="ru">Русский (RU)</option>
+              <option value="es">Español (ES)</option>
+              <option value="ja">日本語 (JA)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label data-i18n="pages.note.create.name">词典名称:</label>
+            <input type="text" id="dict-name" placeholder="留空自动生成">
+          </div>
+          
+          <div class="form-group">
+            <label data-i18n="pages.note.create.words">添加词汇:</label>
+            <div class="word-input-section">
+              <div class="single-word-input">
+                <input type="text" id="single-word" placeholder="单个词汇">
+                <select id="word-pos">
+                  <option value="n">名词 (n)</option>
+                  <option value="v">动词 (v)</option>
+                  <option value="a">形容词 (a)</option>
+                </select>
+                <button id="add-single-word" class="add-btn">添加</button>
+              </div>
+              
+              <div class="batch-word-input">
+                <textarea id="batch-words" placeholder="批量添加词汇（用空格、逗号、句号或换行分隔）\n例如：apple banana, orange. grape\ncat dog"></textarea>
+                <select id="batch-pos">
+                  <option value="n">名词 (n)</option>
+                  <option value="v">动词 (v)</option>
+                  <option value="a">形容词 (a)</option>
+                </select>
+                <button id="add-batch-words" class="add-btn">批量添加</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 当前词汇列表 -->
+          <div class="current-words">
+            <h5 data-i18n="pages.note.create.currentWords">当前词汇:</h5>
+            <div id="word-list" class="word-list"></div>
+          </div>
+          
+          <div class="form-actions">
+            <button id="save-dict" class="save-btn" data-i18n="pages.note.create.save">保存词典</button>
+            <button id="clear-words" class="clear-btn" data-i18n="pages.note.create.clear">清空</button>
+          </div>
+        </div>
+        
+        <!-- 已保存词典列表 -->
+        <div class="saved-dicts-section">
+          <h4 data-i18n="pages.note.saved.title">已保存词典</h4>
+          <div id="saved-dict-list" class="saved-dict-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 关于页面 -->
     <div class="page" id="about-page">
       <div class="header">
@@ -1766,6 +2118,10 @@
       <span>🤖</span>
     </button>
     
+    <button class="sidebar-btn" id="note-btn" title="笔记" data-i18n-title="sidebar.note">
+      <span>📝</span>
+    </button>
+    
     <button class="sidebar-btn" id="about-btn" title="关于" data-i18n-title="sidebar.about">
       <span>ℹ️</span>
     </button>
@@ -1782,6 +2138,8 @@
     </div>
   </div>
   
+  <script src="note-functions.js"></script>
+  <script src="popup.js"></script>
   <script src="settings.js"></script>
 </body>
 </html>

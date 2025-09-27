@@ -48,6 +48,18 @@ class PopupController {
       lineHeight: 1.5,      // 行间距倍数
       paragraphSpacing: 0   // 段间距 px
     };
+    
+    // 用户词典相关
+    this.userDictionaries = [];
+    this.currentWords = [];
+    this.supportedLanguages = [
+      { code: 'zh', name: '中文' },
+      { code: 'en', name: 'English' },
+      { code: 'fr', name: 'Français' },
+      { code: 'ru', name: 'Русский' },
+      { code: 'es', name: 'Español' },
+      { code: 'ja', name: '日本語' }
+    ];
 
     this.init();
   }
@@ -95,10 +107,17 @@ class PopupController {
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
+    // 绑定笔记页面事件
+    this.bindNoteEvents();
+    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
+    this.loadUserDictionaries();
     this.loadTextSettings();
+
+    // 初始化笔记功能
+    this.noteFunctions = new NoteFunctions(this);
 
   }
 
@@ -177,6 +196,12 @@ class PopupController {
         break;
       case 'ai-btn':
         this.showPage('ai');
+        break;
+      case 'note-btn':
+        this.showPage('note');
+        if (this.noteFunctions) {
+          this.noteFunctions.loadUserDictionaries();
+        }
         break;
       case 'about-btn':
         this.showPage('about');
@@ -801,11 +826,34 @@ class PopupController {
 
 
 
-
-
 }
 
-// 全局引用，供HTML onclick使用
+// NoteFunctions类的全局方法代理
+function removeWord(index) {
+  if (window.popupController && window.popupController.noteFunctions) {
+    window.popupController.noteFunctions.removeWord(index);
+  }
+}
+
+function editDictionary(dictId) {
+  if (window.popupController && window.popupController.noteFunctions) {
+    window.popupController.noteFunctions.editDictionary(dictId);
+  }
+}
+
+function exportDictionary(dictId) {
+  if (window.popupController && window.popupController.noteFunctions) {
+    window.popupController.noteFunctions.exportDictionary(dictId);
+  }
+}
+
+function deleteDictionary(dictId) {
+  if (window.popupController && window.popupController.noteFunctions) {
+    window.popupController.noteFunctions.deleteDictionary(dictId);
+  }
+}
+
+// 全局变量
 let popupController;
 
 // 初始化
