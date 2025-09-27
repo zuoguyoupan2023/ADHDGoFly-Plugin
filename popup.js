@@ -4,14 +4,15 @@ class PopupController {
     this.currentStatus = null;
     this.currentPage = 'home';
     this.i18nManager = new I18nManager();
-    this.versionInfo = null; // 缓存版本信息
+    this.versionInfo = null; // 默认词典设置
     this.dictSettings = {
       zh: true,
-      en: true,
+      en: false,
       fr: false,
       ru: false,
       es: false,
-      ja: false
+      ja: false,
+      test: true
     };
     this.colorSchemes = {
       default: {

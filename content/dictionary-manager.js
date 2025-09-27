@@ -6,11 +6,23 @@ class DictionaryManager {
     this.loadPromise = null;
     this.enabledLanguages = {
       zh: true,
-      en: true,
+      en: false,
       fr: false,
       ru: false,
       es: false,
       ja: false
+    };
+    
+    // 独立词典选择设置
+    this.dictSettings = {
+      test: true  // 临时测试词典默认启用
+    };
+    
+    // 临时测试词典
+    this.testDictionary = {
+      water: 'n',
+      walk: 'v', 
+      fast: 'a'
     };
   }
 
@@ -115,11 +127,20 @@ class DictionaryManager {
    * @returns {Object} 词典对象
    */
   getDictionary(language) {
-    // 只返回启用的语言词典
-    if (!this.enabledLanguages[language]) {
-      return {};
+    let resultDictionary = {};
+    
+    // 检查预设语言词典是否启用
+    if (this.enabledLanguages[language]) {
+      const baseDictionary = this.dictionaries[language] || {};
+      resultDictionary = { ...resultDictionary, ...baseDictionary };
     }
-    return this.dictionaries[language] || {};
+    
+    // 检查独立词典设置
+    if (language === 'en' && this.dictSettings.test) {
+      resultDictionary = { ...resultDictionary, ...this.testDictionary };
+    }
+    
+    return resultDictionary;
   }
 
   /**
@@ -178,6 +199,23 @@ class DictionaryManager {
   updateEnabledLanguages(enabledLanguages) {
     console.log('更新启用的语言:', enabledLanguages);
     this.enabledLanguages = { ...this.enabledLanguages, ...enabledLanguages };
+  }
+
+  /**
+   * 更新独立词典设置
+   * @param {Object} dictSettings - 独立词典设置
+   */
+  updateDictSettings(dictSettings) {
+    this.dictSettings = { ...dictSettings };
+    console.log('更新独立词典设置:', this.dictSettings);
+  }
+
+  /**
+   * 获取独立词典设置
+   * @returns {Object} 独立词典设置
+   */
+  getDictSettings() {
+    return { ...this.dictSettings };
   }
 
   /**
