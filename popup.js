@@ -349,7 +349,7 @@ class PopupController {
     
     if (status.error) {
       statusDiv.textContent = status.error;
-      statusDiv.className = 'status disabled';
+      statusDiv.className = 'status-badge disabled';
       toggleBtn.textContent = this.i18nManager.t('buttons.retry');
       toggleBtn.className = 'toggle-btn';
       return;
@@ -359,7 +359,7 @@ class PopupController {
     
     // 更新状态显示
     statusDiv.textContent = enabled ? this.i18nManager.t('status.enabled') : this.i18nManager.t('status.disabled');
-    statusDiv.className = enabled ? 'status enabled' : 'status disabled';
+    statusDiv.className = enabled ? 'status-badge enabled' : 'status-badge disabled';
     
     // 更新按钮
     toggleBtn.textContent = enabled ? this.i18nManager.t('buttons.disable') : this.i18nManager.t('buttons.enable');

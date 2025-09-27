@@ -29,65 +29,68 @@
       flex-direction: column;
     }
     
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
+    /* 应用标题和状态区域 */
+    .app-header {
+      margin-bottom: 16px;
     }
     
-    .header h3 {
+    .app-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .app-title h3 {
       margin: 0;
       color: #333;
       font-size: 18px;
       font-weight: 600;
     }
     
-    .status { 
-      text-align: center; 
-      margin: 15px 0; 
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 13px;
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
       font-weight: 500;
+      white-space: nowrap;
     }
     
-    .status.enabled {
+    .status-badge.enabled {
       background-color: #E8F5E8;
       color: #2D7D32;
       border: 1px solid #C8E6C9;
     }
     
-    .status.disabled {
+    .status-badge.disabled {
       background-color: #FFEBEE;
       color: #C62828;
       border: 1px solid #FFCDD2;
     }
     
-    /* 版本信息样式 */
-    .version-info {
-      background-color: #F5F5F5;
-      border: 1px solid #E0E0E0;
+    /* 紧凑版本信息样式 */
+    .version-compact {
+      background-color: #F8F9FA;
+      border: 1px solid #E9ECEF;
       border-radius: 6px;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 12px;
+      padding: 8px 12px;
+      margin: 12px 0;
+      font-size: 11px;
     }
     
-    .version-current, .version-latest {
+    .version-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
+      align-items: center;
+      gap: 12px;
     }
     
-    .version-latest {
-      margin-bottom: 8px;
-    }
-    
-    .version-label {
+    .version-text {
       color: #666;
-      font-weight: 500;
+      font-size: 11px;
     }
     
-    .version-value {
+    .version-text strong {
       color: #333;
       font-weight: 600;
     }
@@ -190,10 +193,14 @@
       font-style: italic;
     }
     
+    /* 主要操作区域 */
+    .main-actions {
+      margin: 16px 0;
+    }
+    
     .toggle-btn {
       width: 100%; 
-      padding: 14px; 
-      margin: 10px 0; 
+      padding: 12px; 
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -247,6 +254,50 @@
     .legend-noun { background-color: rgba(0, 102, 204, 0.3); }
     .legend-verb { background-color: rgba(204, 0, 0, 0.3); }
     .legend-adj { background-color: rgba(0, 153, 51, 0.3); }
+    
+    /* 紧凑图例样式 */
+    .legend-compact {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .legend-compact h4 {
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .legend-grid .legend-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      background: #F8F9FA;
+      border-radius: 4px;
+      border: 1px solid #E9ECEF;
+      margin: 0;
+    }
+    
+    .legend-grid .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      margin-right: 6px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .legend-grid .legend-item span {
+      font-size: 10px;
+      font-weight: 500;
+      color: #555;
+    }
     
     /* 右侧侧边栏 */
     .sidebar {
@@ -1276,21 +1327,25 @@
   <div class="main-content">
     <!-- 主页面 -->
     <div class="page active" id="home-page">
-      <div class="header">
-        <h3 data-i18n="appName">ADHDGoFly</h3>
+      <!-- 应用标题和状态 -->
+      <div class="app-header">
+        <div class="app-title">
+          <h3 data-i18n="appName">ADHDGoFly</h3>
+          <div class="status-badge" id="status">状态检查中...</div>
+        </div>
       </div>
       
-      <div class="status" id="status">状态检查中...</div>
-      
-      <!-- 版本信息区域 -->
-      <div class="version-info" id="versionInfo">
-        <div class="version-current">
-          <span class="version-label" data-i18n="version.current">当前版本:</span>
-          <span class="version-value" id="currentVersion" data-i18n="version.checking">检查中...</span>
-        </div>
-        <div class="version-latest">
-          <span class="version-label" data-i18n="version.latest">最新版本:</span>
-          <span class="version-value" id="latestVersion" data-i18n="version.checking">检查中...</span>
+      <!-- 版本信息（紧凑版） -->
+      <div class="version-compact" id="versionInfo">
+        <div class="version-row">
+          <span class="version-text">
+            <span data-i18n="version.current">当前版本:</span> 
+            <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+          <span class="version-text">
+            <span data-i18n="version.latest">最新版本:</span> 
+            <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
         </div>
         <div class="version-update" id="updateNotice" style="display: none;">
           <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本！</div>
@@ -1312,21 +1367,27 @@
         </div>
       </div>
       
-      <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">切换高亮</button>
+      <!-- 主要操作按钮 -->
+      <div class="main-actions">
+        <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">切换高亮</button>
+      </div>
       
-      <div class="legend">
+      <!-- 词性颜色图例（紧凑版） -->
+      <div class="legend-compact">
         <h4 data-i18n="legend.title">词性颜色</h4>
-        <div class="legend-item">
-          <div class="legend-color legend-noun"></div>
-          <span data-i18n="legend.noun">名词</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color legend-verb"></div>
-          <span data-i18n="legend.verb">动词</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color legend-adj"></div>
-          <span data-i18n="legend.adjective">形容词</span>
+        <div class="legend-grid">
+          <div class="legend-item">
+            <div class="legend-color legend-noun"></div>
+            <span data-i18n="legend.noun">名词</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color legend-verb"></div>
+            <span data-i18n="legend.verb">动词</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color legend-adj"></div>
+            <span data-i18n="legend.adjective">形容词</span>
+          </div>
         </div>
       </div>
     </div>
