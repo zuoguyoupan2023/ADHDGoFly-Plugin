@@ -419,6 +419,202 @@
       border-top: 1px solid #e0e0e0;
     }
     
+    /* 本地词典样式 */
+    .local-dict-section {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: #f8f9fa;
+    }
+    
+    .local-dict-header {
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .local-dict-header h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .local-dict-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .local-dict-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .local-dict-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .local-dict-input {
+      padding: 8px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      background: white;
+      font-size: 13px;
+      color: #333;
+      transition: all 0.2s ease;
+    }
+    
+    .local-dict-input:focus {
+      outline: none;
+      border-color: #007AFF;
+      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+    }
+    
+    .local-dict-input::placeholder {
+       color: #999;
+       font-size: 12px;
+     }
+     
+     /* 输入框与按钮组合 */
+     .input-with-button {
+       display: flex;
+       gap: 8px;
+       align-items: center;
+     }
+     
+     .input-with-button .local-dict-input {
+       flex: 1;
+     }
+     
+     .add-word-btn {
+       padding: 8px 12px;
+       border: 1px solid #007AFF;
+       border-radius: 4px;
+       background: white;
+       color: #007AFF;
+       font-size: 12px;
+       font-weight: 500;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       white-space: nowrap;
+     }
+     
+     .add-word-btn:hover {
+       background: #007AFF;
+       color: white;
+       transform: translateY(-1px);
+     }
+     
+     /* 词典预览区域 */
+     .dict-preview-section {
+       margin-top: 20px;
+       padding: 15px;
+       border: 1px solid #d0d0d0;
+       border-radius: 6px;
+       background: white;
+     }
+     
+     .preview-title {
+       margin: 0 0 12px 0;
+       font-size: 13px;
+       font-weight: 600;
+       color: #333;
+       border-bottom: 1px solid #e0e0e0;
+       padding-bottom: 6px;
+     }
+     
+     .preview-content {
+       display: flex;
+       flex-direction: column;
+       gap: 10px;
+     }
+     
+     .preview-category {
+       display: flex;
+       align-items: flex-start;
+       gap: 8px;
+       min-height: 24px;
+     }
+     
+     .category-label {
+       font-size: 12px;
+       font-weight: 500;
+       color: #555;
+       min-width: 50px;
+       margin-top: 2px;
+     }
+     
+     .word-list {
+       flex: 1;
+       display: flex;
+       flex-wrap: wrap;
+       gap: 6px;
+       min-height: 20px;
+     }
+     
+     .word-tag {
+       padding: 3px 8px;
+       border-radius: 12px;
+       font-size: 11px;
+       font-weight: 500;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       position: relative;
+     }
+     
+     .word-tag.noun {
+       background: rgba(0, 102, 204, 0.15);
+       color: #0066cc;
+       border: 1px solid rgba(0, 102, 204, 0.3);
+     }
+     
+     .word-tag.verb {
+       background: rgba(204, 0, 0, 0.15);
+       color: #cc0000;
+       border: 1px solid rgba(204, 0, 0, 0.3);
+     }
+     
+     .word-tag.adj {
+       background: rgba(0, 153, 51, 0.15);
+       color: #009933;
+       border: 1px solid rgba(0, 153, 51, 0.3);
+     }
+     
+     .word-tag:hover {
+       transform: translateY(-1px);
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+     }
+     
+     /* 本地词典操作按钮 */
+     .local-dict-actions {
+       margin-top: 15px;
+       padding-top: 15px;
+       border-top: 1px solid #e0e0e0;
+     }
+     
+     .save-local-dict-btn {
+       width: 100%;
+       padding: 12px;
+       border: none;
+       border-radius: 6px;
+       background-color: #007AFF;
+       color: white;
+       font-size: 14px;
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.2s ease;
+     }
+     
+     .save-local-dict-btn:hover {
+       background-color: #0056CC;
+       transform: translateY(-1px);
+     }
+    
     .save-btn {
       width: 100%;
       padding: 12px;
@@ -1407,6 +1603,60 @@
                 <span class="dict-desc" data-i18n="pages.dict.languages.ja">日文词典</span>
               </div>
             </label>
+          </div>
+        </div>
+        
+        <!-- 本地词典测试功能 -->
+        <div class="local-dict-section">
+          <div class="local-dict-header">
+            <h4>本地词典</h4>
+          </div>
+          <div class="local-dict-content">
+            <div class="local-dict-input-group">
+              <label class="local-dict-label">名词</label>
+              <div class="input-with-button">
+                <input type="text" class="local-dict-input" id="local-dict-noun" placeholder="输入名词...">
+                <button class="add-word-btn" id="add-noun-btn">添加</button>
+              </div>
+            </div>
+            <div class="local-dict-input-group">
+              <label class="local-dict-label">动词</label>
+              <div class="input-with-button">
+                <input type="text" class="local-dict-input" id="local-dict-verb" placeholder="输入动词...">
+                <button class="add-word-btn" id="add-verb-btn">添加</button>
+              </div>
+            </div>
+            <div class="local-dict-input-group">
+              <label class="local-dict-label">形容词</label>
+              <div class="input-with-button">
+                <input type="text" class="local-dict-input" id="local-dict-adj" placeholder="输入形容词...">
+                <button class="add-word-btn" id="add-adj-btn">添加</button>
+              </div>
+            </div>
+            
+            <!-- 词典预览区域 -->
+            <div class="dict-preview-section">
+              <h5 class="preview-title">词典预览</h5>
+              <div class="preview-content">
+                <div class="preview-category">
+                  <span class="category-label">名词：</span>
+                  <div class="word-list" id="noun-preview"></div>
+                </div>
+                <div class="preview-category">
+                  <span class="category-label">动词：</span>
+                  <div class="word-list" id="verb-preview"></div>
+                </div>
+                <div class="preview-category">
+                  <span class="category-label">形容词：</span>
+                  <div class="word-list" id="adj-preview"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 保存词典按钮 -->
+            <div class="local-dict-actions">
+              <button class="save-local-dict-btn" id="save-local-dict-btn">保存本地词典</button>
+            </div>
           </div>
         </div>
         
