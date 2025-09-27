@@ -69,7 +69,12 @@ class TextSegmenter {
         
         if (pos) {
           const normalizedPos = this.normalizePartOfSpeech(pos);
-          html += `<span class="adhd-${normalizedPos}" data-word="${word}" data-pos="${pos}">${word}</span>`;
+          // 只对支持的词性（n、v、a）进行高亮，其他词性不处理
+          if (normalizedPos) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${word}" data-pos="${pos}">${word}</span>`;
+          } else {
+            html += word;
+          }
           i += len - 1; // 跳过已匹配的字符
           matched = true;
           break;
@@ -105,7 +110,12 @@ class TextSegmenter {
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
-        html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+        // 只对支持的词性（n、v、a）进行高亮，其他词性不处理
+        if (normalizedPos) {
+          html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+        } else {
+          html += token;
+        }
       } else {
         html += token;
       }
@@ -127,10 +137,11 @@ class TextSegmenter {
   /**
    * 标准化词性标记
    * @param {string} pos 原始词性标记
-   * @returns {string} 标准化后的词性
+   * @returns {string|null} 标准化后的词性，如果不是支持的词性则返回null
    */
   normalizePartOfSpeech(pos) {
     // 词性映射表 - 映射到CSS类名
+    // 当前只支持名词(n)、动词(v)、形容词(a)三种词性的高亮
     const posMap = {
       // 名词 -> 'n'
       'n': 'n',
@@ -157,10 +168,20 @@ class TextSegmenter {
       'jj': 'a',
       'jjr': 'a',
       'jjs': 'a'
+      
+      // 未来扩展词性支持时，可以在此添加更多词性映射
+      // 例如：
+      // 'adv': 'adv',     // 副词
+      // 'prep': 'prep',   // 介词
+      // 'conj': 'conj',   // 连词
+      // 'pron': 'pron',   // 代词
+      // 'num': 'num',     // 数词
+      // 'int': 'int'      // 感叹词
     };
     
     const normalized = posMap[pos.toLowerCase()];
-    return normalized || 'other';
+    // 只返回支持的词性，不支持的词性返回null（不进行高亮）
+    return normalized || null;
   }
 
   /**
@@ -169,14 +190,23 @@ class TextSegmenter {
    * @returns {string} 词性显示名称
    */
   getPartOfSpeechName(pos) {
+    // 当前只支持名词、动词、形容词三种词性
     const names = {
       'n': '名词',
       'v': '动词',
-      'a': '形容词',
-      'other': '其他'
+      'a': '形容词'
+      
+      // 未来扩展词性支持时，可以在此添加更多词性名称
+      // 例如：
+      // 'adv': '副词',
+      // 'prep': '介词',
+      // 'conj': '连词',
+      // 'pron': '代词',
+      // 'num': '数词',
+      // 'int': '感叹词'
     };
     
-    return names[pos] || '其他';
+    return names[pos] || '未知词性';
   }
 
   /**
