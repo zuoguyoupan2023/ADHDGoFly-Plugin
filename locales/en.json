@@ -91,16 +91,11 @@
     },
     "ai": {
       "title": "Smart Analysis",
-      "description": "Smart analysis and recommendations based on current page content",
+      "description": "Highlight analysis  based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
-        "posDistribution": "Part of Speech Distribution",
-        "highlight": {
-          "title": "Highlight Statistics",
-          "total": "Total Highlighted Words",
-          "nodes": "Processed Nodes"
-        }
+        "posDistribution": "Part of Speech Distribution"
       },
 
       "refresh": "🔄 Refresh Analysis",

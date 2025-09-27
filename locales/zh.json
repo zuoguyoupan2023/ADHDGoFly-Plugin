@@ -91,16 +91,11 @@
     },
     "ai": {
       "title": "智能分析",
-      "description": "基于当前页面内容的智能分析和推荐",
+      "description": "基于当前页面高亮内容的数据分析",
       "stats": {
         "title": "📊 页面统计",
         "language": "语言分布",
-        "posDistribution": "词性分布",
-        "highlight": {
-          "title": "高亮统计",
-          "total": "总高亮词汇",
-          "nodes": "处理节点"
-        }
+        "posDistribution": "词性分布"
       },
 
       "refresh": "🔄 刷新分析",

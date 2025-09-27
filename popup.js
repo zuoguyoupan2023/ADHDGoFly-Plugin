@@ -696,7 +696,13 @@ class PopupController {
     
     document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
-    document.getElementById('highlightStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    
+    // 高亮统计UI已隐藏，检查元素是否存在再操作
+    const highlightStatsElement = document.getElementById('highlightStats');
+    if (highlightStatsElement) {
+      highlightStatsElement.innerHTML = `<div class="loading">${loadingText}</div>`;
+    }
+    
     // document.getElementById('colorRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
     // document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
   }
@@ -778,7 +784,13 @@ class PopupController {
   }
 
   displayHighlightStats(highlights) {
+    // 高亮统计UI已隐藏，但保留逻辑代码以避免调用错误
     const container = document.getElementById('highlightStats');
+    if (!container) {
+      // UI元素不存在时静默返回，不报错
+      return;
+    }
+    
     if (Object.keys(highlights).length === 0) {
       container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
       return;
@@ -799,7 +811,13 @@ class PopupController {
     
     document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
-    document.getElementById('highlightStats').innerHTML = `<div class="error">${errorText}</div>`;
+    
+    // 高亮统计UI已隐藏，检查元素是否存在再操作
+    const highlightStatsElement = document.getElementById('highlightStats');
+    if (highlightStatsElement) {
+      highlightStatsElement.innerHTML = `<div class="error">${errorText}</div>`;
+    }
+    
     // document.getElementById('colorRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
     // document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
   }
