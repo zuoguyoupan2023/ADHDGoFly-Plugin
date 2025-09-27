@@ -52,7 +52,9 @@ class PopupController {
     this.localDict = {
       nouns: [],
       verbs: [],
-      adjectives: []
+      adjectives: [],
+      language: 'zh',
+      wordSpacing: 'no-space'
     };
     this.savedDictName = null;
 
@@ -763,6 +765,25 @@ class PopupController {
   
   // 本地词典相关方法
   bindLocalDictEvents() {
+    // 语言选择事件
+    const languageSelect = document.getElementById('dict-language');
+    if (languageSelect) {
+      languageSelect.addEventListener('change', (e) => {
+        this.handleLanguageChange(e.target.value);
+      });
+    }
+    
+    // 词汇分隔方式选择事件
+    const spacingRadios = document.querySelectorAll('input[name="word-spacing"]');
+    spacingRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.localDict.wordSpacing = e.target.value;
+          this.saveLocalDictToStorage();
+        }
+      });
+    });
+    
     // 添加词汇按钮事件
     const addNounBtn = document.getElementById('add-noun-btn');
     const addVerbBtn = document.getElementById('add-verb-btn');
@@ -804,6 +825,51 @@ class PopupController {
         if (e.key === 'Enter') this.addWord('adj');
       });
     }
+  }
+  
+  handleLanguageChange(language) {
+    this.localDict.language = language;
+    
+    // 显示或隐藏其他语言选项
+    const otherOptions = document.getElementById('other-language-options');
+    if (otherOptions) {
+      if (language === 'other') {
+        otherOptions.style.display = 'block';
+      } else {
+        otherOptions.style.display = 'none';
+        // 根据预设语言设置默认分词方式
+        this.setDefaultWordSpacing(language);
+      }
+    }
+    
+    this.saveLocalDictToStorage();
+  }
+  
+  setDefaultWordSpacing(language) {
+    // 根据语言类型设置默认的词汇分隔方式
+    let defaultSpacing;
+    switch(language) {
+      case 'zh':
+      case 'ja':
+        defaultSpacing = 'no-space';
+        break;
+      case 'en':
+      case 'fr':
+      case 'ru':
+      case 'es':
+        defaultSpacing = 'space';
+        break;
+      default:
+        defaultSpacing = 'no-space';
+    }
+    
+    this.localDict.wordSpacing = defaultSpacing;
+    
+    // 更新单选按钮状态
+    const spacingRadios = document.querySelectorAll('input[name="word-spacing"]');
+    spacingRadios.forEach(radio => {
+      radio.checked = radio.value === defaultSpacing;
+    });
   }
   
   addWord(type) {
@@ -931,6 +997,8 @@ class PopupController {
       name: dictName,
       version: '1.0.0',
       lastUpdated: now.toISOString(),
+      language: this.localDict.language,
+      wordSpacing: this.localDict.wordSpacing,
       words: {}
     };
     
@@ -963,8 +1031,13 @@ class PopupController {
       this.localDict = {
         nouns: [],
         verbs: [],
-        adjectives: []
+        adjectives: [],
+        language: 'zh',
+        wordSpacing: 'no-space'
       };
+      
+      // 重置UI状态
+      this.resetLanguageUI();
       this.updatePreview();
       this.updateSaveButtonState();
       this.saveLocalDictToStorage();
@@ -999,6 +1072,26 @@ class PopupController {
     });
   }
   
+  resetLanguageUI() {
+    // 重置语言选择
+    const languageSelect = document.getElementById('dict-language');
+    if (languageSelect) {
+      languageSelect.value = this.localDict.language;
+    }
+    
+    // 重置其他语言选项显示状态
+    const otherOptions = document.getElementById('other-language-options');
+    if (otherOptions) {
+      otherOptions.style.display = this.localDict.language === 'other' ? 'block' : 'none';
+    }
+    
+    // 重置单选按钮状态
+    const spacingRadios = document.querySelectorAll('input[name="word-spacing"]');
+    spacingRadios.forEach(radio => {
+      radio.checked = radio.value === this.localDict.wordSpacing;
+    });
+  }
+  
   async loadLocalDictSettings() {
     try {
       const result = await new Promise((resolve) => {
@@ -1006,9 +1099,16 @@ class PopupController {
       });
       
       if (result.localDictTemp) {
-        this.localDict = result.localDictTemp;
+        this.localDict = {
+          nouns: result.localDictTemp.nouns || [],
+          verbs: result.localDictTemp.verbs || [],
+          adjectives: result.localDictTemp.adjectives || [],
+          language: result.localDictTemp.language || 'zh',
+          wordSpacing: result.localDictTemp.wordSpacing || 'no-space'
+        };
       }
       
+      this.resetLanguageUI();
       this.updatePreview();
       this.updateSaveButtonState();
       this.showSavedDictName();

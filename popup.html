@@ -623,16 +623,69 @@
      }
      
      .saved-dict-name {
-       margin-top: 10px;
-       padding: 8px 12px;
-       background: #e8f5e8;
-       color: #2d5a2d;
-       border: 1px solid #c3e6c3;
-       border-radius: 4px;
-       font-size: 13px;
-       text-align: center;
-       display: none;
-     }
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: #e8f5e8;
+        color: #2d5a2d;
+        border: 1px solid #c3e6c3;
+        border-radius: 4px;
+        font-size: 13px;
+        text-align: center;
+        display: none;
+      }
+      
+      /* 语言选择样式 */
+      .language-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        background-color: white;
+        cursor: pointer;
+      }
+      
+      .language-select:focus {
+        outline: none;
+        border-color: #007AFF;
+        box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+      }
+      
+      /* 其他语言选项样式 */
+      .other-language-options {
+        margin-top: 10px;
+        padding: 12px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+      }
+      
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .radio-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 13px;
+        color: #333;
+      }
+      
+      .radio-label input[type="radio"] {
+        margin-right: 8px;
+        cursor: pointer;
+      }
+      
+      .radio-label span {
+        user-select: none;
+      }
+      
+      .radio-label:hover {
+        color: #007AFF;
+      }
     
     .save-btn {
       width: 100%;
@@ -1631,6 +1684,37 @@
             <h4>本地词典</h4>
           </div>
           <div class="local-dict-content">
+            <!-- 语言类型选择 -->
+            <div class="local-dict-input-group">
+              <label class="local-dict-label">语言类型</label>
+              <select id="dict-language" class="language-select">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="ru">Русский</option>
+                <option value="es">Español</option>
+                <option value="ja">日本語</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            
+            <!-- 其他语言选项 -->
+            <div class="other-language-options" id="other-language-options" style="display: none;">
+              <div class="local-dict-input-group">
+                <label class="local-dict-label">词汇分隔方式</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="word-spacing" value="no-space" checked>
+                    <span>无空格分隔（如中文、日文）</span>
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="word-spacing" value="space">
+                    <span>空格分隔（如拉丁语系）</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
             <div class="local-dict-input-group">
               <label class="local-dict-label">名词</label>
               <div class="input-with-button">
