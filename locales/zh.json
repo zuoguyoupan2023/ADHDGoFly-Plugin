@@ -89,26 +89,24 @@
       "apply": "应用设置",
       "reset": "重置默认"
     },
-    "pages": {
-      "ai": {
-        "title": "智能分析",
-        "description": "基于当前页面内容的智能分析和推荐",
-        "stats": {
-          "title": "📊 页面统计",
-          "language": "语言分布",
-          "posDistribution": "词性分布",
-          "highlight": "高亮统计"
-        },
-        "recommendations": {
-          "title": "🔍 智能推荐",
-          "colors": "推荐颜色方案",
-          "textStyle": "推荐文本样式"
-        },
-        "refresh": "🔄 刷新分析",
-        "analyzing": "分析中...",
-        "noData": "暂无数据",
-        "error": "分析失败，请重试"
-      }
+    "ai": {
+      "title": "智能分析",
+      "description": "基于当前页面内容的智能分析和推荐",
+      "stats": {
+        "title": "📊 页面统计",
+        "language": "语言分布",
+        "posDistribution": "词性分布",
+        "highlight": "高亮统计"
+      },
+      "recommendations": {
+        "title": "🔍 智能推荐",
+        "colors": "推荐颜色方案",
+        "textStyle": "推荐文本样式"
+      },
+      "refresh": "🔄 刷新分析",
+      "analyzing": "分析中...",
+      "noData": "暂无数据",
+      "error": "分析失败，请重试"
     },
     "about": {
       "title": "关于",
