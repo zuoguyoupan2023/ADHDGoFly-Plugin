@@ -43,18 +43,26 @@
   background-color: rgba(0, 153, 51, 0.2) !important;
 }
 
-/* 其他词性样式 */
-.adhd-other {
-  color: #666666 !important;
-  background-color: rgba(102, 102, 102, 0.1) !important;
-  border-radius: 2px !important;
-  padding: 1px 2px !important;
-  margin: 0 1px !important;
+/* 其他词性样式已移除 - 当前只支持名词、动词、形容词三种词性的高亮 */
+/* 未来扩展其他词性支持时，可以在此添加样式，例如：
+.adhd-adv {
+  color: #ff6b6b;
+  background-color: rgba(255, 107, 107, 0.1);
 }
 
-.adhd-other:hover {
-  background-color: rgba(102, 102, 102, 0.2) !important;
+.adhd-adv:hover {
+  background-color: rgba(255, 107, 107, 0.2);
 }
+
+.adhd-prep {
+  color: #4ecdc4;
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+.adhd-prep:hover {
+  background-color: rgba(78, 205, 196, 0.2);
+}
+*/
 
 /* 确保不影响页面布局 */
 .adhd-processed {

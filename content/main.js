@@ -352,8 +352,8 @@ class ADHDHighlighter {
     const fontSizeMultiplier = fontSize / 100;
     
     style.textContent = `
-      /* ADHD文本样式设置 - 只应用到高亮词汇 */
-      .adhd-n, .adhd-v, .adhd-a, .adhd-other {
+      /* ADHD文本样式设置 - 只应用到名词、动词、形容词 */
+      .adhd-n, .adhd-v, .adhd-a {
         font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
@@ -363,8 +363,7 @@ class ADHDHighlighter {
       /* 确保span元素也应用样式 */
       .adhd-processed span.adhd-n,
       .adhd-processed span.adhd-v,
-      .adhd-processed span.adhd-a,
-      .adhd-processed span.adhd-other {
+      .adhd-processed span.adhd-a {
         font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
