@@ -102,13 +102,10 @@
           "nodes": "处理节点"
         }
       },
-      "recommendations": {
-        "title": "🔍 智能推荐",
-        "colors": "推荐颜色方案",
-        "textStyle": "推荐文本样式"
-      },
+
       "refresh": "🔄 刷新分析",
       "analyzing": "分析中...",
+
       "noData": "暂无数据",
       "error": "分析失败，请重试"
     },

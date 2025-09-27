@@ -127,6 +127,12 @@ class PopupController {
       if (this.versionInfo) {
         this.updateVersionUI();
       }
+      
+      // 如果当前显示的是AI分析页面，重新加载数据以应用新语言
+      const currentPage = document.querySelector('.page.active');
+      if (currentPage && currentPage.id === 'aiPage') {
+        this.loadAIAnalysis();
+      }
     });
   }
   
@@ -786,43 +792,7 @@ class PopupController {
     container.innerHTML = html;
   }
 
-  displayRecommendations(recommendations) {
-    // 显示颜色推荐
-    const colorContainer = document.getElementById('colorRecommendation');
-    if (recommendations.colors) {
-      let html = '<div class="recommendation-list">';
-      recommendations.colors.forEach(rec => {
-        html += `
-          <div class="recommendation-item">
-            <span class="rec-name">${rec.name}</span>
-            <span class="rec-reason">${rec.reason}</span>
-          </div>
-        `;
-      });
-      html += '</div>';
-      colorContainer.innerHTML = html;
-    } else {
-      colorContainer.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
-    }
-    
-    // 显示文本样式推荐
-    const textContainer = document.getElementById('textRecommendation');
-    if (recommendations.textStyle) {
-      let html = '<div class="recommendation-list">';
-      recommendations.textStyle.forEach(rec => {
-        html += `
-          <div class="recommendation-item">
-            <span class="rec-name">${rec.name}</span>
-            <span class="rec-reason">${rec.reason}</span>
-          </div>
-        `;
-      });
-      html += '</div>';
-      textContainer.innerHTML = html;
-    } else {
-      textContainer.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
-    }
-  }
+  // displayRecommendations方法已删除 - 推荐功能已禁用
 
   showAIError() {
     const errorText = this.i18nManager.t('pages.ai.error');

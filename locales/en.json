@@ -102,13 +102,10 @@
           "nodes": "Processed Nodes"
         }
       },
-      "recommendations": {
-        "title": "🔍 Smart Recommendations",
-        "colors": "Recommended Color Scheme",
-        "textStyle": "Recommended Text Style"
-      },
+
       "refresh": "🔄 Refresh Analysis",
       "analyzing": "Analyzing...",
+
       "noData": "No data available",
       "error": "Analysis failed, please try again"
     },
