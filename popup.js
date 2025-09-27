@@ -252,6 +252,41 @@ class PopupController {
         checkbox.checked = this.dictSettings[langCode];
       }
     });
+    
+    // 更新首页词典标签显示
+    this.updateDictTags();
+  }
+  
+  updateDictTags() {
+    const dictTagsContainer = document.getElementById('dictTags');
+    if (!dictTagsContainer) return;
+    
+    // 清空现有标签
+    dictTagsContainer.innerHTML = '';
+    
+    // 词典名称映射
+    const dictNames = {
+      zh: this.i18nManager.t('pages.dict.languages.zh'),
+      en: this.i18nManager.t('pages.dict.languages.en'),
+      fr: this.i18nManager.t('pages.dict.languages.fr'),
+      ru: this.i18nManager.t('pages.dict.languages.ru'),
+      es: this.i18nManager.t('pages.dict.languages.es'),
+      ja: this.i18nManager.t('pages.dict.languages.ja')
+    };
+    
+    // 只处理已知的词典语言代码
+    const validLangCodes = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
+    
+    // 根据词典界面的实际复选框状态添加标签
+    validLangCodes.forEach(langCode => {
+      const checkbox = document.getElementById(`dict-${langCode}`);
+      if (checkbox && checkbox.checked && dictNames[langCode]) {
+        const tag = document.createElement('div');
+        tag.className = 'dict-tag';
+        tag.textContent = dictNames[langCode];
+        dictTagsContainer.appendChild(tag);
+      }
+    });
   }
 
   async saveDictSettings() {
@@ -283,6 +318,9 @@ class PopupController {
       }, 1500);
       
       console.log('词典设置已保存:', this.dictSettings);
+      
+      // 更新首页词典标签显示
+      this.updateDictTags();
       
     } catch (error) {
       console.error('保存词典设置失败:', error);

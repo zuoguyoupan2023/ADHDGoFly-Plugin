@@ -295,6 +295,36 @@
       color: #555;
     }
     
+    .dict-summary {
+      margin-top: 12px;
+      padding: 8px 0;
+    }
+    
+    .dict-summary h4 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .dict-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .dict-tag {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 500;
+      color: #555;
+      white-space: nowrap;
+    }
+    
     /* 右侧侧边栏 */
     .sidebar {
       width: 60px;
@@ -1384,6 +1414,14 @@
             <div class="legend-color legend-adj"></div>
             <span data-i18n="legend.adjective">形容词</span>
           </div>
+        </div>
+      </div>
+      
+      <!-- 词典状态显示 -->
+      <div class="dict-summary">
+        <h4 data-i18n="dict.title">词典</h4>
+        <div class="dict-tags" id="dictTags">
+          <!-- 动态生成已启用的词典标签 -->
         </div>
       </div>
     </div>

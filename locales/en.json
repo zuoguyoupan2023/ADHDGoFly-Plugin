@@ -47,6 +47,9 @@
     "verb": "Verb",
     "adjective": "Adjective"
   },
+  "dict": {
+    "title": "Dictionaries"
+  },
   "pages": {
     "dict": {
       "title": "Dictionary Management",
