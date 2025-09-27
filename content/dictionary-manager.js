@@ -175,9 +175,71 @@ class DictionaryManager {
    * 更新启用的语言列表
    * @param {Object} enabledLanguages 启用的语言设置
    */
-  updateEnabledLanguages(enabledLanguages) {
+  async updateEnabledLanguages(enabledLanguages) {
     console.log('更新启用的语言:', enabledLanguages);
-    this.enabledLanguages = { ...this.enabledLanguages, ...enabledLanguages };
+    
+    // 更新预设语言设置
+    const { localDicts, ...presetLanguages } = enabledLanguages;
+    this.enabledLanguages = { ...this.enabledLanguages, ...presetLanguages };
+    
+    // 处理本地词典
+    if (localDicts) {
+      await this.loadLocalDictionaries(localDicts);
+    }
+  }
+
+  /**
+   * 加载本地词典
+   * @param {Object} localDictSettings 本地词典设置
+   * @private
+   */
+  async loadLocalDictionaries(localDictSettings) {
+    try {
+      console.log('开始加载本地词典:', localDictSettings);
+      
+      // 获取所有启用的本地词典键
+      const enabledLocalDicts = Object.keys(localDictSettings).filter(key => localDictSettings[key]);
+      
+      if (enabledLocalDicts.length === 0) {
+        console.log('没有启用的本地词典');
+        return;
+      }
+      
+      // 构建实际的存储键名（添加localDict_前缀）
+      const storageKeys = enabledLocalDicts.map(key => `localDict_${key}`);
+      
+      // 从Chrome存储中加载本地词典数据
+      const result = await new Promise((resolve) => {
+        chrome.storage.local.get(storageKeys, resolve);
+      });
+      
+      // 处理每个本地词典
+      for (let i = 0; i < enabledLocalDicts.length; i++) {
+        const dictKey = enabledLocalDicts[i];
+        const storageKey = storageKeys[i];
+        const dictData = result[storageKey];
+        
+        if (dictData && dictData.words) {
+          // 将本地词典合并到对应语言的词典中
+          const language = dictData.language || 'zh';
+          
+          if (!this.dictionaries[language]) {
+            this.dictionaries[language] = {};
+          }
+          
+          // 转换本地词典格式并合并
+          const convertedDict = this.convertDictionaryFormat(dictData);
+          this.dictionaries[language] = { ...this.dictionaries[language], ...convertedDict };
+          
+          console.log(`本地词典 ${dictKey} 已加载到 ${language} 词典，词汇数: ${Object.keys(convertedDict).length}`);
+        } else {
+          console.warn(`本地词典 ${dictKey} 数据不存在或格式错误`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('加载本地词典失败:', error);
+    }
   }
 
   /**
