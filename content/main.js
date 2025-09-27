@@ -616,20 +616,20 @@ class ADHDHighlighter {
       
       // 获取高亮统计
       const highlightStats = {
-        totalWords: processingStats.highlightedWords || 0,
+        total: processingStats.highlightedWords || 0,
         processedNodes: processingStats.processedNodes || 0,
         skippedNodes: processingStats.skippedNodes || 0,
         errors: processingStats.errors || 0
       };
       
-      // 生成智能推荐
-      const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
+      // 生成智能推荐 - 暂时禁用
+      // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
       
       return {
         languages: languageStats,
         partOfSpeech: posStats,
         highlights: highlightStats,
-        recommendations: recommendations,
+        // recommendations: recommendations, // 暂时禁用推荐功能
         summary: processingSummary
       };
       

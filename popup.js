@@ -691,8 +691,8 @@ class PopupController {
     document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('highlightStats').innerHTML = `<div class="loading">${loadingText}</div>`;
-    document.getElementById('colorRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`;
-    document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`;
+    // document.getElementById('colorRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
+    // document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
   }
 
   displayAIAnalysis(data) {
@@ -708,7 +708,7 @@ class PopupController {
     this.displayHighlightStats(data.highlights || {});
     
     // 显示推荐
-    this.displayRecommendations(data.recommendations || {});
+    // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
   }
 
   displayLanguageStats(languages) {
@@ -779,8 +779,8 @@ class PopupController {
     }
     
     let html = `<div class="highlight-summary">`;
-    html += `<p>总高亮词汇: <strong>${highlights.total || 0}</strong></p>`;
-    html += `<p>处理节点: <strong>${highlights.processedNodes || 0}</strong></p>`;
+    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.total')}: <strong>${highlights.total || 0}</strong></p>`;
+    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.nodes')}: <strong>${highlights.processedNodes || 0}</strong></p>`;
     html += `</div>`;
     
     container.innerHTML = html;
@@ -830,8 +830,8 @@ class PopupController {
     document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('highlightStats').innerHTML = `<div class="error">${errorText}</div>`;
-    document.getElementById('colorRecommendation').innerHTML = `<div class="error">${errorText}</div>`;
-    document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`;
+    // document.getElementById('colorRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
+    // document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
   }
 
   async refreshAIAnalysis() {

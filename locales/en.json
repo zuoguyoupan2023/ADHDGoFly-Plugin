@@ -96,7 +96,11 @@
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
         "posDistribution": "Part of Speech Distribution",
-        "highlight": "Highlight Statistics"
+        "highlight": {
+          "title": "Highlight Statistics",
+          "total": "Total Highlighted Words",
+          "nodes": "Processed Nodes"
+        }
       },
       "recommendations": {
         "title": "🔍 Smart Recommendations",
