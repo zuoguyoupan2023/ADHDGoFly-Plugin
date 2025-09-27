@@ -47,6 +47,14 @@ class PopupController {
       lineHeight: 1.5,      // 行间距倍数
       paragraphSpacing: 0   // 段间距 px
     };
+    
+    // 本地词典数据
+    this.localDict = {
+      nouns: [],
+      verbs: [],
+      adjectives: []
+    };
+    this.savedDictName = null;
 
     this.init();
   }
@@ -94,10 +102,14 @@ class PopupController {
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
+    // 绑定本地词典事件
+    this.bindLocalDictEvents();
+    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
+    this.loadLocalDictSettings();
 
   }
 
@@ -746,6 +758,262 @@ class PopupController {
       if (updateNotice) {
         updateNotice.style.display = 'block';
       }
+    }
+  }
+  
+  // 本地词典相关方法
+  bindLocalDictEvents() {
+    // 添加词汇按钮事件
+    const addNounBtn = document.getElementById('add-noun-btn');
+    const addVerbBtn = document.getElementById('add-verb-btn');
+    const addAdjBtn = document.getElementById('add-adj-btn');
+    
+    if (addNounBtn) {
+      addNounBtn.addEventListener('click', () => this.addWord('noun'));
+    }
+    if (addVerbBtn) {
+      addVerbBtn.addEventListener('click', () => this.addWord('verb'));
+    }
+    if (addAdjBtn) {
+      addAdjBtn.addEventListener('click', () => this.addWord('adj'));
+    }
+    
+    // 保存词典按钮事件
+    const saveLocalDictBtn = document.getElementById('save-local-dict-btn');
+    if (saveLocalDictBtn) {
+      saveLocalDictBtn.addEventListener('click', () => this.saveLocalDict());
+    }
+    
+    // 输入框回车事件
+    const nounInput = document.getElementById('local-dict-noun');
+    const verbInput = document.getElementById('local-dict-verb');
+    const adjInput = document.getElementById('local-dict-adj');
+    
+    if (nounInput) {
+      nounInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.addWord('noun');
+      });
+    }
+    if (verbInput) {
+      verbInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.addWord('verb');
+      });
+    }
+    if (adjInput) {
+      adjInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.addWord('adj');
+      });
+    }
+  }
+  
+  addWord(type) {
+    let inputId, arrayKey;
+    
+    switch(type) {
+      case 'noun':
+        inputId = 'local-dict-noun';
+        arrayKey = 'nouns';
+        break;
+      case 'verb':
+        inputId = 'local-dict-verb';
+        arrayKey = 'verbs';
+        break;
+      case 'adj':
+        inputId = 'local-dict-adj';
+        arrayKey = 'adjectives';
+        break;
+      default:
+        return;
+    }
+    
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const word = input.value.trim();
+    if (!word) return;
+    
+    // 检查是否已存在
+    if (this.localDict[arrayKey].includes(word)) {
+      alert('该词汇已存在！');
+      return;
+    }
+    
+    // 添加到数组
+    this.localDict[arrayKey].push(word);
+    
+    // 清空输入框
+    input.value = '';
+    
+    // 更新预览区域
+    this.updatePreview();
+    
+    // 更新保存按钮状态
+    this.updateSaveButtonState();
+    
+    // 保存到本地存储
+    this.saveLocalDictToStorage();
+  }
+  
+  updatePreview() {
+    // 更新名词预览
+    const nounPreview = document.getElementById('noun-preview');
+    if (nounPreview) {
+      nounPreview.innerHTML = this.localDict.nouns.map(word => 
+        `<span class="word-tag noun" onclick="popupController.removeWord('nouns', '${word}')">${word}</span>`
+      ).join('');
+    }
+    
+    // 更新动词预览
+    const verbPreview = document.getElementById('verb-preview');
+    if (verbPreview) {
+      verbPreview.innerHTML = this.localDict.verbs.map(word => 
+        `<span class="word-tag verb" onclick="popupController.removeWord('verbs', '${word}')">${word}</span>`
+      ).join('');
+    }
+    
+    // 更新形容词预览
+    const adjPreview = document.getElementById('adj-preview');
+    if (adjPreview) {
+      adjPreview.innerHTML = this.localDict.adjectives.map(word => 
+        `<span class="word-tag adj" onclick="popupController.removeWord('adjectives', '${word}')">${word}</span>`
+      ).join('');
+    }
+  }
+  
+  removeWord(arrayKey, word) {
+    const index = this.localDict[arrayKey].indexOf(word);
+    if (index > -1) {
+      this.localDict[arrayKey].splice(index, 1);
+      this.updatePreview();
+      this.updateSaveButtonState();
+      this.saveLocalDictToStorage();
+    }
+  }
+  
+  updateSaveButtonState() {
+    const saveBtn = document.getElementById('save-local-dict-btn');
+    if (!saveBtn) return;
+    
+    const hasWords = this.localDict.nouns.length > 0 || 
+                    this.localDict.verbs.length > 0 || 
+                    this.localDict.adjectives.length > 0;
+    
+    if (hasWords) {
+      saveBtn.disabled = false;
+      saveBtn.style.opacity = '1';
+      saveBtn.style.cursor = 'pointer';
+    } else {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = '0.5';
+      saveBtn.style.cursor = 'not-allowed';
+    }
+  }
+  
+  saveLocalDict() {
+    const hasWords = this.localDict.nouns.length > 0 || 
+                    this.localDict.verbs.length > 0 || 
+                    this.localDict.adjectives.length > 0;
+    
+    if (!hasWords) {
+      alert('请先添加词汇！');
+      return;
+    }
+    
+    // 生成词典名称
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dictName = `词典-${year}-${month}-${day}`;
+    
+    // 创建词典数据
+    const dictData = {
+      name: dictName,
+      version: '1.0.0',
+      lastUpdated: now.toISOString(),
+      words: {}
+    };
+    
+    // 添加词汇到词典数据
+    this.localDict.nouns.forEach(word => {
+      dictData.words[word] = { pos: ['n'] };
+    });
+    this.localDict.verbs.forEach(word => {
+      dictData.words[word] = { pos: ['v'] };
+    });
+    this.localDict.adjectives.forEach(word => {
+      dictData.words[word] = { pos: ['adj'] };
+    });
+    
+    // 保存到Chrome存储
+    chrome.storage.local.set({
+      [`localDict_${dictName}`]: dictData
+    }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('保存词典失败:', chrome.runtime.lastError);
+        alert('保存词典失败！');
+        return;
+      }
+      
+      this.savedDictName = dictName;
+      this.showSavedDictName();
+      alert('词典保存成功！');
+      
+      // 清空当前词典
+      this.localDict = {
+        nouns: [],
+        verbs: [],
+        adjectives: []
+      };
+      this.updatePreview();
+      this.updateSaveButtonState();
+      this.saveLocalDictToStorage();
+    });
+  }
+  
+  showSavedDictName() {
+    // 在保存按钮下方显示词典名称
+    let nameDisplay = document.getElementById('saved-dict-name');
+    if (!nameDisplay) {
+      nameDisplay = document.createElement('div');
+      nameDisplay.id = 'saved-dict-name';
+      nameDisplay.className = 'saved-dict-name';
+      
+      const saveBtn = document.getElementById('save-local-dict-btn');
+      if (saveBtn && saveBtn.parentNode) {
+        saveBtn.parentNode.appendChild(nameDisplay);
+      }
+    }
+    
+    if (this.savedDictName) {
+      nameDisplay.textContent = `已保存: ${this.savedDictName}`;
+      nameDisplay.style.display = 'block';
+    } else {
+      nameDisplay.style.display = 'none';
+    }
+  }
+  
+  saveLocalDictToStorage() {
+    chrome.storage.local.set({
+      'localDictTemp': this.localDict
+    });
+  }
+  
+  async loadLocalDictSettings() {
+    try {
+      const result = await new Promise((resolve) => {
+        chrome.storage.local.get(['localDictTemp'], resolve);
+      });
+      
+      if (result.localDictTemp) {
+        this.localDict = result.localDictTemp;
+      }
+      
+      this.updatePreview();
+      this.updateSaveButtonState();
+      this.showSavedDictName();
+    } catch (error) {
+      console.error('加载本地词典设置失败:', error);
     }
   }
 
