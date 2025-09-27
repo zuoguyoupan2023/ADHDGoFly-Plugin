@@ -48,24 +48,20 @@
       font-weight: 600;
     }
     
-    .status-badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-      white-space: nowrap;
+    .status {
+      font-size: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: #ccc;
     }
     
-    .status-badge.enabled {
-      background-color: #E8F5E8;
-      color: #2D7D32;
-      border: 1px solid #C8E6C9;
+    .status.enabled {
+      background-color: #4CAF50;
     }
     
-    .status-badge.disabled {
-      background-color: #FFEBEE;
-      color: #C62828;
-      border: 1px solid #FFCDD2;
+    .status.disabled {
+      background-color: #F44336;
     }
     
     /* 紧凑版本信息样式 */
@@ -1331,7 +1327,7 @@
       <div class="app-header">
         <div class="app-title">
           <h3 data-i18n="appName">ADHDGoFly</h3>
-          <div class="status-badge" id="status">状态检查中...</div>
+          <div class="status" id="status">状态检查中...</div>
         </div>
       </div>
       
