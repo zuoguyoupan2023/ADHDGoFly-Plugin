@@ -352,8 +352,8 @@ class ADHDHighlighter {
     const fontSizeMultiplier = fontSize / 100;
     
     style.textContent = `
-      /* ADHD文本样式设置 - 只应用到支持的高亮词汇（名词、动词、形容词） */
-      .adhd-n, .adhd-v, .adhd-a {
+      /* ADHD文本样式设置 - 只应用到高亮词汇 */
+      .adhd-n, .adhd-v, .adhd-a, .adhd-other {
         font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
@@ -363,28 +363,12 @@ class ADHDHighlighter {
       /* 确保span元素也应用样式 */
       .adhd-processed span.adhd-n,
       .adhd-processed span.adhd-v,
-      .adhd-processed span.adhd-a {
+      .adhd-processed span.adhd-a,
+      .adhd-processed span.adhd-other {
         font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
       }
-      
-      /* 
-       * 未来扩展词性支持时，需要在此添加新词性的样式
-       * 例如：
-       * .adhd-adv { // 副词
-       *   font-size: ${fontSizeMultiplier}em !important;
-       *   letter-spacing: ${letterSpacing}px !important;
-       *   line-height: ${lineHeight} !important;
-       *   display: inline !important;
-       * }
-       * 
-       * .adhd-processed span.adhd-adv {
-       *   font-size: ${fontSizeMultiplier}em !important;
-       *   letter-spacing: ${letterSpacing}px !important;
-       *   line-height: ${lineHeight} !important;
-       * }
-       */
       
       /* 高亮词汇容器样式 */
       .adhd-processed {

@@ -43,33 +43,18 @@
   background-color: rgba(0, 153, 51, 0.2) !important;
 }
 
-/* 
- * 未来扩展词性支持时，可以在此添加更多词性样式
- * 例如：
- * .adhd-adv { // 副词样式
- *   color: #ff6600 !important;
- *   background-color: rgba(255, 102, 0, 0.1) !important;
- *   border-radius: 2px !important;
- *   padding: 1px 2px !important;
- *   margin: 0 1px !important;
- * }
- * 
- * .adhd-prep { // 介词样式
- *   color: #9900cc !important;
- *   background-color: rgba(153, 0, 204, 0.1) !important;
- *   border-radius: 2px !important;
- *   padding: 1px 2px !important;
- *   margin: 0 1px !important;
- * }
- * 
- * 同时需要添加对应的悬停效果：
- * .adhd-adv:hover {
- *   background-color: rgba(255, 102, 0, 0.2) !important;
- * }
- * .adhd-prep:hover {
- *   background-color: rgba(153, 0, 204, 0.2) !important;
- * }
- */
+/* 其他词性样式 */
+.adhd-other {
+  color: #666666 !important;
+  background-color: rgba(102, 102, 102, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+.adhd-other:hover {
+  background-color: rgba(102, 102, 102, 0.2) !important;
+}
 
 /* 确保不影响页面布局 */
 .adhd-processed {
