@@ -11,7 +11,8 @@ class PopupController {
       fr: false,
       ru: false,
       es: false,
-      ja: false
+      ja: false,
+      localDicts: {} // 本地词典选择状态
     };
     this.colorSchemes = {
       default: {
@@ -251,6 +252,7 @@ class PopupController {
 
   updateDictUI() {
     Object.keys(this.dictSettings).forEach(langCode => {
+      if (langCode === 'localDicts') return; // 跳过本地词典设置
       const checkbox = document.getElementById(`dict-${langCode}`);
       if (checkbox) {
         checkbox.checked = this.dictSettings[langCode];
@@ -1027,6 +1029,9 @@ class PopupController {
       this.showSavedDictName();
       alert('词典保存成功！');
       
+      // 刷新词典列表
+      this.loadLocalDictList();
+      
       // 清空当前词典
       this.localDict = {
         nouns: [],
@@ -1112,63 +1117,213 @@ class PopupController {
       this.updatePreview();
       this.updateSaveButtonState();
       this.showSavedDictName();
+      this.loadLocalDictList();
     } catch (error) {
       console.error('加载本地词典设置失败:', error);
     }
   }
 
+  // 加载本地词典列表
+  async loadLocalDictList() {
+    try {
+      const result = await new Promise((resolve) => {
+        chrome.storage.local.get(null, resolve);
+      });
+      
+      const localDicts = [];
+       for (const [key, value] of Object.entries(result)) {
+         if (key.startsWith('localDict_') && key !== 'localDictTemp') {
+           localDicts.push({
+             key: key,
+             name: key.replace('localDict_', ''),
+             data: value,
+             selected: this.dictSettings.localDicts[key] || false // 应用已保存的选择状态
+           });
+         }
+       }
+      
+      this.displayLocalDictList(localDicts);
+    } catch (error) {
+      console.error('加载本地词典列表失败:', error);
+    }
+  }
 
+  // 显示本地词典列表
+  displayLocalDictList(localDicts) {
+    const listSection = document.getElementById('local-dict-list-section');
+    const listContainer = document.getElementById('local-dict-list');
+    
+    if (!listContainer) return;
+    
+    if (localDicts.length === 0) {
+      listSection.style.display = 'none';
+      return;
+    }
+    
+    listSection.style.display = 'block';
+    listContainer.innerHTML = '';
+    
+    localDicts.forEach(dict => {
+      const dictItem = this.createLocalDictItem(dict);
+      listContainer.appendChild(dictItem);
+    });
+  }
 
+  // 创建本地词典项
+  createLocalDictItem(dict) {
+    const item = document.createElement('div');
+    item.className = 'local-dict-item';
+    item.dataset.dictKey = dict.key;
+    
+    const totalWords = (dict.data.nouns?.length || 0) + 
+                      (dict.data.verbs?.length || 0) + 
+                      (dict.data.adjectives?.length || 0);
+    
+    const languageMap = {
+      'zh': '中文',
+      'en': 'English',
+      'fr': 'Français',
+      'ru': 'Русский',
+      'es': 'Español',
+      'ja': '日本語',
+      'other': '其他'
+    };
+    
+    const languageText = languageMap[dict.data.language] || '未知';
+    const spacingText = dict.data.wordSpacing === 'no-space' ? '无空格' : '有空格';
+    
+    item.innerHTML = `
+      <div class="local-dict-item-left">
+        <input type="checkbox" class="local-dict-checkbox" ${dict.selected ? 'checked' : ''}>
+        <div class="local-dict-info">
+          <div class="local-dict-name" data-editing="false">${dict.name}</div>
+          <div class="local-dict-meta">
+            <span>词汇: ${totalWords}</span>
+            <span>语言: ${languageText}</span>
+            <span>分词: ${spacingText}</span>
+          </div>
+        </div>
+      </div>
+      <div class="local-dict-item-right">
+        <div class="local-dict-actions">
+          <button class="local-dict-action-btn rename-btn">重命名</button>
+          <button class="local-dict-action-btn delete delete-btn">删除</button>
+        </div>
+      </div>
+    `;
+    
+    this.bindLocalDictItemEvents(item, dict);
+    return item;
+  }
 
+  // 绑定本地词典项事件
+  bindLocalDictItemEvents(item, dict) {
+    const checkbox = item.querySelector('.local-dict-checkbox');
+    const renameBtn = item.querySelector('.rename-btn');
+    const deleteBtn = item.querySelector('.delete-btn');
+    const nameElement = item.querySelector('.local-dict-name');
+    
+    // 选择事件
+    checkbox.addEventListener('change', (e) => {
+      this.toggleLocalDictSelection(dict.key, e.target.checked);
+    });
+    
+    // 重命名事件
+    renameBtn.addEventListener('click', () => {
+      this.startRenameLocalDict(nameElement, dict);
+    });
+    
+    // 删除事件
+    deleteBtn.addEventListener('click', () => {
+      this.deleteLocalDict(dict.key);
+    });
+  }
 
+  // 开始重命名本地词典
+  startRenameLocalDict(nameElement, dict) {
+    if (nameElement.dataset.editing === 'true') return;
+    
+    const currentName = nameElement.textContent;
+    nameElement.dataset.editing = 'true';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'local-dict-name-input';
+    input.value = currentName;
+    
+    nameElement.innerHTML = '';
+    nameElement.appendChild(input);
+    input.focus();
+    input.select();
+    
+    const finishRename = async () => {
+      const newName = input.value.trim();
+      if (newName && newName !== currentName) {
+        await this.renameLocalDict(dict.key, newName);
+      }
+      nameElement.dataset.editing = 'false';
+      nameElement.textContent = newName || currentName;
+    };
+    
+    input.addEventListener('blur', finishRename);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        input.blur();
+      }
+    });
+  }
 
+  // 重命名本地词典
+  async renameLocalDict(oldKey, newName) {
+    try {
+      const result = await new Promise((resolve) => {
+        chrome.storage.local.get([oldKey], resolve);
+      });
+      
+      if (result[oldKey]) {
+        const newKey = `localDict_${newName}`;
+        
+        // 保存新键值
+        await new Promise((resolve) => {
+          chrome.storage.local.set({ [newKey]: result[oldKey] }, resolve);
+        });
+        
+        // 删除旧键值
+        await new Promise((resolve) => {
+          chrome.storage.local.remove([oldKey], resolve);
+        });
+        
+        // 重新加载列表
+        this.loadLocalDictList();
+      }
+    } catch (error) {
+      console.error('重命名本地词典失败:', error);
+    }
+  }
 
+  // 删除本地词典
+  async deleteLocalDict(dictKey) {
+    if (!confirm('确定要删除这个本地词典吗？此操作不可撤销。')) {
+      return;
+    }
+    
+    try {
+      await new Promise((resolve) => {
+        chrome.storage.local.remove([dictKey], resolve);
+      });
+      
+      // 重新加载列表
+      this.loadLocalDictList();
+    } catch (error) {
+      console.error('删除本地词典失败:', error);
+    }
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // 切换本地词典选择状态
+  toggleLocalDictSelection(dictKey, selected) {
+    this.dictSettings.localDicts[dictKey] = selected;
+    console.log(`词典 ${dictKey} 选择状态: ${selected}`);
+  }
 
 }
 
