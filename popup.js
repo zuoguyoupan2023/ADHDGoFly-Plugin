@@ -91,6 +91,9 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
+    // AI分析事件
+    this.bindAIEvents();
+    
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
@@ -176,6 +179,7 @@ class PopupController {
         break;
       case 'ai-btn':
         this.showPage('ai');
+        this.loadAIAnalysis();
         break;
       case 'about-btn':
         this.showPage('about');
@@ -640,6 +644,199 @@ class PopupController {
     this.updateTextUI();
     
     console.log('文本设置已重置');
+  }
+
+  // AI分析相关方法
+  bindAIEvents() {
+    // 刷新分析按钮事件
+    const refreshBtn = document.getElementById('refresh-analysis-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.refreshAIAnalysis());
+    }
+  }
+
+  async loadAIAnalysis() {
+    console.log('开始加载AI分析数据...');
+    
+    try {
+      // 显示加载状态
+      this.showAILoadingState();
+      
+      // 获取当前标签页的分析数据
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        // 向content script请求分析数据
+        const response = await chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'getAnalysisData'
+        });
+        
+        if (response && response.success) {
+          this.displayAIAnalysis(response.data);
+        } else {
+          this.showAIError();
+        }
+      } else {
+        this.showAIError();
+      }
+    } catch (error) {
+      console.error('加载AI分析数据失败:', error);
+      this.showAIError();
+    }
+  }
+
+  showAILoadingState() {
+    // 显示所有分析项为加载中状态
+    const loadingText = this.i18nManager.t('pages.ai.analyzing');
+    
+    document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('highlightStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('colorRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`;
+  }
+
+  displayAIAnalysis(data) {
+    console.log('显示AI分析数据:', data);
+    
+    // 显示语言分布
+    this.displayLanguageStats(data.languages || {});
+    
+    // 显示词性分布
+    this.displayPOSStats(data.partOfSpeech || {});
+    
+    // 显示高亮统计
+    this.displayHighlightStats(data.highlights || {});
+    
+    // 显示推荐
+    this.displayRecommendations(data.recommendations || {});
+  }
+
+  displayLanguageStats(languages) {
+    const container = document.getElementById('languageStats');
+    if (Object.keys(languages).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    const total = Object.values(languages).reduce((sum, count) => sum + count, 0);
+    let html = '';
+    
+    Object.entries(languages).forEach(([lang, count]) => {
+      const percentage = ((count / total) * 100).toFixed(1);
+      html += `
+        <div class="stat-bar">
+          <div class="stat-label">${lang.toUpperCase()}</div>
+          <div class="stat-progress">
+            <div class="stat-fill" style="width: ${percentage}%; background-color: #007AFF;"></div>
+          </div>
+          <div class="stat-value">${percentage}%</div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  displayPOSStats(partOfSpeech) {
+    const container = document.getElementById('posStats');
+    if (Object.keys(partOfSpeech).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    const total = Object.values(partOfSpeech).reduce((sum, count) => sum + count, 0);
+    const colors = {
+      'noun': '#0066cc',
+      'verb': '#cc0000',
+      'adj': '#009933',
+      'other': '#666666'
+    };
+    
+    let html = '';
+    
+    Object.entries(partOfSpeech).forEach(([pos, count]) => {
+      const percentage = ((count / total) * 100).toFixed(1);
+      const color = colors[pos] || colors.other;
+      html += `
+        <div class="stat-bar">
+          <div class="stat-label">${pos}</div>
+          <div class="stat-progress">
+            <div class="stat-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+          </div>
+          <div class="stat-value">${percentage}%</div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  displayHighlightStats(highlights) {
+    const container = document.getElementById('highlightStats');
+    if (Object.keys(highlights).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    let html = `<div class="highlight-summary">`;
+    html += `<p>总高亮词汇: <strong>${highlights.total || 0}</strong></p>`;
+    html += `<p>处理节点: <strong>${highlights.processedNodes || 0}</strong></p>`;
+    html += `</div>`;
+    
+    container.innerHTML = html;
+  }
+
+  displayRecommendations(recommendations) {
+    // 显示颜色推荐
+    const colorContainer = document.getElementById('colorRecommendation');
+    if (recommendations.colors) {
+      let html = '<div class="recommendation-list">';
+      recommendations.colors.forEach(rec => {
+        html += `
+          <div class="recommendation-item">
+            <span class="rec-name">${rec.name}</span>
+            <span class="rec-reason">${rec.reason}</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+      colorContainer.innerHTML = html;
+    } else {
+      colorContainer.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+    }
+    
+    // 显示文本样式推荐
+    const textContainer = document.getElementById('textRecommendation');
+    if (recommendations.textStyle) {
+      let html = '<div class="recommendation-list">';
+      recommendations.textStyle.forEach(rec => {
+        html += `
+          <div class="recommendation-item">
+            <span class="rec-name">${rec.name}</span>
+            <span class="rec-reason">${rec.reason}</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+      textContainer.innerHTML = html;
+    } else {
+      textContainer.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+    }
+  }
+
+  showAIError() {
+    const errorText = this.i18nManager.t('pages.ai.error');
+    
+    document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('highlightStats').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('colorRecommendation').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`;
+  }
+
+  async refreshAIAnalysis() {
+    console.log('刷新AI分析...');
+    await this.loadAIAnalysis();
   }
 
 

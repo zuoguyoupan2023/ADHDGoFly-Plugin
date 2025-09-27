@@ -89,17 +89,26 @@
       "apply": "Apply Settings",
       "reset": "Reset Default"
     },
-    "ai": {
-      "title": "Smart Analysis",
-      "description": "Smart analysis and recommendations based on current page content",
-      "pageStats": "📊 Page Statistics",
-      "languageDistribution": "Language Distribution",
-      "posDistribution": "Part of Speech Distribution",
-      "highlightStats": "Highlight Statistics",
-      "analysis": "🔍 Analysis",
-      "colorRecommendation": "Recommended Color Scheme",
-      "textRecommendation": "Recommended Text Style",
-      "analyzing": "Analyzing..."
+    "pages": {
+      "ai": {
+        "title": "Smart Analysis",
+        "description": "Smart analysis and recommendations based on current page content",
+        "stats": {
+          "title": "📊 Page Statistics",
+          "language": "Language Distribution",
+          "posDistribution": "Part of Speech Distribution",
+          "highlight": "Highlight Statistics"
+        },
+        "recommendations": {
+          "title": "🔍 Smart Recommendations",
+          "colors": "Recommended Color Scheme",
+          "textStyle": "Recommended Text Style"
+        },
+        "refresh": "🔄 Refresh Analysis",
+        "analyzing": "Analyzing...",
+        "noData": "No data available",
+        "error": "Analysis failed, please try again"
+      }
     },
     "about": {
       "title": "About",

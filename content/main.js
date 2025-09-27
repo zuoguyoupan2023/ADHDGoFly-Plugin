@@ -622,10 +622,14 @@ class ADHDHighlighter {
         errors: processingStats.errors || 0
       };
       
+      // 生成智能推荐
+      const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
+      
       return {
         languages: languageStats,
         partOfSpeech: posStats,
         highlights: highlightStats,
+        recommendations: recommendations,
         summary: processingSummary
       };
       
@@ -719,6 +723,115 @@ class ADHDHighlighter {
     }
     
     return posStats;
+  }
+
+  /**
+   * 生成智能推荐
+   * @param {Object} languageStats 语言统计
+   * @param {Object} posStats 词性统计
+   * @param {Object} highlightStats 高亮统计
+   * @returns {Object} 推荐内容
+   */
+  generateRecommendations(languageStats, posStats, highlightStats) {
+    const recommendations = {
+      colors: [],
+      textStyle: []
+    };
+    
+    try {
+      // 基于词性分布推荐颜色方案
+      const totalPos = posStats.n + posStats.v + posStats.a;
+      
+      if (totalPos > 0) {
+        const nounRatio = posStats.n / totalPos;
+        const verbRatio = posStats.v / totalPos;
+        const adjRatio = posStats.a / totalPos;
+        
+        // 推荐颜色方案
+        if (nounRatio > 0.5) {
+          recommendations.colors.push({
+            name: '蓝色主导方案',
+            reason: '页面名词较多，建议使用蓝色系突出重点'
+          });
+        }
+        
+        if (verbRatio > 0.3) {
+          recommendations.colors.push({
+            name: '高对比度方案',
+            reason: '动词丰富，建议使用高对比度方案便于区分'
+          });
+        }
+        
+        if (adjRatio > 0.25) {
+          recommendations.colors.push({
+            name: '柔和色彩方案',
+            reason: '形容词较多，建议使用柔和色彩减少视觉疲劳'
+          });
+        }
+      }
+      
+      // 基于高亮密度推荐文本样式
+      const highlightDensity = highlightStats.totalWords / Math.max(highlightStats.processedNodes, 1);
+      
+      if (highlightDensity > 10) {
+        recommendations.textStyle.push({
+          name: '增大行间距',
+          reason: '高亮密度较高，建议增大行间距提升可读性'
+        });
+        
+        recommendations.textStyle.push({
+          name: '适当增大字号',
+          reason: '内容密集，建议适当增大字号减轻阅读负担'
+        });
+      } else if (highlightDensity < 3) {
+        recommendations.textStyle.push({
+          name: '标准间距',
+          reason: '高亮适中，当前文本样式已较为合适'
+        });
+      }
+      
+      // 基于语言分布推荐
+      const totalLangWords = Object.values(languageStats).reduce((sum, count) => sum + count, 0);
+      if (totalLangWords > 0) {
+        const multiLang = Object.values(languageStats).filter(count => count > totalLangWords * 0.1).length;
+        
+        if (multiLang > 1) {
+          recommendations.colors.push({
+            name: '多语言友好方案',
+            reason: '检测到多种语言，建议使用统一的颜色方案'
+          });
+        }
+      }
+      
+      // 如果没有生成任何推荐，提供默认推荐
+      if (recommendations.colors.length === 0) {
+        recommendations.colors.push({
+          name: '默认配色方案',
+          reason: '基于当前页面特征，推荐使用默认配色'
+        });
+      }
+      
+      if (recommendations.textStyle.length === 0) {
+        recommendations.textStyle.push({
+          name: '标准文本样式',
+          reason: '当前页面适合使用标准的文本样式设置'
+        });
+      }
+      
+    } catch (error) {
+      console.error('生成推荐失败:', error);
+      // 提供备用推荐
+      recommendations.colors = [{
+        name: '默认方案',
+        reason: '推荐使用默认颜色方案'
+      }];
+      recommendations.textStyle = [{
+        name: '标准样式',
+        reason: '推荐使用标准文本样式'
+      }];
+    }
+    
+    return recommendations;
   }
 }
 
