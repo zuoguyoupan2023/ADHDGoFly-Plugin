@@ -266,12 +266,12 @@ class PopupController {
     
     // 词典名称映射
     const dictNames = {
-      zh: this.i18nManager.t('pages.dict.languages.zh'),
-      en: this.i18nManager.t('pages.dict.languages.en'),
-      fr: this.i18nManager.t('pages.dict.languages.fr'),
-      ru: this.i18nManager.t('pages.dict.languages.ru'),
-      es: this.i18nManager.t('pages.dict.languages.es'),
-      ja: this.i18nManager.t('pages.dict.languages.ja')
+      zh: 'ZH',
+      en: 'EN',
+      fr: 'FR',
+      ru: 'RU',
+      es: 'ES',
+      ja: 'JA'
     };
     
     // 只处理已知的词典语言代码
