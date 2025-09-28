@@ -11,8 +11,6 @@
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": [
-      "content/dictionary-manager-new.js",
-      "content/dictionary-adapter.js",
       "content/dictionary-manager.js",
       "content/language-detector.js",
       "content/text-segmenter.js",
