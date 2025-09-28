@@ -9,8 +9,8 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: true,
-            en: true,
+            zh: false,
+            en: false,
             fr: false,
             ru: false,
             es: false,
@@ -171,6 +171,10 @@ class DictionaryAdapter {
      * @returns {Object} 词典数据
      */
     getDictionary(language) {
+        // 只返回启用的语言词典
+        if (!this.enabledLanguages[language]) {
+            return {};
+        }
         return this.legacyData[language] || {};
     }
 
@@ -226,6 +230,23 @@ class DictionaryAdapter {
         // TODO: 实现注册表更新逻辑
         // 这里可以调用新管理器的updateRegistry方法
         console.log('Syncing enabled languages to registry:', enabledLanguages);
+    }
+
+    /**
+     * 检查语言是否启用
+     * @param {string} language 语言代码
+     * @returns {boolean} 是否启用
+     */
+    isLanguageEnabled(language) {
+        return this.enabledLanguages[language] || false;
+    }
+
+    /**
+     * 获取启用的语言列表
+     * @returns {Array<string>} 启用的语言代码数组
+     */
+    getEnabledLanguages() {
+        return Object.keys(this.enabledLanguages).filter(lang => this.enabledLanguages[lang]);
     }
 
     /**
