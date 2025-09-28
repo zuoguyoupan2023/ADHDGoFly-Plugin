@@ -114,8 +114,27 @@ class TextSegmenter {
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
+        
+        // 检查是否为副词但实际是比较级/最高级
+        if (!normalizedPos && pos === 'adv') {
+          // 检查是否符合比较级/最高级模式
+          let isComparative = false;
+          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+          if (irregularComparatives.includes(cleanWord)) {
+            isComparative = true;
+          } else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+            isComparative = true;
+          }
+          
+          if (isComparative) {
+            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
         // 只对支持的词性（n、v、a）进行高亮，其他词性不处理
-        if (normalizedPos) {
+        else if (normalizedPos) {
           html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
         } else {
           html += token;
