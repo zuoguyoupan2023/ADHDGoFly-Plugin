@@ -23,7 +23,7 @@ class ADHDHighlighter {
     };
     
     // 初始化各个模块
-    this.dictionaryManager = new DictionaryManager();
+    this.dictionaryManager = new DictionaryAdapter();
     this.languageDetector = new LanguageDetector();
     this.textSegmenter = new TextSegmenter();
     this.pageProcessor = new PageProcessor(

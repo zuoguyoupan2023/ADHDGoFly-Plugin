@@ -1,0 +1,93 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01",
+  "dictionaries": {
+    "preset": [
+      {
+        "id": "zh-preset",
+        "name": "ZH",
+        "displayName": {
+          "zh": "中文词典",
+          "en": "Chinese Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "filePath": "dictionaries/ZH_word.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "id": "en-preset",
+        "name": "EN",
+        "displayName": {
+          "zh": "英文词典",
+          "en": "English Dictionary"
+        },
+        "language": "en",
+        "type": "preset",
+        "filePath": "dictionaries/EN_word.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "id": "es-preset",
+        "name": "ES",
+        "displayName": {
+          "zh": "西班牙语词典",
+          "en": "Spanish Dictionary"
+        },
+        "language": "es",
+        "type": "preset",
+        "filePath": "dictionaries/ES_word.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "id": "fr-preset",
+        "name": "FR",
+        "displayName": {
+          "zh": "法语词典",
+          "en": "French Dictionary"
+        },
+        "language": "fr",
+        "type": "preset",
+        "filePath": "dictionaries/FR_word.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "id": "ja-preset",
+        "name": "JA",
+        "displayName": {
+          "zh": "日语词典",
+          "en": "Japanese Dictionary"
+        },
+        "language": "ja",
+        "type": "preset",
+        "filePath": "dictionaries/JA_word.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
+        "id": "ru-preset",
+        "name": "RU",
+        "displayName": {
+          "zh": "俄语词典",
+          "en": "Russian Dictionary"
+        },
+        "language": "ru",
+        "type": "preset",
+        "filePath": "dictionaries/RU_word.json",
+        "enabled": true,
+        "priority": 1
+      }
+    ],
+    "downloaded": [],
+    "local": []
+  },
+  "settings": {
+    "autoCleanup": true,
+    "maxLocalDictionaries": 10,
+    "maxDownloadedDictionaries": 20
+  }
+}
