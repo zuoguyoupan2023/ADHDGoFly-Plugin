@@ -140,7 +140,26 @@ class TextSegmenter {
         }
         
         if (!matched) {
-          html += token;
+          // 最后检查是否为比较级/最高级（只有在词典中找不到时才检查）
+          let isComparative = false;
+          if (cleanWord) {
+            // 不规则比较级/最高级
+            const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+            if (irregularComparatives.includes(cleanWord)) {
+              isComparative = true;
+            }
+            // 规则比较级/最高级
+            else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+              isComparative = true;
+            }
+          }
+          
+          if (isComparative) {
+            html += `<span class="adhd-comp">${token}</span>`;
+          } else {
+            html += token;
+          }
         }
       }
     });

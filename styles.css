@@ -43,7 +43,19 @@
   background-color: rgba(0, 153, 51, 0.2) !important;
 }
 
-/* 其他词性样式已移除 - 当前只支持名词、动词、形容词三种词性的高亮 */
+.adhd-comp {
+  color: #9966cc !important;
+  background-color: rgba(153, 102, 204, 0.1) !important;
+  border-radius: 2px !important;
+  padding: 1px 2px !important;
+  margin: 0 1px !important;
+}
+
+.adhd-comp:hover {
+  background-color: rgba(153, 102, 204, 0.2) !important;
+}
+
+/* 其他词性样式 - 当前支持名词、动词、形容词、比较级/最高级四种类型的高亮 */
 /* 未来扩展其他词性支持时，可以在此添加样式，例如：
 .adhd-adv {
   color: #ff6b6b;

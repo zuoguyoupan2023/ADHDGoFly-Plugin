@@ -193,7 +193,7 @@ class EnglishMorphology {
     // 这个已经在规则1中处理了，但需要特别处理 -es 的情况
     
     // === 形容词比较级/最高级规则 ===
-    // 规则8: -er结尾 (bigger -> big, faster -> fast)
+    // 规则8: -er结尾 (bigger -> big, faster -> fast, larger -> large)
     if (word.endsWith('er') && word.length > 3) {
       const stem = word.slice(0, -2);
       stems.push(stem);
@@ -206,9 +206,14 @@ class EnglishMorphology {
           stems.push(stem.slice(0, -1));
         }
       }
+      
+      // 处理以辅音结尾的词汇，可能原形以e结尾 (larger -> large)
+      if (stem.length >= 1 && this.isConsonant(stem[stem.length - 1])) {
+        stems.push(stem + 'e');
+      }
     }
     
-    // 规则9: -est结尾 (biggest -> big, fastest -> fast)
+    // 规则9: -est结尾 (biggest -> big, fastest -> fast, largest -> large)
     if (word.endsWith('est') && word.length > 4) {
       const stem = word.slice(0, -3);
       stems.push(stem);
@@ -220,6 +225,11 @@ class EnglishMorphology {
         if (lastChar === secondLastChar && this.isConsonant(lastChar)) {
           stems.push(stem.slice(0, -1));
         }
+      }
+      
+      // 处理以辅音结尾的词汇，可能原形以e结尾 (largest -> large)
+      if (stem.length >= 1 && this.isConsonant(stem[stem.length - 1])) {
+        stems.push(stem + 'e');
       }
     }
     
