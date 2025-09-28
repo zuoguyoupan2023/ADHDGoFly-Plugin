@@ -76,6 +76,12 @@ class QuickHighlighter {
   constructor() {
     this.enabled = false;
     this.dictionaryManager = new DictionaryManager();
+    this.highlightingToggles = {
+      noun: true,
+      verb: true,
+      adj: true,
+      comparative: true
+    };
     this.init();
   }
 
@@ -84,13 +90,27 @@ class QuickHighlighter {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'toggle') {
         this.toggle();
+      } else if (message.action === 'updateColorScheme') {
+        // 更新高亮开关设置
+        if (message.highlightingToggles) {
+          this.highlightingToggles = { ...this.highlightingToggles, ...message.highlightingToggles };
+          console.log('更新高亮开关设置:', this.highlightingToggles);
+          // 如果当前已启用，重新处理页面
+          if (this.enabled) {
+            this.removeHighlights();
+            this.processPage();
+          }
+        }
       }
     });
     
-    // 检查存储的状态
-    chrome.storage.local.get(['enabled'], (result) => {
+    // 检查存储的状态和设置
+    chrome.storage.local.get(['enabled', 'highlightingToggles'], (result) => {
       if (result.enabled) {
         this.enable();
+      }
+      if (result.highlightingToggles) {
+        this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
       }
     });
   }
@@ -223,7 +243,21 @@ class QuickHighlighter {
         const pos = dictionary[word];
         
         if (pos) {
-          html += `<span class="adhd-${this.normalizePos(pos)}">${word}</span>`;
+          const normalizedPos = this.normalizePos(pos);
+          // 根据高亮开关决定是否应用高亮
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+            (normalizedPos === 'other')
+          );
+          
+          if (shouldHighlight && normalizedPos !== 'other') {
+            html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+          } else {
+            html += word;
+          }
           i += len - 1; // 跳过已匹配的字符
           matched = true;
           break;
@@ -249,19 +283,22 @@ class QuickHighlighter {
       
       let isComparative = false;
       
+      // 对于英语单词，总是检查是否为比较级或最高级
+      if (cleanWord.length > 0 && /^[a-zA-Z]+$/.test(cleanWord)) {
+        // 检查是否为比较级或最高级
+        if (cleanWord.endsWith('er') && cleanWord.length > 3) {
+          isComparative = true;
+        } else if (cleanWord.endsWith('est') && cleanWord.length > 4) {
+          isComparative = true;
+        } else if (['better', 'best', 'worse', 'worst'].includes(cleanWord)) {
+          isComparative = true;
+        }
+      }
+      
       // 如果直接匹配失败，尝试词汇变形匹配（仅对英语）
       if (!pos && cleanWord.length > 0) {
         // 简单判断是否为英语（包含英文字母）
         if (/^[a-zA-Z]+$/.test(cleanWord)) {
-          // 检查是否为比较级或最高级
-          if (cleanWord.endsWith('er') && cleanWord.length > 3) {
-            isComparative = true;
-          } else if (cleanWord.endsWith('est') && cleanWord.length > 4) {
-            isComparative = true;
-          } else if (['better', 'best', 'worse', 'worst'].includes(cleanWord)) {
-            isComparative = true;
-          }
-          
           // 使用简化的英语变形规则
           const possibleStems = this.getEnglishStems(cleanWord);
           for (const stem of possibleStems) {
@@ -275,10 +312,24 @@ class QuickHighlighter {
       
       if (pos) {
         // 如果是比较级/最高级，使用特殊样式
-        if (isComparative) {
+        if (isComparative && this.highlightingToggles.comparative) {
           html += `<span class="adhd-comp">${word}</span>`;
         } else {
-          html += `<span class="adhd-${this.normalizePos(pos)}">${word}</span>`;
+          const normalizedPos = this.normalizePos(pos);
+          // 根据高亮开关决定是否应用高亮
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+            (normalizedPos === 'other')
+          );
+          
+          if (shouldHighlight && normalizedPos !== 'other') {
+            html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+          } else {
+            html += word;
+          }
         }
       } else {
         html += word;

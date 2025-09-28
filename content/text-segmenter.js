@@ -10,6 +10,22 @@ class TextSegmenter {
     
     // 初始化英语词汇变形处理器
     this.enMorphology = new EnglishMorphology();
+    
+    // 高亮开关设置
+    this.highlightingToggles = {
+      noun: true,
+      verb: true,
+      adj: true,
+      comparative: true
+    };
+  }
+  
+  /**
+   * 更新高亮开关设置
+   * @param {Object} toggles 高亮开关设置
+   */
+  updateHighlightingToggles(toggles) {
+    this.highlightingToggles = { ...this.highlightingToggles, ...toggles };
   }
 
   /**
@@ -72,8 +88,15 @@ class TextSegmenter {
         
         if (pos) {
           const normalizedPos = this.normalizePartOfSpeech(pos);
-          // 只对支持的词性（n、v、a）进行高亮，其他词性不处理
-          if (normalizedPos) {
+          // 根据高亮开关决定是否应用高亮
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'adj' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'adv' && this.highlightingToggles.adj) // 副词也使用形容词开关
+          );
+          
+          if (shouldHighlight && normalizedPos) {
             html += `<span class="adhd-${normalizedPos}" data-word="${word}" data-pos="${pos}">${word}</span>`;
           } else {
             html += word;
@@ -127,15 +150,25 @@ class TextSegmenter {
             isComparative = true;
           }
           
-          if (isComparative) {
+          if (isComparative && this.highlightingToggles.comparative) {
             html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
           } else {
             html += token;
           }
         }
-        // 只对支持的词性（n、v、a）进行高亮，其他词性不处理
+        // 根据高亮开关决定是否应用高亮
         else if (normalizedPos) {
-          html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'adj' && this.highlightingToggles.adj)
+          );
+          
+          if (shouldHighlight) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+          } else {
+            html += token;
+          }
         } else {
           html += token;
         }
@@ -148,8 +181,14 @@ class TextSegmenter {
             if (dictionary[stem]) {
               const pos = dictionary[stem];
               const normalizedPos = this.normalizePartOfSpeech(pos);
-              // 对名词、动词、形容词进行变形匹配
-              if (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'adj') {
+              // 根据高亮开关决定是否应用变形匹配高亮
+              const shouldHighlight = (
+                (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+                (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+                (normalizedPos === 'adj' && this.highlightingToggles.adj)
+              );
+              
+              if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'adj')) {
                 html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
                 matched = true;
                 break;
@@ -174,7 +213,7 @@ class TextSegmenter {
             }
           }
           
-          if (isComparative) {
+          if (isComparative && this.highlightingToggles.comparative) {
             html += `<span class="adhd-comp">${token}</span>`;
           } else {
             html += token;

@@ -8,7 +8,7 @@ class ADHDHighlighter {
     this.colorSchemes = {
       default: { noun: '#0066cc', verb: '#cc0000', adj: '#009933' },
       warm: { noun: '#8b4513', verb: '#dc143c', adj: '#ff8c00' },
-      cool: { noun: '#191970', verb: '#008b8b', adj: '#9370db' },
+      cool: { noun: '#191970', verb: '#008b8b', adj: '#4169E1' },
       pastel: { noun: '#da70d6', verb: '#20b2aa', adj: '#f0e68c' },
       'high-contrast': { noun: '#000080', verb: '#8b0000', adj: '#228b22' }
     };
@@ -141,7 +141,7 @@ class ADHDHighlighter {
           break;
           
         case 'updateColorScheme':
-          await this.updateColorScheme(message.scheme, message.colors);
+          await this.updateColorScheme(message.scheme, message.colors, message.highlightingToggles);
           sendResponse({ success: true });
           break;
           
@@ -222,11 +222,28 @@ class ADHDHighlighter {
    */
   async loadColorSettings() {
     try {
-      const result = await chrome.storage.local.get(['colorScheme']);
+      const result = await chrome.storage.local.get(['colorScheme', 'highlightingToggles']);
       if (result.colorScheme) {
         console.log('加载颜色设置:', result.colorScheme);
         this.currentColorScheme = result.colorScheme;
         this.applyColorScheme();
+      }
+      
+      // 加载高亮开关设置
+      if (result.highlightingToggles) {
+        console.log('加载高亮开关设置:', result.highlightingToggles);
+        
+        // 更新TextSegmenter的高亮开关设置
+        if (this.textSegmenter) {
+          this.textSegmenter.updateHighlightingToggles(result.highlightingToggles);
+          console.log('TextSegmenter高亮开关设置已加载:', this.textSegmenter.highlightingToggles);
+        }
+        
+        // 兼容旧的quickHighlighter（如果存在）
+        if (this.pageProcessor && this.pageProcessor.quickHighlighter) {
+          this.pageProcessor.quickHighlighter.highlightingToggles = result.highlightingToggles;
+          console.log('QuickHighlighter高亮开关设置已加载:', result.highlightingToggles);
+        }
       }
     } catch (error) {
       console.error('加载颜色设置失败:', error);
@@ -237,12 +254,28 @@ class ADHDHighlighter {
    * 更新颜色方案
    * @param {string} scheme 方案名称
    * @param {Object} colors 颜色配置
+   * @param {Object} highlightingToggles 高亮开关设置
    */
-  async updateColorScheme(scheme, colors) {
-    console.log('更新颜色方案:', scheme, colors);
+  async updateColorScheme(scheme, colors, highlightingToggles) {
+    console.log('更新颜色方案:', scheme, colors, highlightingToggles);
     
     this.currentColorScheme = scheme;
     this.colorSchemes[scheme] = colors;
+    
+    // 更新高亮开关设置
+    if (highlightingToggles) {
+      // 更新TextSegmenter的高亮开关设置
+      if (this.textSegmenter) {
+        this.textSegmenter.updateHighlightingToggles(highlightingToggles);
+        console.log('TextSegmenter高亮开关设置已更新:', this.textSegmenter.highlightingToggles);
+      }
+      
+      // 兼容旧的quickHighlighter（如果存在）
+      if (this.pageProcessor && this.pageProcessor.quickHighlighter) {
+        this.pageProcessor.quickHighlighter.highlightingToggles = highlightingToggles;
+        console.log('QuickHighlighter高亮开关设置已更新:', highlightingToggles);
+      }
+    }
     
     // 应用新的颜色方案
     this.applyColorScheme();

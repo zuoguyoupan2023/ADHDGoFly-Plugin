@@ -498,6 +498,83 @@
       border-top: 1px solid #e0e0e0;
     }
     
+    /* 高亮开关控制样式 */
+    .highlighting-toggles {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #9370db;
+    }
+    
+    .highlighting-toggles h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .toggle-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .toggle-label input[type="checkbox"] {
+      display: none;
+    }
+    
+    .toggle-checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d0d0;
+      border-radius: 3px;
+      margin-right: 8px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark {
+      background-color: #9370db;
+      border-color: #9370db;
+    }
+    
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .toggle-description {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .toggle-description p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+    }
+    
     .save-btn {
       width: 100%;
       padding: 12px;
@@ -605,7 +682,7 @@
     /* 冷色方案预览 */
     .noun-cool { color: #191970; background-color: rgba(25, 25, 112, 0.15); }
     .verb-cool { color: #008b8b; background-color: rgba(0, 139, 139, 0.15); }
-    .adj-cool { color: #9370db; background-color: rgba(147, 112, 219, 0.15); }
+    .adj-cool { color: #4169E1; background-color: rgba(65, 105, 225, 0.15); }
     
     /* 柔和方案预览 */
     .noun-pastel { color: #da70d6; background-color: rgba(218, 112, 214, 0.15); }
@@ -1583,6 +1660,44 @@
               <span class="preview-word verb-high-contrast">动词</span>
               <span class="preview-word adj-high-contrast">形容词</span>
             </div>
+          </div>
+        </div>
+        
+        <!-- 高亮开关控制 -->
+        <div class="highlighting-toggles">
+          <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
+          <div class="toggle-group">
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-noun" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.noun">名词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-verb" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.verb">动词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-adj" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.adj">形容词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-comparative" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.comparative">比较级/最高级高亮</span>
+              </label>
+            </div>
+          </div>
+          <div class="toggle-description">
+            <p data-i18n="pages.colors.toggles.description">取消勾选可关闭对应类型词汇的高亮显示</p>
           </div>
         </div>
         

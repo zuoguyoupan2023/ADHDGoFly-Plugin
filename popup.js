@@ -27,7 +27,7 @@ class PopupController {
       cool: {
         noun: '#191970',    // 深蓝色 (midnight blue)
         verb: '#008b8b',    // 深青色 (dark cyan)
-        adj: '#9370db'      // 紫色 (medium purple)
+        adj: '#4169E1'      // 皇家蓝 (royal blue)
       },
       pastel: {
         noun: '#da70d6',    // 兰花紫 (orchid)
@@ -46,6 +46,12 @@ class PopupController {
       letterSpacing: 0,     // 字间距 px
       lineHeight: 1.5,      // 行间距倍数
       paragraphSpacing: 0   // 段间距 px
+    };
+    this.highlightingToggles = {
+      noun: true,           // 名词高亮开关
+      verb: true,           // 动词高亮开关
+      adj: true,            // 形容词高亮开关
+      comparative: true     // 比较级/最高级高亮开关
     };
 
     this.init();
@@ -101,6 +107,7 @@ class PopupController {
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
+    this.loadHighlightingToggles();
 
   }
 
@@ -435,6 +442,20 @@ class PopupController {
       });
     });
     
+    // 高亮开关复选框事件
+    const highlightToggles = ['noun', 'verb', 'adj', 'comparative'];
+    highlightToggles.forEach(type => {
+      const checkbox = document.getElementById(`highlight-${type}`);
+      if (checkbox) {
+        checkbox.addEventListener('change', (e) => {
+          this.highlightingToggles[type] = e.target.checked;
+          console.log(`${type}高亮开关:`, e.target.checked);
+          // 立即保存设置
+          this.saveColorSettings();
+        });
+      }
+    });
+    
     // 应用方案按钮事件
     const saveColorsBtn = document.getElementById('save-colors-btn');
     if (saveColorsBtn) {
@@ -481,19 +502,48 @@ class PopupController {
   updateColorUI() {
     this.selectColorScheme(this.currentColorScheme);
   }
+  
+  async loadHighlightingToggles() {
+    try {
+      const result = await chrome.storage.local.get(['highlightingToggles']);
+      if (result.highlightingToggles) {
+        this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
+      }
+      
+      // 更新UI
+      this.updateHighlightingTogglesUI();
+    } catch (error) {
+      console.error('加载高亮开关设置失败:', error);
+    }
+  }
+  
+  updateHighlightingTogglesUI() {
+    const highlightTypes = ['noun', 'verb', 'adj', 'comparative'];
+    highlightTypes.forEach(type => {
+      const checkbox = document.getElementById(`highlight-${type}`);
+      if (checkbox) {
+        checkbox.checked = this.highlightingToggles[type];
+      }
+    });
+  }
 
   async saveColorSettings() {
     try {
-      await chrome.storage.local.set({ colorScheme: this.currentColorScheme });
+      // 保存颜色方案和高亮开关设置
+      await chrome.storage.local.set({ 
+        colorScheme: this.currentColorScheme,
+        highlightingToggles: this.highlightingToggles
+      });
       
-      // 通知content script更新颜色方案
+      // 通知content script更新颜色方案和高亮开关
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
           await chrome.tabs.sendMessage(tabs[0].id, {
             action: 'updateColorScheme',
             scheme: this.currentColorScheme,
-            colors: this.colorSchemes[this.currentColorScheme]
+            colors: this.colorSchemes[this.currentColorScheme],
+            highlightingToggles: this.highlightingToggles
           });
         }
       } catch (error) {
@@ -512,6 +562,7 @@ class PopupController {
       }, 1500);
       
       console.log('颜色方案已保存:', this.currentColorScheme);
+      console.log('高亮开关已保存:', this.highlightingToggles);
       
     } catch (error) {
       console.error('保存颜色设置失败:', error);
