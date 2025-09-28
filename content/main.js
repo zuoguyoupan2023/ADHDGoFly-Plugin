@@ -200,9 +200,19 @@ class ADHDHighlighter {
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
         this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
+      } else {
+        // 首次使用时的默认设置，启用英语词典
+        const defaultSettings = { en: true };
+        console.log('使用默认词典设置:', defaultSettings);
+        this.dictionaryManager.updateEnabledLanguages(defaultSettings);
+        // 保存默认设置
+        await chrome.storage.local.set({ dictSettings: defaultSettings });
       }
     } catch (error) {
       console.error('加载词典设置失败:', error);
+      // 出错时也使用默认设置
+      const defaultSettings = { en: true };
+      this.dictionaryManager.updateEnabledLanguages(defaultSettings);
     }
   }
 

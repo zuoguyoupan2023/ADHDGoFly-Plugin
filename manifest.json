@@ -11,14 +11,15 @@
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": [
-      "content/dictionary-manager-new.js",
-      "content/dictionary-adapter.js",
-      "content/dictionary-manager.js",
-      "content/language-detector.js",
-      "content/text-segmenter.js",
-      "content/page-processor.js",
-      "content/main.js"
-    ],
+        "content/dictionary-manager-new.js",
+        "content/dictionary-adapter.js",
+        "content/dictionary-manager.js",
+        "content/language-detector.js",
+        "content/en-noun-morphology.js",
+        "content/text-segmenter.js",
+        "content/page-processor.js",
+        "content/main.js"
+      ],
     "css": ["styles.css"],
     "run_at": "document_end"
   }],

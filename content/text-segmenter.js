@@ -3,10 +3,13 @@ class TextSegmenter {
   constructor() {
     // 标点符号和分隔符模式
     this.punctuationPattern = /[\s\p{P}]/u;
-    this.spaceBasedSeparators = /(\s+|[.,!?;:()"])/;
+    this.spaceBasedSeparators = /(\s+|[.,!?;:()"'])/;
     
     // CJK分词的最大词长
     this.maxWordLength = 8;
+    
+    // 初始化英语名词变形处理器
+    this.enNounMorphology = new EnglishNounMorphology();
   }
 
   /**
@@ -107,6 +110,7 @@ class TextSegmenter {
       // 清理词汇（移除标点，转为小写）
       const cleanWord = this.cleanWord(token);
       
+      // 首先尝试精确匹配
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
@@ -117,7 +121,27 @@ class TextSegmenter {
           html += token;
         }
       } else {
-        html += token;
+        // 如果精确匹配失败，尝试英语名词变形匹配
+        let matched = false;
+        if (cleanWord && this.enNounMorphology) {
+          const possibleStems = this.enNounMorphology.getPossibleStems(cleanWord);
+          for (const stem of possibleStems) {
+            if (dictionary[stem]) {
+              const pos = dictionary[stem];
+              const normalizedPos = this.normalizePartOfSpeech(pos);
+              // 只对名词进行变形匹配
+              if (normalizedPos === 'n') {
+                html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
+                matched = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (!matched) {
+          html += token;
+        }
       }
     });
     
