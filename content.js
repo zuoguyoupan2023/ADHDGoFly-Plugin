@@ -310,26 +310,43 @@ class QuickHighlighter {
         }
       }
       
-      if (pos) {
-        // 如果是比较级/最高级，使用特殊样式
-        if (isComparative && this.highlightingToggles.comparative) {
-          html += `<span class="adhd-comp">${word}</span>`;
-        } else {
-          const normalizedPos = this.normalizePos(pos);
-          // 根据高亮开关决定是否应用高亮
+      // 检查比较级/最高级，但排除已识别为名词或动词的词汇
+      if (isComparative && this.highlightingToggles.comparative && pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 如果词典中标记为名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
           const shouldHighlight = (
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
-            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
-            (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
-            (normalizedPos === 'other')
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
           );
           
-          if (shouldHighlight && normalizedPos !== 'other') {
+          if (shouldHighlight) {
             html += `<span class="adhd-${normalizedPos}">${word}</span>`;
           } else {
             html += word;
           }
+        } else {
+          // 词典中标记为形容词或副词的比较级，显示为紫色
+          html += `<span class="adhd-comp">${word}</span>`;
+        }
+      } else if (isComparative && this.highlightingToggles.comparative && !pos) {
+        // 词典中找不到但符合比较级模式的词，显示为紫色
+        html += `<span class="adhd-comp">${word}</span>`;
+      } else if (pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 根据高亮开关决定是否应用高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+          (normalizedPos === 'other')
+        );
+        
+        if (shouldHighlight && normalizedPos !== 'other') {
+          html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+        } else {
+          html += word;
         }
       } else {
         html += word;

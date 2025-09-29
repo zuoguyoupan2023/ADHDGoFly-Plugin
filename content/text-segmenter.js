@@ -138,30 +138,11 @@ class TextSegmenter {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
         
-        // 检查是否为副词但实际是比较级/最高级
-        if (!normalizedPos && pos === 'adv') {
-          // 检查是否符合比较级/最高级模式
-          let isComparative = false;
-          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
-          if (irregularComparatives.includes(cleanWord)) {
-            isComparative = true;
-          } else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
-                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
-            isComparative = true;
-          }
-          
-          if (isComparative && this.highlightingToggles.comparative) {
-            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
-          } else {
-            html += token;
-          }
-        }
-        // 根据高亮开关决定是否应用高亮
-        else if (normalizedPos) {
+        // 如果是名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
           const shouldHighlight = (
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
-            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-            (normalizedPos === 'a' && this.highlightingToggles.adj)
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
           );
           
           if (shouldHighlight) {
@@ -169,36 +150,9 @@ class TextSegmenter {
           } else {
             html += token;
           }
-        } else {
-          html += token;
         }
-      } else {
-        // 如果精确匹配失败，尝试英语词汇变形匹配
-        let matched = false;
-        if (cleanWord && this.enMorphology) {
-          const possibleStems = this.enMorphology.getPossibleStems(cleanWord);
-          for (const stem of possibleStems) {
-            if (dictionary[stem]) {
-              const pos = dictionary[stem];
-              const normalizedPos = this.normalizePartOfSpeech(pos);
-              // 根据高亮开关决定是否应用变形匹配高亮
-              const shouldHighlight = (
-                (normalizedPos === 'n' && this.highlightingToggles.noun) ||
-                (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-                (normalizedPos === 'a' && this.highlightingToggles.adj)
-              );
-              
-              if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
-                html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
-                matched = true;
-                break;
-              }
-            }
-          }
-        }
-        
-        if (!matched) {
-          // 最后检查是否为比较级/最高级（只有在词典中找不到时才检查）
+        // 如果是形容词或副词，检查是否为比较级
+        else {
           let isComparative = false;
           if (cleanWord) {
             // 不规则比较级/最高级
@@ -214,8 +168,60 @@ class TextSegmenter {
           }
           
           if (isComparative && this.highlightingToggles.comparative) {
-            html += `<span class="adhd-comp">${token}</span>`;
+            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
           } else {
+            html += token;
+          }
+        }
+      }
+      // 如果精确匹配失败，检查比较级
+      else {
+        let isComparative = false;
+        if (cleanWord) {
+          // 不规则比较级/最高级
+          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+          if (irregularComparatives.includes(cleanWord)) {
+            isComparative = true;
+          }
+          // 规则比较级/最高级
+          else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                   (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+            isComparative = true;
+          }
+        }
+        
+        if (isComparative && this.highlightingToggles.comparative) {
+          html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+        }
+        // 然后尝试词汇变形匹配
+        else {
+          // 如果精确匹配失败，尝试英语词汇变形匹配
+          let matched = false;
+          if (cleanWord && this.enMorphology) {
+            const possibleStems = this.enMorphology.getPossibleStems(cleanWord);
+            for (const stem of possibleStems) {
+              if (dictionary[stem]) {
+                const pos = dictionary[stem];
+                const normalizedPos = this.normalizePartOfSpeech(pos);
+                // 根据高亮开关决定是否应用变形匹配高亮
+                const shouldHighlight = (
+                  (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+                  (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+                  (normalizedPos === 'a' && this.highlightingToggles.adj)
+                );
+                
+                if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
+                  html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
+                  matched = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          if (!matched) {
             html += token;
           }
         }
