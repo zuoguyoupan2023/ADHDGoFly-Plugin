@@ -1,7 +1,8 @@
 // 文本分词器模块
 // 在Node.js环境中引入英语词汇变形处理器
-if (typeof module !== 'undefined' && module.exports && typeof EnglishMorphology === 'undefined') {
-  const EnglishMorphology = require('./en-noun-morphology.js');
+let EnglishMorphology;
+if (typeof module !== 'undefined' && module.exports) {
+  EnglishMorphology = require('./en-noun-morphology.js');
 }
 
 class TextSegmenter {
@@ -817,29 +818,40 @@ class TextSegmenter {
         continue;
       }
       
+      // 尝试俄语词汇还原
+      let restoredWords = this.restoreRussianWord(cleanWord);
+      
       // 从词典中查找 - 处理两种可能的词典格式
       let entry = null;
       let pos = null;
+      let foundWord = null;
       
-      // 情况1: 完整词典结构 {words: {...}}
-      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
-        entry = dictionary.words[cleanWord];
-        // 如果有多个词性，优先选择形容词，然后动词，最后名词
-        if (entry.pos && Array.isArray(entry.pos)) {
-          if (entry.pos.includes('adj')) {
-            pos = 'adj';
-          } else if (entry.pos.includes('v')) {
-            pos = 'v';
+      // 尝试查找还原后的词汇
+      for (let word of restoredWords) {
+        // 情况1: 完整词典结构 {words: {...}}
+        if (dictionary && dictionary.words && dictionary.words[word]) {
+          entry = dictionary.words[word];
+          foundWord = word;
+          // 如果有多个词性，优先选择形容词，然后动词，最后名词
+          if (entry.pos && Array.isArray(entry.pos)) {
+            if (entry.pos.includes('adj')) {
+              pos = 'adj';
+            } else if (entry.pos.includes('v')) {
+              pos = 'v';
+            } else {
+              pos = entry.pos[0];
+            }
           } else {
-            pos = entry.pos[0];
+            pos = entry.pos ? entry.pos[0] : entry;
           }
-        } else {
-          pos = entry.pos ? entry.pos[0] : entry;
+          break;
         }
-      }
-      // 情况2: 扁平化词典结构 {word: pos, ...}
-      else if (dictionary && dictionary[cleanWord]) {
-        pos = dictionary[cleanWord];
+        // 情况2: 扁平化词典结构 {word: pos, ...}
+        else if (dictionary && dictionary[word]) {
+          pos = dictionary[word];
+          foundWord = word;
+          break;
+        }
       }
       
       if (pos) {
@@ -866,6 +878,334 @@ class TextSegmenter {
     }
     
     return processedTokens.join(' ');
+  }
+
+  /**
+   * 俄语词汇还原函数
+   * 处理名词格变、动词变位、形容词变化等
+   * @param {string} word 需要还原的俄语词汇
+   * @returns {Array<string>} 可能的还原形式数组
+   */
+  restoreRussianWord(word) {
+    let restoredForms = [word]; // 包含原词
+    
+    // 1. 名词格变还原
+    let nounForms = this.restoreRussianNounDeclension(word);
+    restoredForms = restoredForms.concat(nounForms);
+    
+    // 2. 动词变位还原
+    let verbForms = this.restoreRussianVerbConjugation(word);
+    restoredForms = restoredForms.concat(verbForms);
+    
+    // 3. 形容词变化还原
+    let adjectiveForms = this.restoreRussianAdjectiveDeclension(word);
+    restoredForms = restoredForms.concat(adjectiveForms);
+    
+    // 4. 动词体对处理
+    let aspectForms = this.restoreRussianVerbAspects(word);
+    restoredForms = restoredForms.concat(aspectForms);
+    
+    // 去重并返回
+    return [...new Set(restoredForms)];
+  }
+
+  /**
+   * 俄语名词格变还原
+   * 处理6格×3性的名词变化形式
+   * @param {string} word 变化后的名词
+   * @returns {Array<string>} 可能的原形
+   */
+  restoreRussianNounDeclension(word) {
+    let restoredForms = [];
+    
+    // 阳性名词格变还原规则
+    const masculinePatterns = [
+      // 生格: -а/-я → 原形
+      { pattern: /а$/, replacement: '' },
+      { pattern: /я$/, replacement: 'ь' },
+      // 与格: -у/-ю → 原形
+      { pattern: /у$/, replacement: '' },
+      { pattern: /ю$/, replacement: 'ь' },
+      // 工具格: -ом/-ем/-ём → 原形
+      { pattern: /ом$/, replacement: '' },
+      { pattern: /ем$/, replacement: 'ь' },
+      { pattern: /ём$/, replacement: 'ь' },
+      // 前置格: -е → 原形
+      { pattern: /е$/, replacement: '' }
+    ];
+    
+    // 阴性名词格变还原规则
+    const femininePatterns = [
+      // 生格: -ы/-и → -а/-я
+      { pattern: /ы$/, replacement: 'а' },
+      { pattern: /и$/, replacement: 'я' },
+      // 与格: -е → -а/-я
+      { pattern: /е$/, replacement: 'а' },
+      // 宾格: -у/-ю → -а/-я
+      { pattern: /у$/, replacement: 'а' },
+      { pattern: /ю$/, replacement: 'я' },
+      // 工具格: -ой/-ей → -а/-я
+      { pattern: /ой$/, replacement: 'а' },
+      { pattern: /ей$/, replacement: 'я' },
+      // 前置格: -е → -а/-я
+      { pattern: /е$/, replacement: 'я' }
+    ];
+    
+    // 中性名词格变还原规则
+    const neuterPatterns = [
+      // 生格: -а/-я → -о/-е
+      { pattern: /а$/, replacement: 'о' },
+      { pattern: /я$/, replacement: 'е' },
+      // 与格: -у/-ю → -о/-е
+      { pattern: /у$/, replacement: 'о' },
+      { pattern: /ю$/, replacement: 'е' },
+      // 工具格: -ом/-ем → -о/-е
+      { pattern: /ом$/, replacement: 'о' },
+      { pattern: /ем$/, replacement: 'е' },
+      // 前置格: -е → -о/-е
+      { pattern: /е$/, replacement: 'о' }
+    ];
+    
+    // 应用阳性名词规则
+    for (let rule of masculinePatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    // 应用阴性名词规则
+    for (let rule of femininePatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    // 应用中性名词规则
+    for (let rule of neuterPatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    return restoredForms;
+  }
+
+  /**
+   * 俄语动词变位还原
+   * 处理第一、二变位类动词和不规则动词
+   * @param {string} word 变位后的动词
+   * @returns {Array<string>} 可能的不定式
+   */
+  restoreRussianVerbConjugation(word) {
+    let restoredForms = [];
+    
+    // 第一变位类动词还原规则 (-ать, -ять, -еть)
+    const firstConjugationPatterns = [
+      // 现在时变位 → 不定式
+      { pattern: /аю$/, replacement: 'ать' },
+      { pattern: /аешь$/, replacement: 'ать' },
+      { pattern: /ает$/, replacement: 'ать' },
+      { pattern: /аем$/, replacement: 'ать' },
+      { pattern: /аете$/, replacement: 'ать' },
+      { pattern: /ают$/, replacement: 'ать' },
+      // -ять动词
+      { pattern: /яю$/, replacement: 'ять' },
+      { pattern: /яешь$/, replacement: 'ять' },
+      { pattern: /яет$/, replacement: 'ять' },
+      { pattern: /яем$/, replacement: 'ять' },
+      { pattern: /яете$/, replacement: 'ять' },
+      { pattern: /яют$/, replacement: 'ять' },
+      // -еть动词
+      { pattern: /ею$/, replacement: 'еть' },
+      { pattern: /еешь$/, replacement: 'еть' },
+      { pattern: /еет$/, replacement: 'еть' },
+      { pattern: /еем$/, replacement: 'еть' },
+      { pattern: /еете$/, replacement: 'еть' },
+      { pattern: /еют$/, replacement: 'еть' }
+    ];
+    
+    // 第二变位类动词还原规则 (-ить)
+    const secondConjugationPatterns = [
+      { pattern: /ю$/, replacement: 'ить' },
+      { pattern: /ишь$/, replacement: 'ить' },
+      { pattern: /ит$/, replacement: 'ить' },
+      { pattern: /им$/, replacement: 'ить' },
+      { pattern: /ите$/, replacement: 'ить' },
+      { pattern: /ят$/, replacement: 'ить' },
+      { pattern: /ат$/, replacement: 'ить' }
+    ];
+    
+    // 常见不规则动词映射
+    const irregularVerbs = {
+      'есть': 'быть',
+      'иду': 'идти',
+      'идёшь': 'идти',
+      'идёт': 'идти',
+      'идём': 'идти',
+      'идёте': 'идти',
+      'идут': 'идти',
+      'еду': 'ехать',
+      'едешь': 'ехать',
+      'едет': 'ехать',
+      'едем': 'ехать',
+      'едете': 'ехать',
+      'едут': 'ехать'
+    };
+    
+    // 检查不规则动词
+    if (irregularVerbs[word]) {
+      restoredForms.push(irregularVerbs[word]);
+    }
+    
+    // 应用第一变位类规则
+    for (let rule of firstConjugationPatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    // 应用第二变位类规则
+    for (let rule of secondConjugationPatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    return restoredForms;
+  }
+
+  /**
+   * 俄语形容词变化还原
+   * 处理形容词的性数格变化
+   * @param {string} word 变化后的形容词
+   * @returns {Array<string>} 可能的原形（阳性单数主格）
+   */
+  restoreRussianAdjectiveDeclension(word) {
+    let restoredForms = [];
+    
+    // 硬变化形容词还原规则
+    const hardAdjectivePatterns = [
+      // 阴性形式 → 阳性
+      { pattern: /ая$/, replacement: 'ый' },
+      { pattern: /ую$/, replacement: 'ый' },
+      { pattern: /ой$/, replacement: 'ый' },
+      // 中性形式 → 阳性
+      { pattern: /ое$/, replacement: 'ый' },
+      { pattern: /ого$/, replacement: 'ый' },
+      { pattern: /ому$/, replacement: 'ый' },
+      { pattern: /ым$/, replacement: 'ый' },
+      { pattern: /ом$/, replacement: 'ый' },
+      // 复数形式 → 阳性单数
+      { pattern: /ые$/, replacement: 'ый' },
+      { pattern: /ых$/, replacement: 'ый' },
+      { pattern: /ыми$/, replacement: 'ый' }
+    ];
+    
+    // 软变化形容词还原规则
+    const softAdjectivePatterns = [
+      // 阴性形式 → 阳性
+      { pattern: /яя$/, replacement: 'ий' },
+      { pattern: /юю$/, replacement: 'ий' },
+      { pattern: /ей$/, replacement: 'ий' },
+      // 中性形式 → 阳性
+      { pattern: /ее$/, replacement: 'ий' },
+      { pattern: /его$/, replacement: 'ий' },
+      { pattern: /ему$/, replacement: 'ий' },
+      { pattern: /им$/, replacement: 'ий' },
+      { pattern: /ем$/, replacement: 'ий' },
+      // 复数形式 → 阳性单数
+      { pattern: /ие$/, replacement: 'ий' },
+      { pattern: /их$/, replacement: 'ий' },
+      { pattern: /ими$/, replacement: 'ий' }
+    ];
+    
+    // 应用硬变化规则
+    for (let rule of hardAdjectivePatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    // 应用软变化规则
+    for (let rule of softAdjectivePatterns) {
+      if (rule.pattern.test(word)) {
+        let restored = word.replace(rule.pattern, rule.replacement);
+        if (restored && restored !== word) {
+          restoredForms.push(restored);
+        }
+      }
+    }
+    
+    return restoredForms;
+  }
+
+  /**
+   * 俄语动词体对处理
+   * 处理完成体/未完成体动词对
+   * @param {string} word 动词
+   * @returns {Array<string>} 可能的体对形式
+   */
+  restoreRussianVerbAspects(word) {
+    let restoredForms = [];
+    
+    // 常见动词体对映射
+    const aspectPairs = {
+      // 完成体 → 未完成体
+      'сделать': 'делать',
+      'прочитать': 'читать',
+      'написать': 'писать',
+      'купить': 'покупать',
+      'решить': 'решать',
+      'построить': 'строить',
+      'выучить': 'учить',
+      'найти': 'искать',
+      // 未完成体 → 完成体
+      'делать': 'сделать',
+      'читать': 'прочитать',
+      'писать': 'написать',
+      'покупать': 'купить',
+      'решать': 'решить',
+      'строить': 'построить',
+      'учить': 'выучить',
+      'искать': 'найти'
+    };
+    
+    // 检查体对映射
+    if (aspectPairs[word]) {
+      restoredForms.push(aspectPairs[word]);
+    }
+    
+    // 前缀规则：完成体动词通常有前缀
+    const perfectivePrefixes = ['с', 'про', 'на', 'вы', 'по', 'за', 'при', 'пере', 'до'];
+    
+    for (let prefix of perfectivePrefixes) {
+      if (word.startsWith(prefix)) {
+        let unprefixed = word.substring(prefix.length);
+        if (unprefixed.length > 2) {
+          restoredForms.push(unprefixed);
+        }
+      }
+    }
+    
+    return restoredForms;
   }
 
   /**
