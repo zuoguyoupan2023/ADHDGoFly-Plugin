@@ -340,62 +340,74 @@ class TextSegmenter {
     console.log('词典类型:', typeof dictionary);
     console.log('词典是否有words属性:', dictionary && dictionary.words ? '是' : '否');
     
-    // 硬编码的测试词汇列表
-    const testWords = ['littérature', 'française', 'travail', 'étréci', 'projet', 'efficace', 'étudier', 'réussir'];
-    
     // 按空格分割文本
     let tokens = text.split(/\s+/);
     let processedTokens = [];
     
     for (let i = 0; i < tokens.length; i++) {
       let token = tokens[i];
-      if (!token) continue;
       
-      // 清理词汇（移除标点，转为小写）
+      // 清理词汇，保留法语重音字符
       let cleanWord = token.toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
       
       console.log(`处理词汇: "${token}" -> 清理后: "${cleanWord}"`);
       
-      // 检查是否在测试词汇列表中
-      if (testWords.includes(cleanWord)) {
-        console.log(`发现测试词汇: ${cleanWord}`);
-        
-        // 从词典中查找 - 处理两种可能的词典格式
-        let entry = null;
-        let pos = null;
-        
-        // 情况1: 完整词典结构 {words: {...}}
-        if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
-          entry = dictionary.words[cleanWord];
-          pos = entry.pos ? entry.pos[0] : entry;
-          console.log(`完整词典中找到: ${cleanWord}, 词性: ${pos}`);
-        }
-        // 情况2: 扁平化词典结构 {word: pos, ...}
-        else if (dictionary && dictionary[cleanWord]) {
-          pos = dictionary[cleanWord];
-          console.log(`扁平词典中找到: ${cleanWord}, 词性: ${pos}`);
-        }
-        
-        if (pos) {
-          let normalizedPos = this.normalizePartOfSpeech(pos);
-          console.log(`标准化词性: ${normalizedPos}`);
-          
-          // 检查是否应该高亮
-          if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
-              (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-              (normalizedPos === 'a' && this.highlightingToggles.adj)) {
-            processedTokens.push(`<span class="adhd-${normalizedPos}">${token}</span>`);
-            console.log(`添加高亮: ${normalizedPos}`);
+      // 跳过空词汇
+      if (!cleanWord) {
+        processedTokens.push(token);
+        continue;
+      }
+      
+      // 从词典中查找 - 处理两种可能的词典格式
+      let entry = null;
+      let pos = null;
+      
+      // 情况1: 完整词典结构 {words: {...}}
+      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
+        entry = dictionary.words[cleanWord];
+        // 如果有多个词性，优先选择形容词，然后动词，最后名词
+        if (entry.pos && Array.isArray(entry.pos)) {
+          if (entry.pos.includes('adj')) {
+            pos = 'adj';
+          } else if (entry.pos.includes('v')) {
+            pos = 'v';
           } else {
-            processedTokens.push(token);
-            console.log('不高亮（开关关闭或词性不匹配）');
+            pos = entry.pos[0];
           }
         } else {
-          console.log(`词典中未找到: ${cleanWord}`);
+          pos = entry.pos ? entry.pos[0] : entry;
+        }
+        console.log(`完整词典中找到: ${cleanWord}, 所有词性: ${entry.pos}, 选择词性: ${pos}`);
+      }
+      // 情况2: 扁平化词典结构 {word: pos, ...}
+      else if (dictionary && dictionary[cleanWord]) {
+        pos = dictionary[cleanWord];
+        console.log(`扁平词典中找到: ${cleanWord}, 词性: ${pos}`);
+      }
+      
+      if (pos) {
+        let normalizedPos = this.normalizePartOfSpeech(pos);
+        console.log(`标准化词性: ${normalizedPos}`);
+        
+        // 检查是否应该高亮
+        if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj)) {
+          // 分离词汇和标点符号
+          const wordMatch = token.match(/^([\w\u00C0-\u017F]+)(.*)$/);
+          if (wordMatch) {
+            const [, word, punctuation] = wordMatch;
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${word}</span>${punctuation}`);
+          } else {
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${token}</span>`);
+          }
+          console.log(`添加高亮: ${normalizedPos}`);
+        } else {
           processedTokens.push(token);
+          console.log('不高亮（开关关闭或词性不匹配）');
         }
       } else {
-        console.log(`非测试词汇: ${cleanWord}`);
+        console.log(`词典中未找到: ${cleanWord}`);
         processedTokens.push(token);
       }
     }
