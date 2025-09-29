@@ -51,6 +51,15 @@ class TextSegmenter {
       dictionary: new Map()
     };
     
+    // 西班牙语形态学还原缓存
+    this.spanishMorphologyCache = {
+      nouns: new Map(),
+      verbs: new Map(),
+      adjectives: new Map(),
+      reflexives: new Map(),
+      dictionary: new Map()
+    };
+    
     // 缓存大小限制
     this.maxCacheSize = 1000;
   }
@@ -754,29 +763,35 @@ class TextSegmenter {
         continue;
       }
       
-      // 从词典中查找 - 处理两种可能的词典格式
-      let entry = null;
+      // 处理冠词缩写（al, del）
       let pos = null;
+      let baseForm = null;
       
-      // 情况1: 完整词典结构 {words: {...}}
-      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
-        entry = dictionary.words[cleanWord];
-        // 如果有多个词性，优先选择形容词，然后动词，最后名词
-        if (entry.pos && Array.isArray(entry.pos)) {
-          if (entry.pos.includes('adj')) {
-            pos = 'adj';
-          } else if (entry.pos.includes('v')) {
-            pos = 'v';
-          } else {
-            pos = entry.pos[0];
+      if (cleanWord === 'al' || cleanWord === 'del') {
+        // 获取下一个词汇用于冠词缩写处理
+        const nextToken = i + 1 < tokens.length ? tokens[i + 1] : null;
+        const nextCleanWord = nextToken ? nextToken.toLowerCase().replace(/[^\w\u00C0-\u017F\u00D1\u00F1]/g, '') : null;
+        
+        if (nextCleanWord) {
+          // 处理缩写，尝试查找后续名词
+          const contractionResult = this.restoreSpanishContractions(cleanWord, nextCleanWord);
+          if (contractionResult.length > 0) {
+            // 查找名词部分
+            const nounResult = this.findSpanishWordInDictionary(nextCleanWord, dictionary);
+            if (nounResult.pos) {
+              // 高亮缩写词汇本身（作为介词处理）
+              processedTokens.push(token); // 不高亮缩写，但保留原词
+              continue;
+            }
           }
-        } else {
-          pos = entry.pos ? entry.pos[0] : entry;
         }
       }
-      // 情况2: 扁平化词典结构 {word: pos, ...}
-      else if (dictionary && dictionary[cleanWord]) {
-        pos = dictionary[cleanWord];
+      
+      // 使用形态学还原查找词汇
+      const morphologyResult = this.findSpanishWordInDictionary(cleanWord, dictionary);
+      if (morphologyResult.pos) {
+        pos = morphologyResult.pos;
+        baseForm = morphologyResult.baseForm;
       }
       
       if (pos) {
@@ -803,6 +818,246 @@ class TextSegmenter {
     }
     
     return processedTokens.join(' ');
+  }
+
+  /**
+   * 西班牙语名词复数还原算法
+   * 将名词的复数形式还原为单数形式
+   * @param {string} word 要还原的词汇
+   * @returns {Array} 候选的单数形式数组
+   */
+  restoreSpanishNounPlural(word) {
+    const candidates = [];
+    
+    // 规则1: 以-s结尾的复数 → 去掉-s
+    // libros → libro, casas → casa
+    if (word.endsWith('s') && word.length > 2) {
+      candidates.push(word.slice(0, -1));
+    }
+    
+    // 规则2: 以-es结尾的复数 → 去掉-es
+    // profesores → profesor, ciudades → ciudad
+    if (word.endsWith('es') && word.length > 3) {
+      candidates.push(word.slice(0, -2));
+    }
+    
+    // 规则3: 以-ces结尾的复数 → 变为-z
+    // lápices → lápiz, luces → luz
+    if (word.endsWith('ces') && word.length > 4) {
+      candidates.push(word.slice(0, -3) + 'z');
+    }
+    
+    // 去重并返回
+    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+  }
+
+  /**
+   * 西班牙语动词变位还原算法
+   * 将动词的变位形式还原为不定式形式
+   * @param {string} word 要还原的词汇
+   * @returns {Array} 候选的不定式形式数组
+   */
+  restoreSpanishVerbConjugation(word) {
+    const candidates = [];
+    
+    // -ar动词变位还原
+    const arEndings = ['o', 'as', 'a', 'amos', 'áis', 'an'];
+    for (const ending of arEndings) {
+      if (word.endsWith(ending) && word.length > ending.length + 1) {
+        const stem = word.slice(0, -ending.length);
+        candidates.push(stem + 'ar');
+      }
+    }
+    
+    // -er动词变位还原
+    const erEndings = ['o', 'es', 'e', 'emos', 'éis', 'en'];
+    for (const ending of erEndings) {
+      if (word.endsWith(ending) && word.length > ending.length + 1) {
+        const stem = word.slice(0, -ending.length);
+        candidates.push(stem + 'er');
+      }
+    }
+    
+    // -ir动词变位还原
+    const irEndings = ['o', 'es', 'e', 'imos', 'ís', 'en'];
+    for (const ending of irEndings) {
+      if (word.endsWith(ending) && word.length > ending.length + 1) {
+        const stem = word.slice(0, -ending.length);
+        candidates.push(stem + 'ir');
+      }
+    }
+    
+    // 处理常见不规则动词变位
+    const irregularVerbs = {
+      'soy': 'ser', 'eres': 'ser', 'es': 'ser', 'somos': 'ser', 'sois': 'ser', 'son': 'ser',
+      'estoy': 'estar', 'estás': 'estar', 'está': 'estar', 'estamos': 'estar', 'estáis': 'estar', 'están': 'estar',
+      'tengo': 'tener', 'tienes': 'tener', 'tiene': 'tener', 'tenemos': 'tener', 'tenéis': 'tener', 'tienen': 'tener',
+      'hago': 'hacer', 'haces': 'hacer', 'hace': 'hacer', 'hacemos': 'hacer', 'hacéis': 'hacer', 'hacen': 'hacer',
+      'voy': 'ir', 'vas': 'ir', 'va': 'ir', 'vamos': 'ir', 'vais': 'ir', 'van': 'ir'
+    };
+    
+    if (irregularVerbs[word]) {
+      candidates.push(irregularVerbs[word]);
+    }
+    
+    // 去重并返回
+    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+  }
+
+  /**
+   * 西班牙语形容词性数一致还原算法
+   * 将形容词的性数变化形式还原为阳性单数形式
+   * @param {string} word 要还原的词汇
+   * @returns {Array} 候选的阳性单数形式数组
+   */
+  restoreSpanishAdjectiveAgreement(word) {
+    const candidates = [];
+    
+    // 阴性形容词 → 阳性形容词
+    // buena → bueno, alta → alto
+    if (word.endsWith('a') && word.length > 2) {
+      candidates.push(word.slice(0, -1) + 'o');
+    }
+    
+    // 复数形容词 → 单数形容词
+    // buenos → bueno, buenas → buena → bueno
+    if (word.endsWith('os') && word.length > 3) {
+      candidates.push(word.slice(0, -2));
+    }
+    if (word.endsWith('as') && word.length > 3) {
+      const singular = word.slice(0, -2);
+      candidates.push(singular);
+      candidates.push(singular + 'o'); // buenas → buena → bueno
+    }
+    
+    // 以辅音结尾的复数形容词
+    // felices → feliz, azules → azul
+    if (word.endsWith('es') && word.length > 3) {
+      candidates.push(word.slice(0, -2));
+    }
+    
+    // 去重并返回
+    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+  }
+
+  /**
+   * 西班牙语反身动词处理算法
+   * 处理以se结尾的反身动词形式
+   * @param {string} word 要还原的词汇
+   * @returns {Array} 候选的基础动词形式数组
+   */
+  restoreSpanishReflexiveVerbs(word) {
+    const candidates = [];
+    
+    // 处理反身代词 + 动词的组合
+    // me lavo → lavar, se come → comer, nos vamos → ir
+    const reflexivePronouns = ['me', 'te', 'se', 'nos', 'os'];
+    
+    for (const pronoun of reflexivePronouns) {
+      if (word.startsWith(pronoun) && word.length > pronoun.length + 2) {
+        const verbPart = word.slice(pronoun.length);
+        // 递归调用动词变位还原
+        const verbCandidates = this.restoreSpanishVerbConjugation(verbPart);
+        candidates.push(...verbCandidates);
+      }
+    }
+    
+    // 处理不定式反身动词
+    // lavarse → lavar, comerse → comer
+    if (word.endsWith('se') && word.length > 4) {
+      const baseVerb = word.slice(0, -2);
+      if (baseVerb.endsWith('ar') || baseVerb.endsWith('er') || baseVerb.endsWith('ir')) {
+        candidates.push(baseVerb);
+      }
+    }
+    
+    // 去重并返回
+    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+  }
+
+  /**
+   * 西班牙语冠词缩写处理算法
+   * 处理al和del缩写形式
+   * @param {string} word 当前词汇
+   * @param {string} nextWord 下一个词汇
+   * @returns {Object} 缩写分析结果
+   */
+  restoreSpanishContractions(word, nextWord) {
+    const results = [];
+    
+    // al = a + el
+    if (word === 'al' && nextWord) {
+      results.push({
+        preposition: 'a',
+        article: 'el',
+        noun: nextWord,
+        type: 'contraction'
+      });
+    }
+    
+    // del = de + el
+    if (word === 'del' && nextWord) {
+      results.push({
+        preposition: 'de',
+        article: 'el',
+        noun: nextWord,
+        type: 'contraction'
+      });
+    }
+    
+    return results;
+  }
+
+  /**
+   * 在词典中查找西班牙语单词（包含形态学还原）
+   * @param {string} word 要查找的词汇
+   * @param {Object} dictionary 词典对象
+   * @returns {Object} 查找结果 {baseForm, pos}
+   */
+  findSpanishWordInDictionary(word, dictionary) {
+    // 直接查找
+    let result = this.lookupInDictionary(word, dictionary);
+    if (result.pos) {
+      return { baseForm: word, pos: result.pos };
+    }
+    
+    // 尝试名词复数还原
+    const nounCandidates = this.restoreSpanishNounPlural(word);
+    for (const candidate of nounCandidates) {
+      result = this.lookupInDictionary(candidate, dictionary);
+      if (result.pos) {
+        return { baseForm: candidate, pos: result.pos };
+      }
+    }
+    
+    // 尝试动词变位还原
+    const verbCandidates = this.restoreSpanishVerbConjugation(word);
+    for (const candidate of verbCandidates) {
+      result = this.lookupInDictionary(candidate, dictionary);
+      if (result.pos) {
+        return { baseForm: candidate, pos: result.pos };
+      }
+    }
+    
+    // 尝试形容词性数还原
+    const adjCandidates = this.restoreSpanishAdjectiveAgreement(word);
+    for (const candidate of adjCandidates) {
+      result = this.lookupInDictionary(candidate, dictionary);
+      if (result.pos) {
+        return { baseForm: candidate, pos: result.pos };
+      }
+    }
+    
+    // 尝试反身动词还原
+    const reflexiveCandidates = this.restoreSpanishReflexiveVerbs(word);
+    for (const candidate of reflexiveCandidates) {
+      result = this.lookupInDictionary(candidate, dictionary);
+      if (result.pos) {
+        return { baseForm: candidate, pos: result.pos };
+      }
+    }
+    
+    return { baseForm: null, pos: null };
   }
 
   /**
