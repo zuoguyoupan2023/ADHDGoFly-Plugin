@@ -827,6 +827,11 @@ class TextSegmenter {
    * @returns {Array} 候选的单数形式数组
    */
   restoreSpanishNounPlural(word) {
+    // 检查缓存
+    if (this.spanishMorphologyCache.nouns.has(word)) {
+      return this.spanishMorphologyCache.nouns.get(word);
+    }
+    
     const candidates = [];
     
     // 规则1: 以-s结尾的复数 → 去掉-s
@@ -848,7 +853,16 @@ class TextSegmenter {
     }
     
     // 去重并返回
-    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    const result = [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    
+    // 存储到缓存（限制缓存大小）
+    if (this.spanishMorphologyCache.nouns.size >= this.maxCacheSize) {
+      const firstKey = this.spanishMorphologyCache.nouns.keys().next().value;
+      this.spanishMorphologyCache.nouns.delete(firstKey);
+    }
+    this.spanishMorphologyCache.nouns.set(word, result);
+    
+    return result;
   }
 
   /**
@@ -858,6 +872,11 @@ class TextSegmenter {
    * @returns {Array} 候选的不定式形式数组
    */
   restoreSpanishVerbConjugation(word) {
+    // 检查缓存
+    if (this.spanishMorphologyCache.verbs.has(word)) {
+      return this.spanishMorphologyCache.verbs.get(word);
+    }
+    
     const candidates = [];
     
     // -ar动词变位还原
@@ -901,7 +920,16 @@ class TextSegmenter {
     }
     
     // 去重并返回
-    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    const result = [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    
+    // 存储到缓存（限制缓存大小）
+    if (this.spanishMorphologyCache.verbs.size >= this.maxCacheSize) {
+      const firstKey = this.spanishMorphologyCache.verbs.keys().next().value;
+      this.spanishMorphologyCache.verbs.delete(firstKey);
+    }
+    this.spanishMorphologyCache.verbs.set(word, result);
+    
+    return result;
   }
 
   /**
@@ -911,6 +939,11 @@ class TextSegmenter {
    * @returns {Array} 候选的阳性单数形式数组
    */
   restoreSpanishAdjectiveAgreement(word) {
+    // Check cache first
+    if (this.spanishMorphologyCache.adjectives.has(word)) {
+      return this.spanishMorphologyCache.adjectives.get(word);
+    }
+    
     const candidates = [];
     
     // 阴性形容词 → 阳性形容词
@@ -937,7 +970,16 @@ class TextSegmenter {
     }
     
     // 去重并返回
-    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    const result = [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    
+    // Cache the result
+    if (this.spanishMorphologyCache.adjectives.size >= this.maxCacheSize) {
+      const firstKey = this.spanishMorphologyCache.adjectives.keys().next().value;
+      this.spanishMorphologyCache.adjectives.delete(firstKey);
+    }
+    this.spanishMorphologyCache.adjectives.set(word, result);
+    
+    return result;
   }
 
   /**
@@ -947,6 +989,11 @@ class TextSegmenter {
    * @returns {Array} 候选的基础动词形式数组
    */
   restoreSpanishReflexiveVerbs(word) {
+    // Check cache first
+    if (this.spanishMorphologyCache.reflexives.has(word)) {
+      return this.spanishMorphologyCache.reflexives.get(word);
+    }
+    
     const candidates = [];
     
     // 处理反身代词 + 动词的组合
@@ -972,7 +1019,16 @@ class TextSegmenter {
     }
     
     // 去重并返回
-    return [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    const result = [...new Set(candidates)].filter(candidate => candidate.length > 0);
+    
+    // Cache the result
+    if (this.spanishMorphologyCache.reflexives.size >= this.maxCacheSize) {
+      const firstKey = this.spanishMorphologyCache.reflexives.keys().next().value;
+      this.spanishMorphologyCache.reflexives.delete(firstKey);
+    }
+    this.spanishMorphologyCache.reflexives.set(word, result);
+    
+    return result;
   }
 
   /**
@@ -1015,10 +1071,22 @@ class TextSegmenter {
    * @returns {Object} 查找结果 {baseForm, pos}
    */
   findSpanishWordInDictionary(word, dictionary) {
+    // Check cache first
+    if (this.spanishMorphologyCache.dictionary.has(word)) {
+      return this.spanishMorphologyCache.dictionary.get(word);
+    }
+    
     // 直接查找
     let result = this.lookupInDictionary(word, dictionary);
     if (result.pos) {
-      return { baseForm: word, pos: result.pos };
+      const finalResult = { baseForm: word, pos: result.pos };
+      // Cache the result
+      if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+        const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+        this.spanishMorphologyCache.dictionary.delete(firstKey);
+      }
+      this.spanishMorphologyCache.dictionary.set(word, finalResult);
+      return finalResult;
     }
     
     // 尝试名词复数还原
@@ -1026,7 +1094,14 @@ class TextSegmenter {
     for (const candidate of nounCandidates) {
       result = this.lookupInDictionary(candidate, dictionary);
       if (result.pos) {
-        return { baseForm: candidate, pos: result.pos };
+        const finalResult = { baseForm: candidate, pos: result.pos };
+        // Cache the result
+        if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+          const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+          this.spanishMorphologyCache.dictionary.delete(firstKey);
+        }
+        this.spanishMorphologyCache.dictionary.set(word, finalResult);
+        return finalResult;
       }
     }
     
@@ -1035,7 +1110,14 @@ class TextSegmenter {
     for (const candidate of verbCandidates) {
       result = this.lookupInDictionary(candidate, dictionary);
       if (result.pos) {
-        return { baseForm: candidate, pos: result.pos };
+        const finalResult = { baseForm: candidate, pos: result.pos };
+        // Cache the result
+        if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+          const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+          this.spanishMorphologyCache.dictionary.delete(firstKey);
+        }
+        this.spanishMorphologyCache.dictionary.set(word, finalResult);
+        return finalResult;
       }
     }
     
@@ -1044,7 +1126,14 @@ class TextSegmenter {
     for (const candidate of adjCandidates) {
       result = this.lookupInDictionary(candidate, dictionary);
       if (result.pos) {
-        return { baseForm: candidate, pos: result.pos };
+        const finalResult = { baseForm: candidate, pos: result.pos };
+        // Cache the result
+        if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+          const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+          this.spanishMorphologyCache.dictionary.delete(firstKey);
+        }
+        this.spanishMorphologyCache.dictionary.set(word, finalResult);
+        return finalResult;
       }
     }
     
@@ -1053,11 +1142,25 @@ class TextSegmenter {
     for (const candidate of reflexiveCandidates) {
       result = this.lookupInDictionary(candidate, dictionary);
       if (result.pos) {
-        return { baseForm: candidate, pos: result.pos };
+        const finalResult = { baseForm: candidate, pos: result.pos };
+        // Cache the result
+        if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+          const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+          this.spanishMorphologyCache.dictionary.delete(firstKey);
+        }
+        this.spanishMorphologyCache.dictionary.set(word, finalResult);
+        return finalResult;
       }
     }
     
-    return { baseForm: null, pos: null };
+    const finalResult = { baseForm: null, pos: null };
+    // Cache negative results too to avoid repeated processing
+    if (this.spanishMorphologyCache.dictionary.size >= this.maxCacheSize) {
+      const firstKey = this.spanishMorphologyCache.dictionary.keys().next().value;
+      this.spanishMorphologyCache.dictionary.delete(firstKey);
+    }
+    this.spanishMorphologyCache.dictionary.set(word, finalResult);
+    return finalResult;
   }
 
   /**
