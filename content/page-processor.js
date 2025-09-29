@@ -233,23 +233,12 @@ class PageProcessor {
     }
 
     try {
-      // 检测语言
-      const language = this.languageDetector.detectLanguage(text);
-      
-      // 获取对应语言的词典
-      const dictionary = this.dictionaryManager.getDictionary(language);
-      
-      if (!dictionary || Object.keys(dictionary).length === 0) {
-        this.stats.skippedNodes++;
-        return;
-      }
-      
-      // 进行分词和高亮
-      const segmentedHtml = this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
+      // 跳过语言检测，直接对所有启用的语言进行匹配
+      const segmentedHtml = this.processMultiLanguageText(text);
       
       // 如果有变化，替换节点
       if (segmentedHtml !== text) {
-        this.replaceTextNode(textNode, segmentedHtml, language);
+        this.replaceTextNode(textNode, segmentedHtml, 'multi');
         
         // 统计高亮词汇数量
         const stats = this.textSegmenter.getSegmentationStats(segmentedHtml);
@@ -263,6 +252,58 @@ class PageProcessor {
       this.stats.errors++;
       this.stats.skippedNodes++;
     }
+  }
+
+  /**
+   * 处理多语言文本，对所有启用的语言词典进行匹配
+   * @param {string} text 原始文本
+   * @returns {string} 处理后的HTML字符串
+   * @private
+   */
+  processMultiLanguageText(text) {
+    // 获取所有启用的语言
+    const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
+    
+    if (enabledLanguages.length === 0) {
+      return text;
+    }
+    
+    // 如果只有一种语言启用，使用原有逻辑
+    if (enabledLanguages.length === 1) {
+      const language = enabledLanguages[0];
+      const dictionary = this.dictionaryManager.getDictionary(language);
+      if (dictionary && Object.keys(dictionary).length > 0) {
+        return this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
+      }
+      return text;
+    }
+    
+    // 多语言处理：合并所有词典，一次性处理
+    const combinedDictionary = {};
+    const languagePriority = ['zh', 'ja', 'ko', 'ru', 'fr', 'es', 'en'];
+    
+    // 按优先级合并词典（后面的语言会覆盖前面的）
+    const sortedLanguages = enabledLanguages.sort((a, b) => {
+      const aIndex = languagePriority.indexOf(a);
+      const bIndex = languagePriority.indexOf(b);
+      return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+    });
+    
+    for (const language of sortedLanguages) {
+      const dictionary = this.dictionaryManager.getDictionary(language);
+      if (dictionary && Object.keys(dictionary).length > 0) {
+        Object.assign(combinedDictionary, dictionary);
+      }
+    }
+    
+    // 使用合并后的词典进行一次性处理
+    if (Object.keys(combinedDictionary).length > 0) {
+      // 选择主要语言进行处理（优先级最高的启用语言）
+      const primaryLanguage = sortedLanguages[0];
+      return this.textSegmenter.segmentText(text, primaryLanguage, combinedDictionary, this.dictionaryManager);
+    }
+    
+    return text;
   }
 
   /**
