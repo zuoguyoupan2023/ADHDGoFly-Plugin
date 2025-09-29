@@ -272,13 +272,13 @@ class QuickHighlighter {
     return html;
   }
 
-  // 基于空格的文本分词（英文、法文、西班牙文、俄文）
-  segmentSpaceBasedText(text, dictionary) {
+  // 英语文本分词和高亮处理（专用于英语）
+  segmentEnglishText(text, dictionary) {
     const words = text.split(/(\s+|[.,!?;:()")])/);
     let html = '';
     
     words.forEach(word => {
-      const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+      const cleanWord = word.toLowerCase().replace(/[^a-zA-Z]/g, '');
       let pos = dictionary[cleanWord];
       
       let isComparative = false;
@@ -356,6 +356,138 @@ class QuickHighlighter {
           (normalizedPos === 'v' && this.highlightingToggles.verb) ||
           (normalizedPos === 'a' && this.highlightingToggles.adj) ||
           (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+          (normalizedPos === 'other')
+        );
+        
+        if (shouldHighlight && normalizedPos !== 'other') {
+          html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+        } else {
+          html += word;
+        }
+      } else {
+        html += word;
+      }
+    });
+    
+    return html;
+  }
+
+  // 法语文本分词和高亮处理（专用于法语）
+  segmentFrenchText(text, dictionary) {
+    const words = text.split(/(\s+|[.,!?;:()")])/);
+    let html = '';
+    
+    words.forEach(word => {
+      const cleanWord = word.toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
+      let pos = dictionary[cleanWord];
+      
+      // 如果直接匹配失败，尝试法语词汇变形匹配
+      if (!pos && cleanWord.length > 0) {
+        const possibleStems = this.getFrenchStems(cleanWord);
+        for (const stem of possibleStems) {
+          if (dictionary[stem]) {
+            pos = dictionary[stem];
+            break;
+          }
+        }
+      }
+      
+      if (pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 根据高亮开关决定是否应用高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'adv' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'other')
+        );
+        
+        if (shouldHighlight && normalizedPos !== 'other') {
+          html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+        } else {
+          html += word;
+        }
+      } else {
+        html += word;
+      }
+    });
+    
+    return html;
+  }
+
+  // 西班牙语文本分词和高亮处理（专用于西班牙语）
+  segmentSpanishText(text, dictionary) {
+    const words = text.split(/(\s+|[.,!?;:()")])/);
+    let html = '';
+    
+    words.forEach(word => {
+      const cleanWord = word.toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
+      let pos = dictionary[cleanWord];
+      
+      // 如果直接匹配失败，尝试西班牙语词汇变形匹配
+      if (!pos && cleanWord.length > 0) {
+        const possibleStems = this.getSpanishStems(cleanWord);
+        for (const stem of possibleStems) {
+          if (dictionary[stem]) {
+            pos = dictionary[stem];
+            break;
+          }
+        }
+      }
+      
+      if (pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 根据高亮开关决定是否应用高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'adv' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'other')
+        );
+        
+        if (shouldHighlight && normalizedPos !== 'other') {
+          html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+        } else {
+          html += word;
+        }
+      } else {
+        html += word;
+      }
+    });
+    
+    return html;
+  }
+
+  // 俄语文本分词和高亮处理（专用于俄语）
+  segmentRussianText(text, dictionary) {
+    const words = text.split(/(\s+|[.,!?;:()")])/);
+    let html = '';
+    
+    words.forEach(word => {
+      const cleanWord = word.toLowerCase().replace(/[^\w\u0400-\u04FF]/g, '');
+      let pos = dictionary[cleanWord];
+      
+      // 如果直接匹配失败，尝试俄语词汇变形匹配
+      if (!pos && cleanWord.length > 0) {
+        const possibleStems = this.getRussianStems(cleanWord);
+        for (const stem of possibleStems) {
+          if (dictionary[stem]) {
+            pos = dictionary[stem];
+            break;
+          }
+        }
+      }
+      
+      if (pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 根据高亮开关决定是否应用高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'adv' && this.highlightingToggles.adj) ||
           (normalizedPos === 'other')
         );
         
