@@ -76,6 +76,12 @@ class QuickHighlighter {
   constructor() {
     this.enabled = false;
     this.dictionaryManager = new DictionaryManager();
+    this.highlightingToggles = {
+      noun: true,
+      verb: true,
+      adj: true,
+      comparative: true
+    };
     this.init();
   }
 
@@ -84,13 +90,27 @@ class QuickHighlighter {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'toggle') {
         this.toggle();
+      } else if (message.action === 'updateColorScheme') {
+        // 更新高亮开关设置
+        if (message.highlightingToggles) {
+          this.highlightingToggles = { ...this.highlightingToggles, ...message.highlightingToggles };
+          console.log('更新高亮开关设置:', this.highlightingToggles);
+          // 如果当前已启用，重新处理页面
+          if (this.enabled) {
+            this.removeHighlights();
+            this.processPage();
+          }
+        }
       }
     });
     
-    // 检查存储的状态
-    chrome.storage.local.get(['enabled'], (result) => {
+    // 检查存储的状态和设置
+    chrome.storage.local.get(['enabled', 'highlightingToggles'], (result) => {
       if (result.enabled) {
         this.enable();
+      }
+      if (result.highlightingToggles) {
+        this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
       }
     });
   }
@@ -223,7 +243,21 @@ class QuickHighlighter {
         const pos = dictionary[word];
         
         if (pos) {
-          html += `<span class="adhd-${this.normalizePos(pos)}">${word}</span>`;
+          const normalizedPos = this.normalizePos(pos);
+          // 根据高亮开关决定是否应用高亮
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+            (normalizedPos === 'other')
+          );
+          
+          if (shouldHighlight && normalizedPos !== 'other') {
+            html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+          } else {
+            html += word;
+          }
           i += len - 1; // 跳过已匹配的字符
           matched = true;
           break;
@@ -240,21 +274,174 @@ class QuickHighlighter {
 
   // 基于空格的文本分词（英文、法文、西班牙文、俄文）
   segmentSpaceBasedText(text, dictionary) {
-    const words = text.split(/(\s+|[.,!?;:()"])/);
+    const words = text.split(/(\s+|[.,!?;:()")])/);
     let html = '';
     
     words.forEach(word => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
-      const pos = dictionary[cleanWord];
+      let pos = dictionary[cleanWord];
       
-      if (pos) {
-        html += `<span class="adhd-${this.normalizePos(pos)}">${word}</span>`;
+      let isComparative = false;
+      
+      // 对于英语单词，总是检查是否为比较级或最高级
+      if (cleanWord.length > 0 && /^[a-zA-Z]+$/.test(cleanWord)) {
+        // 检查是否为比较级或最高级
+        if (cleanWord.endsWith('er') && cleanWord.length > 3) {
+          isComparative = true;
+        } else if (cleanWord.endsWith('est') && cleanWord.length > 4) {
+          isComparative = true;
+        } else if (['better', 'best', 'worse', 'worst'].includes(cleanWord)) {
+          isComparative = true;
+        }
+      }
+      
+      // 如果直接匹配失败，尝试词汇变形匹配（仅对英语）
+      if (!pos && cleanWord.length > 0) {
+        // 简单判断是否为英语（包含英文字母）
+        if (/^[a-zA-Z]+$/.test(cleanWord)) {
+          // 使用简化的英语变形规则
+          const possibleStems = this.getEnglishStems(cleanWord);
+          for (const stem of possibleStems) {
+            if (dictionary[stem]) {
+              pos = dictionary[stem];
+              break;
+            }
+          }
+        }
+      }
+      
+      // 检查比较级/最高级，但排除已识别为名词或动词的词汇
+      if (isComparative && pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 如果词典中标记为名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
+          );
+          
+          if (shouldHighlight) {
+            html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+          } else {
+            html += word;
+          }
+        } else {
+          // 词典中标记为形容词或副词的比较级
+          if (this.highlightingToggles.comparative) {
+            // 紫色比较级高亮开启，显示为紫色
+            html += `<span class="adhd-comp">${word}</span>`;
+          } else if (this.highlightingToggles.adj) {
+            // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+            html += `<span class="adhd-adj">${word}</span>`;
+          } else {
+            html += word;
+          }
+        }
+      } else if (isComparative && !pos) {
+        // 词典中找不到但符合比较级模式的词
+        if (this.highlightingToggles.comparative) {
+          // 紫色比较级高亮开启，显示为紫色
+          html += `<span class="adhd-comp">${word}</span>`;
+        } else if (this.highlightingToggles.adj) {
+          // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+          html += `<span class="adhd-adj">${word}</span>`;
+        } else {
+          html += word;
+        }
+      } else if (pos) {
+        const normalizedPos = this.normalizePos(pos);
+        // 根据高亮开关决定是否应用高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+          (normalizedPos === 'adv' && this.highlightingToggles.adj) || // 副词也使用形容词开关
+          (normalizedPos === 'other')
+        );
+        
+        if (shouldHighlight && normalizedPos !== 'other') {
+          html += `<span class="adhd-${normalizedPos}">${word}</span>`;
+        } else {
+          html += word;
+        }
       } else {
         html += word;
       }
     });
     
     return html;
+  }
+  
+  // 简化的英语词根提取（内嵌到content.js中）
+  getEnglishStems(word) {
+    const stems = [word]; // 总是包含原词
+    
+    // 不规则动词映射
+    const irregularVerbs = {
+      'went': 'go', 'gone': 'go', 'ran': 'run', 'came': 'come',
+      'thought': 'think', 'brought': 'bring', 'caught': 'catch',
+      'taught': 'teach', 'bought': 'buy', 'fought': 'fight'
+    };
+    
+    // 不规则形容词映射
+    const irregularAdj = {
+      'better': 'good', 'best': 'good', 'worse': 'bad', 'worst': 'bad'
+    };
+    
+    // 检查不规则形式
+    if (irregularVerbs[word]) stems.push(irregularVerbs[word]);
+    if (irregularAdj[word]) stems.push(irregularAdj[word]);
+    
+    // 规则变形处理
+    // 复数名词 -s, -es
+    if (word.endsWith('s') && word.length > 2) {
+      stems.push(word.slice(0, -1));
+      if (word.endsWith('es') && word.length > 3) {
+        stems.push(word.slice(0, -2));
+      }
+    }
+    
+    // 动词 -ed
+    if (word.endsWith('ed') && word.length > 3) {
+      const stem = word.slice(0, -2);
+      stems.push(stem);
+      stems.push(stem + 'e'); // 处理 make -> maked 的情况
+    }
+    
+    // 动词 -ing
+    if (word.endsWith('ing') && word.length > 4) {
+      const stem = word.slice(0, -3);
+      stems.push(stem);
+      stems.push(stem + 'e'); // 处理 make -> making
+      // 处理双写辅音 (running -> run)
+      if (stem.length >= 2 && stem[stem.length-1] === stem[stem.length-2]) {
+        stems.push(stem.slice(0, -1));
+      }
+    }
+    
+    // 形容词比较级 -er
+    if (word.endsWith('er') && word.length > 3) {
+      const stem = word.slice(0, -2);
+      stems.push(stem);
+      stems.push(stem + 'e'); // larger -> large
+      // 处理双写辅音 (bigger -> big)
+      if (stem.length >= 2 && stem[stem.length-1] === stem[stem.length-2]) {
+        stems.push(stem.slice(0, -1));
+      }
+    }
+    
+    // 形容词最高级 -est
+    if (word.endsWith('est') && word.length > 4) {
+      const stem = word.slice(0, -3);
+      stems.push(stem);
+      stems.push(stem + 'e'); // largest -> large
+      // 处理双写辅音 (biggest -> big)
+      if (stem.length >= 2 && stem[stem.length-1] === stem[stem.length-2]) {
+        stems.push(stem.slice(0, -1));
+      }
+    }
+    
+    return [...new Set(stems)]; // 去重
   }
 
   // 标准化词性标记

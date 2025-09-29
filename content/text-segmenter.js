@@ -3,10 +3,47 @@ class TextSegmenter {
   constructor() {
     // 标点符号和分隔符模式
     this.punctuationPattern = /[\s\p{P}]/u;
-    this.spaceBasedSeparators = /(\s+|[.,!?;:()"])/;
+    this.spaceBasedSeparators = /(\s+|[.,!?;:()'"'])/;
     
     // CJK分词的最大词长
     this.maxWordLength = 8;
+    
+    // 初始化英语词汇变形处理器
+    this.enMorphology = new EnglishMorphology();
+    
+    // 语言处理器映射表
+    this.languageProcessors = {
+      'en': 'segmentEnLangText',
+      'fr': 'segmentFrLangText', 
+      'es': 'segmentEsLangText',
+      'ru': 'segmentRuLangText'
+    };
+    
+    // 语言特定的高亮开关支持表
+    this.languageHighlightSupport = {
+      'en': ['noun', 'verb', 'adj', 'comparative'],
+      'fr': ['noun', 'verb', 'adj'],
+      'es': ['noun', 'verb', 'adj'], 
+      'ru': ['noun', 'verb', 'adj'],
+      'zh': ['noun', 'verb', 'adj'],
+      'ja': ['noun', 'verb', 'adj']
+    };
+    
+    // 高亮开关设置
+    this.highlightingToggles = {
+      noun: true,
+      verb: true,
+      adj: true,
+      comparative: true
+    };
+  }
+  
+  /**
+   * 更新高亮开关设置
+   * @param {Object} toggles 高亮开关设置
+   */
+  updateHighlightingToggles(toggles) {
+    this.highlightingToggles = { ...this.highlightingToggles, ...toggles };
   }
 
   /**
@@ -14,9 +51,10 @@ class TextSegmenter {
    * @param {string} text 要分词的文本
    * @param {string} language 语言代码
    * @param {Object} dictionary 词典对象
+   * @param {Object} dictionaryManager 词典管理器（可选，用于检查语言启用状态）
    * @returns {string} 处理后的HTML字符串
    */
-  segmentText(text, language, dictionary) {
+  segmentText(text, language, dictionary, dictionaryManager = null) {
     if (!text || !text.trim()) {
       return text;
     }
@@ -25,7 +63,24 @@ class TextSegmenter {
     if (this.isCJKLanguage(language)) {
       return this.segmentCJKText(text, dictionary);
     } else {
-      return this.segmentSpaceBasedText(text, dictionary);
+      // 检查语言是否启用（如果提供了dictionaryManager）
+      if (dictionaryManager && !dictionaryManager.isLanguageEnabled(language)) {
+        return text; // 语言未启用，返回原文本
+      }
+      
+      // 尝试使用语言特定处理器
+      const processorName = this.languageProcessors[language];
+      if (processorName && typeof this[processorName] === 'function') {
+        return this[processorName](text, dictionary, dictionaryManager);
+      }
+      
+      // 回退到通用处理器或原有逻辑
+      if (typeof this.segmentGenericText === 'function') {
+        return this.segmentGenericText(text, dictionary);
+      } else {
+        // 向后兼容：使用原有的segmentSpaceBasedText
+        return this.segmentSpaceBasedText(text, dictionary);
+      }
     }
   }
 
@@ -69,7 +124,19 @@ class TextSegmenter {
         
         if (pos) {
           const normalizedPos = this.normalizePartOfSpeech(pos);
-          html += `<span class="adhd-${normalizedPos}" data-word="${word}" data-pos="${pos}">${word}</span>`;
+          // 根据高亮开关决定是否应用高亮
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'adv' && this.highlightingToggles.adj) // 副词也使用形容词开关
+          );
+          
+          if (shouldHighlight && normalizedPos) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${word}" data-pos="${pos}">${word}</span>`;
+          } else {
+            html += word;
+          }
           i += len - 1; // 跳过已匹配的字符
           matched = true;
           break;
@@ -102,12 +169,533 @@ class TextSegmenter {
       // 清理词汇（移除标点，转为小写）
       const cleanWord = this.cleanWord(token);
       
+      // 首先尝试精确匹配
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
-        html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+        
+        // 如果是名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
+          );
+          
+          if (shouldHighlight) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
+        // 如果是形容词或副词，检查是否为比较级
+        else {
+          let isComparative = false;
+          if (cleanWord) {
+            // 不规则比较级/最高级
+            const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+            if (irregularComparatives.includes(cleanWord)) {
+              isComparative = true;
+            }
+            // 规则比较级/最高级
+            else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+              isComparative = true;
+            }
+          }
+          
+          if (isComparative) {
+             if (this.highlightingToggles.comparative) {
+               // 紫色比较级高亮开启，显示为紫色
+               html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else if (this.highlightingToggles.adj) {
+               // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+               html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else {
+               html += token;
+             }
+           } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
+             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+           } else {
+             html += token;
+           }
+        }
+      }
+      // 如果精确匹配失败，检查比较级
+      else {
+        let isComparative = false;
+        if (cleanWord) {
+          // 不规则比较级/最高级
+          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+          if (irregularComparatives.includes(cleanWord)) {
+            isComparative = true;
+          }
+          // 规则比较级/最高级
+          else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                   (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+            isComparative = true;
+          }
+        }
+        
+        if (isComparative) {
+          if (this.highlightingToggles.comparative) {
+            // 紫色比较级高亮开启，显示为紫色
+            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else if (this.highlightingToggles.adj) {
+            // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+            html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
+        // 然后尝试词汇变形匹配
+        else {
+          // 如果精确匹配失败，尝试英语词汇变形匹配
+          let matched = false;
+          if (cleanWord && this.enMorphology) {
+            const possibleStems = this.enMorphology.getPossibleStems(cleanWord);
+            for (const stem of possibleStems) {
+              if (dictionary[stem]) {
+                const pos = dictionary[stem];
+                const normalizedPos = this.normalizePartOfSpeech(pos);
+                // 根据高亮开关决定是否应用变形匹配高亮
+                const shouldHighlight = (
+                  (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+                  (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+                  (normalizedPos === 'a' && this.highlightingToggles.adj)
+                );
+                
+                if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
+                  html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
+                  matched = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          if (!matched) {
+            html += token;
+          }
+        }
+      }
+    });
+    
+    return html;
+  }
+
+  /**
+   * 通用的基于空格的文本分词处理器
+   * 提供基本的词典匹配功能，不包含语言特定逻辑
+   * @param {string} text 要分词的文本
+   * @param {Object} dictionary 词典对象
+   * @returns {string} 处理后的HTML字符串
+   */
+  segmentGenericText(text, dictionary) {
+    // 按空格和标点符号分割
+    const tokens = text.split(this.spaceBasedSeparators);
+    let html = '';
+    
+    tokens.forEach(token => {
+      if (!token) return;
+      
+      // 清理词汇（移除标点，转为小写）
+      const cleanWord = this.cleanWord(token);
+      
+      // 尝试精确匹配
+      if (cleanWord && dictionary[cleanWord]) {
+        const pos = dictionary[cleanWord];
+        const normalizedPos = this.normalizePartOfSpeech(pos);
+        
+        // 根据词性和高亮开关决定是否高亮
+        const shouldHighlight = (
+          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+          (normalizedPos === 'a' && this.highlightingToggles.adj)
+        );
+        
+        if (shouldHighlight) {
+          html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+        } else {
+          html += token;
+        }
       } else {
+        // 没有匹配到词汇，保持原样
         html += token;
+      }
+    });
+    
+    return html;
+  }
+
+  /**
+   * 法语专用文本分词处理器
+   * 硬编码检测指定词汇并从词典获取词性
+   * @param {string} text 要分词的文本
+   * @param {Object} dictionary 词典对象
+   * @returns {string} 处理后的HTML字符串
+   */
+  segmentFrLangText(text, dictionary) {
+    console.log('=== 法语处理开始 ===');
+    console.log('输入文本:', text);
+    console.log('词典类型:', typeof dictionary);
+    console.log('词典是否有words属性:', dictionary && dictionary.words ? '是' : '否');
+    
+    // 按空格分割文本
+    let tokens = text.split(/\s+/);
+    let processedTokens = [];
+    
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+      
+      // 清理词汇，保留法语重音字符
+      let cleanWord = token.toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
+      
+      console.log(`处理词汇: "${token}" -> 清理后: "${cleanWord}"`);
+      
+      // 跳过空词汇
+      if (!cleanWord) {
+        processedTokens.push(token);
+        continue;
+      }
+      
+      // 从词典中查找 - 处理两种可能的词典格式
+      let entry = null;
+      let pos = null;
+      
+      // 情况1: 完整词典结构 {words: {...}}
+      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
+        entry = dictionary.words[cleanWord];
+        // 如果有多个词性，优先选择形容词，然后动词，最后名词
+        if (entry.pos && Array.isArray(entry.pos)) {
+          if (entry.pos.includes('adj')) {
+            pos = 'adj';
+          } else if (entry.pos.includes('v')) {
+            pos = 'v';
+          } else {
+            pos = entry.pos[0];
+          }
+        } else {
+          pos = entry.pos ? entry.pos[0] : entry;
+        }
+        console.log(`完整词典中找到: ${cleanWord}, 所有词性: ${entry.pos}, 选择词性: ${pos}`);
+      }
+      // 情况2: 扁平化词典结构 {word: pos, ...}
+      else if (dictionary && dictionary[cleanWord]) {
+        pos = dictionary[cleanWord];
+        console.log(`扁平词典中找到: ${cleanWord}, 词性: ${pos}`);
+      }
+      
+      if (pos) {
+        let normalizedPos = this.normalizePartOfSpeech(pos);
+        console.log(`标准化词性: ${normalizedPos}`);
+        
+        // 检查是否应该高亮
+        if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj)) {
+          // 分离词汇和标点符号
+          const wordMatch = token.match(/^([\w\u00C0-\u017F]+)(.*)$/);
+          if (wordMatch) {
+            const [, word, punctuation] = wordMatch;
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${word}</span>${punctuation}`);
+          } else {
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${token}</span>`);
+          }
+          console.log(`添加高亮: ${normalizedPos}`);
+        } else {
+          processedTokens.push(token);
+          console.log('不高亮（开关关闭或词性不匹配）');
+        }
+      } else {
+        console.log(`词典中未找到: ${cleanWord}`);
+        processedTokens.push(token);
+      }
+    }
+    
+    let result = processedTokens.join(' ');
+    console.log('处理结果:', result);
+    console.log('=== 法语处理结束 ===');
+    
+    return result;
+  }
+
+  /**
+   * 西班牙语专用文本分词处理器
+   * 采用简单的词典匹配逻辑，不处理复杂的动词变位
+   * @param {string} text 要分词的文本
+   * @param {Object} dictionary 词典对象
+   * @returns {string} 处理后的HTML字符串
+   */
+  segmentEsLangText(text, dictionary) {
+    // 按空格分割文本
+    let tokens = text.split(/\s+/);
+    let processedTokens = [];
+    
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+      
+      // 清理词汇，保留西班牙语重音字符
+      let cleanWord = token.toLowerCase().replace(/[^\w\u00C0-\u017F\u00D1\u00F1]/g, '');
+      
+      // 跳过空词汇
+      if (!cleanWord) {
+        processedTokens.push(token);
+        continue;
+      }
+      
+      // 从词典中查找 - 处理两种可能的词典格式
+      let entry = null;
+      let pos = null;
+      
+      // 情况1: 完整词典结构 {words: {...}}
+      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
+        entry = dictionary.words[cleanWord];
+        // 如果有多个词性，优先选择形容词，然后动词，最后名词
+        if (entry.pos && Array.isArray(entry.pos)) {
+          if (entry.pos.includes('adj')) {
+            pos = 'adj';
+          } else if (entry.pos.includes('v')) {
+            pos = 'v';
+          } else {
+            pos = entry.pos[0];
+          }
+        } else {
+          pos = entry.pos ? entry.pos[0] : entry;
+        }
+      }
+      // 情况2: 扁平化词典结构 {word: pos, ...}
+      else if (dictionary && dictionary[cleanWord]) {
+        pos = dictionary[cleanWord];
+      }
+      
+      if (pos) {
+        let normalizedPos = this.normalizePartOfSpeech(pos);
+        
+        // 检查是否应该高亮
+        if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj)) {
+          // 分离词汇和标点符号
+          const wordMatch = token.match(/^([\w\u00C0-\u017F\u00D1\u00F1]+)(.*)$/);
+          if (wordMatch) {
+            const [, word, punctuation] = wordMatch;
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${word}</span>${punctuation}`);
+          } else {
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${token}</span>`);
+          }
+        } else {
+          processedTokens.push(token);
+        }
+      } else {
+        processedTokens.push(token);
+      }
+    }
+    
+    return processedTokens.join(' ');
+  }
+
+  /**
+   * 俄语专用文本分词处理器
+   * 采用简单的词典匹配逻辑，支持西里尔字母
+   * @param {string} text 要分词的文本
+   * @param {Object} dictionary 词典对象
+   * @returns {string} 处理后的HTML字符串
+   */
+  segmentRuLangText(text, dictionary) {
+    // 按空格分割文本
+    let tokens = text.split(/\s+/);
+    let processedTokens = [];
+    
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+      
+      // 清理词汇，保留俄语西里尔字母
+      let cleanWord = token.toLowerCase().replace(/[^\w\u0400-\u04FF]/g, '');
+      
+      // 跳过空词汇
+      if (!cleanWord) {
+        processedTokens.push(token);
+        continue;
+      }
+      
+      // 从词典中查找 - 处理两种可能的词典格式
+      let entry = null;
+      let pos = null;
+      
+      // 情况1: 完整词典结构 {words: {...}}
+      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
+        entry = dictionary.words[cleanWord];
+        // 如果有多个词性，优先选择形容词，然后动词，最后名词
+        if (entry.pos && Array.isArray(entry.pos)) {
+          if (entry.pos.includes('adj')) {
+            pos = 'adj';
+          } else if (entry.pos.includes('v')) {
+            pos = 'v';
+          } else {
+            pos = entry.pos[0];
+          }
+        } else {
+          pos = entry.pos ? entry.pos[0] : entry;
+        }
+      }
+      // 情况2: 扁平化词典结构 {word: pos, ...}
+      else if (dictionary && dictionary[cleanWord]) {
+        pos = dictionary[cleanWord];
+      }
+      
+      if (pos) {
+        let normalizedPos = this.normalizePartOfSpeech(pos);
+        
+        // 检查是否应该高亮
+        if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj)) {
+          // 分离词汇和标点符号
+          const wordMatch = token.match(/^([\w\u0400-\u04FF]+)(.*)$/);
+          if (wordMatch) {
+            const [, word, punctuation] = wordMatch;
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${word}</span>${punctuation}`);
+          } else {
+            processedTokens.push(`<span class="adhd-${normalizedPos}">${token}</span>`);
+          }
+        } else {
+          processedTokens.push(token);
+        }
+      } else {
+        processedTokens.push(token);
+      }
+    }
+    
+    return processedTokens.join(' ');
+  }
+
+  /**
+   * 英语专用文本分词处理器
+   * 包含完整的英语特定逻辑：词汇变形、比较级处理等
+   * @param {string} text 要分词的文本
+   * @param {Object} dictionary 词典对象
+   * @param {Object} dictionaryManager 词典管理器（可选）
+   * @returns {string} 处理后的HTML字符串
+   */
+  segmentEnLangText(text, dictionary, dictionaryManager = null) {
+    // 按空格和标点符号分割
+    const tokens = text.split(this.spaceBasedSeparators);
+    let html = '';
+    
+    tokens.forEach(token => {
+      if (!token) return;
+      
+      // 清理词汇（移除标点，转为小写）
+      const cleanWord = this.cleanWord(token);
+      
+      // 首先尝试精确匹配
+      if (cleanWord && dictionary[cleanWord]) {
+        const pos = dictionary[cleanWord];
+        const normalizedPos = this.normalizePartOfSpeech(pos);
+        
+        // 如果是名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
+          );
+          
+          if (shouldHighlight) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
+        // 如果是形容词或副词，检查是否为比较级
+        else {
+          let isComparative = false;
+          if (cleanWord) {
+            // 不规则比较级/最高级
+            const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+            if (irregularComparatives.includes(cleanWord)) {
+              isComparative = true;
+            }
+            // 规则比较级/最高级
+            else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+              isComparative = true;
+            }
+          }
+          
+          if (isComparative) {
+             if (this.highlightingToggles.comparative) {
+               // 紫色比较级高亮开启，显示为紫色
+               html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else if (this.highlightingToggles.adj) {
+               // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+               html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else {
+               html += token;
+             }
+           } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
+             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+           } else {
+             html += token;
+           }
+        }
+      }
+      // 如果精确匹配失败，检查比较级
+      else {
+        let isComparative = false;
+        if (cleanWord) {
+          // 不规则比较级/最高级
+          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+          if (irregularComparatives.includes(cleanWord)) {
+            isComparative = true;
+          }
+          // 规则比较级/最高级
+          else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                   (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+            isComparative = true;
+          }
+        }
+        
+        if (isComparative) {
+          if (this.highlightingToggles.comparative) {
+            // 紫色比较级高亮开启，显示为紫色
+            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else if (this.highlightingToggles.adj) {
+            // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+            html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
+        // 然后尝试词汇变形匹配
+        else {
+          // 如果精确匹配失败，尝试英语词汇变形匹配
+          let matched = false;
+          if (cleanWord && this.enMorphology) {
+            const possibleStems = this.enMorphology.getPossibleStems(cleanWord);
+            for (const stem of possibleStems) {
+              if (dictionary[stem]) {
+                const pos = dictionary[stem];
+                const normalizedPos = this.normalizePartOfSpeech(pos);
+                // 根据高亮开关决定是否应用变形匹配高亮
+                const shouldHighlight = (
+                  (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+                  (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+                  (normalizedPos === 'a' && this.highlightingToggles.adj)
+                );
+                
+                if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
+                  html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
+                  matched = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          if (!matched) {
+            html += token;
+          }
+        }
       }
     });
     
@@ -127,10 +715,11 @@ class TextSegmenter {
   /**
    * 标准化词性标记
    * @param {string} pos 原始词性标记
-   * @returns {string} 标准化后的词性
+   * @returns {string|null} 标准化后的词性，如果不是支持的词性则返回null
    */
   normalizePartOfSpeech(pos) {
     // 词性映射表 - 映射到CSS类名
+    // 当前只支持名词(n)、动词(v)、形容词(a)三种词性的高亮
     const posMap = {
       // 名词 -> 'n'
       'n': 'n',
@@ -157,10 +746,20 @@ class TextSegmenter {
       'jj': 'a',
       'jjr': 'a',
       'jjs': 'a'
+      
+      // 未来扩展词性支持时，可以在此添加更多词性映射
+      // 例如：
+      // 'adv': 'adv',     // 副词
+      // 'prep': 'prep',   // 介词
+      // 'conj': 'conj',   // 连词
+      // 'pron': 'pron',   // 代词
+      // 'num': 'num',     // 数词
+      // 'int': 'int'      // 感叹词
     };
     
     const normalized = posMap[pos.toLowerCase()];
-    return normalized || 'other';
+    // 只返回支持的词性，不支持的词性返回null（不进行高亮）
+    return normalized || null;
   }
 
   /**

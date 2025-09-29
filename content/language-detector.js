@@ -22,6 +22,16 @@ class LanguageDetector {
       arabic: 0.3,
       korean: 0.3
     };
+
+    // 法语常见词汇（用于辅助检测）
+    this.frenchWords = [
+      'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'et', 'est', 'avec', 'sur', 'pour', 'dans', 'par',
+      'ce', 'cette', 'ces', 'son', 'sa', 'ses', 'il', 'elle', 'ils', 'elles', 'je', 'tu', 'nous', 'vous',
+      'mais', 'ou', 'donc', 'car', 'ni', 'que', 'qui', 'dont', 'où', 'si', 'comme', 'quand', 'bien',
+      'très', 'plus', 'moins', 'aussi', 'encore', 'déjà', 'toujours', 'jamais', 'souvent', 'parfois',
+      'avoir', 'être', 'faire', 'aller', 'venir', 'voir', 'savoir', 'pouvoir', 'vouloir', 'devoir',
+      'travail', 'travaille', 'étudiant', 'université', 'projet', 'efficace', 'étudier', 'réussir'
+    ];
   }
 
   /**
@@ -53,13 +63,23 @@ class LanguageDetector {
 
     // 按优先级检查语言
     const detectionOrder = [
-      'chinese', 'japanese', 'korean', 'arabic', 'russian', 'french', 'spanish'
+      'chinese', 'japanese', 'korean', 'arabic', 'russian'
     ];
 
     for (const language of detectionOrder) {
       if (ratios[language] >= this.thresholds[language]) {
         return this.mapLanguageCode(language);
       }
+    }
+
+    // 特殊处理法语和西班牙语（检查重音字符和常见词汇）
+    const isFrench = this.detectFrench(sample, ratios.french);
+    if (isFrench) {
+      return 'fr';
+    }
+
+    if (ratios.spanish >= this.thresholds.spanish) {
+      return 'es';
     }
 
     // 如果没有检测到特殊语言，检查是否主要是拉丁字母
@@ -70,6 +90,34 @@ class LanguageDetector {
 
     // 默认返回英文
     return 'en';
+  }
+
+  /**
+   * 检测是否为法语文本
+   * @param {string} sample 文本样本
+   * @param {number} accentRatio 重音字符比例
+   * @returns {boolean} 是否为法语
+   * @private
+   */
+  detectFrench(sample, accentRatio) {
+    // 如果重音字符比例达到阈值，直接判定为法语
+    if (accentRatio >= this.thresholds.french) {
+      return true;
+    }
+
+    // 检查法语常见词汇
+    const words = sample.toLowerCase().match(/\b[a-zàâäéèêëïîôöùûüÿç]+\b/gi) || [];
+    let frenchWordCount = 0;
+    
+    for (const word of words) {
+      if (this.frenchWords.includes(word)) {
+        frenchWordCount++;
+      }
+    }
+
+    // 如果法语词汇比例超过30%，或者有重音字符且法语词汇比例超过20%，判定为法语
+    const frenchWordRatio = frenchWordCount / words.length;
+    return frenchWordRatio > 0.3 || (accentRatio > 0 && frenchWordRatio > 0.2);
   }
 
   /**

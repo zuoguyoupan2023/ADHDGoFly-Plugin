@@ -8,7 +8,7 @@ class ADHDHighlighter {
     this.colorSchemes = {
       default: { noun: '#0066cc', verb: '#cc0000', adj: '#009933' },
       warm: { noun: '#8b4513', verb: '#dc143c', adj: '#ff8c00' },
-      cool: { noun: '#191970', verb: '#008b8b', adj: '#9370db' },
+      cool: { noun: '#191970', verb: '#008b8b', adj: '#4169E1' },
       pastel: { noun: '#da70d6', verb: '#20b2aa', adj: '#f0e68c' },
       'high-contrast': { noun: '#000080', verb: '#8b0000', adj: '#228b22' }
     };
@@ -16,14 +16,14 @@ class ADHDHighlighter {
     
     // 文本样式设置
     this.textSettings = {
-      fontSize: 100,
+      fontSize: 115,  // 默认字号增大15%
       letterSpacing: 0,
       lineHeight: 1.5,
       paragraphSpacing: 0
     };
     
     // 初始化各个模块
-    this.dictionaryManager = new DictionaryManager();
+    this.dictionaryManager = new DictionaryAdapter();
     this.languageDetector = new LanguageDetector();
     this.textSegmenter = new TextSegmenter();
     this.pageProcessor = new PageProcessor(
@@ -141,7 +141,7 @@ class ADHDHighlighter {
           break;
           
         case 'updateColorScheme':
-          await this.updateColorScheme(message.scheme, message.colors);
+          await this.updateColorScheme(message.scheme, message.colors, message.highlightingToggles);
           sendResponse({ success: true });
           break;
           
@@ -200,9 +200,19 @@ class ADHDHighlighter {
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
         this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
+      } else {
+        // 首次使用时的默认设置，启用英语词典
+        const defaultSettings = { en: true };
+        console.log('使用默认词典设置:', defaultSettings);
+        this.dictionaryManager.updateEnabledLanguages(defaultSettings);
+        // 保存默认设置
+        await chrome.storage.local.set({ dictSettings: defaultSettings });
       }
     } catch (error) {
       console.error('加载词典设置失败:', error);
+      // 出错时也使用默认设置
+      const defaultSettings = { en: true };
+      this.dictionaryManager.updateEnabledLanguages(defaultSettings);
     }
   }
 
@@ -212,11 +222,28 @@ class ADHDHighlighter {
    */
   async loadColorSettings() {
     try {
-      const result = await chrome.storage.local.get(['colorScheme']);
+      const result = await chrome.storage.local.get(['colorScheme', 'highlightingToggles']);
       if (result.colorScheme) {
         console.log('加载颜色设置:', result.colorScheme);
         this.currentColorScheme = result.colorScheme;
         this.applyColorScheme();
+      }
+      
+      // 加载高亮开关设置
+      if (result.highlightingToggles) {
+        console.log('加载高亮开关设置:', result.highlightingToggles);
+        
+        // 更新TextSegmenter的高亮开关设置
+        if (this.textSegmenter) {
+          this.textSegmenter.updateHighlightingToggles(result.highlightingToggles);
+          console.log('TextSegmenter高亮开关设置已加载:', this.textSegmenter.highlightingToggles);
+        }
+        
+        // 兼容旧的quickHighlighter（如果存在）
+        if (this.pageProcessor && this.pageProcessor.quickHighlighter) {
+          this.pageProcessor.quickHighlighter.highlightingToggles = result.highlightingToggles;
+          console.log('QuickHighlighter高亮开关设置已加载:', result.highlightingToggles);
+        }
       }
     } catch (error) {
       console.error('加载颜色设置失败:', error);
@@ -227,12 +254,28 @@ class ADHDHighlighter {
    * 更新颜色方案
    * @param {string} scheme 方案名称
    * @param {Object} colors 颜色配置
+   * @param {Object} highlightingToggles 高亮开关设置
    */
-  async updateColorScheme(scheme, colors) {
-    console.log('更新颜色方案:', scheme, colors);
+  async updateColorScheme(scheme, colors, highlightingToggles) {
+    console.log('更新颜色方案:', scheme, colors, highlightingToggles);
     
     this.currentColorScheme = scheme;
     this.colorSchemes[scheme] = colors;
+    
+    // 更新高亮开关设置
+    if (highlightingToggles) {
+      // 更新TextSegmenter的高亮开关设置
+      if (this.textSegmenter) {
+        this.textSegmenter.updateHighlightingToggles(highlightingToggles);
+        console.log('TextSegmenter高亮开关设置已更新:', this.textSegmenter.highlightingToggles);
+      }
+      
+      // 兼容旧的quickHighlighter（如果存在）
+      if (this.pageProcessor && this.pageProcessor.quickHighlighter) {
+        this.pageProcessor.quickHighlighter.highlightingToggles = highlightingToggles;
+        console.log('QuickHighlighter高亮开关设置已更新:', highlightingToggles);
+      }
+    }
     
     // 应用新的颜色方案
     this.applyColorScheme();
@@ -333,7 +376,7 @@ class ADHDHighlighter {
   }
 
   /**
-   * 应用文本设置到页面
+   * 应用文本设置到页面 - 只影响高亮词汇
    */
   applyTextSettings() {
     // 移除旧的文本样式
@@ -348,53 +391,42 @@ class ADHDHighlighter {
     
     const { fontSize, letterSpacing, lineHeight, paragraphSpacing } = this.textSettings;
     
+    // 将百分比转换为倍数
+    const fontSizeMultiplier = fontSize / 100;
+    
     style.textContent = `
-      /* ADHD文本样式设置 */
-      body {
-        font-size: ${fontSize}% !important;
+      /* ADHD文本样式设置 - 只应用到名词、动词、形容词 */
+      .adhd-n, .adhd-v, .adhd-a {
+        font-size: ${fontSizeMultiplier}em !important;
+        letter-spacing: ${letterSpacing}px !important;
+        line-height: ${lineHeight} !important;
+        display: inline !important;
+      }
+      
+      /* 确保span元素也应用样式 */
+      .adhd-processed span.adhd-n,
+      .adhd-processed span.adhd-v,
+      .adhd-processed span.adhd-a {
+        font-size: ${fontSizeMultiplier}em !important;
         letter-spacing: ${letterSpacing}px !important;
         line-height: ${lineHeight} !important;
       }
       
-      /* 段落间距 */
-      p, div, article, section {
-        margin-bottom: ${paragraphSpacing}px !important;
-      }
-      
-      /* 确保高亮文本继承样式 */
+      /* 高亮词汇容器样式 */
       .adhd-processed {
-        font-size: inherit !important;
-        letter-spacing: inherit !important;
-        line-height: inherit !important;
+        display: inline !important;
       }
       
-      .adhd-n, .adhd-v, .adhd-a, .adhd-other {
-        font-size: inherit !important;
-        letter-spacing: inherit !important;
-        line-height: inherit !important;
-      }
-      
-      /* 特殊元素调整 */
-      h1, h2, h3, h4, h5, h6 {
-        letter-spacing: ${letterSpacing}px !important;
-        line-height: ${Math.max(lineHeight, 1.2)} !important;
-        margin-bottom: ${Math.max(paragraphSpacing, 10)}px !important;
-      }
-      
-      /* 列表项间距 */
-      li {
-        margin-bottom: ${Math.floor(paragraphSpacing / 2)}px !important;
-      }
-      
-      /* 表格单元格 */
-      td, th {
-        letter-spacing: ${letterSpacing}px !important;
-        line-height: ${lineHeight} !important;
-      }
+      /* 段落间距 - 使用更兼容的选择器 */
+      ${paragraphSpacing > 0 ? `
+      .adhd-processed {
+        margin-bottom: ${paragraphSpacing}px !important;
+      }` : ''}
     `;
     
     document.head.appendChild(style);
-    console.log('文本设置已应用:', this.textSettings);
+    console.log('文本设置已应用到高亮词汇:', this.textSettings);
+    console.log('字号倍数:', fontSizeMultiplier + 'em');
   }
 
   /**
@@ -429,6 +461,10 @@ class ADHDHighlighter {
     try {
       // 处理页面
       await this.pageProcessor.processPage();
+      
+      // 应用颜色方案和文本设置
+      this.applyColorScheme();
+      this.applyTextSettings();
       
       this.enabled = true;
       
@@ -580,6 +616,10 @@ class ADHDHighlighter {
     // 重新处理
     await this.pageProcessor.processPage();
     
+    // 重新应用样式设置
+    this.applyColorScheme();
+    this.applyTextSettings();
+    
     console.log('页面重新处理完成');
   }
 
@@ -619,16 +659,20 @@ class ADHDHighlighter {
       
       // 获取高亮统计
       const highlightStats = {
-        totalWords: processingStats.highlightedWords || 0,
+        total: processingStats.highlightedWords || 0,
         processedNodes: processingStats.processedNodes || 0,
         skippedNodes: processingStats.skippedNodes || 0,
         errors: processingStats.errors || 0
       };
       
+      // 生成智能推荐 - 暂时禁用
+      // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
+      
       return {
         languages: languageStats,
         partOfSpeech: posStats,
         highlights: highlightStats,
+        // recommendations: recommendations, // 暂时禁用推荐功能
         summary: processingSummary
       };
       
@@ -722,6 +766,115 @@ class ADHDHighlighter {
     }
     
     return posStats;
+  }
+
+  /**
+   * 生成智能推荐
+   * @param {Object} languageStats 语言统计
+   * @param {Object} posStats 词性统计
+   * @param {Object} highlightStats 高亮统计
+   * @returns {Object} 推荐内容
+   */
+  generateRecommendations(languageStats, posStats, highlightStats) {
+    const recommendations = {
+      colors: [],
+      textStyle: []
+    };
+    
+    try {
+      // 基于词性分布推荐颜色方案
+      const totalPos = posStats.n + posStats.v + posStats.a;
+      
+      if (totalPos > 0) {
+        const nounRatio = posStats.n / totalPos;
+        const verbRatio = posStats.v / totalPos;
+        const adjRatio = posStats.a / totalPos;
+        
+        // 推荐颜色方案
+        if (nounRatio > 0.5) {
+          recommendations.colors.push({
+            name: '蓝色主导方案',
+            reason: '页面名词较多，建议使用蓝色系突出重点'
+          });
+        }
+        
+        if (verbRatio > 0.3) {
+          recommendations.colors.push({
+            name: '高对比度方案',
+            reason: '动词丰富，建议使用高对比度方案便于区分'
+          });
+        }
+        
+        if (adjRatio > 0.25) {
+          recommendations.colors.push({
+            name: '柔和色彩方案',
+            reason: '形容词较多，建议使用柔和色彩减少视觉疲劳'
+          });
+        }
+      }
+      
+      // 基于高亮密度推荐文本样式
+      const highlightDensity = highlightStats.totalWords / Math.max(highlightStats.processedNodes, 1);
+      
+      if (highlightDensity > 10) {
+        recommendations.textStyle.push({
+          name: '增大行间距',
+          reason: '高亮密度较高，建议增大行间距提升可读性'
+        });
+        
+        recommendations.textStyle.push({
+          name: '适当增大字号',
+          reason: '内容密集，建议适当增大字号减轻阅读负担'
+        });
+      } else if (highlightDensity < 3) {
+        recommendations.textStyle.push({
+          name: '标准间距',
+          reason: '高亮适中，当前文本样式已较为合适'
+        });
+      }
+      
+      // 基于语言分布推荐
+      const totalLangWords = Object.values(languageStats).reduce((sum, count) => sum + count, 0);
+      if (totalLangWords > 0) {
+        const multiLang = Object.values(languageStats).filter(count => count > totalLangWords * 0.1).length;
+        
+        if (multiLang > 1) {
+          recommendations.colors.push({
+            name: '多语言友好方案',
+            reason: '检测到多种语言，建议使用统一的颜色方案'
+          });
+        }
+      }
+      
+      // 如果没有生成任何推荐，提供默认推荐
+      if (recommendations.colors.length === 0) {
+        recommendations.colors.push({
+          name: '默认配色方案',
+          reason: '基于当前页面特征，推荐使用默认配色'
+        });
+      }
+      
+      if (recommendations.textStyle.length === 0) {
+        recommendations.textStyle.push({
+          name: '标准文本样式',
+          reason: '当前页面适合使用标准的文本样式设置'
+        });
+      }
+      
+    } catch (error) {
+      console.error('生成推荐失败:', error);
+      // 提供备用推荐
+      recommendations.colors = [{
+        name: '默认方案',
+        reason: '推荐使用默认颜色方案'
+      }];
+      recommendations.textStyle = [{
+        name: '标准样式',
+        reason: '推荐使用标准文本样式'
+      }];
+    }
+    
+    return recommendations;
   }
 }
 

@@ -3,6 +3,8 @@ class PopupController {
   constructor() {
     this.currentStatus = null;
     this.currentPage = 'home';
+    this.i18nManager = new I18nManager();
+    this.versionInfo = null; // 缓存版本信息
     this.dictSettings = {
       zh: true,
       en: true,
@@ -25,7 +27,7 @@ class PopupController {
       cool: {
         noun: '#191970',    // 深蓝色 (midnight blue)
         verb: '#008b8b',    // 深青色 (dark cyan)
-        adj: '#9370db'      // 紫色 (medium purple)
+        adj: '#4169E1'      // 皇家蓝 (royal blue)
       },
       pastel: {
         noun: '#da70d6',    // 兰花紫 (orchid)
@@ -40,10 +42,16 @@ class PopupController {
     };
     this.currentColorScheme = 'default';
     this.textSettings = {
-      fontSize: 100,        // 字号百分比
+      fontSize: 115,        // 字号百分比 - 默认增大15%
       letterSpacing: 0,     // 字间距 px
       lineHeight: 1.5,      // 行间距倍数
       paragraphSpacing: 0   // 段间距 px
+    };
+    this.highlightingToggles = {
+      noun: true,           // 名词高亮开关
+      verb: true,           // 动词高亮开关
+      adj: true,            // 形容词高亮开关
+      comparative: true     // 比较级/最高级高亮开关
     };
 
     this.init();
@@ -51,6 +59,15 @@ class PopupController {
 
   async init() {
     console.log('初始化Popup控制器...');
+    
+    // 初始化i18n
+    await this.i18nManager.init();
+    
+    // 设置初始状态文本
+    const statusDiv = document.getElementById('status');
+    if (statusDiv) {
+      statusDiv.textContent = this.i18nManager.t('status.checking');
+    }
     
     // 绑定事件
     this.bindEvents();
@@ -80,11 +97,65 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
+    // AI分析事件
+    this.bindAIEvents();
+    
+    // 绑定语言切换事件
+    this.bindLanguageEvents();
+    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
+    this.loadHighlightingToggles();
 
+  }
+
+  bindLanguageEvents() {
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      languageToggle.addEventListener('click', () => this.toggleLanguage());
+    }
+    
+    // 监听语言变化事件
+    document.addEventListener('languageChanged', (event) => {
+      this.updateLanguageUI(event.detail.newLanguage);
+      // 重新应用当前状态的翻译
+      if (this.currentStatus) {
+        this.updateUI(this.currentStatus);
+      } else {
+          // 如果还在检查状态，更新检查中的文本
+          const statusDiv = document.getElementById('status');
+          if (statusDiv && (statusDiv.textContent.includes('Checking') || statusDiv.textContent.includes('检查中'))) {
+            statusDiv.textContent = this.i18nManager.t('status.checking');
+          }
+        }
+      // 重新应用版本信息的翻译
+      if (this.versionInfo) {
+        this.updateVersionUI();
+      }
+      
+      // 如果当前显示的是AI分析页面，重新加载数据以应用新语言
+      const currentPage = document.querySelector('.page.active');
+      if (currentPage && currentPage.id === 'aiPage') {
+        this.loadAIAnalysis();
+      }
+    });
+  }
+  
+  async toggleLanguage() {
+    const currentLang = this.i18nManager.getCurrentLanguage();
+    const newLang = currentLang === 'zh' ? 'en' : 'zh';
+    await this.i18nManager.switchLanguage(newLang);
+  }
+  
+  updateLanguageUI(language) {
+    // 更新语言切换按钮的提示
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      const title = language === 'zh' ? 'Switch to English' : '切换到中文';
+      languageToggle.setAttribute('title', title);
+    }
   }
 
   bindSidebarEvents() {
@@ -119,7 +190,13 @@ class PopupController {
       case 'text-btn':
         this.showPage('text');
         break;
-
+      case 'ai-btn':
+        this.showPage('ai');
+        this.loadAIAnalysis();
+        break;
+      case 'about-btn':
+        this.showPage('about');
+        break;
       case 'settings-btn':
         this.showPage('settings');
         // 初始化设置页面
@@ -182,6 +259,41 @@ class PopupController {
         checkbox.checked = this.dictSettings[langCode];
       }
     });
+    
+    // 更新首页词典标签显示
+    this.updateDictTags();
+  }
+  
+  updateDictTags() {
+    const dictTagsContainer = document.getElementById('dictTags');
+    if (!dictTagsContainer) return;
+    
+    // 清空现有标签
+    dictTagsContainer.innerHTML = '';
+    
+    // 词典名称映射
+    const dictNames = {
+      zh: 'ZH',
+      en: 'EN',
+      fr: 'FR',
+      ru: 'RU',
+      es: 'ES',
+      ja: 'JA'
+    };
+    
+    // 只处理已知的词典语言代码
+    const validLangCodes = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
+    
+    // 根据词典界面的实际复选框状态添加标签
+    validLangCodes.forEach(langCode => {
+      const checkbox = document.getElementById(`dict-${langCode}`);
+      if (checkbox && checkbox.checked && dictNames[langCode]) {
+        const tag = document.createElement('div');
+        tag.className = 'dict-tag';
+        tag.textContent = dictNames[langCode];
+        dictTagsContainer.appendChild(tag);
+      }
+    });
   }
 
   async saveDictSettings() {
@@ -214,6 +326,9 @@ class PopupController {
       
       console.log('词典设置已保存:', this.dictSettings);
       
+      // 更新首页词典标签显示
+      this.updateDictTags();
+      
     } catch (error) {
       console.error('保存词典设置失败:', error);
     }
@@ -223,7 +338,7 @@ class PopupController {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        this.updateUI({ enabled: false, error: '无法获取当前标签页' });
+        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.noTab') });
         return;
       }
 
@@ -233,11 +348,11 @@ class PopupController {
         this.currentStatus = response;
         this.updateUI(response);
       } else {
-        this.updateUI({ enabled: false, error: '插件未加载或初始化失败' });
+        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.notLoaded') });
       }
     } catch (error) {
       console.error('检查状态失败:', error);
-      this.updateUI({ enabled: false, error: '连接失败' });
+      this.updateUI({ enabled: false, error: this.i18nManager.t('errors.connectionFailed') });
     }
   }
 
@@ -246,15 +361,15 @@ class PopupController {
     const statusDiv = document.getElementById('status');
     
     // 显示加载状态
-    toggleBtn.textContent = '处理中...';
+    toggleBtn.textContent = this.i18nManager.t('status.processing');
     toggleBtn.disabled = true;
-    statusDiv.textContent = '正在切换状态...';
+    statusDiv.textContent = this.i18nManager.t('status.switching');
     statusDiv.className = 'status';
     
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        throw new Error('无法获取当前标签页');
+        throw new Error(this.i18nManager.t('errors.noTab'));
       }
 
       const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle' });
@@ -263,7 +378,7 @@ class PopupController {
         this.currentStatus = { ...this.currentStatus, enabled: response.enabled, statistics: response.stats };
         this.updateUI(this.currentStatus);
       } else {
-        throw new Error(response?.error || '操作失败');
+        throw new Error(response?.error || this.i18nManager.t('errors.operationFailed'));
       }
     } catch (error) {
       console.error('切换失败:', error);
@@ -279,8 +394,8 @@ class PopupController {
     
     if (status.error) {
       statusDiv.textContent = status.error;
-      statusDiv.className = 'status disabled';
-      toggleBtn.textContent = '重试';
+      statusDiv.className = 'status-badge disabled';
+      toggleBtn.textContent = this.i18nManager.t('buttons.retry');
       toggleBtn.className = 'toggle-btn';
       return;
     }
@@ -288,11 +403,11 @@ class PopupController {
     const enabled = status.enabled;
     
     // 更新状态显示
-    statusDiv.textContent = enabled ? '高亮已开启' : '高亮已关闭';
+    statusDiv.textContent = enabled ? this.i18nManager.t('status.enabled') : this.i18nManager.t('status.disabled');
     statusDiv.className = enabled ? 'status enabled' : 'status disabled';
     
     // 更新按钮
-    toggleBtn.textContent = enabled ? '关闭高亮' : '开启高亮';
+    toggleBtn.textContent = enabled ? this.i18nManager.t('buttons.disable') : this.i18nManager.t('buttons.enable');
     toggleBtn.className = enabled ? 'toggle-btn disabled' : 'toggle-btn';
     
     // 显示统计信息（如果有）
@@ -325,6 +440,20 @@ class PopupController {
           this.selectColorScheme(scheme);
         }
       });
+    });
+    
+    // 高亮开关复选框事件
+    const highlightToggles = ['noun', 'verb', 'adj', 'comparative'];
+    highlightToggles.forEach(type => {
+      const checkbox = document.getElementById(`highlight-${type}`);
+      if (checkbox) {
+        checkbox.addEventListener('change', (e) => {
+          this.highlightingToggles[type] = e.target.checked;
+          console.log(`${type}高亮开关:`, e.target.checked);
+          // 立即保存设置
+          this.saveColorSettings();
+        });
+      }
     });
     
     // 应用方案按钮事件
@@ -373,19 +502,48 @@ class PopupController {
   updateColorUI() {
     this.selectColorScheme(this.currentColorScheme);
   }
+  
+  async loadHighlightingToggles() {
+    try {
+      const result = await chrome.storage.local.get(['highlightingToggles']);
+      if (result.highlightingToggles) {
+        this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
+      }
+      
+      // 更新UI
+      this.updateHighlightingTogglesUI();
+    } catch (error) {
+      console.error('加载高亮开关设置失败:', error);
+    }
+  }
+  
+  updateHighlightingTogglesUI() {
+    const highlightTypes = ['noun', 'verb', 'adj', 'comparative'];
+    highlightTypes.forEach(type => {
+      const checkbox = document.getElementById(`highlight-${type}`);
+      if (checkbox) {
+        checkbox.checked = this.highlightingToggles[type];
+      }
+    });
+  }
 
   async saveColorSettings() {
     try {
-      await chrome.storage.local.set({ colorScheme: this.currentColorScheme });
+      // 保存颜色方案和高亮开关设置
+      await chrome.storage.local.set({ 
+        colorScheme: this.currentColorScheme,
+        highlightingToggles: this.highlightingToggles
+      });
       
-      // 通知content script更新颜色方案
+      // 通知content script更新颜色方案和高亮开关
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
           await chrome.tabs.sendMessage(tabs[0].id, {
             action: 'updateColorScheme',
             scheme: this.currentColorScheme,
-            colors: this.colorSchemes[this.currentColorScheme]
+            colors: this.colorSchemes[this.currentColorScheme],
+            highlightingToggles: this.highlightingToggles
           });
         }
       } catch (error) {
@@ -404,6 +562,7 @@ class PopupController {
       }, 1500);
       
       console.log('颜色方案已保存:', this.currentColorScheme);
+      console.log('高亮开关已保存:', this.highlightingToggles);
       
     } catch (error) {
       console.error('保存颜色设置失败:', error);
@@ -570,7 +729,7 @@ class PopupController {
   resetTextSettings() {
     // 重置为默认值
     this.textSettings = {
-      fontSize: 100,
+      fontSize: 115,  // 默认增大15%
       letterSpacing: 0,
       lineHeight: 1.5,
       paragraphSpacing: 0
@@ -582,6 +741,181 @@ class PopupController {
     console.log('文本设置已重置');
   }
 
+  // AI分析相关方法
+  bindAIEvents() {
+    // 刷新分析按钮事件
+    const refreshBtn = document.getElementById('refresh-analysis-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.refreshAIAnalysis());
+    }
+  }
+
+  async loadAIAnalysis() {
+    console.log('开始加载AI分析数据...');
+    
+    try {
+      // 显示加载状态
+      this.showAILoadingState();
+      
+      // 获取当前标签页的分析数据
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        // 向content script请求分析数据
+        const response = await chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'getAnalysisData'
+        });
+        
+        if (response && response.success) {
+          this.displayAIAnalysis(response.data);
+        } else {
+          this.showAIError();
+        }
+      } else {
+        this.showAIError();
+      }
+    } catch (error) {
+      console.error('加载AI分析数据失败:', error);
+      this.showAIError();
+    }
+  }
+
+  showAILoadingState() {
+    // 显示所有分析项为加载中状态
+    const loadingText = this.i18nManager.t('pages.ai.analyzing');
+    
+    document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    
+    // 高亮统计UI已隐藏，检查元素是否存在再操作
+    const highlightStatsElement = document.getElementById('highlightStats');
+    if (highlightStatsElement) {
+      highlightStatsElement.innerHTML = `<div class="loading">${loadingText}</div>`;
+    }
+    
+    // document.getElementById('colorRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
+    // document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
+  }
+
+  displayAIAnalysis(data) {
+    console.log('显示AI分析数据:', data);
+    
+    // 显示语言分布
+    this.displayLanguageStats(data.languages || {});
+    
+    // 显示词性分布
+    this.displayPOSStats(data.partOfSpeech || {});
+    
+    // 显示高亮统计
+    this.displayHighlightStats(data.highlights || {});
+    
+    // 显示推荐
+    // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
+  }
+
+  displayLanguageStats(languages) {
+    const container = document.getElementById('languageStats');
+    if (Object.keys(languages).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    const total = Object.values(languages).reduce((sum, count) => sum + count, 0);
+    let html = '';
+    
+    Object.entries(languages).forEach(([lang, count]) => {
+      const percentage = ((count / total) * 100).toFixed(1);
+      html += `
+        <div class="stat-bar">
+          <div class="stat-label">${lang.toUpperCase()}</div>
+          <div class="stat-progress">
+            <div class="stat-fill" style="width: ${percentage}%; background-color: #007AFF;"></div>
+          </div>
+          <div class="stat-value">${percentage}%</div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  displayPOSStats(partOfSpeech) {
+    const container = document.getElementById('posStats');
+    if (Object.keys(partOfSpeech).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    const total = Object.values(partOfSpeech).reduce((sum, count) => sum + count, 0);
+    const colors = {
+      'noun': '#0066cc',
+      'verb': '#cc0000',
+      'adj': '#009933',
+      'other': '#666666'
+    };
+    
+    let html = '';
+    
+    Object.entries(partOfSpeech).forEach(([pos, count]) => {
+      const percentage = ((count / total) * 100).toFixed(1);
+      const color = colors[pos] || colors.other;
+      html += `
+        <div class="stat-bar">
+          <div class="stat-label">${pos}</div>
+          <div class="stat-progress">
+            <div class="stat-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+          </div>
+          <div class="stat-value">${percentage}%</div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  displayHighlightStats(highlights) {
+    // 高亮统计UI已隐藏，但保留逻辑代码以避免调用错误
+    const container = document.getElementById('highlightStats');
+    if (!container) {
+      // UI元素不存在时静默返回，不报错
+      return;
+    }
+    
+    if (Object.keys(highlights).length === 0) {
+      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    let html = `<div class="highlight-summary">`;
+    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.total')}: <strong>${highlights.total || 0}</strong></p>`;
+    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.nodes')}: <strong>${highlights.processedNodes || 0}</strong></p>`;
+    html += `</div>`;
+    
+    container.innerHTML = html;
+  }
+
+  // displayRecommendations方法已删除 - 推荐功能已禁用
+
+  showAIError() {
+    const errorText = this.i18nManager.t('pages.ai.error');
+    
+    document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
+    
+    // 高亮统计UI已隐藏，检查元素是否存在再操作
+    const highlightStatsElement = document.getElementById('highlightStats');
+    if (highlightStatsElement) {
+      highlightStatsElement.innerHTML = `<div class="error">${errorText}</div>`;
+    }
+    
+    // document.getElementById('colorRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
+    // document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
+  }
+
+  async refreshAIAnalysis() {
+    console.log('刷新AI分析...');
+    await this.loadAIAnalysis();
+  }
+
 
 
   async checkVersion() {
@@ -589,53 +923,103 @@ class PopupController {
       // 显示当前版本
       const manifest = chrome.runtime.getManifest();
       const currentVersion = manifest.version;
-      document.getElementById('currentVersion').textContent = currentVersion;
+      
+      // 初始化版本信息缓存
+      this.versionInfo = {
+        currentVersion: currentVersion,
+        latestVersion: null,
+        isChecking: true,
+        hasUpdate: false,
+        error: null,
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      
+      // 更新UI显示
+      this.updateVersionUI();
       
       // 请求后台检查最新版本
        chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+         this.versionInfo.isChecking = false;
+         
          if (response && response.success) {
-           document.getElementById('latestVersion').textContent = response.latestVersion;
-           
-           if (response.hasUpdate) {
-             // 显示更新提示
-             const updateNotice = document.getElementById('updateNotice');
-             
-             // 设置官方GitHub链接
-             const githubLink = document.getElementById('githubLink');
-             githubLink.href = response.releaseUrl;
-             
-             // 设置替代下载链接
-             if (response.alternativeDownloads) {
-               const baiduLink = document.getElementById('baiduLink');
-               const giteeLink = document.getElementById('giteeLink');
-               const directLink = document.getElementById('directLink');
-               
-               baiduLink.href = response.alternativeDownloads.baidu;
-               giteeLink.href = response.alternativeDownloads.gitee;
-               directLink.href = response.alternativeDownloads.direct;
-             }
-             
-             // 设置联系信息
-             if (response.contactInfo) {
-               const contactInfoElement = document.querySelector('.contact-info');
-               if (contactInfoElement) {
-                 contactInfoElement.textContent = response.contactInfo;
-               }
-             }
-             
-             updateNotice.style.display = 'block';
-           }
+           this.versionInfo.latestVersion = response.latestVersion;
+           this.versionInfo.hasUpdate = response.hasUpdate;
+           this.versionInfo.releaseUrl = response.releaseUrl;
+           this.versionInfo.alternativeDownloads = response.alternativeDownloads;
+           this.versionInfo.contactInfo = response.contactInfo;
          } else {
-           document.getElementById('latestVersion').textContent = '检查失败';
-           if (response && response.error) {
-             console.error('版本检查失败:', response.error);
-           }
+           this.versionInfo.error = response?.error || 'Unknown error';
          }
+         
+         // 更新UI显示
+         this.updateVersionUI();
        });
     } catch (error) {
       console.error('版本检测失败:', error);
-      document.getElementById('currentVersion').textContent = '未知';
-      document.getElementById('latestVersion').textContent = '检查失败';
+      this.versionInfo = {
+        currentVersion: '未知',
+        latestVersion: null,
+        isChecking: false,
+        hasUpdate: false,
+        error: error.message,
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      this.updateVersionUI();
+    }
+  }
+  
+  updateVersionUI() {
+    if (!this.versionInfo) return;
+    
+    // 更新当前版本显示
+    document.getElementById('currentVersion').textContent = this.versionInfo.currentVersion;
+    
+    // 更新最新版本显示
+     const latestVersionElement = document.getElementById('latestVersion');
+     if (this.versionInfo.isChecking) {
+       latestVersionElement.textContent = this.i18nManager.t('version.checking');
+     } else if (this.versionInfo.error) {
+       latestVersionElement.textContent = this.i18nManager.t('version.checkFailed');
+     } else {
+       latestVersionElement.textContent = this.versionInfo.latestVersion;
+     }
+    
+    // 处理更新提示
+    if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
+      const updateNotice = document.getElementById('updateNotice');
+      
+      // 设置官方GitHub链接
+      const githubLink = document.getElementById('githubLink');
+      if (githubLink && this.versionInfo.releaseUrl) {
+        githubLink.href = this.versionInfo.releaseUrl;
+      }
+      
+      // 设置替代下载链接
+      if (this.versionInfo.alternativeDownloads) {
+        const baiduLink = document.getElementById('baiduLink');
+        const giteeLink = document.getElementById('giteeLink');
+        const directLink = document.getElementById('directLink');
+        
+        if (baiduLink) baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
+        if (giteeLink) giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
+        if (directLink) directLink.href = this.versionInfo.alternativeDownloads.direct;
+      }
+      
+      // 设置联系信息
+      if (this.versionInfo.contactInfo) {
+        const contactInfoElement = document.querySelector('.contact-info');
+        if (contactInfoElement) {
+          contactInfoElement.textContent = this.versionInfo.contactInfo;
+        }
+      }
+      
+      if (updateNotice) {
+        updateNotice.style.display = 'block';
+      }
     }
   }
 

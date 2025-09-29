@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="settings.css">
+  <script src="i18n.js"></script>
+  <script src="popup.js"></script>
   <style>
     * {
       margin: 0;
@@ -27,65 +29,64 @@
       flex-direction: column;
     }
     
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
+    /* 应用标题和状态区域 */
+    .app-header {
+      margin-bottom: 16px;
     }
     
-    .header h3 {
+    .app-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .app-title h3 {
       margin: 0;
       color: #333;
       font-size: 18px;
       font-weight: 600;
     }
     
-    .status { 
-      text-align: center; 
-      margin: 15px 0; 
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
+    .status {
+      font-size: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: #ccc;
     }
     
     .status.enabled {
-      background-color: #E8F5E8;
-      color: #2D7D32;
-      border: 1px solid #C8E6C9;
+      background-color: #4CAF50;
     }
     
     .status.disabled {
-      background-color: #FFEBEE;
-      color: #C62828;
-      border: 1px solid #FFCDD2;
+      background-color: #F44336;
     }
     
-    /* 版本信息样式 */
-    .version-info {
-      background-color: #F5F5F5;
-      border: 1px solid #E0E0E0;
+    /* 紧凑版本信息样式 */
+    .version-compact {
+      background-color: #F8F9FA;
+      border: 1px solid #E9ECEF;
       border-radius: 6px;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 12px;
+      padding: 8px 12px;
+      margin: 12px 0;
+      font-size: 11px;
     }
     
-    .version-current, .version-latest {
+    .version-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
+      align-items: center;
+      gap: 12px;
     }
     
-    .version-latest {
-      margin-bottom: 8px;
-    }
-    
-    .version-label {
+    .version-text {
       color: #666;
-      font-weight: 500;
+      font-size: 11px;
     }
     
-    .version-value {
+    .version-text strong {
       color: #333;
       font-weight: 600;
     }
@@ -188,10 +189,16 @@
       font-style: italic;
     }
     
+    /* 主要操作区域 */
+    .main-actions {
+      margin: 16px 0;
+      text-align: center;
+    }
+    
     .toggle-btn {
-      width: 100%; 
-      padding: 14px; 
-      margin: 10px 0; 
+      width: auto;
+      min-width: 80px;
+      padding: 12px 20px; 
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -246,6 +253,80 @@
     .legend-verb { background-color: rgba(204, 0, 0, 0.3); }
     .legend-adj { background-color: rgba(0, 153, 51, 0.3); }
     
+    /* 紧凑图例样式 */
+    .legend-compact {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .legend-compact h4 {
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .legend-grid .legend-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      background: #F8F9FA;
+      border-radius: 4px;
+      border: 1px solid #E9ECEF;
+      margin: 0;
+    }
+    
+    .legend-grid .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      margin-right: 6px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .legend-grid .legend-item span {
+      font-size: 10px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .dict-summary {
+      margin-top: 12px;
+      padding: 8px 0;
+    }
+    
+    .dict-summary h4 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .dict-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .dict-tag {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 500;
+      color: #555;
+      white-space: nowrap;
+    }
+    
     /* 右侧侧边栏 */
     .sidebar {
       width: 60px;
@@ -286,6 +367,20 @@
       border-color: #007AFF;
       color: white;
       box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+    }
+    
+    .language-switcher {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .language-btn {
+      position: relative;
+    }
+    
+    .language-btn .language-icon {
+      font-size: 16px;
     }
     
     .sidebar-btn span {
@@ -403,6 +498,83 @@
       border-top: 1px solid #e0e0e0;
     }
     
+    /* 高亮开关控制样式 */
+    .highlighting-toggles {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #9370db;
+    }
+    
+    .highlighting-toggles h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .toggle-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .toggle-label input[type="checkbox"] {
+      display: none;
+    }
+    
+    .toggle-checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d0d0;
+      border-radius: 3px;
+      margin-right: 8px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark {
+      background-color: #9370db;
+      border-color: #9370db;
+    }
+    
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .toggle-description {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .toggle-description p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+    }
+    
     .save-btn {
       width: 100%;
       padding: 12px;
@@ -510,7 +682,7 @@
     /* 冷色方案预览 */
     .noun-cool { color: #191970; background-color: rgba(25, 25, 112, 0.15); }
     .verb-cool { color: #008b8b; background-color: rgba(0, 139, 139, 0.15); }
-    .adj-cool { color: #9370db; background-color: rgba(147, 112, 219, 0.15); }
+    .adj-cool { color: #4169E1; background-color: rgba(65, 105, 225, 0.15); }
     
     /* 柔和方案预览 */
     .noun-pastel { color: #da70d6; background-color: rgba(218, 112, 214, 0.15); }
@@ -1260,57 +1432,75 @@
   <div class="main-content">
     <!-- 主页面 -->
     <div class="page active" id="home-page">
-      <div class="header">
-        <h3>ADHDGoFly</h3>
+      <!-- 应用标题和状态 -->
+      <div class="app-header">
+        <div class="app-title">
+          <h3 data-i18n="appName">ADHDGoFly</h3>
+          <div class="status" id="status">状态检查中...</div>
+        </div>
       </div>
       
-      <div class="status" id="status">状态检查中...</div>
-      
-      <!-- 版本信息区域 -->
-      <div class="version-info" id="versionInfo">
-        <div class="version-current">
-          <span class="version-label">当前版本:</span>
-          <span class="version-value" id="currentVersion">检查中...</span>
-        </div>
-        <div class="version-latest">
-          <span class="version-label">最新版本:</span>
-          <span class="version-value" id="latestVersion">检查中...</span>
+      <!-- 版本信息（紧凑版） -->
+      <div class="version-compact" id="versionInfo">
+        <div class="version-row">
+          <span class="version-text">
+            <span data-i18n="version.current">当前版本:</span> 
+            <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+          <span class="version-text">
+            <span data-i18n="version.latest">最新版本:</span> 
+            <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
         </div>
         <div class="version-update" id="updateNotice" style="display: none;">
-          <div class="update-title">🎉 发现新版本！</div>
-          <div class="update-description">建议更新以获得最新功能和修复</div>
+          <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本！</div>
+          <div class="update-description" data-i18n="version.updateDescription">建议更新以获得最新功能和修复</div>
           <div class="download-options">
             <div class="download-section">
-              <div class="download-label">官方下载：</div>
+              <div class="download-label" data-i18n="version.officialDownload">官方下载：</div>
               <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
             </div>
             <div class="download-section">
-              <div class="download-label">国内链接：</div>
+              <div class="download-label" data-i18n="version.domesticLinks">国内链接：</div>
               <div class="alternative-links">
-                 <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link">直链下载</a>
+                 <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link" data-i18n="version.directDownload">直链下载</a>
               </div>
             </div>
           </div>
-          <div class="update-note">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
-          <div class="contact-info">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
+          <div class="update-note" data-i18n="version.updateNote">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
+          <div class="contact-info" data-i18n="version.contactInfo">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
         </div>
       </div>
       
-      <button id="toggle" class="toggle-btn">切换高亮</button>
+      <!-- 主要操作按钮 -->
+      <div class="main-actions">
+        <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">切换高亮</button>
+      </div>
       
-      <div class="legend">
-        <h4>词性颜色</h4>
-        <div class="legend-item">
-          <div class="legend-color legend-noun"></div>
-          <span>名词</span>
+      <!-- 词性颜色图例（紧凑版） -->
+      <div class="legend-compact">
+        <h4 data-i18n="legend.title">词性颜色</h4>
+        <div class="legend-grid">
+          <div class="legend-item">
+            <div class="legend-color legend-noun"></div>
+            <span data-i18n="legend.noun">名词</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color legend-verb"></div>
+            <span data-i18n="legend.verb">动词</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color legend-adj"></div>
+            <span data-i18n="legend.adjective">形容词</span>
+          </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color legend-verb"></div>
-          <span>动词</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color legend-adj"></div>
-          <span>形容词</span>
+      </div>
+      
+      <!-- 词典状态显示 -->
+      <div class="dict-summary">
+        <h4 data-i18n="dict.title">词典</h4>
+        <div class="dict-tags" id="dictTags">
+          <!-- 动态生成已启用的词典标签 -->
         </div>
       </div>
     </div>
@@ -1318,12 +1508,12 @@
     <!-- 词典管理页面 -->
     <div class="page" id="dict-page">
       <div class="header">
-        <h3>词典管理</h3>
+        <h3 data-i18n="pages.dict.title">词典管理</h3>
       </div>
       
       <div class="dict-content">
         <div class="dict-info">
-          <p>选择要使用的语言词典</p>
+          <p data-i18n="pages.dict.description">选择要使用的语言词典</p>
         </div>
         
         <div class="dict-list">
@@ -1333,7 +1523,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">ZH</span>
-                <span class="dict-desc">中文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.zh">中文词典</span>
               </div>
             </label>
           </div>
@@ -1344,7 +1534,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">EN</span>
-                <span class="dict-desc">英文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.en">英文词典</span>
               </div>
             </label>
           </div>
@@ -1355,7 +1545,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">FR</span>
-                <span class="dict-desc">法文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.fr">法文词典</span>
               </div>
             </label>
           </div>
@@ -1366,7 +1556,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">RU</span>
-                <span class="dict-desc">俄文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.ru">俄文词典</span>
               </div>
             </label>
           </div>
@@ -1377,7 +1567,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">ES</span>
-                <span class="dict-desc">西班牙文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.es">西班牙文词典</span>
               </div>
             </label>
           </div>
@@ -1388,7 +1578,7 @@
               <span class="checkmark"></span>
               <div class="dict-info-text">
                 <span class="dict-name">JA</span>
-                <span class="dict-desc">日文词典</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.ja">日文词典</span>
               </div>
             </label>
           </div>
@@ -1403,73 +1593,111 @@
     <!-- 颜色管理页面 -->
     <div class="page" id="colors-page">
       <div class="header">
-        <h3>颜色方案</h3>
+        <h3 data-i18n="pages.colors.title">颜色方案</h3>
       </div>
       
       <div class="colors-content">
         <div class="colors-info">
-          <p>选择高亮颜色方案</p>
+          <p data-i18n="pages.colors.description">选择高亮颜色方案</p>
         </div>
         
         <div class="color-schemes">
           <div class="scheme-item active" data-scheme="default">
             <div class="scheme-header">
               <input type="radio" name="colorScheme" id="scheme-default" checked>
-              <label for="scheme-default">默认方案</label>
+              <label for="scheme-default" data-i18n="pages.colors.schemes.default">默认方案</label>
             </div>
             <div class="scheme-preview">
-              <span class="preview-word noun-default">名词</span>
-              <span class="preview-word verb-default">动词</span>
-              <span class="preview-word adj-default">形容词</span>
+              <span class="preview-word noun-default" data-i18n="pages.colors.preview.noun">名词</span>
+              <span class="preview-word verb-default" data-i18n="pages.colors.preview.verb">动词</span>
+              <span class="preview-word adj-default" data-i18n="pages.colors.preview.adjective">形容词</span>
             </div>
           </div>
           
           <div class="scheme-item" data-scheme="warm">
             <div class="scheme-header">
               <input type="radio" name="colorScheme" id="scheme-warm">
-              <label for="scheme-warm">暖色方案</label>
+              <label for="scheme-warm" data-i18n="pages.colors.schemes.warm">暖色方案</label>
             </div>
             <div class="scheme-preview">
-              <span class="preview-word noun-warm">名词</span>
-              <span class="preview-word verb-warm">动词</span>
-              <span class="preview-word adj-warm">形容词</span>
+              <span class="preview-word noun-warm" data-i18n="pages.colors.preview.noun">名词</span>
+              <span class="preview-word verb-warm" data-i18n="pages.colors.preview.verb">动词</span>
+              <span class="preview-word adj-warm" data-i18n="pages.colors.preview.adjective">形容词</span>
             </div>
           </div>
           
           <div class="scheme-item" data-scheme="cool">
             <div class="scheme-header">
               <input type="radio" name="colorScheme" id="scheme-cool">
-              <label for="scheme-cool">冷色方案</label>
+              <label for="scheme-cool" data-i18n="pages.colors.schemes.cool">冷色方案</label>
             </div>
             <div class="scheme-preview">
-              <span class="preview-word noun-cool">名词</span>
-              <span class="preview-word verb-cool">动词</span>
-              <span class="preview-word adj-cool">形容词</span>
+              <span class="preview-word noun-cool" data-i18n="pages.colors.preview.noun">名词</span>
+              <span class="preview-word verb-cool" data-i18n="pages.colors.preview.verb">动词</span>
+              <span class="preview-word adj-cool" data-i18n="pages.colors.preview.adjective">形容词</span>
             </div>
           </div>
           
           <div class="scheme-item" data-scheme="pastel">
             <div class="scheme-header">
               <input type="radio" name="colorScheme" id="scheme-pastel">
-              <label for="scheme-pastel">柔和方案</label>
+              <label for="scheme-pastel" data-i18n="pages.colors.schemes.pastel">柔和方案</label>
             </div>
             <div class="scheme-preview">
-              <span class="preview-word noun-pastel">名词</span>
-              <span class="preview-word verb-pastel">动词</span>
-              <span class="preview-word adj-pastel">形容词</span>
+              <span class="preview-word noun-pastel" data-i18n="pages.colors.preview.noun">名词</span>
+              <span class="preview-word verb-pastel" data-i18n="pages.colors.preview.verb">动词</span>
+              <span class="preview-word adj-pastel" data-i18n="pages.colors.preview.adjective">形容词</span>
             </div>
           </div>
           
           <div class="scheme-item" data-scheme="high-contrast">
             <div class="scheme-header">
               <input type="radio" name="colorScheme" id="scheme-high-contrast">
-              <label for="scheme-high-contrast">高对比度</label>
+              <label for="scheme-high-contrast" data-i18n="pages.colors.schemes.highContrast">高对比度</label>
             </div>
             <div class="scheme-preview">
-              <span class="preview-word noun-high-contrast">名词</span>
-              <span class="preview-word verb-high-contrast">动词</span>
-              <span class="preview-word adj-high-contrast">形容词</span>
+              <span class="preview-word noun-high-contrast" data-i18n="pages.colors.preview.noun">名词</span>
+              <span class="preview-word verb-high-contrast" data-i18n="pages.colors.preview.verb">动词</span>
+              <span class="preview-word adj-high-contrast" data-i18n="pages.colors.preview.adjective">形容词</span>
             </div>
+          </div>
+        </div>
+        
+        <!-- 高亮开关控制 -->
+        <div class="highlighting-toggles">
+          <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
+          <div class="toggle-group">
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-noun" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.noun">名词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-verb" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.verb">动词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-adj" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.adj">形容词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-comparative" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.comparative">比较级/最高级高亮</span>
+              </label>
+            </div>
+          </div>
+          <div class="toggle-description">
+            <p data-i18n="pages.colors.toggles.description">取消勾选可关闭对应类型词汇的高亮显示</p>
           </div>
         </div>
         
@@ -1482,59 +1710,59 @@
     <!-- 文本样式管理页面 -->
     <div class="page" id="text-page">
       <div class="header">
-        <h3>文本样式</h3>
+        <h3 data-i18n="pages.text.title">文本样式</h3>
       </div>
       
       <div class="text-content">
         <div class="text-info">
-          <p>调整页面文本的显示样式</p>
+          <p data-i18n="pages.text.description">调整页面文本的显示样式</p>
         </div>
         
         <div class="text-controls">
           <!-- 字号设置 -->
           <div class="control-group">
-            <label class="control-label">字号大小</label>
+            <label class="control-label" data-i18n="pages.text.fontSize">字号大小</label>
             <div class="control-input">
               <input type="range" id="fontSize" min="80" max="150" step="5" value="100">
               <span class="control-value" id="fontSizeValue">100%</span>
             </div>
-            <div class="control-desc">调整页面文字大小</div>
+            <div class="control-desc" data-i18n="pages.text.fontSizeDesc">调整页面文字大小</div>
           </div>
           
           <!-- 字间距设置 -->
           <div class="control-group">
-            <label class="control-label">字间距</label>
+            <label class="control-label" data-i18n="pages.text.letterSpacing">字间距</label>
             <div class="control-input">
               <input type="range" id="letterSpacing" min="0" max="3" step="0.1" value="0">
               <span class="control-value" id="letterSpacingValue">0px</span>
             </div>
-            <div class="control-desc">调整字符之间的间距</div>
+            <div class="control-desc" data-i18n="pages.text.letterSpacingDesc">调整字符之间的间距</div>
           </div>
           
           <!-- 行间距设置 -->
           <div class="control-group">
-            <label class="control-label">行间距</label>
+            <label class="control-label" data-i18n="pages.text.lineHeight">行间距</label>
             <div class="control-input">
               <input type="range" id="lineHeight" min="1.0" max="2.5" step="0.1" value="1.5">
               <span class="control-value" id="lineHeightValue">1.5</span>
             </div>
-            <div class="control-desc">调整行与行之间的间距</div>
+            <div class="control-desc" data-i18n="pages.text.lineHeightDesc">调整行与行之间的间距</div>
           </div>
           
           <!-- 段间距设置 -->
           <div class="control-group">
-            <label class="control-label">段间距</label>
+            <label class="control-label" data-i18n="pages.text.paragraphSpacing">段间距</label>
             <div class="control-input">
               <input type="range" id="paragraphSpacing" min="0" max="20" step="1" value="0">
               <span class="control-value" id="paragraphSpacingValue">0px</span>
             </div>
-            <div class="control-desc">调整段落之间的间距</div>
+            <div class="control-desc" data-i18n="pages.text.paragraphSpacingDesc">调整段落之间的间距</div>
           </div>
         </div>
         
         <!-- 预览区域 -->
         <div class="text-preview">
-          <h4>预览效果</h4>
+          <h4 data-i18n="pages.text.preview">预览效果</h4>
           <div class="preview-content" id="textPreview">
             <p>这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.</p>
             <p>第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect.</p>
@@ -1542,8 +1770,8 @@
         </div>
         
         <div class="text-actions">
-          <button class="save-btn" id="save-text-btn">应用样式</button>
-          <button class="reset-btn" id="reset-text-btn">重置默认</button>
+          <button class="save-btn" id="save-text-btn" data-i18n="pages.text.apply">应用样式</button>
+          <button class="reset-btn" id="reset-text-btn" data-i18n="pages.text.reset">重置默认</button>
         </div>
       </div>
     </div>
@@ -1551,21 +1779,21 @@
     <!-- AI分析页面 -->
     <div class="page" id="ai-page">
       <div class="header">
-        <h3>智能分析</h3>
+        <h3 data-i18n="pages.ai.title">智能分析</h3>
       </div>
       
       <div class="ai-content">
         <div class="ai-info">
-          <p>基于当前页面内容的智能分析和推荐</p>
+          <p data-i18n="pages.ai.description">基于当前页面高亮内容的数据分析</p>
         </div>
         
         <!-- 页面统计信息 -->
         <div class="analysis-section">
-          <h4>📊 页面统计</h4>
+          <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
           
           <!-- 语言分布 -->
           <div class="stat-group">
-            <div class="stat-title">语言分布</div>
+            <div class="stat-title" data-i18n="pages.ai.stats.language">语言分布</div>
             <div class="stat-content" id="languageStats">
               <div class="loading">分析中...</div>
             </div>
@@ -1573,44 +1801,79 @@
           
           <!-- 词性分布 -->
           <div class="stat-group">
-            <div class="stat-title">词性分布</div>
+            <div class="stat-title" data-i18n="pages.ai.stats.posDistribution">词性分布</div>
             <div class="stat-content" id="posStats">
               <div class="loading">分析中...</div>
             </div>
           </div>
           
-          <!-- 高亮统计 -->
-          <div class="stat-group">
-            <div class="stat-title">高亮统计</div>
-            <div class="stat-content" id="highlightStats">
-              <div class="loading">分析中...</div>
-            </div>
-          </div>
+          <!-- 高亮统计UI已隐藏 - 逻辑代码保留但不显示UI -->
         </div>
         
-        <!-- AI推荐 -->
-        <div class="analysis-section">
-          <h4>🔍 分析</h4>
-          
-          <!-- 颜色方案推荐 -->
-          <div class="recommendation-group">
-            <div class="rec-title">推荐颜色方案</div>
-            <div class="rec-content" id="colorRecommendation">
-              <div class="loading">分析中...</div>
-            </div>
-          </div>
-          
-          <!-- 文本样式推荐 -->
-          <div class="recommendation-group">
-            <div class="rec-title">推荐文本样式</div>
-            <div class="rec-content" id="textRecommendation">
-              <div class="loading">分析中...</div>
-            </div>
-          </div>
-        </div>
+        <!-- 推荐功能已彻底删除 -->
         
         <div class="ai-actions">
-          <button class="refresh-btn" id="refresh-analysis-btn">🔄 刷新分析</button>
+          <button class="refresh-btn" id="refresh-analysis-btn" data-i18n="pages.ai.refresh">🔄 刷新分析</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关于页面 -->
+    <div class="page" id="about-page">
+      <div class="header">
+        <h3 data-i18n="pages.about.title">关于</h3>
+      </div>
+      
+      <div class="about-content">
+        <!-- 关于我们 -->
+        <div class="about-section">
+          <div class="section-header">
+            <h4 data-i18n="pages.about.about.title">关于我们</h4>
+          </div>
+          <div class="section-content">
+            <div class="about-info">
+              <p data-i18n="pages.about.about.description"><strong>ADHDGoFly</strong> 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。</p>
+              <div class="version-info">
+                <p><strong data-i18n="pages.about.about.version">版本：</strong>0.1.1</p>
+                <p><strong data-i18n="pages.about.about.developer">开发者：</strong>ADHDGoFly Team</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 词典来源 -->
+        <div class="about-section">
+          <div class="section-header">
+            <h4 data-i18n="pages.about.dictionaries.title">词典来源</h4>
+          </div>
+          <div class="section-content">
+            <div class="dictionary-sources">
+              <div class="source-item">
+                <h5>中文词典 (ZH)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.zh">基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。</p>
+              </div>
+              <div class="source-item">
+                <h5>英文词典 (EN)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.en">基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。</p>
+              </div>
+              <div class="source-item">
+                <h5>法语词典 (FR)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.fr">来源于开源法语语言资源，包含基础词汇的词性信息。</p>
+              </div>
+              <div class="source-item">
+                <h5>俄语词典 (RU)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.ru">基于开源俄语词典项目，提供基本的词性标注功能。</p>
+              </div>
+              <div class="source-item">
+                <h5>西班牙语词典 (ES)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.es">来源于公开的西班牙语语言学资源，支持常用词汇识别。</p>
+              </div>
+              <div class="source-item">
+                <h5>日语词典 (JA)</h5>
+                <p data-i18n="pages.about.dictionaries.descriptions.ja">基于开源日语词典，包含假名和汉字的词性信息。</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1618,85 +1881,36 @@
     <!-- 设置页面 -->
     <div class="page" id="settings-page">
       <div class="header">
-        <h3>设置</h3>
+        <h3 data-i18n="pages.settings.title">设置</h3>
       </div>
       
       <div class="settings-content">
-        <!-- 关于我们 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4>关于我们</h4>
-          </div>
-          <div class="section-content">
-            <div class="about-info">
-              <p><strong>ADHDGoFly</strong> 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。</p>
-              <div class="version-info">
-                <p><strong>版本：</strong>0.1.1</p>
-                <p><strong>开发者：</strong>ADHDGoFly Team</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- 词典来源 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4>词典来源</h4>
-          </div>
-          <div class="section-content">
-            <div class="dictionary-sources">
-              <div class="source-item">
-                <h5>中文词典 (ZH)</h5>
-                <p>基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。</p>
-              </div>
-              <div class="source-item">
-                <h5>英文词典 (EN)</h5>
-                <p>基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。</p>
-              </div>
-              <div class="source-item">
-                <h5>法语词典 (FR)</h5>
-                <p>来源于开源法语语言资源，包含基础词汇的词性信息。</p>
-              </div>
-              <div class="source-item">
-                <h5>俄语词典 (RU)</h5>
-                <p>基于开源俄语词典项目，提供基本的词性标注功能。</p>
-              </div>
-              <div class="source-item">
-                <h5>西班牙语词典 (ES)</h5>
-                <p>来源于公开的西班牙语语言学资源，支持常用词汇识别。</p>
-              </div>
-              <div class="source-item">
-                <h5>日语词典 (JA)</h5>
-                <p>基于开源日语词典，包含假名和汉字的词性信息。</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- 其他设置 -->
         <div class="settings-section">
           <div class="section-header">
-            <h4>其他设置</h4>
+            <h4 data-i18n="pages.settings.other.title">其他设置</h4>
           </div>
           <div class="section-content">
             <div class="setting-item">
               <label class="setting-label">
                 <input type="checkbox" id="auto-update" checked>
                 <span class="checkmark"></span>
-                自动检查更新
+                <span data-i18n="pages.settings.other.autoUpdate">自动检查更新</span>
               </label>
-              <p class="setting-desc">启用后将自动检查插件更新</p>
+              <p class="setting-desc" data-i18n="pages.settings.other.autoUpdateDesc">启用后将自动检查插件更新</p>
             </div>
             <div class="setting-item">
               <label class="setting-label">
                 <input type="checkbox" id="analytics" checked>
                 <span class="checkmark"></span>
-                匿名使用统计
+                <span data-i18n="pages.settings.other.analytics">匿名使用统计</span>
               </label>
-              <p class="setting-desc">帮助我们改进产品（不收集个人信息）</p>
+              <p class="setting-desc" data-i18n="pages.settings.other.analyticsDesc">帮助我们改进产品（不收集个人信息）</p>
             </div>
             <div class="setting-actions">
-              <button class="reset-btn" id="reset-settings">重置所有设置</button>
+              <button class="reset-btn" id="reset-settings" data-i18n="pages.settings.other.reset">重置所有设置</button>
             </div>
           </div>
         </div>
@@ -1708,30 +1922,42 @@
   
   <!-- 右侧侧边栏 -->
   <div class="sidebar">
-    <button class="sidebar-btn active" id="home-btn" title="主页">
+    <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home">
       <span>🏠</span>
     </button>
     
-    <button class="sidebar-btn" id="dict-btn" title="词典">
+    <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict">
       <span>📚</span>
     </button>
     
-    <button class="sidebar-btn" id="colors-btn" title="颜色">
+    <button class="sidebar-btn" id="colors-btn" title="颜色" data-i18n-title="sidebar.colors">
       <span>🎨</span>
     </button>
     
-    <button class="sidebar-btn" id="text-btn" title="文本">
+    <button class="sidebar-btn" id="text-btn" title="文本" data-i18n-title="sidebar.text">
       <span>文</span>
     </button>
     
-
+    <button class="sidebar-btn" id="ai-btn" title="AI" data-i18n-title="sidebar.ai">
+      <span>🤖</span>
+    </button>
     
-    <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings">
+    <button class="sidebar-btn" id="about-btn" title="关于" data-i18n-title="sidebar.about">
+      <span>ℹ️</span>
+    </button>
+    
+    <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings">
       <span>⚙️</span>
     </button>
+    
+    <!-- 语言切换按钮 -->
+    <div class="language-switcher">
+      <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language">
+        <span class="language-icon">🌐</span>
+      </button>
+    </div>
   </div>
   
   <script src="settings.js"></script>
-  <script src="popup.js"></script>
 </body>
 </html>
