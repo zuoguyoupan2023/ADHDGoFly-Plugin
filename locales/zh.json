@@ -72,6 +72,14 @@
         "cool": "冷色方案",
         "pastel": "柔和方案",
         "highContrast": "高对比度"
+      },
+      "toggles": {
+        "title": "高亮选项",
+        "noun": "高亮名词",
+        "verb": "高亮动词",
+        "adj": "高亮形容词",
+        "comparative": "高亮比较级/最高级",
+        "description": "选择要高亮的词性类型"
       }
     },
     "text": {

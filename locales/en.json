@@ -72,6 +72,14 @@
         "cool": "Cool Scheme",
         "pastel": "Pastel Scheme",
         "highContrast": "High Contrast"
+      },
+      "toggles": {
+        "title": "Highlighting Options",
+        "noun": "Highlight Nouns",
+        "verb": "Highlight Verbs",
+        "adj": "Highlight Adjectives",
+        "comparative": "Highlight Comparatives/Superlatives",
+        "description": "Choose which parts of speech to highlight"
       }
     },
     "text": {
