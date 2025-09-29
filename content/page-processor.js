@@ -245,7 +245,7 @@ class PageProcessor {
       }
       
       // 进行分词和高亮
-      const segmentedHtml = this.textSegmenter.segmentText(text, language, dictionary);
+      const segmentedHtml = this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
       
       // 如果有变化，替换节点
       if (segmentedHtml !== text) {
