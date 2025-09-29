@@ -167,13 +167,21 @@ class TextSegmenter {
             }
           }
           
-          if (isComparative && this.highlightingToggles.comparative) {
-            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
-          } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
-            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
-          } else {
-            html += token;
-          }
+          if (isComparative) {
+             if (this.highlightingToggles.comparative) {
+               // 紫色比较级高亮开启，显示为紫色
+               html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else if (this.highlightingToggles.adj) {
+               // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+               html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else {
+               html += token;
+             }
+           } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
+             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+           } else {
+             html += token;
+           }
         }
       }
       // 如果精确匹配失败，检查比较级
@@ -192,8 +200,16 @@ class TextSegmenter {
           }
         }
         
-        if (isComparative && this.highlightingToggles.comparative) {
-          html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+        if (isComparative) {
+          if (this.highlightingToggles.comparative) {
+            // 紫色比较级高亮开启，显示为紫色
+            html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else if (this.highlightingToggles.adj) {
+            // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+            html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+          } else {
+            html += token;
+          }
         }
         // 然后尝试词汇变形匹配
         else {

@@ -311,7 +311,7 @@ class QuickHighlighter {
       }
       
       // 检查比较级/最高级，但排除已识别为名词或动词的词汇
-      if (isComparative && this.highlightingToggles.comparative && pos) {
+      if (isComparative && pos) {
         const normalizedPos = this.normalizePos(pos);
         // 如果词典中标记为名词或动词，优先使用词典标记
         if (normalizedPos === 'n' || normalizedPos === 'v') {
@@ -326,12 +326,28 @@ class QuickHighlighter {
             html += word;
           }
         } else {
-          // 词典中标记为形容词或副词的比较级，显示为紫色
-          html += `<span class="adhd-comp">${word}</span>`;
+          // 词典中标记为形容词或副词的比较级
+          if (this.highlightingToggles.comparative) {
+            // 紫色比较级高亮开启，显示为紫色
+            html += `<span class="adhd-comp">${word}</span>`;
+          } else if (this.highlightingToggles.adj) {
+            // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+            html += `<span class="adhd-adj">${word}</span>`;
+          } else {
+            html += word;
+          }
         }
-      } else if (isComparative && this.highlightingToggles.comparative && !pos) {
-        // 词典中找不到但符合比较级模式的词，显示为紫色
-        html += `<span class="adhd-comp">${word}</span>`;
+      } else if (isComparative && !pos) {
+        // 词典中找不到但符合比较级模式的词
+        if (this.highlightingToggles.comparative) {
+          // 紫色比较级高亮开启，显示为紫色
+          html += `<span class="adhd-comp">${word}</span>`;
+        } else if (this.highlightingToggles.adj) {
+          // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+          html += `<span class="adhd-adj">${word}</span>`;
+        } else {
+          html += word;
+        }
       } else if (pos) {
         const normalizedPos = this.normalizePos(pos);
         // 根据高亮开关决定是否应用高亮
