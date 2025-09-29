@@ -92,7 +92,7 @@ class TextSegmenter {
           const shouldHighlight = (
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
             (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-            (normalizedPos === 'adj' && this.highlightingToggles.adj) ||
+            (normalizedPos === 'a' && this.highlightingToggles.adj) ||
             (normalizedPos === 'adv' && this.highlightingToggles.adj) // 副词也使用形容词开关
           );
           
@@ -161,7 +161,7 @@ class TextSegmenter {
           const shouldHighlight = (
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
             (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-            (normalizedPos === 'adj' && this.highlightingToggles.adj)
+            (normalizedPos === 'a' && this.highlightingToggles.adj)
           );
           
           if (shouldHighlight) {
@@ -185,10 +185,10 @@ class TextSegmenter {
               const shouldHighlight = (
                 (normalizedPos === 'n' && this.highlightingToggles.noun) ||
                 (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-                (normalizedPos === 'adj' && this.highlightingToggles.adj)
+                (normalizedPos === 'a' && this.highlightingToggles.adj)
               );
               
-              if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'adj')) {
+              if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
                 html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
                 matched = true;
                 break;
