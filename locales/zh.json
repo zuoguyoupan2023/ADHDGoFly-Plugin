@@ -79,7 +79,12 @@
         "verb": "高亮动词",
         "adj": "高亮形容词",
         "comparative": "高亮比较级/最高级",
-        "description": "选择要高亮的词性类型"
+        "description": "选择要高亮显示的词性。英文比较级最高级会被特殊标记为紫色。"
+      },
+      "preview": {
+        "noun": "名词",
+        "verb": "动词",
+        "adjective": "形容词"
       }
     },
     "text": {
