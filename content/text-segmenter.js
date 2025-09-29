@@ -1,4 +1,9 @@
 // 文本分词器模块
+// 在Node.js环境中引入英语词汇变形处理器
+if (typeof module !== 'undefined' && module.exports && typeof EnglishMorphology === 'undefined') {
+  const EnglishMorphology = require('./en-noun-morphology.js');
+}
+
 class TextSegmenter {
   constructor() {
     // 标点符号和分隔符模式
@@ -348,7 +353,7 @@ class TextSegmenter {
       let token = tokens[i];
       
       // 清理词汇，保留法语重音字符
-      let cleanWord = token.toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
+      let cleanWord = token.toLowerCase().replace(/[^\w\u00C0-\u017F']/g, '');
       
       console.log(`处理词汇: "${token}" -> 清理后: "${cleanWord}"`);
       
@@ -358,31 +363,75 @@ class TextSegmenter {
         continue;
       }
       
+      // 处理法语省音 (elision)
+      let restoredWord = this.restoreFrenchElision(cleanWord);
+      console.log(`省音还原: "${cleanWord}" -> "${restoredWord}"`);
+      
+      // 处理法语缩写 (contractions)
+      let contractedWords = this.restoreFrenchContractions(restoredWord);
+      console.log(`缩写还原: "${restoredWord}" -> [${contractedWords.join(', ')}]`);
+      
       // 从词典中查找 - 处理两种可能的词典格式
       let entry = null;
       let pos = null;
+      let foundWord = null;
       
-      // 情况1: 完整词典结构 {words: {...}}
-      if (dictionary && dictionary.words && dictionary.words[cleanWord]) {
-        entry = dictionary.words[cleanWord];
-        // 如果有多个词性，优先选择形容词，然后动词，最后名词
-        if (entry.pos && Array.isArray(entry.pos)) {
-          if (entry.pos.includes('adj')) {
-            pos = 'adj';
-          } else if (entry.pos.includes('v')) {
-            pos = 'v';
-          } else {
-            pos = entry.pos[0];
-          }
-        } else {
-          pos = entry.pos ? entry.pos[0] : entry;
+      // 首先尝试查找缩写还原后的词汇
+      for (const word of contractedWords) {
+        foundWord = this.findInDictionary(word, dictionary);
+        if (foundWord) {
+          pos = foundWord.pos;
+          console.log(`缩写还原词汇在词典中找到: ${word}, 词性: ${pos}`);
+          break;
         }
-        console.log(`完整词典中找到: ${cleanWord}, 所有词性: ${entry.pos}, 选择词性: ${pos}`);
       }
-      // 情况2: 扁平化词典结构 {word: pos, ...}
-      else if (dictionary && dictionary[cleanWord]) {
-        pos = dictionary[cleanWord];
-        console.log(`扁平词典中找到: ${cleanWord}, 词性: ${pos}`);
+      
+      // 如果缩写还原未找到，尝试动词变位还原
+      if (!pos) {
+        let verbInfinitives = this.restoreFrenchVerbConjugation(restoredWord);
+        console.log(`动词变位还原: "${restoredWord}" -> [${verbInfinitives.join(', ')}]`);
+        
+        for (const infinitive of verbInfinitives) {
+          foundWord = this.findInDictionary(infinitive, dictionary);
+          if (foundWord) {
+            pos = foundWord.pos;
+            console.log(`动词变位还原词汇在词典中找到: ${infinitive}, 词性: ${pos}`);
+            break;
+          }
+        }
+      }
+      
+      // 如果动词变位还原未找到，尝试形容词一致性还原
+      if (!pos) {
+        let adjectiveForms = this.restoreFrenchAdjectiveAgreement(restoredWord);
+        console.log(`形容词一致性还原: "${restoredWord}" -> [${adjectiveForms.join(', ')}]`);
+        
+        for (const baseForm of adjectiveForms) {
+          foundWord = this.findInDictionary(baseForm, dictionary);
+          if (foundWord) {
+            pos = foundWord.pos;
+            console.log(`形容词一致性还原词汇在词典中找到: ${baseForm}, 词性: ${pos}`);
+            break;
+          }
+        }
+      }
+      
+      // 如果缩写还原词汇未找到，尝试省音还原词汇
+      if (!pos && restoredWord !== cleanWord) {
+        foundWord = this.findInDictionary(restoredWord, dictionary);
+        if (foundWord) {
+          pos = foundWord.pos;
+          console.log(`省音还原词汇在词典中找到: ${restoredWord}, 词性: ${pos}`);
+        }
+      }
+      
+      // 如果还原词汇未找到，尝试原词汇
+      if (!pos) {
+        foundWord = this.findInDictionary(cleanWord, dictionary);
+        if (foundWord) {
+          pos = foundWord.pos;
+          console.log(`原词汇在词典中找到: ${cleanWord}, 词性: ${pos}`);
+        }
       }
       
       if (pos) {
@@ -394,7 +443,7 @@ class TextSegmenter {
             (normalizedPos === 'v' && this.highlightingToggles.verb) ||
             (normalizedPos === 'a' && this.highlightingToggles.adj)) {
           // 分离词汇和标点符号
-          const wordMatch = token.match(/^([\w\u00C0-\u017F]+)(.*)$/);
+          const wordMatch = token.match(/^([\w\u00C0-\u017F']+)(.*)$/);
           if (wordMatch) {
             const [, word, punctuation] = wordMatch;
             processedTokens.push(`<span class="adhd-${normalizedPos}">${word}</span>${punctuation}`);
@@ -417,6 +466,256 @@ class TextSegmenter {
     console.log('=== 法语处理结束 ===');
     
     return result;
+  }
+
+  /**
+   * 法语省音还原处理
+   * 处理 l', j', d', n', m', t', s', c' 等省音形式
+   * @param {string} word 待处理的词汇
+   * @returns {string} 还原后的词汇
+   * @private
+   */
+  restoreFrenchElision(word) {
+    const elisionMap = {
+      "l'": "le",
+      "j'": "je", 
+      "d'": "de",
+      "n'": "ne",
+      "m'": "me",
+      "t'": "te",
+      "s'": "se",
+      "c'": "ce",
+      "qu'": "que"
+    };
+    
+    // 检查是否包含省音
+    for (const [elision, full] of Object.entries(elisionMap)) {
+      if (word.toLowerCase().startsWith(elision)) {
+        // 返回省音后的主要词汇部分
+        return word.substring(elision.length);
+      }
+    }
+    
+    return word;
+  }
+  
+  /**
+   * 法语缩写还原处理
+   * 处理 au, du, aux, des 等强制性缩写形式
+   * @param {string} word 待处理的词汇
+   * @returns {Array<string>} 还原后的词汇数组
+   * @private
+   */
+  restoreFrenchContractions(word) {
+    // 法语缩写映射表
+    const contractionMap = {
+      "au": ["à", "le"],
+      "du": ["de", "le"],
+      "aux": ["à", "les"],
+      "des": ["de", "les"]
+    };
+    
+    // 检查是否为缩写形式
+    if (contractionMap[word]) {
+      return contractionMap[word];
+    }
+    
+    // 如果不是缩写，返回原词汇
+    return [word];
+  }
+  
+  /**
+   * 法语动词变位还原处理
+   * 处理规则动词(-er, -ir, -re)和常见不规则动词的变位形式
+   * @param {string} word 待处理的词汇
+   * @returns {Array<string>} 可能的动词原形数组
+   * @private
+   */
+  restoreFrenchVerbConjugation(word) {
+    let possibleInfinitives = [];
+    
+    // 处理-er动词变位
+    if (word.endsWith('e') || word.endsWith('es') || word.endsWith('ent')) {
+      // 现在时变位: je/tu/il parle, nous parlons, vous parlez, ils parlent
+      let stem = word.replace(/e(s|nt)?$/, '');
+      possibleInfinitives.push(stem + 'er');
+    }
+    if (word.endsWith('ons') || word.endsWith('ez')) {
+      let stem = word.replace(/(ons|ez)$/, '');
+      possibleInfinitives.push(stem + 'er');
+    }
+    if (word.endsWith('ai') || word.endsWith('as') || word.endsWith('a') || 
+        word.endsWith('âmes') || word.endsWith('âtes') || word.endsWith('èrent')) {
+      // 过去时变位
+      let stem = word.replace(/(ai|as|a|âmes|âtes|èrent)$/, '');
+      possibleInfinitives.push(stem + 'er');
+    }
+    
+    // 处理-ir动词变位
+    if (word.endsWith('is') || word.endsWith('it') || word.endsWith('issons') || 
+        word.endsWith('issez') || word.endsWith('issent')) {
+      // 现在时变位: je/tu finis, il finit, nous finissons, vous finissez, ils finissent
+      let stem = word.replace(/(is|it|issons|issez|issent)$/, '');
+      possibleInfinitives.push(stem + 'ir');
+    }
+    
+    // 处理-re动词变位
+    if (word.endsWith('s') || word.endsWith('t') || word.endsWith('ons') || 
+        word.endsWith('ez') || word.endsWith('ent')) {
+      // 现在时变位: je/tu vends, il vend, nous vendons, vous vendez, ils vendent
+      let stem = word.replace(/(s|t|ons|ez|ent)$/, '');
+      if (!stem.endsWith('s')) { // 避免重复处理
+        possibleInfinitives.push(stem + 're');
+      }
+    }
+    
+    // 常见不规则动词映射
+    const irregularVerbs = {
+      'suis': ['être'], 'es': ['être'], 'est': ['être'], 'sommes': ['être'], 'êtes': ['être'], 'sont': ['être'],
+      'ai': ['avoir'], 'as': ['avoir'], 'a': ['avoir'], 'avons': ['avoir'], 'avez': ['avoir'], 'ont': ['avoir'],
+      'vais': ['aller'], 'vas': ['aller'], 'va': ['aller'], 'allons': ['aller'], 'allez': ['aller'], 'vont': ['aller'],
+      'fais': ['faire'], 'fait': ['faire'], 'faisons': ['faire'], 'faites': ['faire'], 'font': ['faire'],
+      'dis': ['dire'], 'dit': ['dire'], 'disons': ['dire'], 'dites': ['dire'], 'disent': ['dire'],
+      'vois': ['voir'], 'voit': ['voir'], 'voyons': ['voir'], 'voyez': ['voir'], 'voient': ['voir'],
+      'sais': ['savoir'], 'sait': ['savoir'], 'savons': ['savoir'], 'savez': ['savoir'], 'savent': ['savoir'],
+      'peux': ['pouvoir'], 'peut': ['pouvoir'], 'pouvons': ['pouvoir'], 'pouvez': ['pouvoir'], 'peuvent': ['pouvoir'],
+      'veux': ['vouloir'], 'veut': ['vouloir'], 'voulons': ['vouloir'], 'voulez': ['vouloir'], 'veulent': ['vouloir']
+    };
+    
+    if (irregularVerbs[word]) {
+      possibleInfinitives.push(...irregularVerbs[word]);
+    }
+    
+    // 如果没有找到变位形式，返回原词汇
+    if (possibleInfinitives.length === 0) {
+      possibleInfinitives.push(word);
+    }
+    
+    return possibleInfinitives;
+  }
+  
+  /**
+   * 法语形容词一致性还原处理
+   * 处理形容词的性别和数量变化形式
+   * @param {string} word 待处理的词汇
+   * @returns {Array<string>} 可能的形容词基本形式数组
+   * @private
+   */
+  restoreFrenchAdjectiveAgreement(word) {
+    let possibleBaseForms = [];
+    
+    // 处理阴性形式 (-e结尾)
+    if (word.endsWith('e') && word.length > 2) {
+      let masculineForm = word.slice(0, -1);
+      possibleBaseForms.push(masculineForm);
+    }
+    
+    // 处理复数形式 (-s结尾)
+    if (word.endsWith('s') && word.length > 2) {
+      let singularForm = word.slice(0, -1);
+      possibleBaseForms.push(singularForm);
+      
+      // 如果是阴性复数形式 (-es结尾)
+      if (singularForm.endsWith('e') && singularForm.length > 2) {
+        let masculineSingular = singularForm.slice(0, -1);
+        possibleBaseForms.push(masculineSingular);
+      }
+    }
+    
+    // 处理特殊变化形式
+    const specialAdjectives = {
+      // -eux/-euse 形容词
+      'euse': 'eux', 'euses': 'eux',
+      // -if/-ive 形容词
+      'ive': 'if', 'ives': 'if',
+      // -er/-ère 形容词
+      'ère': 'er', 'ères': 'er',
+      // -on/-onne 形容词
+      'onne': 'on', 'onnes': 'on',
+      // -en/-enne 形容词
+      'enne': 'en', 'ennes': 'en',
+      // -el/-elle 形容词
+      'elle': 'el', 'elles': 'el',
+      // -et/-ette 形容词
+      'ette': 'et', 'ettes': 'et',
+      // -ot/-otte 形容词
+      'otte': 'ot', 'ottes': 'ot',
+      // -as/-asse 形容词
+      'asse': 'as', 'asses': 'as',
+      // -os/-osse 形容词
+      'osse': 'os', 'osses': 'os',
+      // -eil/-eille 形容词
+      'eille': 'eil', 'eilles': 'eil',
+      // -ul/-ulle 形容词
+      'ulle': 'ul', 'ulles': 'ul'
+    };
+    
+    for (const [feminine, masculine] of Object.entries(specialAdjectives)) {
+      if (word.endsWith(feminine)) {
+        let stem = word.slice(0, -feminine.length);
+        possibleBaseForms.push(stem + masculine);
+      }
+    }
+    
+    // 处理不规则形容词
+    const irregularAdjectives = {
+      'belle': 'beau', 'belles': 'beau', 'beaux': 'beau',
+      'nouvelle': 'nouveau', 'nouvelles': 'nouveau', 'nouveaux': 'nouveau',
+      'vieille': 'vieux', 'vieilles': 'vieux',
+      'folle': 'fou', 'folles': 'fou', 'fous': 'fou',
+      'molle': 'mou', 'molles': 'mou', 'mous': 'mou',
+      'blanche': 'blanc', 'blanches': 'blanc', 'blancs': 'blanc',
+      'fraîche': 'frais', 'fraîches': 'frais',
+      'sèche': 'sec', 'sèches': 'sec', 'secs': 'sec',
+      'longue': 'long', 'longues': 'long', 'longs': 'long',
+      'publique': 'public', 'publiques': 'public', 'publics': 'public'
+    };
+    
+    if (irregularAdjectives[word]) {
+      possibleBaseForms.push(irregularAdjectives[word]);
+    }
+    
+    // 如果没有找到变化形式，返回原词汇
+    if (possibleBaseForms.length === 0) {
+      possibleBaseForms.push(word);
+    }
+    
+    return possibleBaseForms;
+  }
+  
+  /**
+   * 在词典中查找词汇的通用方法
+   * @param {string} word 要查找的词汇
+   * @param {Object} dictionary 词典对象
+   * @returns {Object|null} 找到的词汇信息，包含pos属性
+   * @private
+   */
+  findInDictionary(word, dictionary) {
+    let entry = null;
+    let pos = null;
+    
+    // 情况1: 完整词典结构 {words: {...}}
+    if (dictionary && dictionary.words && dictionary.words[word]) {
+      entry = dictionary.words[word];
+      // 如果有多个词性，优先选择形容词，然后动词，最后名词
+      if (entry.pos && Array.isArray(entry.pos)) {
+        if (entry.pos.includes('adj')) {
+          pos = 'adj';
+        } else if (entry.pos.includes('v')) {
+          pos = 'v';
+        } else {
+          pos = entry.pos[0];
+        }
+      } else {
+        pos = entry.pos ? entry.pos[0] : entry;
+      }
+    }
+    // 情况2: 扁平化词典结构 {word: pos, ...}
+    else if (dictionary && dictionary[word]) {
+      pos = dictionary[word];
+    }
+    
+    return pos ? { pos: pos } : null;
   }
 
   /**
