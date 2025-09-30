@@ -166,7 +166,7 @@ class DictionaryAdapter {
     // ========== 向后兼容的接口 ==========
 
     /**
-     * 获取指定语言的词典（合并同语言的多个词典）
+     * 获取指定语言的词典
      * @param {string} language 语言代码
      * @returns {Object} 词典数据
      */
@@ -175,35 +175,6 @@ class DictionaryAdapter {
         if (!this.enabledLanguages[language]) {
             return {};
         }
-        
-        // 如果使用新管理器，合并同语言的多个词典
-        if (this.newManager) {
-            const dictionaries = this.newManager.getDictionariesByLanguage(language, true);
-            if (dictionaries.length === 0) {
-                return this.legacyData[language] || {};
-            }
-            
-            // 如果只有一个词典，直接返回
-            if (dictionaries.length === 1) {
-                const dictData = this.newManager.loadedDictionaries.get(dictionaries[0].id);
-                if (dictData && dictData.words) {
-                    return dictData.words;
-                }
-            }
-            
-            // 合并多个同语言词典（按优先级，高优先级覆盖低优先级）
-            const mergedDictionary = {};
-            for (const dict of dictionaries.reverse()) { // 反转以让高优先级后覆盖
-                const dictData = this.newManager.loadedDictionaries.get(dict.id);
-                if (dictData && dictData.words) {
-                    Object.assign(mergedDictionary, dictData.words);
-                }
-            }
-            
-            return mergedDictionary;
-        }
-        
-        // 传统模式：直接返回单一词典
         return this.legacyData[language] || {};
     }
 
