@@ -255,7 +255,7 @@ class PageProcessor {
   }
 
   /**
-   * 处理多语言文本，对所有启用的语言词典进行匹配
+   * 处理多语言文本，使用语言检测确定正确的分词策略
    * @param {string} text 原始文本
    * @returns {string} 处理后的HTML字符串
    * @private
@@ -278,29 +278,31 @@ class PageProcessor {
       return text;
     }
     
-    // 多语言处理：合并所有词典，一次性处理
-    const combinedDictionary = {};
-    const languagePriority = ['zh', 'ja', 'ko', 'ru', 'fr', 'es', 'en'];
+    // 多语言处理：使用语言检测确定主要语言
+    const detectedLanguage = this.languageDetector.detectLanguage(text);
     
-    // 按优先级合并词典（后面的语言会覆盖前面的）
+    // 检查检测到的语言是否在启用列表中
+    if (enabledLanguages.includes(detectedLanguage)) {
+      const dictionary = this.dictionaryManager.getDictionary(detectedLanguage);
+      if (dictionary && Object.keys(dictionary).length > 0) {
+        return this.textSegmenter.segmentText(text, detectedLanguage, dictionary, this.dictionaryManager);
+      }
+    }
+    
+    // 如果检测失败或检测到的语言未启用，按优先级尝试处理
+    const languagePriority = ['zh', 'ja', 'ko', 'ru', 'fr', 'es', 'en'];
     const sortedLanguages = enabledLanguages.sort((a, b) => {
       const aIndex = languagePriority.indexOf(a);
       const bIndex = languagePriority.indexOf(b);
       return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
     });
     
+    // 尝试用每种启用的语言处理
     for (const language of sortedLanguages) {
       const dictionary = this.dictionaryManager.getDictionary(language);
       if (dictionary && Object.keys(dictionary).length > 0) {
-        Object.assign(combinedDictionary, dictionary);
+        return this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
       }
-    }
-    
-    // 使用合并后的词典进行一次性处理
-    if (Object.keys(combinedDictionary).length > 0) {
-      // 选择主要语言进行处理（优先级最高的启用语言）
-      const primaryLanguage = sortedLanguages[0];
-      return this.textSegmenter.segmentText(text, primaryLanguage, combinedDictionary, this.dictionaryManager);
     }
     
     return text;
