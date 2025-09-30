@@ -5,7 +5,6 @@ class PopupController {
     this.currentPage = 'home';
     this.i18nManager = new I18nManager();
     this.versionInfo = null; // 缓存版本信息
-    this.availableDictionaries = [];
     this.dictSettings = {
       zh: true,
       en: true,
@@ -69,9 +68,6 @@ class PopupController {
     if (statusDiv) {
       statusDiv.textContent = this.i18nManager.t('status.checking');
     }
-    
-    // 加载可用词典列表
-    await this.loadAvailableDictionaries();
     
     // 绑定事件
     this.bindEvents();
@@ -242,82 +238,11 @@ class PopupController {
     }
   }
 
-  async loadAvailableDictionaries() {
-     try {
-       // 从background script获取词典注册表
-       const response = await chrome.runtime.sendMessage({ action: 'getDictionaryRegistry' });
-       if (response && response.success) {
-         this.availableDictionaries = response.dictionaries;
-         console.log('加载到的词典列表:', this.availableDictionaries);
-         
-         // 根据可用词典更新dictSettings，按词典ID设置
-         const newDictSettings = {};
-         
-         // 先保持现有的词典级别设置
-         Object.keys(this.dictSettings).forEach(dictId => {
-           newDictSettings[dictId] = this.dictSettings[dictId];
-         });
-         
-         // 为每个词典确保有设置项
-         this.availableDictionaries.forEach(dict => {
-           if (newDictSettings[dict.id] === undefined) {
-             // 新词典默认为false（除了中文和英文词典默认为true）
-             newDictSettings[dict.id] = (dict.language === 'zh' || dict.language === 'en');
-           }
-         });
-         
-         this.dictSettings = newDictSettings;
-         
-         // 动态生成词典UI
-         this.generateDictUI();
-       } else {
-         console.error('获取词典注册表失败:', response?.error);
-       }
-     } catch (error) {
-       console.error('加载可用词典失败:', error);
-     }
-   }
-
-  generateDictUI() {
-     const dictContainer = document.querySelector('.dict-options');
-     if (!dictContainer) return;
-     
-     // 清空现有内容
-     dictContainer.innerHTML = '';
-     
-     // 为每个词典生成独立的UI项
-     this.availableDictionaries.forEach(dict => {
-       const dictItem = document.createElement('div');
-       dictItem.className = 'dict-item';
-       dictItem.innerHTML = `
-         <label class="dict-label">
-           <input type="checkbox" id="dict-${dict.id}" ${this.dictSettings[dict.id] ? 'checked' : ''}>
-           <span class="checkmark"></span>
-           <div class="dict-info-text">
-             <span class="dict-name">${dict.name}</span>
-             <span class="dict-desc">${dict.description}</span>
-           </div>
-         </label>
-       `;
-       dictContainer.appendChild(dictItem);
-       
-       // 绑定事件
-       const checkbox = dictItem.querySelector(`#dict-${dict.id}`);
-       checkbox.addEventListener('change', (e) => {
-         this.dictSettings[dict.id] = e.target.checked;
-         console.log(`${dict.name}词典:`, e.target.checked ? '启用' : '禁用');
-       });
-     });
-   }
-
   async loadDictSettings() {
     try {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
         this.dictSettings = { ...this.dictSettings, ...result.dictSettings };
-      } else {
-        // 默认设置：按词典ID设置
-        this.dictSettings = {};
       }
       
       // 更新UI
@@ -328,11 +253,6 @@ class PopupController {
   }
 
   updateDictUI() {
-    // 如果还没有生成UI，先生成
-    if (this.availableDictionaries.length > 0) {
-      this.generateDictUI();
-    }
-    
     Object.keys(this.dictSettings).forEach(langCode => {
       const checkbox = document.getElementById(`dict-${langCode}`);
       if (checkbox) {
@@ -351,13 +271,26 @@ class PopupController {
     // 清空现有标签
     dictTagsContainer.innerHTML = '';
     
-    // 根据可用词典和设置状态添加标签
-    this.availableDictionaries.forEach(dict => {
-      if (this.dictSettings[dict.id]) {
+    // 词典名称映射
+    const dictNames = {
+      zh: 'ZH',
+      en: 'EN',
+      fr: 'FR',
+      ru: 'RU',
+      es: 'ES',
+      ja: 'JA'
+    };
+    
+    // 只处理已知的词典语言代码
+    const validLangCodes = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
+    
+    // 根据词典界面的实际复选框状态添加标签
+    validLangCodes.forEach(langCode => {
+      const checkbox = document.getElementById(`dict-${langCode}`);
+      if (checkbox && checkbox.checked && dictNames[langCode]) {
         const tag = document.createElement('div');
         tag.className = 'dict-tag';
-        tag.textContent = dict.name;
-        tag.title = dict.description; // 添加tooltip显示描述
+        tag.textContent = dictNames[langCode];
         dictTagsContainer.appendChild(tag);
       }
     });

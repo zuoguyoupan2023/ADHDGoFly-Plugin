@@ -95,48 +95,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 初始化版本检查器
 const versionChecker = new SimpleVersionChecker();
 
-// 监听来自popup的消息
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'getDictionaryRegistry') {
-    // 读取词典注册表
-    fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'))
-      .then(response => response.json())
-      .then(data => {
-        // 处理词典数据，转换为popup需要的格式
-        const dictionaries = [];
-        
-        // 处理preset词典
-        if (data.dictionaries && data.dictionaries.preset) {
-          data.dictionaries.preset.forEach(dict => {
-            dictionaries.push({
-              id: dict.id,
-              name: dict.name,
-              description: dict.displayName.zh || dict.displayName.en || dict.name,
-              language: dict.language,
-              enabled: dict.enabled,
-              priority: dict.priority,
-              filePath: dict.filePath
-            });
-          });
-        }
-        
-        sendResponse({ success: true, dictionaries });
-      })
-      .catch(error => {
-        console.error('读取词典注册表失败:', error);
-        sendResponse({ success: false, error: error.message });
-      });
-    
-    return true; // 保持消息通道开放
-  }
-});
-
 // 插件启动时的初始化
 chrome.runtime.onStartup.addListener(() => {
   console.log('ADHDGoFly Plugin 启动');
 });
 
-// 安装时的初始化
 chrome.runtime.onInstalled.addListener(() => {
   console.log('ADHDGoFly Plugin 安装完成');
 });

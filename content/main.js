@@ -199,35 +199,20 @@ class ADHDHighlighter {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
-        
-        // 检查设置格式，如果是新格式（按词典ID），使用新方法
-        const firstKey = Object.keys(result.dictSettings)[0];
-        if (firstKey && (firstKey.includes('-') || firstKey.length > 2)) {
-          // 新格式：按词典ID设置
-          this.dictionaryManager.updateEnabledDictionaries(result.dictSettings);
-        } else {
-          // 旧格式：按语言设置
-          this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
-        }
+        this.dictionaryManager.updateEnabledLanguages(result.dictSettings);
       } else {
-        // 首次使用时的默认设置，启用英语和中文词典
-        const defaultSettings = { 
-          'en-preset': true,
-          'zh-preset': true 
-        };
+        // 首次使用时的默认设置，启用英语词典
+        const defaultSettings = { en: true };
         console.log('使用默认词典设置:', defaultSettings);
-        this.dictionaryManager.updateEnabledDictionaries(defaultSettings);
+        this.dictionaryManager.updateEnabledLanguages(defaultSettings);
         // 保存默认设置
         await chrome.storage.local.set({ dictSettings: defaultSettings });
       }
     } catch (error) {
       console.error('加载词典设置失败:', error);
       // 出错时也使用默认设置
-      const defaultSettings = { 
-        'en-preset': true,
-        'zh-preset': true 
-      };
-      this.dictionaryManager.updateEnabledDictionaries(defaultSettings);
+      const defaultSettings = { en: true };
+      this.dictionaryManager.updateEnabledLanguages(defaultSettings);
     }
   }
 
@@ -587,15 +572,8 @@ class ADHDHighlighter {
   async updateDictSettings(dictSettings) {
     console.log('更新词典设置:', dictSettings);
     
-    // 检查设置格式，如果是新格式（按词典ID），使用新方法
-    const firstKey = Object.keys(dictSettings)[0];
-    if (firstKey && (firstKey.includes('-') || firstKey.length > 2)) {
-      // 新格式：按词典ID设置
-      this.dictionaryManager.updateEnabledDictionaries(dictSettings);
-    } else {
-      // 旧格式：按语言设置
-      this.dictionaryManager.updateEnabledLanguages(dictSettings);
-    }
+    // 保存词典设置到词典管理器
+    this.dictionaryManager.updateEnabledLanguages(dictSettings);
     
     // 如果当前已启用高亮，重新处理页面
     if (this.enabled) {

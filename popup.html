@@ -464,47 +464,6 @@
       border-color: #007AFF;
     }
     
-    /* 词典子列表样式 */
-    .dict-language-group {
-      margin-bottom: 8px;
-    }
-    
-    .dict-group-header {
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: white;
-      transition: all 0.2s ease;
-    }
-    
-    .dict-group-header:hover {
-      border-color: #007AFF;
-      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
-    }
-    
-    .dict-sub-list {
-      margin-left: 20px;
-      margin-top: 4px;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      border-left: 2px solid #007AFF;
-    }
-    
-    .dict-sub-item {
-      padding: 4px 0;
-      font-size: 12px;
-      color: #666;
-    }
-    
-    .dict-sub-name {
-      font-weight: 500;
-      margin-right: 8px;
-    }
-    
-    .dict-sub-desc {
-      color: #888;
-    }
-
     .dict-label input[type="checkbox"]:checked + .checkmark::after {
       content: '✓';
       position: absolute;
@@ -1558,8 +1517,70 @@
         </div>
         
         <div class="dict-list">
-          <div class="dict-options">
-            <!-- 词典列表将由JavaScript动态生成 -->
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-zh" checked>
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">ZH</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.zh">中文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-en" checked>
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">EN</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.en">英文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-fr">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">FR</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.fr">法文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-ru">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">RU</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.ru">俄文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-es">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">ES</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.es">西班牙文词典</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="dict-item">
+            <label class="dict-label">
+              <input type="checkbox" id="dict-ja">
+              <span class="checkmark"></span>
+              <div class="dict-info-text">
+                <span class="dict-name">JA</span>
+                <span class="dict-desc" data-i18n="pages.dict.languages.ja">日文词典</span>
+              </div>
+            </label>
           </div>
         </div>
         

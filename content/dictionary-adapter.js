@@ -8,7 +8,6 @@ class DictionaryAdapter {
         this.legacyData = {};
         this.isLoaded = false;
         this.loadPromise = null;
-        this.enabledDictionaries = {}; // 改为按词典ID存储启用状态
         this.enabledLanguages = {
             zh: true,
             en: true,
@@ -172,51 +171,36 @@ class DictionaryAdapter {
      * @returns {Object} 词典数据
      */
     getDictionary(language) {
-        // 如果使用新管理器，合并同语言的已启用词典
+        // 只返回启用的语言词典
+        if (!this.enabledLanguages[language]) {
+            return {};
+        }
+        
+        // 如果使用新管理器，合并同语言的多个词典
         if (this.newManager) {
-            const allDictionaries = this.newManager.getDictionariesByLanguage(language, false);
-            if (allDictionaries.length === 0) {
+            const dictionaries = this.newManager.getDictionariesByLanguage(language, true);
+            if (dictionaries.length === 0) {
                 return this.legacyData[language] || {};
             }
             
-            // 过滤出已启用的词典
-            const enabledDictionaries = allDictionaries.filter(dict => 
-                this.enabledDictionaries[dict.id] === true
-            );
-            
-            if (enabledDictionaries.length === 0) {
-                // 如果没有启用的词典，检查语言级别设置（向后兼容）
-                if (!this.enabledLanguages[language]) {
-                    return {};
-                }
-                return this.legacyData[language] || {};
-            }
-            
-            // 如果只有一个启用的词典，直接返回
-            if (enabledDictionaries.length === 1) {
-                const dictData = this.newManager.loadedDictionaries.get(enabledDictionaries[0].id);
+            // 如果只有一个词典，直接返回
+            if (dictionaries.length === 1) {
+                const dictData = this.newManager.loadedDictionaries.get(dictionaries[0].id);
                 if (dictData && dictData.words) {
-                    console.log(`返回单个词典 ${enabledDictionaries[0].id} 的数据，词汇数量:`, Object.keys(dictData.words).length);
                     return dictData.words;
                 }
             }
             
-            // 合并多个同语言的启用词典（按优先级，高优先级覆盖低优先级）
+            // 合并多个同语言词典（按优先级，高优先级覆盖低优先级）
             const mergedDictionary = {};
-            for (const dict of enabledDictionaries.reverse()) { // 反转以让高优先级后覆盖
+            for (const dict of dictionaries.reverse()) { // 反转以让高优先级后覆盖
                 const dictData = this.newManager.loadedDictionaries.get(dict.id);
                 if (dictData && dictData.words) {
                     Object.assign(mergedDictionary, dictData.words);
                 }
             }
             
-            console.log(`合并了 ${enabledDictionaries.length} 个词典，总词汇数量:`, Object.keys(mergedDictionary).length);
             return mergedDictionary;
-        }
-        
-        // 传统模式：检查语言级别启用状态
-        if (!this.enabledLanguages[language]) {
-            return {};
         }
         
         // 传统模式：直接返回单一词典
@@ -256,64 +240,6 @@ class DictionaryAdapter {
      * 更新启用的语言列表
      * @param {Object} enabledLanguages 启用的语言设置
      */
-    /**
-     * 更新启用的词典设置
-     * @param {Object} enabledDictionaries 启用的词典设置 {dictId: boolean}
-     */
-    updateEnabledDictionaries(enabledDictionaries) {
-        console.log('Updating enabled dictionaries:', enabledDictionaries);
-        this.enabledDictionaries = { ...this.enabledDictionaries, ...enabledDictionaries };
-        
-        // 同时更新语言级别的启用状态（向后兼容）
-        this._updateLanguageStatusFromDictionaries();
-    }
-
-    /**
-     * 从词典启用状态更新语言启用状态
-     * @private
-     */
-    _updateLanguageStatusFromDictionaries() {
-        if (!this.newManager) return;
-        
-        // 检查每个语言是否有启用的词典
-        const languageStatus = {};
-        
-        Object.keys(this.enabledDictionaries).forEach(dictId => {
-            if (this.enabledDictionaries[dictId]) {
-                const dict = this.newManager.getDictionaryById(dictId);
-                if (dict && dict.language) {
-                    languageStatus[dict.language] = true;
-                }
-            }
-        });
-        
-        console.log('Dictionary-based language status:', languageStatus);
-        
-        // 只有当有启用的词典时才更新语言状态
-        if (Object.keys(languageStatus).length > 0) {
-            // 更新语言启用状态
-            this.enabledLanguages = { ...this.enabledLanguages, ...languageStatus };
-            
-            // 将未启用词典的语言设为false（但保留已有的true状态）
-            Object.keys(this.enabledLanguages).forEach(lang => {
-                if (!languageStatus[lang] && this.enabledLanguages[lang]) {
-                    // 检查是否还有其他启用的词典支持这个语言
-                    const hasEnabledDict = Object.keys(this.enabledDictionaries).some(dictId => {
-                        if (!this.enabledDictionaries[dictId]) return false;
-                        const dict = this.newManager.getDictionaryById(dictId);
-                        return dict && dict.language === lang;
-                    });
-                    
-                    if (!hasEnabledDict) {
-                        this.enabledLanguages[lang] = false;
-                    }
-                }
-            });
-        }
-        
-        console.log('Updated enabled languages:', this.enabledLanguages);
-    }
-
     updateEnabledLanguages(enabledLanguages) {
         console.log('Updating enabled languages:', enabledLanguages);
         this.enabledLanguages = { ...this.enabledLanguages, ...enabledLanguages };
@@ -342,14 +268,6 @@ class DictionaryAdapter {
      */
     isLanguageEnabled(language) {
         return this.enabledLanguages[language] || false;
-    }
-
-    /**
-     * 获取启用的词典设置
-     * @returns {Object} 启用的词典设置对象
-     */
-    getEnabledDictionaries() {
-        return this.enabledDictionaries;
     }
 
     /**
