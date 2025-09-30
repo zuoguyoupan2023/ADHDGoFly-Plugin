@@ -17,6 +17,19 @@
         "priority": 1
       },
       {
+        "id": "zh-preset-simple",
+        "name": "ZH-simple",
+        "displayName": {
+          "zh": "中文词典-简易",
+          "en": "Chinese Dictionary - Simple"
+        },
+        "language": "zh",
+        "type": "preset",
+        "filePath": "dictionaries/ZH_word_simple.json",
+        "enabled": true,
+        "priority": 1
+      },
+      {
         "id": "en-preset",
         "name": "EN",
         "displayName": {
