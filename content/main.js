@@ -26,11 +26,23 @@ class ADHDHighlighter {
     this.dictionaryManager = new DictionaryAdapter();
     this.languageDetector = new LanguageDetector();
     this.textSegmenter = new TextSegmenter();
+    
+    // 页面处理器 - 支持传统和流式处理
     this.pageProcessor = new PageProcessor(
       this.dictionaryManager,
       this.languageDetector,
       this.textSegmenter
     );
+    
+    // 流式页面处理器 - 第一阶段优化
+    this.streamingPageProcessor = new StreamingPageProcessor(
+      this.dictionaryManager,
+      this.languageDetector,
+      this.textSegmenter
+    );
+    
+    // 处理模式配置
+    this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
     // 初始化
     this.init();
@@ -459,8 +471,14 @@ class ADHDHighlighter {
     console.log('启用文本高亮...');
     
     try {
-      // 处理页面
-      await this.pageProcessor.processPage();
+      // 根据处理模式选择处理器
+      if (this.processingMode === 'streaming') {
+        console.log('使用流式处理模式');
+        await this.streamingPageProcessor.processPage();
+      } else {
+        console.log('使用传统处理模式');
+        await this.pageProcessor.processPage();
+      }
       
       // 应用颜色方案和文本设置
       this.applyColorScheme();
@@ -491,8 +509,12 @@ class ADHDHighlighter {
     console.log('禁用文本高亮...');
     
     try {
-      // 移除所有高亮
-      this.pageProcessor.removeAllHighlights();
+      // 根据处理模式选择处理器进行清理
+      if (this.processingMode === 'streaming') {
+        this.streamingPageProcessor.removeAllHighlights();
+      } else {
+        this.pageProcessor.removeAllHighlights();
+      }
       
       this.enabled = false;
       
@@ -513,14 +535,23 @@ class ADHDHighlighter {
    */
   async getStatus() {
     const dictionaryStats = this.dictionaryManager.getStatistics();
-    const processingStats = this.pageProcessor.getStats();
-    const processingSummary = this.pageProcessor.getProcessingSummary();
+    
+    // 根据处理模式获取统计信息
+    let processingStats, processingSummary;
+    if (this.processingMode === 'streaming') {
+      processingStats = this.streamingPageProcessor.getStats();
+      processingSummary = this.streamingPageProcessor.getProcessingSummary();
+    } else {
+      processingStats = this.pageProcessor.getStats();
+      processingSummary = this.pageProcessor.getProcessingSummary();
+    }
     
     return {
       success: true,
       enabled: this.enabled,
       isInitialized: this.isInitialized,
       dictionariesLoaded: this.dictionaryManager.isReady(),
+      processingMode: this.processingMode,
       statistics: {
         ...dictionaryStats,
         ...processingStats,
@@ -534,14 +565,25 @@ class ADHDHighlighter {
    * @returns {Object} 详细统计
    */
   getDetailedStats() {
+    // 根据处理模式获取统计信息
+    let processingStats, processingSummary;
+    if (this.processingMode === 'streaming') {
+      processingStats = this.streamingPageProcessor.getStats();
+      processingSummary = this.streamingPageProcessor.getProcessingSummary();
+    } else {
+      processingStats = this.pageProcessor.getStats();
+      processingSummary = this.pageProcessor.getProcessingSummary();
+    }
+    
     return {
       dictionary: this.dictionaryManager.getStatistics(),
-      processing: this.pageProcessor.getStats(),
-      summary: this.pageProcessor.getProcessingSummary(),
+      processing: processingStats,
+      summary: processingSummary,
       system: {
         enabled: this.enabled,
         initialized: this.isInitialized,
-        dictionariesReady: this.dictionaryManager.isReady()
+        dictionariesReady: this.dictionaryManager.isReady(),
+        processingMode: this.processingMode
       }
     };
   }
@@ -553,9 +595,19 @@ class ADHDHighlighter {
   async updateSettings(settings) {
     console.log('更新设置:', settings);
     
+    // 更新处理模式
+    if (settings.processingMode && ['traditional', 'streaming'].includes(settings.processingMode)) {
+      this.processingMode = settings.processingMode;
+      console.log('处理模式已更新为:', this.processingMode);
+    }
+    
     // 更新页面处理器选项
     if (settings.processing) {
-      this.pageProcessor.updateOptions(settings.processing);
+      if (this.processingMode === 'streaming') {
+        this.streamingPageProcessor.updateOptions(settings.processing);
+      } else {
+        this.pageProcessor.updateOptions(settings.processing);
+      }
     }
     
     // 如果当前已启用，重新处理页面以应用新设置
@@ -610,11 +662,20 @@ class ADHDHighlighter {
     
     console.log('重新处理页面...');
     
-    // 先移除现有高亮
-    this.pageProcessor.removeAllHighlights();
-    
-    // 重新处理
-    await this.pageProcessor.processPage();
+    // 根据处理模式选择处理器
+    if (this.processingMode === 'streaming') {
+      // 先移除现有高亮
+      this.streamingPageProcessor.removeAllHighlights();
+      
+      // 重新处理
+      await this.streamingPageProcessor.processPage();
+    } else {
+      // 先移除现有高亮
+      this.pageProcessor.removeAllHighlights();
+      
+      // 重新处理
+      await this.pageProcessor.processPage();
+    }
     
     // 重新应用样式设置
     this.applyColorScheme();

@@ -18,6 +18,7 @@
         "content/en-noun-morphology.js",
         "content/text-segmenter.js",
         "content/page-processor.js",
+        "content/streaming-page-processor.js",
         "content/main.js"
       ],
     "css": ["styles.css"],
