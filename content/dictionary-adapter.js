@@ -9,12 +9,12 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: false,
-            en: false,
-            fr: false,
-            ru: false,
-            es: false,
-            ja: false
+            zh: true,  // 中文需要分词，默认启用
+            en: true,  // 英文不需要分词，默认启用
+            fr: true,  // 法文不需要分词，默认启用
+            ru: true,  // 俄文不需要分词，默认启用
+            es: true,  // 西班牙文不需要分词，默认启用
+            ja: true   // 日语需要分词，默认启用
         };
     }
 

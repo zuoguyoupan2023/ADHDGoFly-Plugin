@@ -1,201 +1,4 @@
-#!/usr/bin/env node
-
-/**
- * ADHDGoFly Plugin 自动化构建脚本
- * 适用于 Cloudflare Pages 部署环境
- * 从 manifest.json 提取版本信息，生成标准化的插件包
- * 
- * 环境要求:
- * - Node.js 14+ (Cloudflare Pages 默认提供)
- * - zip 命令 (系统自带)
- */
-
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const archiver = require('archiver');
-
-// 检查运行环境 - 移除zip命令依赖
-function checkEnvironment() {
-    // 不再检查zip命令，使用Node.js原生archiver库
-    console.log('✅ 环境检查通过，使用Node.js原生压缩');
-}
-
-// 浏览器配置
-const browserConfigs = {
-    chrome: {
-        suffix: 'chrome',
-        manifestChanges: {
-            name: 'ADHDGoFly, 点亮你的视野 (Chrome)',
-            description: 'Text highlighting for better reading - Chrome Edition'
-        }
-    },
-    edge: {
-        suffix: 'edge', 
-        manifestChanges: {
-            name: 'ADHDGoFly, 点亮你的视野 (Edge)',
-            description: 'Text highlighting for better reading - Edge Edition'
-        }
-    }
-};
-
-// 主函数
-async function main() {
-    console.log('🚀 开始构建 ADHDGoFly 插件发布包 (多浏览器版本)...');
-    
-    // 检查运行环境
-    checkEnvironment();
-    
-    // 创建public输出目录
-    const outputDir = 'public';
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-        console.log('📁 创建输出目录: public/');
-    }
-    
-    // 检查必要文件
-    if (!fs.existsSync('manifest.json')) {
-        console.error('❌ 错误: 找不到 manifest.json 文件');
-        process.exit(1);
-    }
-    
-    // 读取 manifest.json
-    let baseManifest;
-    try {
-        const manifestContent = fs.readFileSync('manifest.json', 'utf8');
-        baseManifest = JSON.parse(manifestContent);
-    } catch (error) {
-        console.error('❌ 错误: 无法解析 manifest.json 文件:', error.message);
-        process.exit(1);
-    }
-    
-    // 提取版本号和项目信息
-    const version = baseManifest.version;
-    const projectName = 'ADHDGoFly-Plugin';
-    
-    console.log(`📦 项目名称: ${projectName}`);
-     console.log(`🏷️  版本号: ${version}`);
-     
-     // 清理旧的构建文件
-     try {
-         const oldFiles = fs.readdirSync('.').filter(file => 
-             file.endsWith('.zip') || file.endsWith('.7z')
-         );
-         oldFiles.forEach(file => {
-             fs.unlinkSync(file);
-             console.log(`🧹 删除旧文件: ${file}`);
-         });
-     } catch (error) {
-         console.log('🧹 清理旧文件 (无旧文件)');
-     }
-     
-     // 定义要包含的文件和目录
-     const includeFiles = [
-         'background.js',
-         'content.js',
-         'popup.html',
-         'popup.js',
-         'styles.css',
-         'edge-compatibility-fix.js',  // 确保包含Edge兼容性修复
-         'content/',
-         'dictionaries/'
-     ];
-     
-     // 检查所有必要文件是否存在
-     const missingFiles = includeFiles.filter(file => !fs.existsSync(file));
-     if (missingFiles.length > 0) {
-         console.error('❌ 错误: 缺少必要文件:', missingFiles.join(', '));
-         process.exit(1);
-     }
-     
-     // 为每个浏览器构建版本
-     const buildResults = [];
-     
-     for (const [browserName, config] of Object.entries(browserConfigs)) {
-         console.log(`\n🌐 构建 ${browserName.toUpperCase()} 版本...`);
-         
-         // 创建浏览器特定的manifest
-         const browserManifest = {
-             ...baseManifest,
-             ...config.manifestChanges
-         };
-         
-         // 生成临时manifest文件
-         const tempManifestPath = `manifest-${browserName}.json`;
-         fs.writeFileSync(tempManifestPath, JSON.stringify(browserManifest, null, 2));
-         
-         // 创建包含文件列表（包含临时manifest）
-         const browserIncludeFiles = [
-             tempManifestPath,
-             ...includeFiles
-         ];
-         
-         // 生成zip文件名（输出到public目录）
-         const zipName = path.join(outputDir, `${projectName}-v${version}-${config.suffix}.zip`);
-         console.log(`📁 输出文件: ${zipName}`);
-         
-         try {
-             await createZipFile(zipName, browserIncludeFiles, browserName, tempManifestPath);
-             
-             // 检查文件是否创建成功
-             if (!fs.existsSync(zipName)) {
-                 throw new Error(`${browserName} ZIP 文件创建失败`);
-             }
-             
-             const stats = fs.statSync(zipName);
-             const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(1);
-             
-             buildResults.push({
-                 browser: browserName,
-                 zipName,
-                 size: fileSizeMB
-             });
-             
-             console.log(`✅ ${browserName.toUpperCase()} 版本构建完成: ${fileSizeMB}MB`);
-             
-         } catch (error) {
-             console.error(`❌ ${browserName.toUpperCase()} 版本构建失败:`, error.message);
-             throw error;
-         } finally {
-             // 清理临时manifest文件
-             if (fs.existsSync(tempManifestPath)) {
-                 fs.unlinkSync(tempManifestPath);
-             }
-         }
-     }
-     
-     // 显示构建总结
-     console.log('\n🎉 多浏览器构建完成!');
-     buildResults.forEach(result => {
-         console.log(`   📦 ${result.browser.toUpperCase()}: ${result.zipName} (${result.size}MB)`);
-     });
-     
-     const totalSize = buildResults.reduce((sum, result) => sum + parseFloat(result.size), 0).toFixed(1);
-     console.log(`📊 总大小: ${totalSize}MB`);
-     console.log('✅ 多浏览器构建成功！');
-       
-       // 生成动态的 index.html
-        console.log('🔄 生成动态 landing page...');
-        try {
-            // 生成下载链接HTML - 基于版本号自动匹配
-         const downloadLinksHtml = buildResults.map(result => {
-             const browserDisplayName = result.browser === 'chrome' ? 'Chrome' : 'Edge';
-             const versionedFileName = `${projectName}-v${version}-${result.browser}.zip`;
-             return `
-                    <div class="download-item">
-                        <h3>${browserDisplayName} 版本</h3>
-                        <p>版本: v${version} | 大小: ${result.size}MB</p>
-                        <a href="./${versionedFileName}" class="download-btn" download>
-                            <span class="icon">📦</span>
-                            下载 ${browserDisplayName} v${version}
-                        </a>
-                        <div class="version-info">
-                            <small style="color: #333;">文件名: ${versionedFileName}</small>
-                        </div>
-                    </div>`;
-         }).join('');
-            
-            const indexTemplate = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -562,10 +365,32 @@ async function main() {
                 <div class="browser-downloads">
                      <h3 style="color: white; margin: 30px 0 20px 0;">选择适合您浏览器的版本:</h3>
                      <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px; text-align: center;">
-                         当前版本: <strong>v${version}</strong> | 发布时间: ${new Date().toLocaleDateString('zh-CN')}
+                         当前版本: <strong>v0.1.2</strong> | 发布时间: 2025/9/30
                      </p>
                      <div class="download-grid">
-                         ${downloadLinksHtml}
+                         
+                    <div class="download-item">
+                        <h3>Chrome 版本</h3>
+                        <p>版本: v0.1.2 | 大小: 5.8MB</p>
+                        <a href="./ADHDGoFly-Plugin-v0.1.2-chrome.zip" class="download-btn" download>
+                            <span class="icon">📦</span>
+                            下载 Chrome v0.1.2
+                        </a>
+                        <div class="version-info">
+                            <small style="color: #333;">文件名: ADHDGoFly-Plugin-v0.1.2-chrome.zip</small>
+                        </div>
+                    </div>
+                    <div class="download-item">
+                        <h3>Edge 版本</h3>
+                        <p>版本: v0.1.2 | 大小: 5.8MB</p>
+                        <a href="./ADHDGoFly-Plugin-v0.1.2-edge.zip" class="download-btn" download>
+                            <span class="icon">📦</span>
+                            下载 Edge v0.1.2
+                        </a>
+                        <div class="version-info">
+                            <small style="color: #333;">文件名: ADHDGoFly-Plugin-v0.1.2-edge.zip</small>
+                        </div>
+                    </div>
                      </div>
                  </div>
                 
@@ -615,76 +440,10 @@ async function main() {
         </main>
         
         <footer class="version-info">
-            <p><strong>当前版本:</strong> v${version}</p>
+            <p><strong>当前版本:</strong> v0.1.2</p>
             <p>适用于 Chrome、Edge、Firefox 等现代浏览器</p>
             <p>© 2024 ADHDGoFly Plugin. 专为提升阅读体验而设计。</p>
         </footer>
     </div>
 </body>
-</html>`;
-    
-            const indexPath = path.join(outputDir, 'index.html');
-            fs.writeFileSync(indexPath, indexTemplate);
-            console.log('✅ Landing page 生成完成');
-            
-        } catch (error) {
-            console.error('❌ 生成 landing page 失败:', error.message);
-            process.exit(1);
-        }
-        
-        console.log('');
-        console.log('🎉 构建完成！可以部署到 Cloudflare Pages 了');
-         console.log('📋 部署文件列表:');
-         console.log(`   - index.html (多浏览器下载页面)`);
-         buildResults.forEach(result => {
-             console.log(`   - ${result.zipName} (${result.browser.toUpperCase()} 版本, ${result.size}MB)`);
-         });
-         console.log('');
-         console.log('🚀 Cloudflare Pages 将自动部署这些文件');
-         console.log('🌐 用户可以选择下载适合的浏览器版本');
-}
-
-// 运行主函数
-main().catch(error => {
-    console.error('❌ 构建失败:', error.message);
-    process.exit(1);
-});
-
-// Node.js原生压缩函数
-function createZipFile(zipName, includeFiles, browserName, tempManifestPath) {
-    return new Promise((resolve, reject) => {
-        const output = fs.createWriteStream(zipName);
-        const archive = archiver('zip', { zlib: { level: 9 } });
-        
-        output.on('close', () => {
-            console.log(`📦 压缩完成: ${archive.pointer()} bytes`);
-            resolve();
-        });
-        
-        archive.on('error', (err) => {
-            reject(err);
-        });
-        
-        archive.pipe(output);
-        
-        // 添加文件和目录
-        includeFiles.forEach(item => {
-            if (fs.existsSync(item)) {
-                const stat = fs.statSync(item);
-                if (stat.isDirectory()) {
-                    console.log(`📁 添加目录: ${item}`);
-                    archive.directory(item, item);
-                } else {
-                    console.log(`📄 添加文件: ${item}`);
-                    // 如果是临时manifest文件，重命名为manifest.json
-                    const fileName = item === tempManifestPath ? 'manifest.json' : item;
-                    archive.file(item, { name: fileName });
-                }
-            } else {
-                console.warn(`⚠️  文件不存在，跳过: ${item}`);
-            }
-        });
-        
-        archive.finalize();
-    });
-}
+</html>

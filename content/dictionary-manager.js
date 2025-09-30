@@ -6,11 +6,11 @@ class DictionaryManager {
     this.loadPromise = null;
     this.enabledLanguages = {
       zh: true,
-      en: true,
-      fr: false,
-      ru: false,
-      es: false,
-      ja: false
+      en: false,  // 英文不需要分词，只需要高亮
+      fr: false,  // 法文不需要分词，只需要高亮
+      ru: false,  // 俄文不需要分词，只需要高亮
+      es: false,  // 西班牙文不需要分词，只需要高亮
+      ja: true    // 日文需要分词
     };
   }
 
