@@ -121,6 +121,65 @@ class TextSegmenter {
   }
 
   /**
+   * 检测字符是否为CJK字符
+   * @param {string} char 单个字符
+   * @returns {boolean} 是否为CJK字符
+   * @private
+   */
+  isCJKCharacter(char) {
+    const code = char.charCodeAt(0);
+    return (
+      // 中文汉字基本区
+      (code >= 0x4E00 && code <= 0x9FFF) ||
+      // 中文汉字扩展A区
+      (code >= 0x3400 && code <= 0x4DBF) ||
+      // 日文平假名
+      (code >= 0x3040 && code <= 0x309F) ||
+      // 日文片假名
+      (code >= 0x30A0 && code <= 0x30FF) ||
+      // 韩文音节
+      (code >= 0xAC00 && code <= 0xD7AF) ||
+      // CJK符号和标点
+      (code >= 0x3000 && code <= 0x303F) ||
+      // 中文汉字扩展B区
+      (code >= 0x20000 && code <= 0x2A6DF) ||
+      // 中文汉字扩展C区
+      (code >= 0x2A700 && code <= 0x2B73F) ||
+      // 中文汉字扩展D区
+      (code >= 0x2B740 && code <= 0x2B81F)
+    );
+  }
+
+  /**
+   * 从指定位置提取连续的非CJK字符序列
+   * @param {string} text 文本
+   * @param {number} startIndex 开始位置
+   * @returns {Object} 包含提取的词和结束位置的对象 {word: string, endIndex: number}
+   * @private
+   */
+  extractNonCJKSequence(text, startIndex) {
+    let word = '';
+    let i = startIndex;
+    
+    while (i < text.length) {
+      const char = text[i];
+      
+      // 如果遇到空格、标点或CJK字符，停止提取
+      if (this.punctuationPattern.test(char) || this.isCJKCharacter(char)) {
+        break;
+      }
+      
+      word += char;
+      i++;
+    }
+    
+    return {
+      word: word,
+      endIndex: i - 1
+    };
+  }
+
+  /**
    * CJK文本分词（中文、日文、韩文）
    * 使用最大匹配算法
    * @param {string} text 要分词的文本
@@ -139,7 +198,42 @@ class TextSegmenter {
         continue;
       }
       
-      // 尝试最大匹配
+      // 检测是否为非CJK字符，如果是则提取整个非CJK序列
+      if (!this.isCJKCharacter(char)) {
+        const result = this.extractNonCJKSequence(text, i);
+        const nonCJKWord = result.word;
+        
+        if (nonCJKWord) {
+          // 检查非CJK词汇是否在CJK词典中存在
+          const pos = dictionary[nonCJKWord] || dictionary[nonCJKWord.toLowerCase()];
+          
+          if (pos) {
+            const normalizedPos = this.normalizePartOfSpeech(pos);
+            // 根据高亮开关决定是否应用高亮
+            const shouldHighlight = (
+              (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+              (normalizedPos === 'v' && this.highlightingToggles.verb) ||
+              (normalizedPos === 'a' && this.highlightingToggles.adj) ||
+              (normalizedPos === 'adv' && this.highlightingToggles.adj) // 副词也使用形容词开关
+            );
+            
+            if (shouldHighlight && normalizedPos) {
+              html += `<span class="adhd-${normalizedPos}" data-word="${nonCJKWord}" data-pos="${pos}">${nonCJKWord}</span>`;
+            } else {
+              html += nonCJKWord;
+            }
+          } else {
+            // 非CJK词汇不在词典中，直接输出
+            html += nonCJKWord;
+          }
+          
+          // 跳过已处理的非CJK字符序列
+          i = result.endIndex;
+          continue;
+        }
+      }
+      
+      // 对CJK字符进行传统的最大匹配
       let matched = false;
       const maxLen = Math.min(this.maxWordLength, text.length - i);
       
