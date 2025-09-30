@@ -96,7 +96,6 @@ async function main() {
          'popup.html',
          'popup.js',
          'styles.css',
-         'edge-compatibility-fix.js',  // 确保包含Edge兼容性修复
          'content/',
          'dictionaries/'
      ];
