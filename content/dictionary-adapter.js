@@ -9,8 +9,8 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: true,  // 默认启用中文
-            en: true,  // 默认启用英文
+            zh: false,
+            en: false,
             fr: false,
             ru: false,
             es: false,
