@@ -33,8 +33,8 @@ const browserConfigs = {
     edge: {
         suffix: 'edge', 
         manifestChanges: {
-            name: 'ADHDGoFly - Illuminate Your Reading',
-            description: 'Smart text highlighting for enhanced reading comprehension and focus. Multi-language support with ADHD-friendly features.'
+            name: 'ADHDGoFly, 点亮你的视野 (Edge)',
+            description: 'Text highlighting for better reading - Edge Edition'
         }
     }
 };
@@ -91,7 +91,6 @@ async function main() {
      
      // 定义要包含的文件和目录
      const includeFiles = [
-         'edge-compatibility-fix.js',
          'background.js',
          'content.js',
          'popup.html',
