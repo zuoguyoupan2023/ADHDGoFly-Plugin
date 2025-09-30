@@ -342,14 +342,40 @@ class PopupController {
         return;
       }
 
-      const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'getStatus' });
+      // 添加重试机制
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      if (response && response.success) {
-        this.currentStatus = response;
-        this.updateUI(response);
-      } else {
-        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.notLoaded') });
+      while (retryCount < maxRetries) {
+        try {
+          const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'getStatus' });
+          
+          if (response && response.success) {
+            this.currentStatus = response;
+            this.updateUI(response);
+            return;
+          } else if (response && response.error && response.error.includes('initializing')) {
+            // 如果是初始化错误，等待一下再重试
+            console.log(`Content script正在初始化，等待重试 (${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            retryCount++;
+            continue;
+          } else {
+            this.updateUI({ enabled: false, error: this.i18nManager.t('errors.notLoaded') });
+            return;
+          }
+        } catch (error) {
+          console.log(`检查状态失败，重试 ${retryCount + 1}/${maxRetries}:`, error);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
+      
+      // 所有重试都失败了
+      this.updateUI({ enabled: false, error: this.i18nManager.t('errors.connectionFailed') });
+      
     } catch (error) {
       console.error('检查状态失败:', error);
       this.updateUI({ enabled: false, error: this.i18nManager.t('errors.connectionFailed') });
@@ -372,14 +398,41 @@ class PopupController {
         throw new Error(this.i18nManager.t('errors.noTab'));
       }
 
-      const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle' });
+      // 添加重试机制
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      if (response && response.success) {
-        this.currentStatus = { ...this.currentStatus, enabled: response.enabled, statistics: response.stats };
-        this.updateUI(this.currentStatus);
-      } else {
-        throw new Error(response?.error || this.i18nManager.t('errors.operationFailed'));
+      while (retryCount < maxRetries) {
+        try {
+          const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle' });
+          
+          if (response && response.success) {
+            this.currentStatus = { ...this.currentStatus, enabled: response.enabled, statistics: response.stats };
+            this.updateUI(this.currentStatus);
+            return;
+          } else if (response && response.error && response.error.includes('initializing')) {
+            // 如果是初始化错误，等待一下再重试
+            console.log(`Content script正在初始化，等待重试 (${retryCount + 1}/${maxRetries})`);
+            statusDiv.textContent = `正在初始化... (${retryCount + 1}/${maxRetries})`;
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            retryCount++;
+            continue;
+          } else {
+            throw new Error(response?.error || this.i18nManager.t('errors.operationFailed'));
+          }
+        } catch (error) {
+          console.log(`切换操作失败，重试 ${retryCount + 1}/${maxRetries}:`, error);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            statusDiv.textContent = `重试中... (${retryCount}/${maxRetries})`;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
+      
+      // 所有重试都失败了
+      throw new Error('操作失败，请刷新页面后重试');
+      
     } catch (error) {
       console.error('切换失败:', error);
       this.updateUI({ ...this.currentStatus, error: error.message });
@@ -936,30 +989,56 @@ class PopupController {
         contactInfo: null
       };
       
+      // 立即显示当前版本，不等待网络请求
+      this.updateVersionUI();
+      
+      // 检测浏览器类型，为Edge设置超时
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const timeout = isEdge ? 8000 : 5000; // Edge给更多时间
+      
+      // 使用Promise.race来设置超时
+      const versionCheckPromise = new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('版本检查超时')), timeout);
+      });
+      
+      try {
+        const response = await Promise.race([versionCheckPromise, timeoutPromise]);
+        
+        this.versionInfo.isChecking = false;
+        
+        if (response && response.success) {
+          this.versionInfo.latestVersion = response.latestVersion;
+          this.versionInfo.hasUpdate = response.hasUpdate;
+          this.versionInfo.releaseUrl = response.releaseUrl;
+          this.versionInfo.alternativeDownloads = response.alternativeDownloads;
+          this.versionInfo.contactInfo = response.contactInfo;
+        } else {
+          this.versionInfo.error = response?.error || 'Unknown error';
+        }
+      } catch (timeoutError) {
+        console.warn('版本检查超时，使用缓存或默认值:', timeoutError);
+        this.versionInfo.isChecking = false;
+        this.versionInfo.latestVersion = '检查超时';
+        this.versionInfo.error = '网络请求超时';
+      }
+      
       // 更新UI显示
       this.updateVersionUI();
       
-      // 请求后台检查最新版本
-       chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
-         this.versionInfo.isChecking = false;
-         
-         if (response && response.success) {
-           this.versionInfo.latestVersion = response.latestVersion;
-           this.versionInfo.hasUpdate = response.hasUpdate;
-           this.versionInfo.releaseUrl = response.releaseUrl;
-           this.versionInfo.alternativeDownloads = response.alternativeDownloads;
-           this.versionInfo.contactInfo = response.contactInfo;
-         } else {
-           this.versionInfo.error = response?.error || 'Unknown error';
-         }
-         
-         // 更新UI显示
-         this.updateVersionUI();
-       });
     } catch (error) {
       console.error('版本检测失败:', error);
       this.versionInfo = {
-        currentVersion: '未知',
+        currentVersion: manifest?.version || '未知',
         latestVersion: null,
         isChecking: false,
         hasUpdate: false,

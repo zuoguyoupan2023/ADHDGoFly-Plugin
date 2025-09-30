@@ -47,15 +47,19 @@ class ADHDHighlighter {
       this.setupMessageListener();
       
       // 初始化词典
+      console.log('正在初始化词典管理器...');
       await this.dictionaryManager.initialize();
       
       // 加载词典设置
+      console.log('正在加载词典设置...');
       await this.loadDictSettings();
       
       // 加载颜色设置
+      console.log('正在加载颜色设置...');
       await this.loadColorSettings();
       
       // 加载文本设置
+      console.log('正在加载文本设置...');
       await this.loadTextSettings();
       
       // 标记为已初始化
@@ -66,9 +70,22 @@ class ADHDHighlighter {
       
       console.log('ADHD文本高亮器初始化完成');
       
+      // 通知background script初始化完成
+      try {
+        chrome.runtime.sendMessage({ action: 'contentScriptReady' });
+      } catch (error) {
+        console.log('通知background script失败，但不影响功能:', error);
+      }
+      
     } catch (error) {
       console.error('初始化失败:', error);
       this.isInitialized = false;
+      
+      // 尝试重新初始化一次
+      setTimeout(() => {
+        console.log('尝试重新初始化...');
+        this.init();
+      }, 2000);
     }
   }
 
@@ -92,6 +109,26 @@ class ADHDHighlighter {
    */
   async handleMessage(message, sender, sendResponse) {
     try {
+      // 检查初始化状态
+      if (!this.isInitialized) {
+        console.log('Content script未完成初始化，等待初始化完成...');
+        // 等待最多5秒让初始化完成
+        let waitCount = 0;
+        while (!this.isInitialized && waitCount < 50) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitCount++;
+        }
+        
+        if (!this.isInitialized) {
+          console.error('Content script初始化超时');
+          sendResponse({ 
+            success: false, 
+            error: 'Extension is still initializing. Please try again in a moment.' 
+          });
+          return;
+        }
+      }
+
       switch (message.action) {
         case 'toggle':
           const newState = await this.toggle();

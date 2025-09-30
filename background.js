@@ -9,7 +9,22 @@ class SimpleVersionChecker {
   async checkLatestVersion() {
     try {
       console.log('正在检查最新版本...');
-      const response = await fetch(this.updateUrl);
+      
+      // 检测浏览器类型，为Edge设置更长的超时时间
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const timeout = isEdge ? 10000 : 6000; // Edge给更多时间
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      const response = await fetch(this.updateUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'ADHDGoFly-Plugin'
+        }
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -36,12 +51,19 @@ class SimpleVersionChecker {
       };
     } catch (error) {
       console.error('检查版本失败:', error);
+      
+      // 如果是超时错误，提供更友好的错误信息
+      let errorMessage = error.message;
+      if (error.name === 'AbortError') {
+        errorMessage = '网络请求超时';
+      }
+      
       return {
         success: false,
         currentVersion: this.currentVersion,
         latestVersion: '检查失败',
         hasUpdate: false,
-        error: error.message
+        error: errorMessage
       };
     }
   }

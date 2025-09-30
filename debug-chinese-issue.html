@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文高亮功能调试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .debug-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007cba;
+            padding-bottom: 5px;
+        }
+        
+        .test-text {
+            font-size: 16px;
+            line-height: 1.8;
+            padding: 15px;
+            background-color: #fafafa;
+            border-left: 4px solid #007cba;
+            margin: 10px 0;
+        }
+        
+        .debug-info {
+            background-color: #e8f4f8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .status.warning { background-color: #fff3cd; color: #856404; }
+        .status.info { background-color: #d1ecf1; color: #0c5460; }
+        
+        .highlight-demo {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px dashed #ccc;
+        }
+        
+        /* 模拟高亮样式 */
+        .adhd-n { background-color: rgba(255, 193, 7, 0.3); }
+        .adhd-v { background-color: rgba(40, 167, 69, 0.3); }
+        .adhd-a { background-color: rgba(220, 53, 69, 0.3); }
+        .adhd-highlight { background-color: rgba(0, 123, 255, 0.2); }
+        
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 中文高亮功能调试页面</h1>
+        
+        <div class="debug-section">
+            <h3>📊 系统信息</h3>
+            <div id="system-info" class="debug-info">正在检测...</div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🔧 扩展状态检查</h3>
+            <div id="extension-status" class="status info">正在检查扩展状态...</div>
+            <button onclick="checkExtensionStatus()">重新检查</button>
+            <button onclick="toggleExtension()">切换扩展</button>
+        </div>
+        
+        <div class="debug-section">
+            <h3>📚 词典状态检查</h3>
+            <div id="dictionary-status" class="debug-info">正在检查词典...</div>
+            <button onclick="checkDictionaries()">检查词典</button>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🎯 中文文本测试</h3>
+            <div class="test-text" id="chinese-test-1">
+                这是一个测试句子。我们正在测试中文高亮功能是否正常工作。
+                学生在学校里学习各种知识，老师教授不同的课程。
+                今天天气很好，阳光明媚，适合户外活动。
+            </div>
+            
+            <div class="test-text" id="chinese-test-2">
+                人工智能技术正在快速发展，深度学习算法在各个领域都有广泛应用。
+                自然语言处理、计算机视觉、语音识别等技术不断进步。
+                未来的科技发展将会带来更多创新和变革。
+            </div>
+            
+            <div class="test-text" id="chinese-test-3">
+                中国有着悠久的历史文化传统，五千年的文明史源远流长。
+                古代的诗词歌赋、书法绘画、建筑艺术都体现了深厚的文化底蕴。
+                现代中国在传承传统文化的同时，也在积极拥抱现代化发展。
+            </div>
+            
+            <button onclick="manualHighlight()">手动触发高亮</button>
+            <button onclick="clearHighlights()">清除高亮</button>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🧪 高亮测试结果</h3>
+            <div id="highlight-results" class="debug-info">等待测试...</div>
+        </div>
+        
+        <div class="debug-section">
+            <h3>📝 调试日志</h3>
+            <div id="debug-log" class="debug-info" style="height: 200px; overflow-y: auto;">
+                调试日志将在这里显示...<br>
+            </div>
+            <button onclick="clearLog()">清除日志</button>
+            <button onclick="exportLog()">导出日志</button>
+        </div>
+        
+        <div class="debug-section">
+            <h3>🔬 高级调试</h3>
+            <button onclick="inspectDOMChanges()">检查DOM变化</button>
+            <button onclick="testTextSegmentation()">测试文本分词</button>
+            <button onclick="checkCSSStyles()">检查CSS样式</button>
+            <button onclick="simulateHighlight()">模拟高亮效果</button>
+        </div>
+    </div>
+
+    <script>
+        let debugLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            debugLog.push(logEntry);
+            
+            const logElement = document.getElementById('debug-log');
+            logElement.innerHTML += logEntry + '<br>';
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        function clearLog() {
+            debugLog = [];
+            document.getElementById('debug-log').innerHTML = '日志已清除...<br>';
+        }
+        
+        function exportLog() {
+            const logText = debugLog.join('\n');
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function detectSystemInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screen: `${screen.width}x${screen.height}`,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            
+            let browser = 'Unknown';
+            if (info.userAgent.includes('Edg/')) browser = 'Microsoft Edge';
+            else if (info.userAgent.includes('Chrome/')) browser = 'Google Chrome';
+            else if (info.userAgent.includes('Firefox/')) browser = 'Mozilla Firefox';
+            else if (info.userAgent.includes('Safari/')) browser = 'Safari';
+            
+            const systemInfoHtml = `
+                <strong>浏览器:</strong> ${browser}<br>
+                <strong>语言:</strong> ${info.language}<br>
+                <strong>平台:</strong> ${info.platform}<br>
+                <strong>屏幕:</strong> ${info.screen}<br>
+                <strong>视口:</strong> ${info.viewport}<br>
+                <strong>时区:</strong> ${info.timezone}<br>
+                <strong>在线状态:</strong> ${info.onLine ? '在线' : '离线'}<br>
+                <strong>Cookie:</strong> ${info.cookieEnabled ? '启用' : '禁用'}
+            `;
+            
+            document.getElementById('system-info').innerHTML = systemInfoHtml;
+            log(`系统信息检测完成: ${browser}`);
+        }
+        
+        async function checkExtensionStatus() {
+            log('开始检查扩展状态...');
+            
+            try {
+                // 检查全局变量
+                const hasADHDHighlighter = typeof window.adhdHighlighter !== 'undefined';
+                const hasDictionaryAdapter = typeof window.DictionaryAdapter !== 'undefined';
+                const hasTextSegmenter = typeof window.TextSegmenter !== 'undefined';
+                
+                log(`ADHDHighlighter: ${hasADHDHighlighter ? '✓' : '✗'}`);
+                log(`DictionaryAdapter: ${hasDictionaryAdapter ? '✓' : '✗'}`);
+                log(`TextSegmenter: ${hasTextSegmenter ? '✓' : '✗'}`);
+                
+                let statusHtml = '';
+                let statusClass = 'info';
+                
+                if (hasADHDHighlighter && window.adhdHighlighter) {
+                    try {
+                        const status = await window.adhdHighlighter.getStatus();
+                        statusHtml = `✅ 扩展已加载<br>启用状态: ${status.enabled ? '是' : '否'}<br>就绪状态: ${status.ready ? '是' : '否'}`;
+                        statusClass = status.enabled && status.ready ? 'success' : 'warning';
+                        log(`扩展状态: 启用=${status.enabled}, 就绪=${status.ready}`);
+                    } catch (error) {
+                        statusHtml = `⚠️ 扩展已加载但状态检查失败: ${error.message}`;
+                        statusClass = 'warning';
+                        log(`扩展状态检查失败: ${error.message}`, 'error');
+                    }
+                } else {
+                    statusHtml = '❌ 扩展未加载或未初始化';
+                    statusClass = 'error';
+                    log('扩展未加载', 'error');
+                }
+                
+                const statusElement = document.getElementById('extension-status');
+                statusElement.innerHTML = statusHtml;
+                statusElement.className = `status ${statusClass}`;
+                
+            } catch (error) {
+                log(`检查扩展状态时出错: ${error.message}`, 'error');
+                document.getElementById('extension-status').innerHTML = `❌ 检查失败: ${error.message}`;
+                document.getElementById('extension-status').className = 'status error';
+            }
+        }
+        
+        async function toggleExtension() {
+            log('尝试切换扩展状态...');
+            
+            if (window.adhdHighlighter) {
+                try {
+                    await window.adhdHighlighter.toggle();
+                    log('扩展状态切换成功');
+                    setTimeout(checkExtensionStatus, 500);
+                } catch (error) {
+                    log(`切换扩展状态失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('扩展未加载，无法切换状态', 'error');
+            }
+        }
+        
+        async function checkDictionaries() {
+            log('开始检查词典状态...');
+            
+            try {
+                let dictInfo = '';
+                
+                if (window.adhdHighlighter && window.adhdHighlighter.dictionaryManager) {
+                    const manager = window.adhdHighlighter.dictionaryManager;
+                    
+                    // 检查中文词典
+                    if (typeof manager.isLanguageEnabled === 'function') {
+                        const zhEnabled = manager.isLanguageEnabled('zh');
+                        dictInfo += `中文词典启用: ${zhEnabled ? '是' : '否'}<br>`;
+                        log(`中文词典启用状态: ${zhEnabled}`);
+                    }
+                    
+                    if (typeof manager.getDictionary === 'function') {
+                        const zhDict = manager.getDictionary('zh');
+                        if (zhDict) {
+                            const wordCount = Object.keys(zhDict).length;
+                            dictInfo += `中文词典词汇数量: ${wordCount}<br>`;
+                            log(`中文词典包含 ${wordCount} 个词汇`);
+                            
+                            // 测试几个常用词
+                            const testWords = ['这', '是', '一个', '测试', '学生', '老师'];
+                            let foundWords = 0;
+                            testWords.forEach(word => {
+                                if (zhDict[word]) {
+                                    foundWords++;
+                                    log(`找到词汇 "${word}": ${zhDict[word]}`);
+                                }
+                            });
+                            dictInfo += `测试词汇匹配: ${foundWords}/${testWords.length}<br>`;
+                        } else {
+                            dictInfo += '❌ 中文词典未加载<br>';
+                            log('中文词典未加载', 'error');
+                        }
+                    }
+                } else {
+                    dictInfo = '❌ 词典管理器未初始化';
+                    log('词典管理器未初始化', 'error');
+                }
+                
+                document.getElementById('dictionary-status').innerHTML = dictInfo;
+                
+            } catch (error) {
+                log(`检查词典状态时出错: ${error.message}`, 'error');
+                document.getElementById('dictionary-status').innerHTML = `❌ 检查失败: ${error.message}`;
+            }
+        }
+        
+        async function manualHighlight() {
+            log('手动触发高亮...');
+            
+            if (window.adhdHighlighter) {
+                try {
+                    await window.adhdHighlighter.reprocessPage();
+                    log('页面重新处理完成');
+                    setTimeout(analyzeHighlights, 1000);
+                } catch (error) {
+                    log(`手动高亮失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('扩展未加载，无法手动高亮', 'error');
+            }
+        }
+        
+        function clearHighlights() {
+            log('清除高亮...');
+            
+            // 移除所有高亮类
+            const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a', 'adhd-highlight'];
+            highlightClasses.forEach(className => {
+                const elements = document.querySelectorAll(`.${className}`);
+                elements.forEach(el => {
+                    el.classList.remove(className);
+                    if (el.classList.length === 0) {
+                        el.removeAttribute('class');
+                    }
+                });
+            });
+            
+            log(`清除了 ${highlightClasses.length} 种高亮样式`);
+        }
+        
+        function analyzeHighlights() {
+            log('分析高亮结果...');
+            
+            const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a', 'adhd-highlight'];
+            let totalHighlights = 0;
+            let results = '';
+            
+            highlightClasses.forEach(className => {
+                const elements = document.querySelectorAll(`.${className}`);
+                const count = elements.length;
+                totalHighlights += count;
+                results += `${className}: ${count}个<br>`;
+                
+                if (count > 0) {
+                    log(`发现 ${count} 个 ${className} 高亮`);
+                    // 显示前几个高亮的文本
+                    for (let i = 0; i < Math.min(3, count); i++) {
+                        log(`  ${className}[${i}]: "${elements[i].textContent}"`);
+                    }
+                }
+            });
+            
+            results += `<strong>总计: ${totalHighlights}个高亮</strong>`;
+            document.getElementById('highlight-results').innerHTML = results;
+            
+            if (totalHighlights === 0) {
+                log('未发现任何高亮，可能存在问题', 'warning');
+            } else {
+                log(`分析完成，共发现 ${totalHighlights} 个高亮`);
+            }
+        }
+        
+        function inspectDOMChanges() {
+            log('开始监控DOM变化...');
+            
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a', 'adhd-highlight'];
+                                highlightClasses.forEach(className => {
+                                    if (node.classList && node.classList.contains(className)) {
+                                        log(`DOM变化: 添加了 ${className} 元素: "${node.textContent}"`);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const target = mutation.target;
+                        if (target.classList) {
+                            const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a', 'adhd-highlight'];
+                            highlightClasses.forEach(className => {
+                                if (target.classList.contains(className)) {
+                                    log(`DOM变化: 元素添加了 ${className} 类: "${target.textContent}"`);
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class']
+            });
+            
+            // 10秒后停止监控
+            setTimeout(() => {
+                observer.disconnect();
+                log('DOM监控已停止');
+            }, 10000);
+        }
+        
+        function testTextSegmentation() {
+            log('测试文本分词功能...');
+            
+            if (typeof TextSegmenter !== 'undefined') {
+                try {
+                    const segmenter = new TextSegmenter();
+                    log('TextSegmenter 实例创建成功');
+                    
+                    // 测试CJK语言检测
+                    const isCJK = segmenter.isCJKLanguage('zh');
+                    log(`中文CJK检测结果: ${isCJK}`);
+                    
+                    // 如果有segmentCJKText方法，测试分词
+                    if (typeof segmenter.segmentCJKText === 'function') {
+                        const testText = '这是一个测试句子';
+                        log(`测试分词: "${testText}"`);
+                        // 注意：这里可能需要更多参数
+                    }
+                    
+                } catch (error) {
+                    log(`文本分词测试失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('TextSegmenter 类不可用', 'error');
+            }
+        }
+        
+        function checkCSSStyles() {
+            log('检查CSS样式...');
+            
+            const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a', 'adhd-highlight'];
+            
+            highlightClasses.forEach(className => {
+                const testElement = document.createElement('span');
+                testElement.className = className;
+                testElement.textContent = '测试';
+                document.body.appendChild(testElement);
+                
+                const styles = window.getComputedStyle(testElement);
+                const backgroundColor = styles.backgroundColor;
+                const color = styles.color;
+                
+                log(`${className} 样式 - 背景: ${backgroundColor}, 颜色: ${color}`);
+                
+                document.body.removeChild(testElement);
+            });
+        }
+        
+        function simulateHighlight() {
+            log('模拟高亮效果...');
+            
+            const testElements = document.querySelectorAll('.test-text');
+            const highlightClasses = ['adhd-n', 'adhd-v', 'adhd-a'];
+            
+            testElements.forEach((element, index) => {
+                const text = element.textContent;
+                const words = text.match(/[\u4e00-\u9fff]+/g) || [];
+                
+                if (words.length > 0) {
+                    let highlightedText = text;
+                    words.forEach((word, wordIndex) => {
+                        if (wordIndex < 5) { // 只高亮前5个词
+                            const className = highlightClasses[wordIndex % highlightClasses.length];
+                            const highlightedWord = `<span class="${className}">${word}</span>`;
+                            highlightedText = highlightedText.replace(word, highlightedWord);
+                        }
+                    });
+                    
+                    element.innerHTML = highlightedText;
+                    log(`模拟高亮完成: 测试区域 ${index + 1}, 高亮了 ${Math.min(5, words.length)} 个词`);
+                }
+            });
+        }
+        
+        // 页面加载完成后执行初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('页面加载完成，开始初始化调试...');
+            detectSystemInfo();
+            
+            // 延迟检查扩展状态，给扩展时间初始化
+            setTimeout(() => {
+                checkExtensionStatus();
+                checkDictionaries();
+            }, 2000);
+            
+            // 定期检查高亮结果
+            setInterval(analyzeHighlights, 5000);
+        });
+        
+        // 监听扩展消息
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+                log(`收到扩展消息: ${JSON.stringify(message)}`);
+            });
+        }
+    </script>
+</body>
+</html>
