@@ -153,6 +153,25 @@
         "ja": "基于开源日语词典，包含假名和汉字的词性信息。"
        }
      },
+     "storage": {
+       "title": "存储管理",
+       "retentionTime": "缓存保留时间",
+       "days3": "3天",
+       "days7": "7天",
+       "days14": "14天",
+       "days28": "28天",
+       "disabled": "禁用缓存",
+       "retentionDesc": "设置高亮缓存的保留时间，过期后自动清理",
+       "usage": "存储使用情况",
+       "cachedPages": "缓存页面",
+       "usedSpace": "已用空间",
+       "lastCleanup": "上次清理",
+       "cleanup": "缓存清理",
+       "cleanupExpired": "清理过期缓存",
+       "cleanupAll": "清除所有缓存",
+       "cleanupDesc": "手动清理缓存数据，释放存储空间",
+       "save": "保存存储设置"
+     },
      "other": {
        "title": "其他设置",
        "autoUpdate": "自动检查更新",

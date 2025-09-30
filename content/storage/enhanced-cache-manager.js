@@ -10,15 +10,78 @@ class EnhancedCacheManager {
     this.db = null;
     this.fallbackMode = false; // 降级模式标志
     this.cacheEnabled = true; // 缓存功能开关
+    this.cacheRetentionDays = 7; // 默认缓存保留天数
     
     // 支持的语言列表
     this.supportedLanguages = ['zh', 'en', 'ja', 'es', 'fr', 'ru'];
     
-    // 初始化数据库
-    this.initDatabase().catch(error => {
-      console.warn('缓存数据库初始化失败，启用降级模式:', error);
-      this.enableFallbackMode();
+    // 加载用户设置
+    this.loadSettings().then(() => {
+      // 初始化数据库
+      this.initDatabase().catch(error => {
+        console.warn('缓存数据库初始化失败，启用降级模式:', error);
+        this.enableFallbackMode();
+      });
     });
+    
+    // 监听设置变更
+    this.setupSettingsListener();
+  }
+
+  /**
+   * 加载用户存储设置
+   */
+  async loadSettings() {
+    try {
+      const settings = await chrome.storage.sync.get({
+        cacheEnabled: true,
+        cacheRetentionDays: 7
+      });
+      
+      this.cacheEnabled = settings.cacheEnabled;
+      this.cacheRetentionDays = settings.cacheRetentionDays;
+      
+      console.log('缓存设置已加载:', { 
+        enabled: this.cacheEnabled, 
+        retentionDays: this.cacheRetentionDays 
+      });
+    } catch (error) {
+      console.warn('加载缓存设置失败，使用默认值:', error);
+    }
+  }
+
+  /**
+   * 设置监听器，响应设置变更
+   */
+  setupSettingsListener() {
+    // 监听来自设置页面的消息
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.action === 'storageSettingsChanged') {
+        this.updateSettings(message.data);
+      }
+    });
+  }
+
+  /**
+   * 更新缓存设置
+   */
+  async updateSettings(newSettings) {
+    if (newSettings.hasOwnProperty('cacheEnabled')) {
+      this.cacheEnabled = newSettings.cacheEnabled;
+    }
+    if (newSettings.hasOwnProperty('cacheRetentionDays')) {
+      this.cacheRetentionDays = newSettings.cacheRetentionDays;
+    }
+    
+    console.log('缓存设置已更新:', { 
+      enabled: this.cacheEnabled, 
+      retentionDays: this.cacheRetentionDays 
+    });
+    
+    // 如果缓存被禁用，清理现有缓存
+    if (!this.cacheEnabled) {
+      await this.clearAllCache();
+    }
   }
 
   /**
@@ -72,50 +135,55 @@ class EnhancedCacheManager {
   }
 
   /**
+   * 检查缓存是否可用
+   */
+  isCacheAvailable() {
+    return this.cacheEnabled && !this.fallbackMode && this.db;
+  }
+
+  /**
    * 插件启动时的缓存恢复
    */
   async restoreOnStartup(url, enabledLanguages) {
-    if (!this.cacheEnabled) return null;
-    
+    if (!this.isCacheAvailable()) {
+      return { success: false, reason: 'cache_disabled' };
+    }
+
     try {
       const pageId = await this.generatePageId(url);
-      const cachedPage = await this.getPageData(pageId);
-      
-      if (!cachedPage) return null;
-      
-      // 检查页面是否过期
-      if (this.isExpired(cachedPage)) {
-        await this.cleanupExpiredPage(pageId);
-        return null;
+      const pageData = await this.getFromStore(
+        this.db.transaction(['pages'], 'readonly').objectStore('pages'),
+        pageId
+      );
+
+      if (!pageData || this.isExpired(pageData)) {
+        return { success: false, reason: 'no_cache_or_expired' };
       }
-      
-      // 获取已缓存的语言数据
+
+      // 获取可用的缓存语言
       const cachedLanguages = await this.getCachedLanguages(pageId);
-      const availableHighlights = {};
-      
-      // 只恢复当前启用语言的高亮数据
-      for (const lang of enabledLanguages) {
-        if (cachedLanguages.includes(lang)) {
-          const highlights = await this.getLanguageHighlights(pageId, lang);
-          if (highlights && highlights.length > 0) {
-            availableHighlights[lang] = highlights;
-          }
-        }
+      const availableLanguages = enabledLanguages.filter(lang => 
+        cachedLanguages.includes(lang)
+      );
+
+      if (availableLanguages.length === 0) {
+        return { success: false, reason: 'no_matching_languages' };
       }
-      
-      // 更新访问时间
-      await this.updateAccessTime(pageId);
+
+      // 应用缓存的高亮
+      const highlights = await this.applyCachedHighlights(pageId, availableLanguages);
       
       return {
-        pageId,
-        availableHighlights,
-        cachedLanguages,
-        needsProcessing: this.calculateMissingLanguages(enabledLanguages, cachedLanguages)
+        success: true,
+        highlights,
+        cachedLanguages: availableLanguages,
+        missingLanguages: enabledLanguages.filter(lang => 
+          !availableLanguages.includes(lang)
+        )
       };
-      
     } catch (error) {
-      console.warn('缓存恢复失败，使用正常处理流程:', error);
-      return null;
+      console.error('缓存恢复失败:', error);
+      return { success: false, reason: 'error', error };
     }
   }
 
@@ -123,25 +191,23 @@ class EnhancedCacheManager {
    * 存储页面高亮数据 - 按语言分层存储
    */
   async storePageHighlights(url, language, highlightData, pageFingerprint) {
-    if (!this.cacheEnabled) return false;
-    
+    if (!this.isCacheAvailable()) {
+      return false;
+    }
+
     try {
       const pageId = await this.generatePageId(url);
       
-      // 存储或更新页面基础信息
+      // 更新或创建页面基础信息
       await this.upsertPageInfo(pageId, url, pageFingerprint);
       
       // 存储特定语言的高亮数据
       await this.storeLanguageHighlights(pageId, language, highlightData);
       
-      // 更新语言状态
-      await this.updateLanguageState(pageId, language, true);
-      
-      console.log(`${language} 语言高亮数据已缓存:`, url);
+      console.log(`页面 ${url} 的 ${language} 语言高亮已缓存`);
       return true;
-      
     } catch (error) {
-      console.warn('存储高亮数据失败:', error);
+      console.error('存储高亮数据失败:', error);
       return false;
     }
   }
@@ -368,8 +434,40 @@ class EnhancedCacheManager {
   }
 
   isExpired(pageData) {
-    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7天
+    const maxAge = this.cacheRetentionDays * 24 * 60 * 60 * 1000; // 使用用户设置的天数
     return (Date.now() - pageData.createdAt) > maxAge;
+  }
+
+  /**
+   * 清理所有缓存数据
+   */
+  async clearAllCache() {
+    if (!this.db) return false;
+
+    try {
+      const transaction = this.db.transaction(['pages', 'highlights'], 'readwrite');
+      const pageStore = transaction.objectStore('pages');
+      const highlightStore = transaction.objectStore('highlights');
+      
+      await Promise.all([
+        new Promise((resolve, reject) => {
+          const request = pageStore.clear();
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        }),
+        new Promise((resolve, reject) => {
+          const request = highlightStore.clear();
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        })
+      ]);
+      
+      console.log('所有缓存数据已清理');
+      return true;
+    } catch (error) {
+      console.error('清理缓存失败:', error);
+      return false;
+    }
   }
 
   // IndexedDB 操作辅助方法
