@@ -39,7 +39,7 @@ class StreamingPageProcessor {
     this.isProcessing = false;
     this.processingScheduled = false;
     
-    // IntersectionObserver 用于视口感知
+    // IntersectionObserver 用于视感受知
     this.intersectionObserver = new IntersectionObserver(
       this.handleIntersection.bind(this),
       {
@@ -260,20 +260,28 @@ class StreamingPageProcessor {
   }
 
   /**
-   * 处理视口交叉事件
+   * 处理交叉观察事件
    * @param {Array<IntersectionObserverEntry>} entries 交叉观察条目
    */
   handleIntersection(entries) {
+    const isEdge = navigator.userAgent.includes('Edg');
+    
     entries.forEach(entry => {
       const wrapper = entry.target;
       
       if (entry.isIntersecting) {
         // 元素进入视口，标记为可见并调度处理
         this.stats.visibleNodes++;
+        if (isEdge) {
+          console.log('[Edge调试-IntersectionObserver] 元素进入视口:', wrapper.className, '可见节点数:', this.stats.visibleNodes);
+        }
         this.scheduleProcessing();
       } else {
         // 元素离开视口，可以考虑降低优先级或暂停处理
         this.stats.visibleNodes = Math.max(0, this.stats.visibleNodes - 1);
+        if (isEdge) {
+          console.log('[Edge调试-IntersectionObserver] 元素离开视口:', wrapper.className, '可见节点数:', this.stats.visibleNodes);
+        }
       }
     });
   }
@@ -449,29 +457,70 @@ class StreamingPageProcessor {
   }
 
   /**
-   * 替换文本节点
+   * 替换文本节点为高亮的HTML元素
    * @param {Node} textNode 原始文本节点
-   * @param {string} html 新的HTML内容
+   * @param {string} html 高亮后的HTML
+   * @private
    */
   replaceTextNode(textNode, html) {
+    const isEdge = navigator.userAgent.includes('Edg');
+    
+    if (isEdge) {
+      console.log('[Edge调试-DOM替换] 准备替换文本节点:', textNode.textContent.substring(0, 50) + '...');
+      console.log('[Edge调试-DOM替换] 替换为HTML:', html.substring(0, 100) + '...');
+    }
+    
     const wrapper = document.createElement('span');
     wrapper.innerHTML = html;
     wrapper.className = 'adhd-processed';
     
+    if (isEdge) {
+      console.log('[Edge调试-DOM替换] 创建包装器元素，类名:', wrapper.className);
+      console.log('[Edge调试-DOM替换] 包装器子元素数量:', wrapper.children.length);
+    }
+    
     // 替换节点
-    textNode.parentNode.replaceChild(wrapper, textNode);
+    try {
+      textNode.parentNode.replaceChild(wrapper, textNode);
+      if (isEdge) {
+        console.log('[Edge调试-DOM替换] 节点替换成功');
+        // 验证替换后的元素是否仍在DOM中
+        setTimeout(() => {
+          if (document.contains(wrapper)) {
+            console.log('[Edge调试-DOM替换] 100ms后包装器仍在DOM中');
+          } else {
+            console.error('[Edge调试-DOM替换] 警告：100ms后包装器已从DOM中消失！');
+          }
+        }, 100);
+      }
+    } catch (error) {
+      if (isEdge) console.error('[Edge调试-DOM替换] 节点替换失败:', error);
+      throw error;
+    }
   }
 
   /**
    * 移除所有高亮
    */
   removeAllHighlights() {
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试-流式处理器] 开始移除所有高亮...');
+      const highlightElementsBefore = document.querySelectorAll('.adhd-processed');
+      const wrappersBefore = document.querySelectorAll('.adhd-observer-wrapper');
+      console.log('[Edge调试-流式处理器] 移除前高亮元素数量:', highlightElementsBefore.length);
+      console.log('[Edge调试-流式处理器] 移除前观察包装器数量:', wrappersBefore.length);
+    }
+    
     // 停止观察
     this.intersectionObserver.disconnect();
+    if (isEdge) console.log('[Edge调试-流式处理器] IntersectionObserver已断开');
     
     // 清理处理队列
     this.processingQueue.clear();
     this.processedNodes = new WeakSet();
+    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列已清理');
     
     // 移除所有高亮元素
     const highlightedElements = document.querySelectorAll('.adhd-processed');
@@ -479,13 +528,23 @@ class StreamingPageProcessor {
       const textNode = document.createTextNode(element.textContent);
       element.parentNode.replaceChild(textNode, element);
     });
+    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', highlightedElements.length, '个高亮元素');
     
     // 移除观察包装器
     const wrappers = document.querySelectorAll('.adhd-observer-wrapper');
     wrappers.forEach(wrapper => wrapper.remove());
+    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', wrappers.length, '个观察包装器');
     
     this.resetStats();
     console.log('已移除所有高亮和流式处理状态');
+    
+    if (isEdge) {
+      // 验证清理结果
+      const remainingHighlights = document.querySelectorAll('.adhd-processed');
+      const remainingWrappers = document.querySelectorAll('.adhd-observer-wrapper');
+      console.log('[Edge调试-流式处理器] 清理后剩余高亮元素:', remainingHighlights.length);
+      console.log('[Edge调试-流式处理器] 清理后剩余包装器:', remainingWrappers.length);
+    }
   }
 
   /**

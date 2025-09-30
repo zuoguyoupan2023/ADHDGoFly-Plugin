@@ -470,18 +470,33 @@ class ADHDHighlighter {
     
     console.log('启用文本高亮...');
     
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试] 检测到Edge浏览器，开始详细日志记录');
+      console.log('[Edge调试] 当前页面URL:', window.location.href);
+      console.log('[Edge调试] 处理模式:', this.processingMode);
+      console.log('[Edge调试] 启用的语言:', this.dictionaryManager.getEnabledLanguages());
+    }
+    
     try {
       // 根据处理模式选择处理器
       if (this.processingMode === 'streaming') {
         console.log('使用流式处理模式');
+        if (isEdge) console.log('[Edge调试] 开始流式处理...');
         await this.streamingPageProcessor.processPage();
+        if (isEdge) console.log('[Edge调试] 流式处理完成');
       } else {
         console.log('使用传统处理模式');
+        if (isEdge) console.log('[Edge调试] 开始传统处理...');
         await this.pageProcessor.processPage();
+        if (isEdge) console.log('[Edge调试] 传统处理完成');
       }
       
       // 应用颜色方案和文本设置
+      if (isEdge) console.log('[Edge调试] 应用颜色方案...');
       this.applyColorScheme();
+      if (isEdge) console.log('[Edge调试] 应用文本设置...');
       this.applyTextSettings();
       
       this.enabled = true;
@@ -489,10 +504,35 @@ class ADHDHighlighter {
       // 保存状态
       await chrome.storage.local.set({ enabled: true });
       
+      if (isEdge) {
+        console.log('[Edge调试] 高亮启用完成，检查DOM中的高亮元素...');
+        const highlightElements = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+        console.log('[Edge调试] 找到高亮元素数量:', highlightElements.length);
+        
+        // 延迟检查高亮元素是否仍然存在
+        setTimeout(() => {
+          const elementsAfterDelay = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+          console.log('[Edge调试] 1秒后高亮元素数量:', elementsAfterDelay.length);
+          if (elementsAfterDelay.length !== highlightElements.length) {
+            console.warn('[Edge调试] 警告：高亮元素数量发生变化！可能存在异步清理问题');
+          }
+        }, 1000);
+        
+        // 再次延迟检查
+        setTimeout(() => {
+          const elementsAfterLongerDelay = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+          console.log('[Edge调试] 3秒后高亮元素数量:', elementsAfterLongerDelay.length);
+          if (elementsAfterLongerDelay.length === 0 && highlightElements.length > 0) {
+            console.error('[Edge调试] 错误：高亮元素完全消失！这是导致问题的关键时刻');
+          }
+        }, 3000);
+      }
+      
       console.log('文本高亮已启用');
       
     } catch (error) {
       console.error('启用高亮失败:', error);
+      if (isEdge) console.error('[Edge调试] 启用过程中发生错误:', error);
       throw error;
     }
   }
@@ -508,11 +548,21 @@ class ADHDHighlighter {
     
     console.log('禁用文本高亮...');
     
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试] 开始禁用高亮...');
+      const highlightElementsBefore = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+      console.log('[Edge调试] 禁用前高亮元素数量:', highlightElementsBefore.length);
+    }
+    
     try {
       // 根据处理模式选择处理器进行清理
       if (this.processingMode === 'streaming') {
+        if (isEdge) console.log('[Edge调试] 使用流式处理器清理高亮...');
         this.streamingPageProcessor.removeAllHighlights();
       } else {
+        if (isEdge) console.log('[Edge调试] 使用传统处理器清理高亮...');
         this.pageProcessor.removeAllHighlights();
       }
       
@@ -521,10 +571,16 @@ class ADHDHighlighter {
       // 保存状态
       await chrome.storage.local.set({ enabled: false });
       
+      if (isEdge) {
+        const highlightElementsAfter = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+        console.log('[Edge调试] 禁用后高亮元素数量:', highlightElementsAfter.length);
+      }
+      
       console.log('文本高亮已禁用');
       
     } catch (error) {
       console.error('禁用高亮失败:', error);
+      if (isEdge) console.error('[Edge调试] 禁用过程中发生错误:', error);
       throw error;
     }
   }
