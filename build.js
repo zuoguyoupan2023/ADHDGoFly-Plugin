@@ -91,13 +91,17 @@ async function main() {
      
      // 定义要包含的文件和目录
      const includeFiles = [
-         'background.js',
-         'content.js',
-         'popup.html',
-         'popup.js',
-         'styles.css',
-         'content/',
-         'dictionaries/'
+    'background.js',
+    'content.js',
+    'popup.html', 
+    'popup.js',
+    'styles.css',
+    'i18n.js',        // 添加
+    'settings.js',    // 添加  
+    'settings.css',   // 添加
+    'content/',
+    'dictionaries/',
+    'locales/'        // 添加
      ];
      
      // 检查所有必要文件是否存在
