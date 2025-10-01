@@ -1,78 +1,14 @@
-// 智能版本检测器 - 支持多渠道差异化策略
+// 简化的版本检测器
 class SimpleVersionChecker {
   constructor() {
     this.updateUrl = 'https://api.github.com/repos/zuoguyoupan2023/ADHDGoFly-Plugin/releases/latest';
     this.currentVersion = chrome.runtime.getManifest().version;
-    this.installationInfo = null;
   }
 
-  // 检测安装来源
-  async detectInstallationSource() {
-    try {
-      const info = await chrome.management.getSelf();
-      this.installationInfo = {
-        installType: info.installType, // "normal", "development", "sideload", "admin"
-        fromWebstore: info.installType === 'normal',
-        isDevMode: info.installType === 'development',
-        isSideload: info.installType === 'sideload'
-      };
-      console.log('安装来源检测结果:', this.installationInfo);
-      return this.installationInfo;
-    } catch (error) {
-      console.error('检测安装来源失败:', error);
-      this.installationInfo = { 
-        installType: 'unknown', 
-        fromWebstore: false, 
-        isDevMode: false,
-        isSideload: false 
-      };
-      return this.installationInfo;
-    }
-  }
-
-  // 获取浏览器类型
-  getBrowserType() {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('Edg/')) {
-      return 'edge';
-    } else if (userAgent.includes('Chrome/')) {
-      return 'chrome';
-    }
-    return 'unknown';
-  }
-
-  // 生成商店链接
-  getStoreUrl() {
-    const browserType = this.getBrowserType();
-    // 注意：这里需要替换为实际的扩展ID
-    const storeUrls = {
-      chrome: 'https://chrome.google.com/webstore/detail/adhdgofly/[EXTENSION_ID]',
-      edge: 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly/[EXTENSION_ID]'
-    };
-    return storeUrls[browserType] || storeUrls.chrome;
-  }
-
-  // 检查最新版本 - 支持差异化策略
+  // 检查最新版本
   async checkLatestVersion() {
     try {
       console.log('正在检查最新版本...');
-      
-      // 首先检测安装来源
-      await this.detectInstallationSource();
-      
-      // 如果是开发模式，不检查更新
-      if (this.installationInfo.isDevMode) {
-        return {
-          success: true,
-          currentVersion: this.currentVersion,
-          latestVersion: this.currentVersion,
-          hasUpdate: false,
-          installType: 'development',
-          message: '开发版本，无需检查更新',
-          skipUpdate: true
-        };
-      }
-      
       const response = await fetch(this.updateUrl);
       
       if (!response.ok) {
@@ -81,42 +17,23 @@ class SimpleVersionChecker {
       
       const release = await response.json();
       const latestVersion = release.tag_name.replace(/^v/, ''); // 移除 'v' 前缀
-      const hasUpdate = this.isNewerVersion(release.tag_name, this.currentVersion);
       
-      // 根据安装来源返回不同的结果
-      if (this.installationInfo.fromWebstore) {
-        // 商店版本
-        return {
-          success: true,
-          currentVersion: this.currentVersion,
-          latestVersion: release.tag_name,
-          hasUpdate: hasUpdate,
-          installType: 'webstore',
-          browserType: this.getBrowserType(),
-          storeUrl: this.getStoreUrl(),
-          message: hasUpdate ? '新版本将通过浏览器商店自动更新' : '已是最新版本（商店版）',
-          actionText: '查看商店页面'
-        };
-      } else {
-        // 手动安装版本
-        return {
-          success: true,
-          currentVersion: this.currentVersion,
-          latestVersion: release.tag_name,
-          hasUpdate: hasUpdate,
-          installType: 'manual',
-          releaseUrl: release.html_url,
-          downloadUrl: 'https://adhdgofly.pages.dev/download', // 官网下载页面
-          alternativeDownloads: {
-            baidu: 'https://pan.baidu.com/s/example_link',
-            gitee: 'https://gitee.com/example/releases',
-            direct: 'https://adhdgofly.pages.dev/download'
-          },
-          message: hasUpdate ? '发现新版本，请手动下载更新' : '已是最新版本（手动安装）',
-          actionText: '立即下载',
-          contactInfo: '如果下载链接都不可用，请联系 WeChat: zuoguyoupan2023'
-        };
-      }
+      // 临时演示：模拟检测到0.1.1版本
+      //const demoLatestVersion = '0.1.1';
+      
+      return {
+        success: true,
+        currentVersion: this.currentVersion,
+        latestVersion: release.tag_name,
+        hasUpdate: this.isNewerVersion(release.tag_name, this.currentVersion),
+        releaseUrl: release.html_url,
+        alternativeDownloads: {
+          baidu: 'https://pan.baidu.com/s/example_link',
+          gitee: 'https://gitee.com/example/releases',
+          direct: 'https://example.com/direct_download'
+        },
+        contactInfo: '如果这些链接都不可用，请联系 WeChat: zuoguyoupan2023'
+      };
     } catch (error) {
       console.error('检查版本失败:', error);
       return {
@@ -124,7 +41,6 @@ class SimpleVersionChecker {
         currentVersion: this.currentVersion,
         latestVersion: '检查失败',
         hasUpdate: false,
-        installType: this.installationInfo?.fromWebstore ? 'webstore' : 'manual',
         error: error.message
       };
     }

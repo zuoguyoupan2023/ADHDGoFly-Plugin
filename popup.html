@@ -146,46 +146,6 @@
       transition: all 0.2s ease;
     }
     
-    /* 商店按钮样式 */
-    .store-button {
-      background-color: #007ACC;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      text-align: center;
-      display: block;
-      margin: 8px 0;
-    }
-    
-    .store-button:hover {
-      background-color: #005a9e;
-    }
-    
-    /* 主要下载链接样式 */
-    .primary-download {
-      background-color: #FF6B35;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 5px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .primary-download:hover {
-      background-color: #e55a2b;
-    }
-    
-    /* 更新状态消息样式 */
-    .update-status-message {
-      font-size: 11px;
-      color: #666;
-      margin: 4px 0;
-      font-style: italic;
-      text-align: center;
-    }
-    
     .github-link {
       background-color: #24292e;
       color: white;
@@ -1480,7 +1440,37 @@
         </div>
       </div>
       
-
+      <!-- 版本信息（紧凑版） -->
+      <div class="version-compact" id="versionInfo">
+        <div class="version-row">
+          <span class="version-text">
+            <span data-i18n="version.current">当前版本:</span> 
+            <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+          <span class="version-text">
+            <span data-i18n="version.latest">最新版本:</span> 
+            <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+        </div>
+        <div class="version-update" id="updateNotice" style="display: none;">
+          <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本！</div>
+          <div class="update-description" data-i18n="version.updateDescription">建议更新以获得最新功能和修复</div>
+          <div class="download-options">
+            <div class="download-section">
+              <div class="download-label" data-i18n="version.officialDownload">GitHub下载：</div>
+              <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
+            </div>
+            <div class="download-section">
+              <div class="download-label" data-i18n="version.domesticLinks">官方下载：</div>
+              <div class="alternative-links">
+                 <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link" data-i18n="version.directDownload">直链下载</a>
+              </div>
+            </div>
+          </div>
+          <div class="update-note" data-i18n="version.updateNote">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
+          <div class="contact-info" data-i18n="version.contactInfo">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
+        </div>
+      </div>
       
       <!-- 主要操作按钮 -->
       <div class="main-actions">
@@ -2001,50 +1991,6 @@
             </div>
             <div class="setting-actions">
               <button class="reset-btn" id="reset-settings" data-i18n="pages.settings.other.reset">重置所有设置</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 版本信息 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.settings.version.title">版本信息</h4>
-          </div>
-          <div class="section-content">
-            <div class="version-info-section">
-              <div class="version-display">
-                <div class="version-item">
-                  <span class="version-label" data-i18n="pages.settings.version.current">当前版本:</span>
-                  <span class="version-value" id="settings-current-version">检查中...</span>
-                </div>
-                <div class="version-item" id="settings-latest-version-item" style="display: none;">
-                  <span class="version-label" data-i18n="pages.settings.version.latest">最新版本:</span>
-                  <span class="version-value" id="settings-latest-version">检查中...</span>
-                </div>
-              </div>
-              
-              <div class="version-status" id="settings-version-status">
-                <div class="status-message" id="settings-status-message"></div>
-                <div class="version-actions" id="settings-version-actions" style="display: none;">
-                  <!-- 商店版本按钮 -->
-                  <a href="#" id="settings-store-button" target="_blank" class="version-btn store-btn" style="display: none;">
-                    <span data-i18n="pages.settings.version.viewStorePage">查看商店页面</span>
-                  </a>
-                  
-                  <!-- 手动安装版本按钮 -->
-                  <div class="manual-install-actions" id="settings-manual-actions" style="display: none;">
-                    <a href="#" id="settings-download-button" target="_blank" class="version-btn download-btn">
-                      <span data-i18n="pages.settings.version.downloadNow">立即下载</span>
-                    </a>
-                    <div class="alternative-downloads">
-                      <span data-i18n="pages.settings.version.alternativeDownloads">备用下载：</span>
-                      <a href="#" id="settings-github-link" target="_blank" class="alt-link" data-i18n="pages.settings.version.githubDownload">GitHub</a>
-                      <a href="#" id="settings-baidu-link" target="_blank" class="alt-link" data-i18n="pages.settings.version.baiduDownload">百度网盘</a>
-                      <a href="#" id="settings-gitee-link" target="_blank" class="alt-link" data-i18n="pages.settings.version.giteeDownload">Gitee</a>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

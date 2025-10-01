@@ -21,21 +21,13 @@
     "current": "Current version:",
     "latest": "Latest version:",
     "checking": "Checking...",
-    "checkFailed": "Check failed",
     "updateTitle": "🎉 New version available!",
     "updateDescription": "Update recommended for latest features and fixes",
-    "primaryDownload": "Official download:",
-    "officialDownload": "GitHub download:",
-    "domesticLinks": "Alternative downloads:",
+    "officialDownload": "Official download:",
+    "domesticLinks": "Alternative links:",
     "directDownload": "Direct download",
     "updateNote": "💡 Tip: If GitHub access is slow, use alternative links",
-    "contactInfo": "If none work, contact WeChat: zuoguyoupan2023",
-    "storeUpdate": "New version will be updated automatically through browser store",
-    "manualUpdate": "New version found, please download manually",
-    "latestStore": "Latest version (Store)",
-    "latestManual": "Latest version (Manual install)",
-    "viewStore": "View Store Page",
-    "downloadNow": "Download Now"
+    "contactInfo": "If none work, contact WeChat: zuoguyoupan2023"
   },
   "buttons": {
     "toggle": "Toggle Highlighting",
@@ -176,22 +168,6 @@
         "analytics": "Anonymous usage statistics",
         "analyticsDesc": "Help us improve the product (no personal information collected)",
         "reset": "Reset All Settings"
-      },
-      "version": {
-        "title": "Version Information",
-        "current": "Current version:",
-        "latest": "Latest version:",
-        "checking": "Checking...",
-        "checkFailed": "Check failed",
-        "upToDate": "Up to date",
-        "autoUpdateAvailable": "Browser will auto-update to the latest version",
-        "manualUpdateRequired": "New version found, please download manually",
-        "viewStorePage": "View Store Page",
-        "downloadNow": "Download Now",
-        "alternativeDownloads": "Alternative downloads:",
-        "githubDownload": "GitHub",
-        "baiduDownload": "Baidu Pan",
-        "giteeDownload": "Gitee"
       }
     }
   },

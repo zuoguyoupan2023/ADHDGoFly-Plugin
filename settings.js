@@ -1,246 +1,7 @@
-// 设置页面管理器
+// Settings page functionality
 class SettingsManager {
     constructor() {
-        this.versionInfo = null;
-    }
-
-    async loadVersionInfo() {
-        try {
-            // 获取当前版本
-            const manifest = chrome.runtime.getManifest();
-            const currentVersion = manifest.version;
-            
-            // 初始化版本信息对象
-            this.versionInfo = {
-                currentVersion: currentVersion,
-                latestVersion: null,
-                hasUpdate: false,
-                isChecking: true,
-                installType: null,
-                browserType: null,
-                storeUrl: null,
-                downloadUrl: null,
-                releaseUrl: null,
-                alternativeDownloads: null,
-                contactInfo: null,
-                message: null,
-                actionText: null,
-                skipUpdate: false,
-                error: null
-            };
-            
-            // 更新UI显示检查状态
-            this.updateVersionUI();
-            
-            // 向后台脚本请求版本检查
-            try {
-                const response = await chrome.runtime.sendMessage({
-                    action: 'checkVersion'
-                });
-                
-                if (response && response.success) {
-                    // 更新版本信息
-                    this.versionInfo.isChecking = false;
-                    this.versionInfo.latestVersion = response.latestVersion;
-                    this.versionInfo.hasUpdate = response.hasUpdate;
-                    this.versionInfo.installType = response.installType;
-                    this.versionInfo.browserType = response.browserType;
-                    this.versionInfo.storeUrl = response.storeUrl;
-                    this.versionInfo.downloadUrl = response.downloadUrl;
-                    this.versionInfo.releaseUrl = response.releaseUrl;
-                    this.versionInfo.alternativeDownloads = response.alternativeDownloads;
-                    this.versionInfo.contactInfo = response.contactInfo;
-                    this.versionInfo.message = response.message;
-                    this.versionInfo.actionText = response.actionText;
-                    this.versionInfo.skipUpdate = response.skipUpdate;
-                } else {
-                    this.versionInfo.isChecking = false;
-                    this.versionInfo.error = response?.error || 'Unknown error';
-                }
-            } catch (error) {
-                console.error('Version check failed:', error);
-                this.versionInfo.isChecking = false;
-                this.versionInfo.error = 'Network error';
-            }
-            
-            // 更新UI
-            this.updateVersionUI();
-            
-        } catch (error) {
-            console.error('Failed to load version info:', error);
-            // 设置错误状态
-            this.versionInfo = {
-                currentVersion: '未知',
-                latestVersion: null,
-                hasUpdate: false,
-                isChecking: false,
-                installType: null,
-                browserType: null,
-                storeUrl: null,
-                downloadUrl: null,
-                releaseUrl: null,
-                alternativeDownloads: null,
-                contactInfo: null,
-                message: null,
-                actionText: null,
-                skipUpdate: false,
-                error: 'Failed to load version info'
-            };
-            this.updateVersionUI();
-        }
-    }
-
-    updateVersionUI() {
-        if (!this.versionInfo) return;
-        
-        // 更新当前版本显示
-        const currentVersionElement = document.getElementById('settings-current-version');
-        if (currentVersionElement) {
-            currentVersionElement.textContent = this.versionInfo.currentVersion;
-        }
-        
-        // 更新最新版本显示
-        const latestVersionElement = document.getElementById('settings-latest-version');
-        const latestVersionItem = document.getElementById('settings-latest-version-item');
-        if (latestVersionElement) {
-            if (this.versionInfo.isChecking) {
-                latestVersionElement.setAttribute('data-i18n', 'pages.settings.version.checking');
-                latestVersionElement.textContent = '检查中...';
-            } else if (this.versionInfo.error) {
-                latestVersionElement.setAttribute('data-i18n', 'pages.settings.version.checkFailed');
-                latestVersionElement.textContent = '检查失败';
-            } else {
-                latestVersionElement.removeAttribute('data-i18n');
-                latestVersionElement.textContent = this.versionInfo.latestVersion;
-            }
-            
-            // 显示最新版本项
-            if (latestVersionItem && !this.versionInfo.isChecking) {
-                latestVersionItem.style.display = 'block';
-            }
-        }
-        
-        // 如果是开发版本，跳过更新检查
-        if (this.versionInfo.skipUpdate) {
-            const versionStatus = document.getElementById('settings-version-status');
-            if (versionStatus) {
-                versionStatus.style.display = 'none';
-            }
-            return;
-        }
-        
-        const versionStatus = document.getElementById('settings-version-status');
-        
-        if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
-            // 显示状态消息
-            const statusMessage = document.getElementById('settings-status-message');
-            if (statusMessage && this.versionInfo.message) {
-                statusMessage.textContent = this.versionInfo.message;
-            }
-            
-            // 根据安装类型显示不同的按钮和链接
-            if (this.versionInfo.installType === 'webstore') {
-                // 商店版本 - 显示"查看商店页面"按钮
-                this.setupWebstoreUI();
-            } else {
-                // 手动安装版本 - 显示下载链接
-                this.setupManualInstallUI();
-            }
-            
-            versionStatus.style.display = 'block';
-        } else if (!this.versionInfo.isChecking && !this.versionInfo.error) {
-            // 没有更新时显示最新版本信息
-            const statusMessage = document.getElementById('settings-status-message');
-            if (statusMessage) {
-                if (this.versionInfo.installType === 'webstore') {
-                    // 使用国际化文本
-                    statusMessage.setAttribute('data-i18n', 'pages.settings.version.autoUpdateAvailable');
-                    statusMessage.textContent = '浏览器将自动更新到最新版本';
-                } else {
-                    // 使用国际化文本
-                    statusMessage.setAttribute('data-i18n', 'pages.settings.version.upToDate');
-                    statusMessage.textContent = '已是最新版本';
-                }
-            }
-            
-            // 隐藏操作按钮
-            const versionActions = document.getElementById('settings-version-actions');
-            if (versionActions) {
-                versionActions.style.display = 'none';
-            }
-            
-            versionStatus.style.display = 'block';
-        } else if (this.versionInfo.error) {
-            versionStatus.style.display = 'none';
-        }
-    }
-    
-    // 设置商店版本UI
-    setupWebstoreUI() {
-        // 隐藏手动安装相关的链接
-        const manualActions = document.getElementById('settings-manual-actions');
-        if (manualActions) {
-            manualActions.style.display = 'none';
-        }
-        
-        // 显示商店链接
-        const storeButton = document.getElementById('settings-store-button');
-        if (storeButton && this.versionInfo.storeUrl) {
-            storeButton.href = this.versionInfo.storeUrl;
-            storeButton.querySelector('span').textContent = this.versionInfo.actionText || '查看商店页面';
-            storeButton.style.display = 'inline-flex';
-        }
-        
-        // 显示操作按钮区域
-        const versionActions = document.getElementById('settings-version-actions');
-        if (versionActions) {
-            versionActions.style.display = 'flex';
-        }
-    }
-    
-    // 设置手动安装版本UI
-    setupManualInstallUI() {
-        // 隐藏商店按钮
-        const storeButton = document.getElementById('settings-store-button');
-        if (storeButton) {
-            storeButton.style.display = 'none';
-        }
-        
-        // 设置主要下载链接
-        const primaryDownloadLink = document.getElementById('settings-download-button');
-        if (primaryDownloadLink && this.versionInfo.downloadUrl) {
-            primaryDownloadLink.href = this.versionInfo.downloadUrl;
-            primaryDownloadLink.querySelector('span').textContent = this.versionInfo.actionText || '立即下载';
-        }
-        
-        // 显示手动安装操作区域
-        const manualActions = document.getElementById('settings-manual-actions');
-        if (manualActions) {
-            manualActions.style.display = 'block';
-        }
-        
-        // 设置替代下载链接
-        if (this.versionInfo.alternativeDownloads) {
-            const githubLink = document.getElementById('settings-github-link');
-            const baiduLink = document.getElementById('settings-baidu-link');
-            const giteeLink = document.getElementById('settings-gitee-link');
-            
-            if (githubLink && this.versionInfo.releaseUrl) {
-                githubLink.href = this.versionInfo.releaseUrl;
-            }
-            if (baiduLink && this.versionInfo.alternativeDownloads.baidu) {
-                baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
-            }
-            if (giteeLink && this.versionInfo.alternativeDownloads.gitee) {
-                giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
-            }
-        }
-        
-        // 显示操作按钮区域
-        const versionActions = document.getElementById('settings-version-actions');
-        if (versionActions) {
-            versionActions.style.display = 'flex';
-        }
+        this.init();
     }
 
     init() {
@@ -249,7 +10,10 @@ class SettingsManager {
     }
 
     bindEvents() {
-        // 绑定自动更新开关
+        // 存储管理相关事件
+        this.bindStorageEvents();
+        
+        // 自动更新开关
         const autoUpdateToggle = document.getElementById('auto-update-toggle');
         if (autoUpdateToggle) {
             autoUpdateToggle.addEventListener('change', (e) => {
@@ -257,45 +21,44 @@ class SettingsManager {
             });
         }
 
-        // 绑定匿名统计开关
-        const analyticsToggle = document.getElementById('analytics-toggle');
-        if (analyticsToggle) {
-            analyticsToggle.addEventListener('change', (e) => {
-                this.saveData({ analytics: e.target.checked });
+        // 匿名统计开关
+        const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
+        if (anonymousStatsToggle) {
+            anonymousStatsToggle.addEventListener('change', (e) => {
+                this.saveData({ anonymousStats: e.target.checked });
             });
         }
 
-        // 绑定重置按钮
-        const resetButton = document.getElementById('reset-button');
-        if (resetButton) {
-            resetButton.addEventListener('click', () => {
+        // 重置按钮
+        const resetBtn = document.getElementById('reset-all-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
                 this.resetAllSettings();
             });
         }
-
-        // 绑定存储设置相关事件
-        this.bindStorageEvents();
     }
 
     bindStorageEvents() {
         // 缓存保留时间选择
-        const retentionSelect = document.getElementById('cache-retention');
-        if (retentionSelect) {
-            retentionSelect.addEventListener('change', (e) => {
-                this.saveStorageSettings({ cacheRetention: parseInt(e.target.value) });
+        const retentionRadios = document.querySelectorAll('input[name="cache-retention"]');
+        retentionRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.saveStorageSettings({ cacheRetentionDays: parseInt(e.target.value) });
+                }
             });
-        }
+        });
 
         // 清理过期缓存按钮
-        const cleanupExpiredBtn = document.getElementById('cleanup-expired');
+        const cleanupExpiredBtn = document.getElementById('cleanup-expired-btn');
         if (cleanupExpiredBtn) {
             cleanupExpiredBtn.addEventListener('click', () => {
                 this.cleanupExpiredCache();
             });
         }
 
-        // 清除所有缓存按钮
-        const cleanupAllBtn = document.getElementById('cleanup-all');
+        // 清理所有缓存按钮
+        const cleanupAllBtn = document.getElementById('cleanup-all-btn');
         if (cleanupAllBtn) {
             cleanupAllBtn.addEventListener('click', () => {
                 this.cleanupAllCache();
@@ -303,7 +66,7 @@ class SettingsManager {
         }
 
         // 保存存储设置按钮
-        const saveStorageBtn = document.getElementById('save-storage');
+        const saveStorageBtn = document.getElementById('save-storage-btn');
         if (saveStorageBtn) {
             saveStorageBtn.addEventListener('click', () => {
                 this.saveCurrentStorageSettings();
@@ -315,108 +78,108 @@ class SettingsManager {
         try {
             const result = await chrome.storage.sync.get({
                 autoUpdate: true,
-                analytics: false
+                anonymousStats: false,
+                cacheRetentionDays: 7,
+                cacheEnabled: true
             });
 
-            // 更新UI
+            // 更新开关状态
             const autoUpdateToggle = document.getElementById('auto-update-toggle');
             if (autoUpdateToggle) {
                 autoUpdateToggle.checked = result.autoUpdate;
             }
 
-            const analyticsToggle = document.getElementById('analytics-toggle');
-            if (analyticsToggle) {
-                analyticsToggle.checked = result.analytics;
+            const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
+            if (anonymousStatsToggle) {
+                anonymousStatsToggle.checked = result.anonymousStats;
             }
 
             // 加载存储设置
             await this.loadStorageSettings(result);
-            
-            // 加载版本信息
-            await this.loadVersionInfo();
 
+            // 显示版本信息
+            const manifest = chrome.runtime.getManifest();
+            const versionElement = document.querySelector('.version-info');
+            if (versionElement) {
+                versionElement.textContent = `版本 ${manifest.version}`;
+            }
         } catch (error) {
-            console.error('Failed to load settings:', error);
+            console.error('加载设置数据失败:', error);
         }
     }
 
     async loadStorageSettings(settings) {
-        try {
-            const storageResult = await chrome.storage.local.get({
-                cacheRetention: 7 // 默认7天
-            });
-
-            // 更新缓存保留时间选择
-            const retentionSelect = document.getElementById('cache-retention');
-            if (retentionSelect) {
-                retentionSelect.value = storageResult.cacheRetention;
-            }
-
-            // 更新存储使用情况
-            await this.updateStorageUsage();
-
-        } catch (error) {
-            console.error('Failed to load storage settings:', error);
+        // 设置缓存保留时间单选按钮
+        const retentionValue = settings.cacheEnabled ? settings.cacheRetentionDays : -1;
+        const retentionRadio = document.querySelector(`input[name="cache-retention"][value="${retentionValue}"]`);
+        if (retentionRadio) {
+            retentionRadio.checked = true;
         }
+
+        // 加载存储使用情况
+        await this.updateStorageUsage();
     }
 
     async updateStorageUsage() {
         try {
-            const stats = await this.getCacheStatistics();
+            // 获取缓存统计信息
+            const cacheStats = await this.getCacheStatistics();
             
-            // 更新缓存页面数
-            const cachedPagesElement = document.getElementById('cached-pages');
+            // 更新显示
+            const cachedPagesElement = document.getElementById('cached-pages-count');
             if (cachedPagesElement) {
-                cachedPagesElement.textContent = stats.pageCount;
+                cachedPagesElement.textContent = cacheStats.pageCount || 0;
             }
 
-            // 更新已用空间
-            const usedSpaceElement = document.getElementById('used-space');
+            const usedSpaceElement = document.getElementById('used-space-size');
             if (usedSpaceElement) {
-                usedSpaceElement.textContent = this.formatBytes(stats.totalSize);
+                usedSpaceElement.textContent = this.formatBytes(cacheStats.totalSize || 0);
             }
 
-            // 更新上次清理时间
-            const lastCleanupElement = document.getElementById('last-cleanup');
+            const lastCleanupElement = document.getElementById('last-cleanup-time');
             if (lastCleanupElement) {
-                const lastCleanup = await chrome.storage.local.get('lastCleanup');
-                if (lastCleanup.lastCleanup) {
-                    const date = new Date(lastCleanup.lastCleanup);
-                    lastCleanupElement.textContent = date.toLocaleString();
-                } else {
-                    lastCleanupElement.textContent = '从未清理';
-                }
+                const lastCleanup = cacheStats.lastCleanup;
+                lastCleanupElement.textContent = lastCleanup ? 
+                    new Date(lastCleanup).toLocaleString() : '从未清理';
             }
-
         } catch (error) {
-            console.error('Failed to update storage usage:', error);
+            console.error('更新存储使用情况失败:', error);
         }
     }
 
     async getCacheStatistics() {
         try {
+            // 获取所有缓存数据
             const allData = await chrome.storage.local.get(null);
             let pageCount = 0;
             let totalSize = 0;
+            let lastCleanup = null;
 
+            // 统计缓存页面和大小
             for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('highlight_')) {
+                if (key.startsWith('cache_')) {
                     pageCount++;
                     totalSize += JSON.stringify(value).length;
+                } else if (key === 'lastCleanupTime') {
+                    lastCleanup = value;
                 }
             }
 
-            return { pageCount, totalSize };
+            return {
+                pageCount,
+                totalSize,
+                lastCleanup
+            };
         } catch (error) {
-            console.error('Failed to get cache statistics:', error);
-            return { pageCount: 0, totalSize: 0 };
+            console.error('获取缓存统计失败:', error);
+            return { pageCount: 0, totalSize: 0, lastCleanup: null };
         }
     }
 
     formatBytes(bytes) {
-        if (bytes === 0) return '0 Bytes';
+        if (bytes === 0) return '0 B';
         const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
@@ -424,181 +187,206 @@ class SettingsManager {
     async saveData(data) {
         try {
             await chrome.storage.sync.set(data);
-            this.showMessage('设置已保存');
+            console.log('设置已保存:', data);
         } catch (error) {
-            console.error('Failed to save settings:', error);
-            this.showMessage('保存失败', 'error');
+            console.error('保存设置失败:', error);
         }
     }
 
     async saveStorageSettings(data) {
         try {
-            await chrome.storage.local.set(data);
-            this.showMessage('存储设置已保存');
+            await chrome.storage.sync.set(data);
+            console.log('存储设置已保存:', data);
+            
+            // 通知内容脚本更新缓存配置
+            this.notifyContentScripts('storageSettingsChanged', data);
         } catch (error) {
-            console.error('Failed to save storage settings:', error);
-            this.showMessage('保存失败', 'error');
+            console.error('保存存储设置失败:', error);
         }
     }
 
     async saveCurrentStorageSettings() {
-        try {
-            const retentionSelect = document.getElementById('cache-retention');
-            if (retentionSelect) {
-                await this.saveStorageSettings({
-                    cacheRetention: parseInt(retentionSelect.value)
-                });
-            }
-        } catch (error) {
-            console.error('Failed to save current storage settings:', error);
+        const selectedRetention = document.querySelector('input[name="cache-retention"]:checked');
+        if (selectedRetention) {
+            const retentionValue = parseInt(selectedRetention.value);
+            const settings = {
+                cacheEnabled: retentionValue !== -1,
+                cacheRetentionDays: retentionValue > 0 ? retentionValue : 7
+            };
+            
+            await this.saveStorageSettings(settings);
+            this.showMessage('存储设置已保存');
         }
     }
 
     async cleanupExpiredCache() {
         try {
-            const result = await chrome.storage.local.get('cacheRetention');
-            const retentionDays = result.cacheRetention || 7;
-            const cutoffTime = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
+            const settings = await chrome.storage.sync.get({
+                cacheRetentionDays: 7,
+                cacheEnabled: true
+            });
 
+            if (!settings.cacheEnabled) {
+                this.showMessage('缓存已禁用，无需清理', 'info');
+                return;
+            }
+
+            const cutoffTime = Date.now() - (settings.cacheRetentionDays * 24 * 60 * 60 * 1000);
             const allData = await chrome.storage.local.get(null);
             const keysToRemove = [];
 
+            // 查找过期的缓存项
             for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('highlight_') && value.timestamp && value.timestamp < cutoffTime) {
+                if (key.startsWith('cache_') && value.timestamp && value.timestamp < cutoffTime) {
                     keysToRemove.push(key);
                 }
             }
 
             if (keysToRemove.length > 0) {
                 await chrome.storage.local.remove(keysToRemove);
-                await chrome.storage.local.set({ lastCleanup: Date.now() });
-                this.showMessage(`已清理 ${keysToRemove.length} 个过期缓存`);
+                await chrome.storage.local.set({ lastCleanupTime: Date.now() });
+                
+                this.showMessage(`已清理 ${keysToRemove.length} 个过期缓存项`);
                 await this.updateStorageUsage();
             } else {
-                this.showMessage('没有过期缓存需要清理');
+                this.showMessage('没有找到过期的缓存项', 'info');
             }
-
         } catch (error) {
-            console.error('Failed to cleanup expired cache:', error);
-            this.showMessage('清理失败', 'error');
+            console.error('清理过期缓存失败:', error);
+            this.showMessage('清理失败，请重试', 'error');
         }
     }
 
     async cleanupAllCache() {
-        try {
-            const allData = await chrome.storage.local.get(null);
-            const keysToRemove = [];
-
-            for (const key of Object.keys(allData)) {
-                if (key.startsWith('highlight_')) {
-                    keysToRemove.push(key);
+        if (confirm('确定要清除所有缓存吗？这将删除所有已保存的高亮数据。')) {
+            try {
+                const allData = await chrome.storage.local.get(null);
+                const cacheKeys = Object.keys(allData).filter(key => key.startsWith('cache_'));
+                
+                if (cacheKeys.length > 0) {
+                    await chrome.storage.local.remove(cacheKeys);
+                    await chrome.storage.local.set({ lastCleanupTime: Date.now() });
+                    
+                    this.showMessage(`已清理 ${cacheKeys.length} 个缓存项`);
+                    await this.updateStorageUsage();
+                } else {
+                    this.showMessage('没有找到缓存数据', 'info');
                 }
+            } catch (error) {
+                console.error('清理所有缓存失败:', error);
+                this.showMessage('清理失败，请重试', 'error');
             }
-
-            if (keysToRemove.length > 0) {
-                await chrome.storage.local.remove(keysToRemove);
-                await chrome.storage.local.set({ lastCleanup: Date.now() });
-                this.showMessage(`已清理 ${keysToRemove.length} 个缓存`);
-                await this.updateStorageUsage();
-            } else {
-                this.showMessage('没有缓存需要清理');
-            }
-
-        } catch (error) {
-            console.error('Failed to cleanup all cache:', error);
-            this.showMessage('清理失败', 'error');
         }
     }
 
     notifyContentScripts(action, data) {
+        // 通知所有标签页的内容脚本
         chrome.tabs.query({}, (tabs) => {
             tabs.forEach(tab => {
                 chrome.tabs.sendMessage(tab.id, {
                     action: action,
                     data: data
                 }).catch(() => {
-                    // 忽略无法发送消息的标签页
+                    // 忽略无法发送消息的标签页（如chrome://页面）
                 });
             });
         });
     }
 
     async resetAllSettings() {
-        if (confirm('确定要重置所有设置吗？此操作不可撤销。')) {
+        if (confirm('确定要重置所有设置吗？这将清除所有自定义配置。')) {
             try {
                 await chrome.storage.sync.clear();
                 await chrome.storage.local.clear();
-                this.showMessage('所有设置已重置');
                 
-                // 重新加载页面以应用默认设置
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                // 重新加载默认设置
+                await this.loadData();
                 
+                // 显示成功消息
+                this.showMessage('所有设置已重置为默认值');
             } catch (error) {
-                console.error('Failed to reset settings:', error);
-                this.showMessage('重置失败', 'error');
+                console.error('重置设置失败:', error);
+                this.showMessage('重置失败，请重试', 'error');
             }
         }
     }
 
     showMessage(message, type = 'success') {
-        // 创建消息元素
-        const messageEl = document.createElement('div');
-        messageEl.className = `message ${type}`;
-        messageEl.textContent = message;
+        // 创建消息提示
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `settings-message ${type}`;
+        messageDiv.textContent = message;
         
-        // 添加样式
-        messageEl.style.cssText = `
+        // 根据消息类型设置样式
+        let backgroundColor;
+        switch (type) {
+            case 'error':
+                backgroundColor = '#f44336';
+                break;
+            case 'info':
+                backgroundColor = '#2196F3';
+                break;
+            case 'warning':
+                backgroundColor = '#ff9800';
+                break;
+            default:
+                backgroundColor = '#4CAF50';
+        }
+        
+        messageDiv.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 12px 20px;
+            padding: 10px 15px;
             border-radius: 4px;
             color: white;
             font-size: 14px;
-            z-index: 10000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            background-color: ${backgroundColor};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         `;
-        
-        if (type === 'success') {
-            messageEl.style.backgroundColor = '#4CAF50';
-        } else if (type === 'error') {
-            messageEl.style.backgroundColor = '#f44336';
-        } else {
-            messageEl.style.backgroundColor = '#2196F3';
-        }
-        
-        document.body.appendChild(messageEl);
-        
-        // 显示动画
-        setTimeout(() => {
-            messageEl.style.opacity = '1';
-            messageEl.style.transform = 'translateX(0)';
-        }, 10);
-        
-        // 自动隐藏
-        setTimeout(() => {
-            messageEl.style.opacity = '0';
-            messageEl.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (messageEl.parentNode) {
-                    messageEl.parentNode.removeChild(messageEl);
+
+        // 添加滑入动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
                 }
-            }, 300);
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(messageDiv);
+
+        // 3秒后自动移除
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 300);
+            }
         }, 3000);
     }
 }
 
-// 初始化设置页面
+// 当设置页面显示时初始化
 function initSettings() {
-    const settingsManager = new SettingsManager();
-    settingsManager.init();
+    if (!window.settingsManager) {
+        window.settingsManager = new SettingsManager();
+    }
 }
 
-// 导出模块
+// 导出给popup.js使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { SettingsManager, initSettings };
 } else {
