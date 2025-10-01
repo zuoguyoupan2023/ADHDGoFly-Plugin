@@ -83,8 +83,12 @@
         "noun": "Highlight Nouns",
         "verb": "Highlight Verbs",
         "adj": "Highlight Adjectives",
-        "comparative": "Highlight Comparatives/Superlatives",
-        "description": "Choose which parts of speech to highlight. English comparatives and superlatives are specially marked in purple."
+        "comparative": "Highlight Comparative/Superlative",
+        "nounSimple": "Nouns",
+        "verbSimple": "Verbs",
+        "adjSimple": "Adjectives",
+        "comparativeSimple": "Comparative/Superlative",
+        "description": "Click buttons to enable or disable highlighting for corresponding word types"
       },
       "preview": {
         "noun": "Noun",

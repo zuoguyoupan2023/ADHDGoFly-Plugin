@@ -439,18 +439,27 @@ class PopupController {
       });
     });
     
-    // 高亮开关复选框事件
-    const highlightToggles = ['noun', 'verb', 'adj', 'comparative'];
-    highlightToggles.forEach(type => {
-      const checkbox = document.getElementById(`highlight-${type}`);
-      if (checkbox) {
-        checkbox.addEventListener('change', (e) => {
-          this.highlightingToggles[type] = e.target.checked;
-          console.log(`${type}高亮开关:`, e.target.checked);
-          // 立即保存设置
-          this.saveColorSettings();
-        });
-      }
+    // 高亮开关按钮事件
+    const highlightButtons = document.querySelectorAll('.toggle-button');
+    highlightButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const type = e.currentTarget.dataset.type;
+        const isActive = e.currentTarget.classList.contains('active');
+        
+        // 切换按钮状态
+        if (isActive) {
+          e.currentTarget.classList.remove('active');
+          this.highlightingToggles[type] = false;
+        } else {
+          e.currentTarget.classList.add('active');
+          this.highlightingToggles[type] = true;
+        }
+        
+        console.log(`${type}高亮开关:`, this.highlightingToggles[type]);
+        
+        // 立即保存设置
+        this.saveColorSettings();
+      });
     });
     
     // 应用方案按钮事件
@@ -517,9 +526,13 @@ class PopupController {
   updateHighlightingTogglesUI() {
     const highlightTypes = ['noun', 'verb', 'adj', 'comparative'];
     highlightTypes.forEach(type => {
-      const checkbox = document.getElementById(`highlight-${type}`);
-      if (checkbox) {
-        checkbox.checked = this.highlightingToggles[type];
+      const button = document.getElementById(`highlight-${type}`);
+      if (button) {
+        if (this.highlightingToggles[type]) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
       }
     });
   }
