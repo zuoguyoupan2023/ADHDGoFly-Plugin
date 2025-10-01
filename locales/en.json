@@ -142,6 +142,25 @@
     },
     "settings": {
       "title": "Settings",
+      "storage": {
+        "title": "Storage Management",
+        "retentionTime": "Cache Retention Time",
+        "days3": "3 Days",
+        "days7": "7 Days",
+        "days14": "14 Days",
+        "days28": "28 Days",
+        "disabled": "Disable Cache",
+        "retentionDesc": "Set the retention time for highlight cache, automatically cleaned after expiration",
+        "usage": "Storage Usage",
+        "cachedPages": "Cached Pages",
+        "usedSpace": "Used Space",
+        "lastCleanup": "Last Cleanup",
+        "cleanup": "Cache Cleanup",
+        "cleanupExpired": "Clean Expired Cache",
+        "cleanupAll": "Clear All Cache",
+        "cleanupDesc": "Manually clean cache data to free up storage space",
+        "save": "Save Storage Settings"
+      },
       "other": {
         "title": "Other Settings",
         "autoUpdate": "Auto-check updates",

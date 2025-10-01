@@ -9,8 +9,8 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: false,
-            en: false,
+            zh: true,
+            en: true,
             fr: false,
             ru: false,
             es: false,

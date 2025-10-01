@@ -1886,6 +1886,86 @@
       
       <div class="settings-content">
 
+        <!-- 存储管理设置 -->
+        <div class="settings-section">
+          <div class="section-header">
+            <h4 data-i18n="pages.settings.storage.title">存储管理</h4>
+          </div>
+          <div class="section-content">
+            <!-- 存储时间设置 -->
+            <div class="setting-item">
+              <label class="setting-label-text">
+                <span data-i18n="pages.settings.storage.retentionTime">缓存保留时间</span>
+              </label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="storage-retention" value="3" id="retention-3">
+                  <span class="radio-mark"></span>
+                  <span data-i18n="pages.settings.storage.days3">3天</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="storage-retention" value="7" id="retention-7" checked>
+                  <span class="radio-mark"></span>
+                  <span data-i18n="pages.settings.storage.days7">7天</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="storage-retention" value="14" id="retention-14">
+                  <span class="radio-mark"></span>
+                  <span data-i18n="pages.settings.storage.days14">14天</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="storage-retention" value="28" id="retention-28">
+                  <span class="radio-mark"></span>
+                  <span data-i18n="pages.settings.storage.days28">28天</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="storage-retention" value="0" id="retention-disabled">
+                  <span class="radio-mark"></span>
+                  <span data-i18n="pages.settings.storage.disabled">禁用缓存</span>
+                </label>
+              </div>
+              <p class="setting-desc" data-i18n="pages.settings.storage.retentionDesc">设置高亮缓存的保留时间，过期后自动清理</p>
+            </div>
+
+            <!-- 存储使用情况 -->
+            <div class="setting-item">
+              <label class="setting-label-text">
+                <span data-i18n="pages.settings.storage.usage">存储使用情况</span>
+              </label>
+              <div class="storage-stats">
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="pages.settings.storage.cachedPages">缓存页面:</span>
+                  <span class="stat-value" id="cached-pages-count">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="pages.settings.storage.usedSpace">已用空间:</span>
+                  <span class="stat-value" id="used-storage-space">-</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="pages.settings.storage.lastCleanup">上次清理:</span>
+                  <span class="stat-value" id="last-cleanup-time">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 手动清理选项 -->
+            <div class="setting-item">
+              <label class="setting-label-text">
+                <span data-i18n="pages.settings.storage.cleanup">缓存清理</span>
+              </label>
+              <div class="cleanup-actions">
+                <button class="cleanup-btn" id="cleanup-expired" data-i18n="pages.settings.storage.cleanupExpired">清理过期缓存</button>
+                <button class="cleanup-btn danger" id="cleanup-all" data-i18n="pages.settings.storage.cleanupAll">清除所有缓存</button>
+              </div>
+              <p class="setting-desc" data-i18n="pages.settings.storage.cleanupDesc">手动清理缓存数据，释放存储空间</p>
+            </div>
+
+            <!-- 保存按钮 -->
+            <div class="setting-actions">
+              <button class="save-btn" id="save-storage-btn" data-i18n="pages.settings.storage.save">保存存储设置</button>
+            </div>
+          </div>
+        </div>
 
         <!-- 其他设置 -->
         <div class="settings-section">

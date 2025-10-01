@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 不透明的背景层 -->
+  <rect x="0" y="0" width="1024" height="1024" fill="#000000" opacity="0"/>
+  
+  <!-- 白色圆角矩形背景 -->
+  <rect x="12" y="12" width="1000" height="1000" rx="120" fill="white"/>
+  
+  <!-- 临时边框 - 用于查看logo边界 -->
+  <rect x="0" y="0" width="1024" height="1024" fill="none" stroke="#FF0000" stroke-width="1" opacity="0.5"/>
+  
+  
+  <!-- 
+    可调整的参数：
+    - 三角形边长: 300 (triangleSize)
+    - 三角形中心X: 250 (triangleCenterX) 
+    - 三角形中心Y: 450 (triangleCenterY)
+    - T字横线宽度: 200 (tWidth)
+    - T字横线高度: 40 (tHeight)
+    - T字竖线宽度: 40 (tStemWidth)
+    - T字竖线高度: 280 (tStemHeight)
+    - T字位置X: 520 (tX)
+    - T字位置Y: 200 (tY)
+    - 边框宽度: 20 (strokeWidth)
+  -->
+  
+  <!-- 正三角形 (A) - 底边800px，靠近底部 -->
+  <path d="M 512 211.2 L 112 904 L 912 904 Z" 
+        fill="#FEE2E2"
+        stroke="#F87171" 
+        stroke-width="24"
+        stroke-linejoin="round"/>
+  
+  <!-- T 字组合 -->
+  <g fill="#10B981">
+    <!-- T 字的横线（斜线） -->
+    <path d="M 520 190 L 920 82.84 L 920 122.84 L 520 230 Z"/>
+    
+    <!-- T 字的竖线 -->
+    <rect x="890" y="82.84" width="60" height="821.16" rx="12"/>
+  </g>
+</svg> 
