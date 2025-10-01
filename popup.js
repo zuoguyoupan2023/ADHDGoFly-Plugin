@@ -74,9 +74,6 @@ class PopupController {
     
     // 检查状态
     await this.checkStatus();
-    
-    // 检查版本
-    await this.checkVersion();
   }
 
   bindEvents() {
@@ -918,110 +915,7 @@ class PopupController {
 
 
 
-  async checkVersion() {
-    try {
-      // 显示当前版本
-      const manifest = chrome.runtime.getManifest();
-      const currentVersion = manifest.version;
-      
-      // 初始化版本信息缓存
-      this.versionInfo = {
-        currentVersion: currentVersion,
-        latestVersion: null,
-        isChecking: true,
-        hasUpdate: false,
-        error: null,
-        releaseUrl: null,
-        alternativeDownloads: null,
-        contactInfo: null
-      };
-      
-      // 更新UI显示
-      this.updateVersionUI();
-      
-      // 请求后台检查最新版本
-       chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
-         this.versionInfo.isChecking = false;
-         
-         if (response && response.success) {
-           this.versionInfo.latestVersion = response.latestVersion;
-           this.versionInfo.hasUpdate = response.hasUpdate;
-           this.versionInfo.releaseUrl = response.releaseUrl;
-           this.versionInfo.alternativeDownloads = response.alternativeDownloads;
-           this.versionInfo.contactInfo = response.contactInfo;
-         } else {
-           this.versionInfo.error = response?.error || 'Unknown error';
-         }
-         
-         // 更新UI显示
-         this.updateVersionUI();
-       });
-    } catch (error) {
-      console.error('版本检测失败:', error);
-      this.versionInfo = {
-        currentVersion: '未知',
-        latestVersion: null,
-        isChecking: false,
-        hasUpdate: false,
-        error: error.message,
-        releaseUrl: null,
-        alternativeDownloads: null,
-        contactInfo: null
-      };
-      this.updateVersionUI();
-    }
-  }
-  
-  updateVersionUI() {
-    if (!this.versionInfo) return;
-    
-    // 更新当前版本显示
-    document.getElementById('currentVersion').textContent = this.versionInfo.currentVersion;
-    
-    // 更新最新版本显示
-     const latestVersionElement = document.getElementById('latestVersion');
-     if (this.versionInfo.isChecking) {
-       latestVersionElement.textContent = this.i18nManager.t('version.checking');
-     } else if (this.versionInfo.error) {
-       latestVersionElement.textContent = this.i18nManager.t('version.checkFailed');
-     } else {
-       latestVersionElement.textContent = this.versionInfo.latestVersion;
-     }
-    
-    // 处理更新提示
-    if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
-      const updateNotice = document.getElementById('updateNotice');
-      
-      // 设置官方GitHub链接
-      const githubLink = document.getElementById('githubLink');
-      if (githubLink && this.versionInfo.releaseUrl) {
-        githubLink.href = this.versionInfo.releaseUrl;
-      }
-      
-      // 设置替代下载链接
-      if (this.versionInfo.alternativeDownloads) {
-        const baiduLink = document.getElementById('baiduLink');
-        const giteeLink = document.getElementById('giteeLink');
-        const directLink = document.getElementById('directLink');
-        
-        if (baiduLink) baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
-        if (giteeLink) giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
-        if (directLink) directLink.href = this.versionInfo.alternativeDownloads.direct;
-      }
-      
-      // 设置联系信息
-      if (this.versionInfo.contactInfo) {
-        const contactInfoElement = document.querySelector('.contact-info');
-        if (contactInfoElement) {
-          contactInfoElement.textContent = this.versionInfo.contactInfo;
-        }
-      }
-      
-      if (updateNotice) {
-        updateNotice.style.display = 'block';
-      }
-    }
-  }
+
 
 
 
