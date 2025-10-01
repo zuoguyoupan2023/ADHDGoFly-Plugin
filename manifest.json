@@ -13,7 +13,6 @@
     "js": [
         "content/dictionary-manager-new.js",
         "content/dictionary-adapter.js",
-        "content/dictionary-manager.js",
         "content/language-detector.js",
         "content/en-noun-morphology.js",
         "content/text-segmenter.js",
