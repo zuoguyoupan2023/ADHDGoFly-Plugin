@@ -488,7 +488,52 @@ class PopupController {
       radio.checked = true;
     }
     
+    // 动态更新按钮颜色
+    this.updateButtonColors(scheme);
+    
     console.log('选择颜色方案:', scheme);
+  }
+  
+  updateButtonColors(scheme) {
+    // 定义各个颜色方案的颜色值 - 与HTML中的预览颜色保持一致
+    const colorSchemes = {
+      default: {
+        noun: '#0066cc',
+        verb: '#cc0000', 
+        adj: '#009933'
+      },
+      warm: {
+        noun: '#8b4513',  // 修正：暖色方案的名词颜色
+        verb: '#dc143c',
+        adj: '#ff8c00'    // 修正：暖色方案的形容词颜色（橙色）
+      },
+      cool: {
+        noun: '#191970',  // 修正：冷色方案的名词颜色（午夜蓝）
+        verb: '#008b8b',  // 修正：冷色方案的动词颜色（深青色）
+        adj: '#4169E1'    // 修正：冷色方案的形容词颜色（皇家蓝）
+      },
+      pastel: {
+        noun: '#da70d6',  // 修正：柔和方案的名词颜色（兰花紫）
+        verb: '#20b2aa',  // 修正：柔和方案的动词颜色（浅海绿）
+        adj: '#f0e68c'    // 修正：柔和方案的形容词颜色（卡其色）
+      },
+      'high-contrast': {
+        noun: '#000080',
+        verb: '#8b0000',
+        adj: '#228b22'
+      }
+    };
+    
+    // 获取当前方案的颜色
+    const colors = colorSchemes[scheme] || colorSchemes.default;
+    
+    // 更新CSS变量
+    const root = document.documentElement;
+    root.style.setProperty('--noun-color', colors.noun);
+    root.style.setProperty('--verb-color', colors.verb);
+    root.style.setProperty('--adj-color', colors.adj);
+    // 比较级/最高级颜色保持不变
+    root.style.setProperty('--comparative-color', '#9966cc');
   }
 
   async loadColorSettings() {
