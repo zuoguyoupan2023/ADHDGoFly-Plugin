@@ -259,6 +259,114 @@
   color: #666;
 }
 
+/* 设置页面版本信息样式 */
+.version-info-section {
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.version-display {
+  margin-bottom: 15px;
+}
+
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+.version-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.version-value {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+}
+
+.version-status {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 15px;
+}
+
+.status-message {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.version-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.version-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.store-btn {
+  background: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+}
+
+.store-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.download-btn {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+}
+
+.download-btn:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.alternative-downloads {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.alt-link {
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+  text-decoration: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.alt-link:hover {
+  color: #333;
+  border-color: #999;
+  background: #f5f5f5;
+}
+
 .dictionary-sources {
   display: flex;
   flex-direction: column;
