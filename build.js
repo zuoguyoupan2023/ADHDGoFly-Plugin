@@ -203,7 +203,7 @@ async function main() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADHDGoFly - 智能阅读助手插件 (多浏览器版本)</title>
+    <title>ADHDGoFly - 关键词高亮阅读助手插件 </title>
     <style>
         * {
             margin: 0;
