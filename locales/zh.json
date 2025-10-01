@@ -90,7 +90,8 @@
         "noun": "名词",
         "verb": "动词",
         "adjective": "形容词"
-      }
+      },
+      "applyScheme": "应用方案"
     },
     "text": {
       "title": "文本样式",
