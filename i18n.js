@@ -1,10 +1,10 @@
 // I18n Manager for ADHDGoFly Plugin
 class I18nManager {
   constructor() {
-    this.currentLanguage = 'zh'; // 默认中文
+    this.currentLanguage = 'en'; // 默认英文，会在init时根据系统语言自动调整
     this.translations = {};
     this.supportedLanguages = ['zh', 'en'];
-    this.fallbackLanguage = 'zh';
+    this.fallbackLanguage = 'en'; // 改为英文作为fallback
   }
 
   // 初始化i18n系统
