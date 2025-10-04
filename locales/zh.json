@@ -79,12 +79,16 @@
         "highContrast": "高对比度"
       },
       "toggles": {
-        "title": "高亮选项",
-        "noun": "高亮名词",
-        "verb": "高亮动词",
-        "adj": "高亮形容词",
-        "comparative": "高亮比较级/最高级",
-        "description": "选择要高亮显示的词性。英文比较级最高级会被特殊标记为紫色。"
+        "title": "高亮控制",
+        "noun": "名词高亮",
+        "verb": "动词高亮",
+        "adj": "形容词高亮",
+        "comparative": "比较级/最高级高亮",
+        "nounSimple": "名词",
+        "verbSimple": "动词",
+        "adjSimple": "形容词",
+        "comparativeSimple": "比较级/最高级",
+        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
       },
       "preview": {
         "noun": "名词",
