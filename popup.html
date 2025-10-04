@@ -515,40 +515,42 @@
     
     .toggle-group {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
       gap: 8px;
     }
     
     .toggle-button {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 15px;
+      padding: 8px 12px;
       border: 2px solid #d0d0d0;
       border-radius: 6px;
       background: white;
-      color: #666;
+      color: black;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
       outline: none;
+      width: auto;
+      min-width: auto;
     }
     
     .toggle-button:hover {
-      border-color: #9370db;
+      border-color: #999;
       background: #f8f9fa;
     }
     
     .toggle-button.active {
-      background: #9370db;
-      border-color: #9370db;
+      background: black;
+      border-color: black;
       color: white;
     }
     
     .toggle-button.active:hover {
-      background: #7b5cb0;
-      border-color: #7b5cb0;
+      background: #333;
+      border-color: #333;
     }
     
     .toggle-description {
@@ -1555,10 +1557,6 @@
       </div>
       
       <div class="colors-content">
-        <div class="colors-info">
-          <p data-i18n="pages.colors.description">选择高亮颜色方案</p>
-        </div>
-        
         <!-- 高亮开关控制 -->
         <div class="highlighting-toggles">
           <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
@@ -1579,6 +1577,10 @@
           <div class="toggle-description">
             <p data-i18n="pages.colors.toggles.description">点击按钮可开启或关闭对应类型词汇的高亮显示</p>
           </div>
+        </div>
+        
+        <div class="colors-info">
+          <p data-i18n="pages.colors.description">选择高亮颜色方案</p>
         </div>
         
         <div class="color-schemes">
