@@ -136,49 +136,7 @@
         "title": "关于我们",
         "description": "ADHDGoFly 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。",
         "version": "版本：",
-        "developer": "开发者：",
-        "website": "官网："
-      },
-      "changelog": {
-        "title": "更新日志",
-        "v013": {
-          "title": "界面优化与功能增强",
-          "feature1": "优化颜色方案选择界面，支持动态按钮颜色切换",
-          "feature2": "改进按钮布局，支持自适应宽度和多行排列",
-          "feature3": "增强用户体验，统一各颜色方案的视觉效果"
-        },
-        "v012": {
-          "title": "多语言支持与性能优化",
-          "feature1": "新增多种颜色方案：暖色、冷色、柔和、高对比度",
-          "feature2": "优化词典加载性能，提升页面响应速度",
-          "feature3": "改进文本分析算法，提高词性识别准确率"
-        },
-        "v011": {
-          "title": "基础功能发布",
-          "feature1": "支持中文、英文等6种语言的词性识别",
-          "feature2": "提供名词、动词、形容词、比较级/最高级的颜色高亮",
-          "feature3": "实现基础的设置管理和存储功能"
-        }
-      },
-      "feedback": {
-        "title": "反馈与支持",
-        "website": {
-          "title": "官方网站",
-          "description": "访问我们的官网了解更多信息和使用指南"
-        },
-        "email": {
-          "title": "邮件反馈",
-          "description": "遇到问题或有建议？发送邮件给我们"
-        },
-        "rating": {
-          "title": "应用评分",
-          "description": "喜欢我们的插件？请在应用商店给我们评分",
-          "button": "去评分"
-        },
-        "issues": {
-          "title": "问题报告",
-          "description": "发现Bug或有功能建议？欢迎提交Issue"
-        }
+        "developer": "开发者："
       },
       "dictionaries": {
         "title": "词典来源",
