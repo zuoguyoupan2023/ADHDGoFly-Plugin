@@ -552,14 +552,33 @@ async function main() {
             </section>
             
             <section class="download-section">
-                <h2>立即下载</h2>
-                <p>选择适合您的下载方式，开始更智能的阅读体验</p>
+                <h2>🎉 发现新版本！</h2>
+                <p>建议更新以获得最新功能和修复</p>
                 
-                <div class="download-options">
-                    <a href="https://github.com/zuoguyoupan2023/ADHDGoFly-Plugin/releases/latest" class="download-btn github" target="_blank">
-                        📦 GitHub Release
-                    </a>
+                <div class="update-notice" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3); border-radius: 15px; padding: 25px; margin: 30px 0; text-align: center;">
+                    <h3 style="color: #ffd700; margin-bottom: 20px; font-size: 1.3rem;">📥 官方下载</h3>
+                    <div class="download-options" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                        <a href="https://github.com/zuoguyoupan2023/ADHDGoFly-Plugin/releases/latest" class="download-btn github" target="_blank" style="background: #24292e; color: white;">
+                            📦 GitHub Releases (最新版)
+                        </a>
+                        <a href="https://github.com/zuoguyoupan2023/ADHDGoFly-Plugin/releases" class="download-btn github" target="_blank" style="background: #0366d6; color: white;">
+                            📋 所有版本
+                        </a>
+                    </div>
                     
+                    <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <h4 style="color: #ffd700; margin-bottom: 10px;">🇨🇳 国内链接</h4>
+                        <p style="color: rgba(255,255,255,0.9); margin-bottom: 15px;">如果GitHub访问较慢，建议使用以下方式：</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; color: white; font-size: 0.9rem;">直链下载（见下方浏览器版本）</span>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-info" style="background: rgba(255,243,205,0.2); border: 1px solid rgba(255,234,167,0.3); border-radius: 10px; padding: 15px; margin-top: 20px;">
+                        <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.9rem;">
+                            💡 <strong>提示：</strong>如果都不可用，请联系 <strong style="color: #ffd700;">WeChat: zuoguyoupan2023</strong>
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="browser-downloads">
