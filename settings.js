@@ -484,7 +484,6 @@ class SettingsManager {
             const management = await chrome.management.getSelf();
             const manifest = chrome.runtime.getManifest();
             
-            console.log('=== 安装来源检测开始 ===');
             console.log('安装来源检测信息:', {
                 installType: management.installType,
                 updateUrl: manifest.update_url,
@@ -492,10 +491,6 @@ class SettingsManager {
                 id: management.id,
                 mayBeFromStore: management.mayBeFromStore
             });
-            
-            // 临时强制返回手动安装，用于调试
-            console.log('=== 临时强制返回手动安装模式 ===');
-            return 'manual';
             
             // 开发者模式
             if (management.installType === 'development') {
