@@ -170,6 +170,11 @@
           "title": "邮件反馈",
           "description": "遇到问题或有建议？发送邮件给我们"
         },
+        "rating": {
+          "title": "应用评分",
+          "description": "喜欢我们的插件？请在应用商店给我们评分",
+          "button": "去评分"
+        },
         "issues": {
           "title": "问题报告",
           "description": "发现Bug或有功能建议？欢迎提交Issue"

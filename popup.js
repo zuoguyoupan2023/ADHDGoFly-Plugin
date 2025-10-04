@@ -108,27 +108,40 @@ class PopupController {
   }
 
   bindAboutEvents() {
-    // 更新日志折叠展开事件
-    const changelogHeaders = document.querySelectorAll('.changelog-header');
-    changelogHeaders.forEach(header => {
-      header.addEventListener('click', () => {
-        const toggleId = header.getAttribute('data-toggle');
-        const content = document.getElementById(`changelog-${toggleId}`);
-        
-        if (content) {
-          const isExpanded = content.classList.contains('expanded');
-          
-          if (isExpanded) {
-            // 折叠
-            content.classList.remove('expanded');
-            header.classList.remove('expanded');
-          } else {
-            // 展开
-            content.classList.add('expanded');
-            header.classList.add('expanded');
-          }
+    // 评分按钮事件
+    const rateBtn = document.getElementById('rate-extension-btn');
+    if (rateBtn) {
+      rateBtn.addEventListener('click', () => this.openRatingPage());
+    }
+  }
+
+  openRatingPage() {
+    // 检测浏览器类型并打开对应的评分页面
+    chrome.runtime.sendMessage({action: 'getBrowserInfo'}, (response) => {
+      let ratingUrl = '';
+      
+      if (response && response.browser) {
+        switch (response.browser) {
+          case 'chrome':
+            ratingUrl = 'https://chrome.google.com/webstore/detail/adhdgofly/your-extension-id';
+            break;
+          case 'firefox':
+            ratingUrl = 'https://addons.mozilla.org/firefox/addon/adhdgofly/';
+            break;
+          case 'edge':
+            ratingUrl = 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly/your-extension-id';
+            break;
+          default:
+            // 默认跳转到官网
+            ratingUrl = 'https://adhdgofly.com/rate';
         }
-      });
+      } else {
+        // 无法检测浏览器时，跳转到官网
+        ratingUrl = 'https://adhdgofly.com/rate';
+      }
+      
+      // 打开评分页面
+      chrome.tabs.create({ url: ratingUrl });
     });
   }
 

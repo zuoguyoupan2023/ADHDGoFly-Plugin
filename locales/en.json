@@ -170,6 +170,11 @@
           "title": "Email Feedback",
           "description": "Encountered issues or have suggestions? Send us an email"
         },
+        "rating": {
+          "title": "App Rating",
+          "description": "Like our plugin? Please rate us in the app store",
+          "button": "Rate Now"
+        },
         "issues": {
           "title": "Issue Reports",
           "description": "Found bugs or have feature suggestions? Welcome to submit issues"
