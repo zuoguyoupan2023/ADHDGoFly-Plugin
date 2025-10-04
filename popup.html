@@ -504,6 +504,7 @@
       padding: 15px;
       background: #f8f9fa;
       border-radius: 6px;
+      border-left: 3px solid #9370db;
     }
     
     .highlighting-toggles h4 {
@@ -519,36 +520,46 @@
       gap: 8px;
     }
     
-    .toggle-button {
+    .toggle-item {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 10px 15px;
-      border: 2px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      color: #666;
-      font-size: 13px;
-      font-weight: 500;
+    }
+    
+    .toggle-label {
+      display: flex;
+      align-items: center;
       cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .toggle-label input[type="checkbox"] {
+      display: none;
+    }
+    
+    .toggle-checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d0d0;
+      border-radius: 3px;
+      margin-right: 8px;
+      position: relative;
       transition: all 0.2s ease;
-      outline: none;
     }
     
-    .toggle-button:hover {
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark {
+      background-color: #9370db;
       border-color: #9370db;
-      background: #f8f9fa;
     }
     
-    .toggle-button.active {
-      background: #9370db;
-      border-color: #9370db;
+    .toggle-label input[type="checkbox"]:checked + .toggle-checkmark::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
       color: white;
-    }
-    
-    .toggle-button.active:hover {
-      background: #7b5cb0;
-      border-color: #7b5cb0;
+      font-size: 12px;
+      font-weight: bold;
     }
     
     .toggle-description {
@@ -594,6 +605,7 @@
       padding: 10px;
       background: #f8f9fa;
       border-radius: 6px;
+      border-left: 3px solid #007AFF;
     }
     
     .colors-info p {
@@ -1563,21 +1575,37 @@
         <div class="highlighting-toggles">
           <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
           <div class="toggle-group">
-            <button class="toggle-button active" id="highlight-noun" data-type="noun">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.nounSimple">名词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-verb" data-type="verb">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.verbSimple">动词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-adj" data-type="adj">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.adjSimple">形容词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-comparative" data-type="comparative">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.comparativeSimple">比较级/最高级</span>
-            </button>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-noun" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.noun">名词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-verb" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.verb">动词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-adj" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.adj">形容词高亮</span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <label class="toggle-label">
+                <input type="checkbox" id="highlight-comparative" checked>
+                <span class="toggle-checkmark"></span>
+                <span class="toggle-text" data-i18n="pages.colors.toggles.comparative">比较级/最高级高亮</span>
+              </label>
+            </div>
           </div>
           <div class="toggle-description">
-            <p data-i18n="pages.colors.toggles.description">点击按钮可开启或关闭对应类型词汇的高亮显示</p>
+            <p data-i18n="pages.colors.toggles.description">取消勾选可关闭对应类型词汇的高亮显示</p>
           </div>
         </div>
         
