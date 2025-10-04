@@ -519,6 +519,14 @@
       gap: 8px;
     }
     
+    /* 按钮颜色方案 - 使用CSS变量实现动态切换 */
+    :root {
+      --noun-color: #0066cc;
+      --verb-color: #cc0000;
+      --adj-color: #009933;
+      --comparative-color: #9966cc;
+    }
+    
     .toggle-button {
       display: inline-flex;
       align-items: center;
@@ -542,15 +550,56 @@
       background: #f8f9fa;
     }
     
-    .toggle-button.active {
-      background: black;
-      border-color: black;
+    /* 名词按钮 */
+    .toggle-button[data-type="noun"].active {
+      background: var(--noun-color);
+      border-color: var(--noun-color);
       color: white;
     }
     
-    .toggle-button.active:hover {
-      background: #333;
-      border-color: #333;
+    .toggle-button[data-type="noun"].active:hover {
+      background: var(--noun-color);
+      border-color: var(--noun-color);
+      opacity: 0.8;
+    }
+    
+    /* 动词按钮 */
+    .toggle-button[data-type="verb"].active {
+      background: var(--verb-color);
+      border-color: var(--verb-color);
+      color: white;
+    }
+    
+    .toggle-button[data-type="verb"].active:hover {
+      background: var(--verb-color);
+      border-color: var(--verb-color);
+      opacity: 0.8;
+    }
+    
+    /* 形容词按钮 */
+    .toggle-button[data-type="adj"].active {
+      background: var(--adj-color);
+      border-color: var(--adj-color);
+      color: white;
+    }
+    
+    .toggle-button[data-type="adj"].active:hover {
+      background: var(--adj-color);
+      border-color: var(--adj-color);
+      opacity: 0.8;
+    }
+    
+    /* 比较级/最高级按钮 */
+    .toggle-button[data-type="comparative"].active {
+      background: var(--comparative-color);
+      border-color: var(--comparative-color);
+      color: white;
+    }
+    
+    .toggle-button[data-type="comparative"].active:hover {
+      background: var(--comparative-color);
+      border-color: var(--comparative-color);
+      opacity: 0.8;
     }
     
     .toggle-description {
