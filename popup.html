@@ -1440,7 +1440,37 @@
         </div>
       </div>
       
-
+      <!-- 版本信息（紧凑版） -->
+      <div class="version-compact" id="versionInfo">
+        <div class="version-row">
+          <span class="version-text">
+            <span data-i18n="version.current">当前版本:</span> 
+            <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+          <span class="version-text">
+            <span data-i18n="version.latest">最新版本:</span> 
+            <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
+          </span>
+        </div>
+        <div class="version-update" id="updateNotice" style="display: none;">
+          <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本！</div>
+          <div class="update-description" data-i18n="version.updateDescription">建议更新以获得最新功能和修复</div>
+          <div class="download-options">
+            <div class="download-section">
+              <div class="download-label" data-i18n="version.officialDownload">GitHub下载：</div>
+              <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
+            </div>
+            <div class="download-section">
+              <div class="download-label" data-i18n="version.domesticLinks">官方下载：</div>
+              <div class="alternative-links">
+                 <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link" data-i18n="version.directDownload">直链下载</a>
+              </div>
+            </div>
+          </div>
+          <div class="update-note" data-i18n="version.updateNote">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
+          <div class="contact-info" data-i18n="version.contactInfo">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
+        </div>
+      </div>
       
       <!-- 主要操作按钮 -->
       <div class="main-actions">
@@ -1933,47 +1963,6 @@
             <!-- 保存按钮 -->
             <div class="setting-actions">
               <button class="save-btn" id="save-storage-btn" data-i18n="pages.settings.storage.save">保存存储设置</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 版本信息设置 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.settings.version.title">版本信息</h4>
-          </div>
-          <div class="section-content">
-            <div class="setting-item">
-              <div class="version-info" id="versionInfo">
-                <div class="version-row">
-                  <span class="version-text">
-                    <span data-i18n="version.current">当前版本:</span> 
-                    <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
-                  </span>
-                  <span class="version-text">
-                    <span data-i18n="version.latest">最新版本:</span> 
-                    <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
-                  </span>
-                </div>
-                <div class="version-update" id="updateNotice" style="display: none;">
-                  <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本！</div>
-                  <div class="update-description" data-i18n="version.updateDescription">建议更新以获得最新功能和修复</div>
-                  <div class="download-options">
-                    <div class="download-section">
-                      <div class="download-label" data-i18n="version.officialDownload">GitHub下载：</div>
-                      <a href="#" id="githubLink" target="_blank" class="download-link github-link">GitHub Releases</a>
-                    </div>
-                    <div class="download-section">
-                      <div class="download-label" data-i18n="version.domesticLinks">官方下载：</div>
-                      <div class="alternative-links">
-                         <a href="https://download.adhdgofly.online" id="directLink" target="_blank" class="download-link direct-link" data-i18n="version.directDownload">直链下载</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="update-note" data-i18n="version.updateNote">💡 提示：如果GitHub访问较慢，建议使用国内链接</div>
-                  <div class="contact-info" data-i18n="version.contactInfo">如果都不可用，请联系 WeChat: zuoguyoupan2023</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

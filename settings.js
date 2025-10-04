@@ -1,22 +1,12 @@
 // Settings page functionality
 class SettingsManager {
     constructor() {
-        this.i18nManager = new I18nManager();
         this.init();
     }
 
-    async init() {
-        // 初始化i18n
-        await this.i18nManager.init();
-        
+    init() {
         this.bindEvents();
         this.loadData();
-        
-        // 清理过期的版本缓存
-        await this.clearExpiredVersionCache();
-        
-        // 检查版本
-        this.checkVersion();
     }
 
     bindEvents() {
@@ -46,14 +36,6 @@ class SettingsManager {
                 this.resetAllSettings();
             });
         }
-
-        // 监听语言变化事件，更新版本信息UI
-        document.addEventListener('languageChanged', (event) => {
-            // 只更新UI显示，不重新检查版本
-            if (this.versionInfo) {
-                this.updateVersionUI();
-            }
-        });
     }
 
     bindStorageEvents() {
@@ -394,172 +376,6 @@ class SettingsManager {
                 }, 300);
             }
         }, 3000);
-    }
-
-    async checkVersion() {
-        try {
-            // 检查今日是否已经检查过版本
-            const cachedVersionData = await this.getCachedVersionData();
-            if (cachedVersionData && this.isToday(cachedVersionData.timestamp)) {
-                console.log('使用今日缓存的版本信息');
-                this.versionInfo = cachedVersionData.versionInfo;
-                this.updateVersionUI();
-                return;
-            }
-
-            // 显示当前版本
-            const manifest = chrome.runtime.getManifest();
-            const currentVersion = manifest.version;
-            
-            // 初始化版本信息缓存
-            this.versionInfo = {
-                currentVersion: currentVersion,
-                latestVersion: null,
-                isChecking: true,
-                hasUpdate: false,
-                error: null,
-                releaseUrl: null,
-                alternativeDownloads: null,
-                contactInfo: null
-            };
-            
-            // 更新UI显示
-            this.updateVersionUI();
-            
-            // 请求后台检查最新版本
-            chrome.runtime.sendMessage({ action: 'checkVersion' }, async (response) => {
-                this.versionInfo.isChecking = false;
-                
-                if (response && response.success) {
-                    this.versionInfo.latestVersion = response.latestVersion;
-                    this.versionInfo.hasUpdate = response.hasUpdate;
-                    this.versionInfo.releaseUrl = response.releaseUrl;
-                    this.versionInfo.alternativeDownloads = response.alternativeDownloads;
-                    this.versionInfo.contactInfo = response.contactInfo;
-                } else {
-                    this.versionInfo.error = response?.error || 'Unknown error';
-                }
-                
-                // 缓存今日的版本检查结果
-                await this.cacheVersionData(this.versionInfo);
-                
-                // 更新UI显示
-                this.updateVersionUI();
-            });
-        } catch (error) {
-            console.error('版本检测失败:', error);
-            this.versionInfo = {
-                currentVersion: '未知',
-                latestVersion: null,
-                isChecking: false,
-                hasUpdate: false,
-                error: error.message,
-                releaseUrl: null,
-                alternativeDownloads: null,
-                contactInfo: null
-            };
-            this.updateVersionUI();
-        }
-    }
-
-    // 获取缓存的版本数据
-    async getCachedVersionData() {
-        try {
-            const result = await chrome.storage.local.get(['versionCheckCache']);
-            return result.versionCheckCache || null;
-        } catch (error) {
-            console.error('获取版本缓存失败:', error);
-            return null;
-        }
-    }
-
-    // 缓存版本数据
-    async cacheVersionData(versionInfo) {
-        try {
-            const cacheData = {
-                timestamp: Date.now(),
-                versionInfo: { ...versionInfo }
-            };
-            await chrome.storage.local.set({ versionCheckCache: cacheData });
-            console.log('版本信息已缓存');
-        } catch (error) {
-            console.error('缓存版本信息失败:', error);
-        }
-    }
-
-    // 检查时间戳是否为今天
-    isToday(timestamp) {
-        const today = new Date();
-        const checkDate = new Date(timestamp);
-        
-        return today.getFullYear() === checkDate.getFullYear() &&
-               today.getMonth() === checkDate.getMonth() &&
-               today.getDate() === checkDate.getDate();
-    }
-
-    // 清理过期的版本缓存（在每日0点后首次访问时调用）
-    async clearExpiredVersionCache() {
-        const cachedData = await this.getCachedVersionData();
-        if (cachedData && !this.isToday(cachedData.timestamp)) {
-            await chrome.storage.local.remove(['versionCheckCache']);
-            console.log('已清理过期的版本缓存');
-        }
-    }
-    
-    updateVersionUI() {
-        if (!this.versionInfo) return;
-        
-        // 更新当前版本显示
-        const currentVersionElement = document.getElementById('currentVersion');
-        if (currentVersionElement) {
-            currentVersionElement.textContent = this.versionInfo.currentVersion;
-        }
-        
-        // 更新最新版本显示
-        const latestVersionElement = document.getElementById('latestVersion');
-        if (latestVersionElement) {
-            if (this.versionInfo.isChecking) {
-                latestVersionElement.textContent = this.i18nManager.t('version.checking');
-            } else if (this.versionInfo.error) {
-                latestVersionElement.textContent = this.i18nManager.t('version.checkFailed');
-            } else {
-                latestVersionElement.textContent = this.versionInfo.latestVersion;
-            }
-        }
-        
-        // 处理更新提示
-        if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
-            const updateNotice = document.getElementById('updateNotice');
-            
-            // 设置官方GitHub链接
-            const githubLink = document.getElementById('githubLink');
-            if (githubLink && this.versionInfo.releaseUrl) {
-                githubLink.href = this.versionInfo.releaseUrl;
-            }
-            
-            // 设置替代下载链接
-            if (this.versionInfo.alternativeDownloads) {
-                const baiduLink = document.getElementById('baiduLink');
-                const giteeLink = document.getElementById('giteeLink');
-                const directLink = document.getElementById('directLink');
-                
-                if (baiduLink) baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
-                if (giteeLink) giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
-                if (directLink) directLink.href = this.versionInfo.alternativeDownloads.direct;
-            }
-            
-            // 设置联系信息
-            if (this.versionInfo.contactInfo) {
-                const contactInfoElement = document.querySelector('.contact-info');
-                if (contactInfoElement) {
-                    contactInfoElement.textContent = this.versionInfo.contactInfo;
-                }
-            }
-            
-            if (updateNotice) {
-                updateNotice.style.display = 'block';
-            }
-        }
     }
 }
 
