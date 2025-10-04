@@ -11,12 +11,6 @@ class SettingsManager {
         
         this.bindEvents();
         this.loadData();
-        
-        // 清理过期的版本缓存
-        await this.clearExpiredVersionCache();
-        
-        // 检查版本
-        this.checkVersion();
     }
 
     bindEvents() {
@@ -46,14 +40,6 @@ class SettingsManager {
                 this.resetAllSettings();
             });
         }
-
-        // 监听语言变化事件，更新版本信息UI
-        document.addEventListener('languageChanged', (event) => {
-            // 只更新UI显示，不重新检查版本
-            if (this.versionInfo) {
-                this.updateVersionUI();
-            }
-        });
     }
 
     bindStorageEvents() {
@@ -330,68 +316,17 @@ class SettingsManager {
     }
 
     showMessage(message, type = 'success') {
-        // 创建消息提示
         const messageDiv = document.createElement('div');
-        messageDiv.className = `settings-message ${type}`;
+        messageDiv.className = `message ${type}`;
         messageDiv.textContent = message;
         
-        // 根据消息类型设置样式
-        let backgroundColor;
-        switch (type) {
-            case 'error':
-                backgroundColor = '#f44336';
-                break;
-            case 'info':
-                backgroundColor = '#2196F3';
-                break;
-            case 'warning':
-                backgroundColor = '#ff9800';
-                break;
-            default:
-                backgroundColor = '#4CAF50';
-        }
+        // 添加到页面顶部
+        document.body.insertBefore(messageDiv, document.body.firstChild);
         
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            border-radius: 4px;
-            color: white;
-            font-size: 14px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-            background-color: ${backgroundColor};
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-
-        // 添加滑入动画
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.body.appendChild(messageDiv);
-
         // 3秒后自动移除
         setTimeout(() => {
             if (messageDiv.parentNode) {
-                messageDiv.style.animation = 'slideOut 0.3s ease-in';
-                setTimeout(() => {
-                    if (messageDiv.parentNode) {
-                        messageDiv.remove();
-                    }
-                }, 300);
+                messageDiv.parentNode.removeChild(messageDiv);
             }
         }, 3000);
     }

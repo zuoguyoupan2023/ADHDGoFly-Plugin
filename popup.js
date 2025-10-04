@@ -70,6 +70,9 @@ class PopupController {
     
     // 检查状态
     await this.checkStatus();
+    
+    // 检查版本信息
+    await this.checkVersion();
   }
 
   bindEvents() {
@@ -1018,63 +1021,113 @@ class PopupController {
     await this.loadAIAnalysis();
   }
 
+  // 版本检查方法
+  async checkVersion() {
+    try {
+      // 获取当前版本
+      const manifest = chrome.runtime.getManifest();
+      const currentVersion = manifest.version;
+      
+      // 初始化版本信息对象
+      this.versionInfo = {
+        currentVersion: currentVersion,
+        latestVersion: null,
+        isChecking: true,
+        hasUpdate: false,
+        error: null,
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      
+      // 更新UI显示
+      this.updateVersionUI();
+      
+      // 发送版本检查请求
+      chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('版本检查通信错误:', chrome.runtime.lastError);
+          this.versionInfo.isChecking = false;
+          this.versionInfo.error = '通信失败';
+          this.updateVersionUI();
+          return;
+        }
+        
+        if (response && response.success) {
+          this.versionInfo.latestVersion = response.latestVersion;
+          this.versionInfo.hasUpdate = response.hasUpdate;
+          this.versionInfo.releaseUrl = response.releaseUrl;
+          this.versionInfo.alternativeDownloads = response.alternativeDownloads;
+          this.versionInfo.contactInfo = response.contactInfo;
+        } else {
+          this.versionInfo.error = response?.error || '检查失败';
+        }
+        
+        this.versionInfo.isChecking = false;
+        this.updateVersionUI();
+      });
+    } catch (error) {
+      console.error('版本检查错误:', error);
+      this.versionInfo = {
+        currentVersion: 'Unknown',
+        latestVersion: null,
+        isChecking: false,
+        hasUpdate: false,
+        error: '检查失败',
+        releaseUrl: null,
+        alternativeDownloads: null,
+        contactInfo: null
+      };
+      this.updateVersionUI();
+    }
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // 更新版本UI显示
+  updateVersionUI() {
+    if (!this.versionInfo) return;
+    
+    // 更新当前版本显示
+    const currentVersionElement = document.getElementById('currentVersion');
+    if (currentVersionElement) {
+      currentVersionElement.textContent = this.versionInfo.currentVersion;
+    }
+    
+    // 更新最新版本显示
+    const latestVersionElement = document.getElementById('latestVersion');
+    if (latestVersionElement) {
+      if (this.versionInfo.isChecking) {
+        latestVersionElement.textContent = window.i18n.t('version.checking');
+      } else if (this.versionInfo.error) {
+        latestVersionElement.textContent = window.i18n.t('version.checkFailed');
+      } else {
+        latestVersionElement.textContent = this.versionInfo.latestVersion;
+      }
+    }
+    
+    // 处理更新提示
+    const updateNotice = document.getElementById('updateNotice');
+    if (updateNotice) {
+      if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
+        updateNotice.style.display = 'block';
+        
+        // 设置GitHub链接
+        const githubLink = document.getElementById('githubLink');
+        if (githubLink && this.versionInfo.releaseUrl) {
+          githubLink.href = this.versionInfo.releaseUrl;
+        }
+        
+        // 设置其他下载链接
+        if (this.versionInfo.alternativeDownloads) {
+          const directLink = document.getElementById('directLink');
+          if (directLink && this.versionInfo.alternativeDownloads.direct) {
+            directLink.href = this.versionInfo.alternativeDownloads.direct;
+          }
+        }
+      } else {
+        updateNotice.style.display = 'none';
+      }
+    }
+  }
 }
 
 // 全局引用，供HTML onclick使用
