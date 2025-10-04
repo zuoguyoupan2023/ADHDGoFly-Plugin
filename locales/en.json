@@ -21,18 +21,13 @@
     "current": "Current version:",
     "latest": "Latest version:",
     "checking": "Checking...",
-    "checkFailed": "Check failed",
-    "autoUpdate": "Auto-update",
     "updateTitle": "🎉 New version available!",
     "updateDescription": "Update recommended for latest features and fixes",
     "officialDownload": "Official download:",
     "domesticLinks": "Alternative links:",
     "directDownload": "Direct download",
     "updateNote": "💡 Tip: If GitHub access is slow, use alternative links",
-    "contactInfo": "If none work, contact WeChat: zuoguyoupan2023",
-    "officialWebsite": "Official Website",
-    "visitOfficialSite": "Visit our official website for more information and support",
-    "autoUpdateNote": "💡 Extensions installed from browser store will auto-update to the latest version"
+    "contactInfo": "If none work, contact WeChat: zuoguyoupan2023"
   },
   "buttons": {
     "toggle": "Toggle Highlighting",

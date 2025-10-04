@@ -3,7 +3,7 @@
   "name": "ADHDGoFly, 点亮你的视野",
   "version": "0.1.2",
   "description": "Text highlighting for better reading",
-  "permissions": ["activeTab", "storage", "management"],
+  "permissions": ["activeTab", "storage"],
   "host_permissions": ["https://api.github.com/*"],
   "background": {
     "service_worker": "background.js"
