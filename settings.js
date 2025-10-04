@@ -484,31 +484,18 @@ class SettingsManager {
             const management = await chrome.management.getSelf();
             const manifest = chrome.runtime.getManifest();
             
-            console.log('=== 安装来源检测详细信息 ===');
-            console.log('Management信息:', {
+            console.log('安装来源检测信息:', {
                 installType: management.installType,
+                updateUrl: manifest.update_url,
                 enabled: management.enabled,
                 id: management.id,
-                mayBeFromStore: management.mayBeFromStore,
-                name: management.name,
-                version: management.version
-            });
-            console.log('Manifest信息:', {
-                update_url: manifest.update_url,
-                version: manifest.version,
-                name: manifest.name
+                mayBeFromStore: management.mayBeFromStore
             });
             
             // 开发者模式
             if (management.installType === 'development') {
-                console.log('✅ 检测结果: 开发者模式');
+                console.log('检测结果: 开发者模式');
                 return 'development';
-            }
-            
-            // 侧载安装（sideload）通常是手动安装
-            if (management.installType === 'sideload') {
-                console.log('✅ 检测结果: 侧载安装（手动安装）');
-                return 'manual';
             }
             
             // 检查是否从Chrome Web Store安装
@@ -517,36 +504,18 @@ class SettingsManager {
             // 2. 扩展ID符合Chrome Web Store的格式（32位字符）
             // 3. 没有自定义update_url，或者update_url包含google.com
             if (management.installType === 'normal') {
-                console.log('检测到normal安装类型，进一步检查...');
-                
                 // 检查扩展ID是否符合Chrome Web Store格式（32位小写字母）
                 const isWebStoreId = /^[a-p]{32}$/.test(management.id);
-                console.log('ID格式检查:', {
-                    id: management.id,
-                    isWebStoreFormat: isWebStoreId,
-                    idLength: management.id.length
-                });
-                
-                // 检查update_url
-                const hasStoreUpdateUrl = !manifest.update_url || manifest.update_url.includes('clients2.google.com');
-                console.log('Update URL检查:', {
-                    update_url: manifest.update_url,
-                    hasStoreUpdateUrl: hasStoreUpdateUrl
-                });
                 
                 // 如果ID符合Web Store格式，且没有自定义update_url，则可能是从商店安装
-                if (isWebStoreId && hasStoreUpdateUrl) {
-                    console.log('✅ 检测结果: 可能来自Chrome Web Store');
+                if (isWebStoreId && (!manifest.update_url || manifest.update_url.includes('clients2.google.com'))) {
+                    console.log('检测结果: 可能来自Chrome Web Store');
                     return 'webstore';
-                } else {
-                    console.log('✅ 检测结果: normal类型但非商店安装，判定为手动安装');
-                    return 'manual';
                 }
             }
             
             // 其他情况视为手动安装
-            console.log('✅ 检测结果: 其他情况，判定为手动安装');
-            console.log('InstallType:', management.installType);
+            console.log('检测结果: 手动安装');
             return 'manual';
         } catch (error) {
             console.warn('无法检测安装来源:', error);

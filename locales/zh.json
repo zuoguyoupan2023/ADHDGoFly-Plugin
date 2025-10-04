@@ -56,28 +56,6 @@
     "title": "词典"
   },
   "pages": {
-    "home": {
-      "title": "首页",
-      "description": "欢迎使用ADHDGoFly插件",
-      "toggles": {
-        "title": "高亮控制",
-        "noun": "名词高亮",
-        "verb": "动词高亮",
-        "adj": "形容词高亮",
-        "comparative": "比较级/最高级高亮",
-        "nounSimple": "名词",
-        "verbSimple": "动词",
-        "adjSimple": "形容词",
-        "comparativeSimple": "比较级/最高级",
-        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
-      },
-      "preview": {
-        "noun": "名词",
-        "verb": "动词",
-        "adjective": "形容词"
-      },
-      "applyScheme": "应用方案"
-    },
     "dict": {
       "title": "词典管理",
       "description": "选择要使用的语言词典",
@@ -211,9 +189,6 @@
     },
     "settings": {
       "title": "设置",
-      "version": {
-        "title": "版本信息"
-      },
       "dictionaries": {
          "title": "词典来源",
          "descriptions": {
