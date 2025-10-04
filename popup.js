@@ -130,29 +130,6 @@ class PopupController {
         }
       });
     });
-
-    // 词典来源每个项目的折叠展开事件
-    const sourceHeaders = document.querySelectorAll('.source-header');
-    sourceHeaders.forEach(header => {
-      header.addEventListener('click', () => {
-        const toggleId = header.getAttribute('data-toggle');
-        const content = document.getElementById(toggleId);
-        
-        if (content) {
-          const isExpanded = content.classList.contains('expanded');
-          
-          if (isExpanded) {
-            // 折叠
-            content.classList.remove('expanded');
-            header.classList.remove('expanded');
-          } else {
-            // 展开
-            content.classList.add('expanded');
-            header.classList.add('expanded');
-          }
-        }
-      });
-    });
   }
 
   bindLanguageEvents() {

@@ -310,82 +310,31 @@
   color: #666;
 }
 
-/* Dictionary Sources Collapsible Styles */
 .dictionary-sources {
-  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .source-item {
-  margin-bottom: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
+  padding: 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fafafa;
 }
 
-.source-item:last-child {
-  margin-bottom: 0;
-}
-
-.source-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 12px 15px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-  transition: background-color 0.2s ease;
-}
-
-.source-header:hover {
-  background-color: #e9ecef;
-}
-
-.source-header h5 {
-  margin: 0;
-  font-size: 14px;
+.source-item h5 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
   font-weight: 600;
   color: #333;
 }
 
-.source-header .toggle-icon {
-  font-size: 12px;
-  color: #666;
-  transition: transform 0.2s ease;
-}
-
-.source-header.expanded .toggle-icon {
-  transform: rotate(180deg);
-}
-
-.source-content {
-  display: none;
-  padding: 15px;
-  background: #fff;
-  animation: slideDown 0.3s ease-out;
-}
-
-.source-content.expanded {
-  display: block;
-}
-
-.source-content p {
+.source-item p {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: #555;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 200px;
-  }
+  font-size: 12px;
+  line-height: 1.4;
+  color: #666;
 }
 
 .setting-item {
