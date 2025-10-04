@@ -90,8 +90,7 @@
         "noun": "Noun",
         "verb": "Verb",
         "adjective": "Adjective"
-      },
-      "applyScheme": "Apply Scheme"
+      }
     },
     "text": {
       "title": "Text Style",
