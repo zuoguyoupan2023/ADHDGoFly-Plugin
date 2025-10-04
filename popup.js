@@ -3,7 +3,6 @@ class PopupController {
   constructor() {
     this.currentStatus = null;
     this.currentPage = 'home';
-    this.i18nManager = new I18nManager();
     this.versionInfo = null; // 缓存版本信息
     this.dictSettings = {
       zh: true,
@@ -60,13 +59,10 @@ class PopupController {
   async init() {
     console.log('初始化Popup控制器...');
     
-    // 初始化i18n
-    await this.i18nManager.init();
-    
     // 设置初始状态文本
     const statusDiv = document.getElementById('status');
     if (statusDiv) {
-      statusDiv.textContent = this.i18nManager.t('status.checking');
+      statusDiv.textContent = window.i18n.t('status.checking');
     }
     
     // 绑定事件
@@ -100,12 +96,53 @@ class PopupController {
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
+    // 绑定关于页面事件
+    this.bindAboutEvents();
+    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
     this.loadTextSettings();
     this.loadHighlightingToggles();
 
+  }
+
+  bindAboutEvents() {
+    // 评分按钮事件
+    const rateBtn = document.getElementById('rate-extension-btn');
+    if (rateBtn) {
+      rateBtn.addEventListener('click', () => this.openRatingPage());
+    }
+  }
+
+  openRatingPage() {
+    // 检测浏览器类型并打开对应的评分页面
+    chrome.runtime.sendMessage({action: 'getBrowserInfo'}, (response) => {
+      let ratingUrl = '';
+      
+      if (response && response.browser) {
+        switch (response.browser) {
+          case 'chrome':
+            ratingUrl = 'https://chrome.google.com/webstore/detail/adhdgofly/your-extension-id';
+            break;
+          case 'firefox':
+            ratingUrl = 'https://addons.mozilla.org/firefox/addon/adhdgofly/';
+            break;
+          case 'edge':
+            ratingUrl = 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly/your-extension-id';
+            break;
+          default:
+            // 默认跳转到官网
+            ratingUrl = 'https://adhdgofly.com/rate';
+        }
+      } else {
+        // 无法检测浏览器时，跳转到官网
+        ratingUrl = 'https://adhdgofly.com/rate';
+      }
+      
+      // 打开评分页面
+      chrome.tabs.create({ url: ratingUrl });
+    });
   }
 
   bindLanguageEvents() {
@@ -141,9 +178,9 @@ class PopupController {
   }
   
   async toggleLanguage() {
-    const currentLang = this.i18nManager.getCurrentLanguage();
+    const currentLang = window.i18n.getCurrentLanguage();
     const newLang = currentLang === 'zh' ? 'en' : 'zh';
-    await this.i18nManager.switchLanguage(newLang);
+    await window.i18n.switchLanguage(newLang);
   }
   
   updateLanguageUI(language) {
@@ -335,7 +372,7 @@ class PopupController {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.noTab') });
+        this.updateUI({ enabled: false, error: window.i18n.t('errors.noTab') });
         return;
       }
 
@@ -345,11 +382,11 @@ class PopupController {
         this.currentStatus = response;
         this.updateUI(response);
       } else {
-        this.updateUI({ enabled: false, error: this.i18nManager.t('errors.notLoaded') });
+        this.updateUI({ enabled: false, error: window.i18n.t('errors.notLoaded') });
       }
     } catch (error) {
       console.error('检查状态失败:', error);
-      this.updateUI({ enabled: false, error: this.i18nManager.t('errors.connectionFailed') });
+      this.updateUI({ enabled: false, error: window.i18n.t('errors.connectionFailed') });
     }
   }
 
@@ -358,15 +395,15 @@ class PopupController {
     const statusDiv = document.getElementById('status');
     
     // 显示加载状态
-    toggleBtn.textContent = this.i18nManager.t('status.processing');
+    toggleBtn.textContent = window.i18n.t('status.processing');
     toggleBtn.disabled = true;
-    statusDiv.textContent = this.i18nManager.t('status.switching');
+    statusDiv.textContent = window.i18n.t('status.switching');
     statusDiv.className = 'status';
     
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        throw new Error(this.i18nManager.t('errors.noTab'));
+        throw new Error(window.i18n.t('errors.noTab'));
       }
 
       const response = await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle' });
@@ -375,7 +412,7 @@ class PopupController {
         this.currentStatus = { ...this.currentStatus, enabled: response.enabled, statistics: response.stats };
         this.updateUI(this.currentStatus);
       } else {
-        throw new Error(response?.error || this.i18nManager.t('errors.operationFailed'));
+        throw new Error(response?.error || window.i18n.t('errors.operationFailed'));
       }
     } catch (error) {
       console.error('切换失败:', error);
@@ -392,7 +429,7 @@ class PopupController {
     if (status.error) {
       statusDiv.textContent = status.error;
       statusDiv.className = 'status-badge disabled';
-      toggleBtn.textContent = this.i18nManager.t('buttons.retry');
+      toggleBtn.textContent = window.i18n.t('buttons.retry');
       toggleBtn.className = 'toggle-btn';
       return;
     }
@@ -400,11 +437,11 @@ class PopupController {
     const enabled = status.enabled;
     
     // 更新状态显示
-    statusDiv.textContent = enabled ? this.i18nManager.t('status.enabled') : this.i18nManager.t('status.disabled');
+    statusDiv.textContent = enabled ? window.i18n.t('status.enabled') : window.i18n.t('status.disabled');
     statusDiv.className = enabled ? 'status enabled' : 'status disabled';
     
     // 更新按钮
-    toggleBtn.textContent = enabled ? this.i18nManager.t('buttons.disable') : this.i18nManager.t('buttons.enable');
+    toggleBtn.textContent = enabled ? window.i18n.t('buttons.disable') : window.i18n.t('buttons.enable');
     toggleBtn.className = enabled ? 'toggle-btn disabled' : 'toggle-btn';
     
     // 显示统计信息（如果有）
@@ -836,7 +873,7 @@ class PopupController {
 
   showAILoadingState() {
     // 显示所有分析项为加载中状态
-    const loadingText = this.i18nManager.t('pages.ai.analyzing');
+    const loadingText = window.i18n.t('pages.ai.analyzing');
     
     document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
@@ -870,7 +907,7 @@ class PopupController {
   displayLanguageStats(languages) {
     const container = document.getElementById('languageStats');
     if (Object.keys(languages).length === 0) {
-      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
       return;
     }
     
@@ -896,7 +933,7 @@ class PopupController {
   displayPOSStats(partOfSpeech) {
     const container = document.getElementById('posStats');
     if (Object.keys(partOfSpeech).length === 0) {
-      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
       return;
     }
     
@@ -936,13 +973,13 @@ class PopupController {
     }
     
     if (Object.keys(highlights).length === 0) {
-      container.innerHTML = `<div class="no-data">${this.i18nManager.t('pages.ai.noData')}</div>`;
+      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
       return;
     }
     
     let html = `<div class="highlight-summary">`;
-    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.total')}: <strong>${highlights.total || 0}</strong></p>`;
-    html += `<p>${this.i18nManager.t('pages.ai.stats.highlight.nodes')}: <strong>${highlights.processedNodes || 0}</strong></p>`;
+    html += `<p>${window.i18n.t('pages.ai.stats.highlight.total')}: <strong>${highlights.total || 0}</strong></p>`;
+    html += `<p>${window.i18n.t('pages.ai.stats.highlight.nodes')}: <strong>${highlights.processedNodes || 0}</strong></p>`;
     html += `</div>`;
     
     container.innerHTML = html;
@@ -951,7 +988,7 @@ class PopupController {
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
   showAIError() {
-    const errorText = this.i18nManager.t('pages.ai.error');
+    const errorText = window.i18n.t('pages.ai.error');
     
     document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
@@ -1034,6 +1071,10 @@ class PopupController {
 let popupController;
 
 // 初始化
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // 确保i18n先初始化
+  await window.i18n.init();
+  
+  // 然后创建PopupController
   popupController = new PopupController();
 });
