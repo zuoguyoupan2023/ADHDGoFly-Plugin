@@ -136,7 +136,49 @@
         "title": "About Us",
         "description": "ADHDGoFly is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
         "version": "Version:",
-        "developer": "Developer:"
+        "developer": "Developer:",
+        "website": "Website:"
+      },
+      "changelog": {
+        "title": "Update Log",
+        "v013": {
+          "title": "Interface Optimization & Feature Enhancement",
+          "feature1": "Optimized color scheme selection interface with dynamic button color switching",
+          "feature2": "Improved button layout with adaptive width and multi-row arrangement",
+          "feature3": "Enhanced user experience with unified visual effects across color schemes"
+        },
+        "v012": {
+          "title": "Multi-language Support & Performance Optimization",
+          "feature1": "Added multiple color schemes: warm, cool, soft, high contrast",
+          "feature2": "Optimized dictionary loading performance for faster page response",
+          "feature3": "Improved text analysis algorithm for better part-of-speech recognition accuracy"
+        },
+        "v011": {
+          "title": "Basic Feature Release",
+          "feature1": "Support for part-of-speech recognition in 6 languages including Chinese and English",
+          "feature2": "Color highlighting for nouns, verbs, adjectives, comparatives/superlatives",
+          "feature3": "Basic settings management and storage functionality"
+        }
+      },
+      "feedback": {
+        "title": "Feedback & Support",
+        "website": {
+          "title": "Official Website",
+          "description": "Visit our official website for more information and user guides"
+        },
+        "email": {
+          "title": "Email Feedback",
+          "description": "Encountered issues or have suggestions? Send us an email"
+        },
+        "rating": {
+          "title": "App Rating",
+          "description": "Like our plugin? Please rate us in the app store",
+          "button": "Rate Now"
+        },
+        "issues": {
+          "title": "Issue Reports",
+          "description": "Found bugs or have feature suggestions? Welcome to submit issues"
+        }
       },
       "dictionaries": {
         "title": "Dictionary Sources",
