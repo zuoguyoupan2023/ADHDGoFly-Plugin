@@ -157,16 +157,32 @@ async function main() {
     console.log('🔄 生成双语言 landing page...');
     try {
         // 生成下载链接HTML
+        // 中文版本的下载链接
         const downloadLinksHtml = buildResults.map(result => {
             return `
                         <div class="download-item">
                             <h3>${result.browser.toUpperCase()} 版本</h3>
                             <p>适用于 ${result.browser === 'chrome' ? 'Chrome 浏览器' : 'Microsoft Edge 浏览器'}</p>
-                            <a href="${result.zipName}" class="download-btn" download>
+                            <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
                                 📥 下载 ${result.browser.toUpperCase()} 版本 (${result.size}MB)
                             </a>
                             <div class="version-info">
                                 <small>版本: v${version} | 大小: ${result.size}MB</small>
+                            </div>
+                        </div>`;
+        }).join('');
+
+        // 英文版本的下载链接
+        const downloadLinksHtmlEn = buildResults.map(result => {
+            return `
+                        <div class="download-item">
+                            <h3>${result.browser.toUpperCase()} Version</h3>
+                            <p>For ${result.browser === 'chrome' ? 'Chrome Browser' : 'Microsoft Edge Browser'}</p>
+                            <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
+                                📥 Download ${result.browser.toUpperCase()} Version (${result.size}MB)
+                            </a>
+                            <div class="version-info">
+                                <small>Version: v${version} | Size: ${result.size}MB</small>
                             </div>
                         </div>`;
         }).join('');
@@ -190,7 +206,7 @@ async function main() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             min-height: 100vh;
         }
         
@@ -206,21 +222,24 @@ async function main() {
             padding: 8px 15px;
             margin: 0 2px;
             background: rgba(255,255,255,0.9);
-            color: #667eea;
+            color: #333;
             text-decoration: none;
             border-radius: 20px;
             font-weight: bold;
             transition: all 0.3s ease;
+            border: 1px solid #ddd;
         }
         
         .language-switcher a:hover {
             background: white;
             transform: translateY(-2px);
+            border-color: #333;
         }
         
         .language-switcher a.active {
-            background: #667eea;
+            background: #333;
             color: white;
+            border-color: #333;
         }
         
         .container {
@@ -239,7 +258,8 @@ async function main() {
         .header h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
         .header p {
@@ -262,7 +282,7 @@ async function main() {
         }
         
         .features h2 {
-            color: #667eea;
+            color: #333;
             font-size: 2.5rem;
             margin-bottom: 30px;
             text-align: center;
@@ -288,7 +308,7 @@ async function main() {
         }
         
         .feature-card h3 {
-            color: #667eea;
+            color: #333;
             margin-bottom: 15px;
             font-size: 1.5rem;
         }
@@ -303,7 +323,7 @@ async function main() {
         }
         
         .download-section h2 {
-            color: #667eea;
+            color: #333;
             font-size: 2.5rem;
             margin-bottom: 20px;
             text-align: center;
@@ -330,14 +350,14 @@ async function main() {
         }
         
         .download-item h3 {
-            color: #667eea;
+            color: #333;
             margin-bottom: 10px;
         }
         
         .download-btn {
             display: inline-block;
             padding: 15px 30px;
-            background: #667eea;
+            background: #333;
             color: white;
             text-decoration: none;
             border-radius: 50px;
@@ -348,7 +368,7 @@ async function main() {
         }
         
         .download-btn:hover {
-            background: #5a67d8;
+            background: #555;
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -425,10 +445,10 @@ async function main() {
             
             <section class="download-section">
                 <h2>🎉 发现新版本！</h2>
-                <p>建议更新以获得最新功能和修复</p>
+                <p>建议更新以获取最新功能和修复</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtml}
+                    ${downloadLinksHtmlEn}
                 </div>
             </section>
         </main>
@@ -443,7 +463,7 @@ async function main() {
         }
 
         // 创建英文版本模板
-        function createEnglishTemplate() {
+        function createEnglishTemplate(downloadLinksHtmlEn) {
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -461,7 +481,7 @@ async function main() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             min-height: 100vh;
         }
         
@@ -477,21 +497,24 @@ async function main() {
             padding: 8px 15px;
             margin: 0 2px;
             background: rgba(255,255,255,0.9);
-            color: #667eea;
+            color: #333;
             text-decoration: none;
             border-radius: 20px;
             font-weight: bold;
             transition: all 0.3s ease;
+            border: 1px solid #ddd;
         }
         
         .language-switcher a:hover {
             background: white;
             transform: translateY(-2px);
+            border-color: #333;
         }
         
         .language-switcher a.active {
-            background: #667eea;
+            background: #333;
             color: white;
+            border-color: #333;
         }
         
         .container {
@@ -510,7 +533,8 @@ async function main() {
         .header h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
         .header p {
@@ -601,14 +625,14 @@ async function main() {
         }
         
         .download-item h3 {
-            color: #667eea;
+            color: #333;
             margin-bottom: 10px;
         }
         
         .download-btn {
             display: inline-block;
             padding: 15px 30px;
-            background: #667eea;
+            background: #333;
             color: white;
             text-decoration: none;
             border-radius: 50px;
@@ -619,7 +643,7 @@ async function main() {
         }
         
         .download-btn:hover {
-            background: #5a67d8;
+            background: #555;
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -699,7 +723,7 @@ async function main() {
                 <p>Update recommended to get the latest features and fixes</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtml}
+                    ${downloadLinksHtmlEn}
                 </div>
             </section>
         </main>
@@ -719,7 +743,7 @@ async function main() {
         fs.writeFileSync(chineseIndexPath, chineseTemplate);
         
         // 写入英文版本
-        const englishTemplate = createEnglishTemplate();
+        const englishTemplate = createEnglishTemplate(downloadLinksHtmlEn);
         const englishIndexPath = path.join(outputDir, 'index-en.html');
         fs.writeFileSync(englishIndexPath, englishTemplate);
         
