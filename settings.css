@@ -377,6 +377,11 @@
   color: #555;
 }
 
+.source-content a {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
