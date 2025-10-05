@@ -206,7 +206,7 @@ async function main() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
             min-height: 100vh;
         }
         
@@ -250,23 +250,79 @@ async function main() {
         
         .header {
             text-align: center;
-            color: white;
+            color: #495057;
             margin-bottom: 50px;
-            padding: 50px 0;
+            padding: 80px 0 60px 0;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 50%, #343a40 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('logo.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center top;
+            opacity: 0.1;
+            z-index: 1;
+        }
+        
+        /* 响应式背景图像尺寸 */
+        @media (max-width: 480px) {
+            .header::before {
+                background-size: 80px 80px;
+                background-position: center 20px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .header::before {
+                background-size: 100px 100px;
+                background-position: center 25px;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .header::before {
+                background-size: 120px 120px;
+                background-position: center 30px;
+            }
+        }
+        
+        @media (min-width: 1201px) {
+            .header::before {
+                background-size: 150px 150px;
+                background-position: center 35px;
+            }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
         }
         
         .header h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
-            color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-top: 60px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
         }
         
         .header p {
             font-size: 1.3rem;
-            opacity: 0.9;
+            opacity: 0.95;
             max-width: 600px;
             margin: 0 auto;
+            color: #f8f9fa;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         
         .main-content {
@@ -408,8 +464,10 @@ async function main() {
 
     <div class="container">
         <header class="header">
-            <h1>ADHDGoFly</h1>
-            <p>关键词高亮阅读助手 - 让网页阅读更轻松，学习更高效</p>
+            <div class="header-content">
+                <h1>ADHDGoFly</h1>
+                <p>关键词高亮阅读助手 - 让网页阅读更轻松，学习更高效</p>
+            </div>
         </header>
 
         <main class="main-content">
@@ -481,7 +539,7 @@ async function main() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
             min-height: 100vh;
         }
         
@@ -525,23 +583,79 @@ async function main() {
         
         .header {
             text-align: center;
-            color: white;
+            color: #495057;
             margin-bottom: 50px;
-            padding: 50px 0;
+            padding: 80px 0 60px 0;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 50%, #343a40 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('logo.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center top;
+            opacity: 0.1;
+            z-index: 1;
+        }
+        
+        /* 响应式背景图像尺寸 */
+        @media (max-width: 480px) {
+            .header::before {
+                background-size: 80px 80px;
+                background-position: center 20px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .header::before {
+                background-size: 100px 100px;
+                background-position: center 25px;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .header::before {
+                background-size: 120px 120px;
+                background-position: center 30px;
+            }
+        }
+        
+        @media (min-width: 1201px) {
+            .header::before {
+                background-size: 150px 150px;
+                background-position: center 35px;
+            }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
         }
         
         .header h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
-            color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-top: 60px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
         }
         
         .header p {
             font-size: 1.3rem;
-            opacity: 0.9;
+            opacity: 0.95;
             max-width: 600px;
             margin: 0 auto;
+            color: #f8f9fa;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         
         .main-content {
@@ -683,8 +797,10 @@ async function main() {
 
     <div class="container">
         <header class="header">
-            <h1>ADHDGoFly</h1>
-            <p>Smart Reading Assistant - Make web reading easier and learning more efficient</p>
+            <div class="header-content">
+                <h1>ADHDGoFly</h1>
+                <p>Smart Reading Assistant - Make web reading easier and learning more efficient</p>
+            </div>
         </header>
 
         <main class="main-content">
