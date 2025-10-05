@@ -117,7 +117,9 @@ async function main() {
         const zipName = path.join(outputDir, `${projectName}-v${version}-${config.suffix}.zip`);
         
         try {
-            await createZipFile(zipName, includeFiles, browserName, tempManifestPath);
+            // 将临时manifest文件添加到包含文件列表中
+            const filesWithManifest = [...includeFiles, tempManifestPath];
+            await createZipFile(zipName, filesWithManifest, browserName, tempManifestPath);
             
             // 获取文件大小
             const stats = fs.statSync(zipName);
