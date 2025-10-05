@@ -158,29 +158,17 @@
         }
       },
       "feedback": {
-        "title": "Feedback & Support",
-        "website": {
-          "title": "Official Website",
-          "description": "Visit our official website for more information and user guides"
-        },
-        "email": {
-          "title": "Email Feedback",
-          "description": "Encountered issues or have suggestions? Send us an email"
-        },
-        "issues": {
-          "title": "Issue Reports",
-          "description": "Found bugs or have feature suggestions? Welcome to submit issues"
-        }
+        "wechat": "Feedback & Support: WeChat zuoguyoupan2023"
       },
       "dictionaries": {
         "title": "Dictionary Sources",
         "descriptions": {
-          "zh": "Based on open-source Chinese word segmentation dictionaries, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
-          "en": "Based on WordNet and other open-source English dictionaries, providing accurate part-of-speech classification. Licensed under Creative Commons.",
-          "fr": "Sourced from open-source French language resources, containing basic vocabulary part-of-speech information.",
-          "ru": "Based on open-source Russian dictionary projects, providing basic part-of-speech annotation functionality.",
-          "es": "Sourced from public Spanish linguistic resources, supporting common vocabulary recognition.",
-          "ja": "Based on open-source Japanese dictionaries, containing part-of-speech information for kana and kanji."
+          "zh": "Based on Jieba Chinese word segmentation dictionary, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
+          "en": "Based on WordNet English dictionary, providing accurate part-of-speech classification and semantic relationships. WordNet is a large English lexical database developed by Princeton University.",
+          "fr": "Sourced from Morphalou French morphological dictionary, containing basic vocabulary part-of-speech information and morphological analysis.",
+          "ru": "Based on OpenCorpora open-source Russian corpus project, providing basic part-of-speech annotation functionality. Completely open and supports commercial use.",
+          "es": "Sourced from Apertium open-source machine translation platform's Spanish linguistic resources, supporting common vocabulary recognition.",
+          "ja": "Based on JMdict open-source Japanese multilingual dictionary, containing part-of-speech information for kana and kanji. Completely open and supports commercial use."
         }
       }
     },
