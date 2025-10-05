@@ -142,21 +142,19 @@
         "title": "Update Log",
         "v013": {
           "title": "Interface Optimization & Feature Enhancement",
-          "feature1": "Optimized color scheme selection interface with dynamic button color switching",
-          "feature2": "Improved button layout with adaptive width and multi-row arrangement",
-          "feature3": "Enhanced user experience with unified visual effects across color schemes"
+          "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
+          "feature2": "Support for English comparative and superlative purple logic",
+          "feature3": "Implement basic settings management and storage functionality"
         },
         "v012": {
           "title": "Multi-language Support & Performance Optimization",
-          "feature1": "Added multiple color schemes: warm, cool, soft, high contrast",
-          "feature2": "Optimized dictionary loading performance for faster page response",
-          "feature3": "Improved text analysis algorithm for better part-of-speech recognition accuracy"
+          "feature1": "Multiple color schemes: warm, cool, soft, high contrast",
+          "feature2": "Added font size, line spacing, word spacing logic"
         },
         "v011": {
           "title": "Basic Feature Release",
-          "feature1": "Support for part-of-speech recognition in 6 languages including Chinese and English",
-          "feature2": "Color highlighting for nouns, verbs, adjectives, comparatives/superlatives",
-          "feature3": "Basic settings management and storage functionality"
+          "feature1": "Support for Chinese and English part-of-speech recognition",
+          "feature2": "Provide color highlighting for nouns, verbs, adjectives"
         }
       },
       "feedback": {
