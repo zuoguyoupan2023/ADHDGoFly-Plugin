@@ -402,7 +402,7 @@ async function main() {
 <body>
     <!-- 语言切换器 -->
     <div class="language-switcher">
-        <a href="index-cn.html" class="active">中文</a>
+        <a href="index.html" class="active">中文</a>
         <a href="index-en.html">English</a>
     </div>
 
@@ -677,7 +677,7 @@ async function main() {
 <body>
     <!-- Language Switcher -->
     <div class="language-switcher">
-        <a href="index-cn.html">中文</a>
+        <a href="index.html">中文</a>
         <a href="index-en.html" class="active">English</a>
     </div>
 
@@ -737,104 +737,19 @@ async function main() {
 </html>`;
         }
 
-        // 写入中文版本
+        // 写入中文版本作为默认首页
         const chineseTemplate = createChineseTemplate();
-        const chineseIndexPath = path.join(outputDir, 'index-cn.html');
-        fs.writeFileSync(chineseIndexPath, chineseTemplate);
+        const defaultIndexPath = path.join(outputDir, 'index.html');
+        fs.writeFileSync(defaultIndexPath, chineseTemplate);
         
         // 写入英文版本
         const englishTemplate = createEnglishTemplate(downloadLinksHtmlEn);
         const englishIndexPath = path.join(outputDir, 'index-en.html');
         fs.writeFileSync(englishIndexPath, englishTemplate);
         
-        // 写入重定向页面
-        const redirectTemplate = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADHDGoFly - 语言选择 / Language Selection</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #667eea;
-            margin-bottom: 30px;
-        }
-        .language-options {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-        .language-btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .language-btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-    </style>
-    <script>
-        // 自动检测浏览器语言并重定向
-        function detectAndRedirect() {
-            const lang = navigator.language || navigator.userLanguage;
-            if (lang.startsWith('zh')) {
-                window.location.href = 'index-cn.html';
-            } else {
-                window.location.href = 'index-en.html';
-            }
-        }
-        
-        // 3秒后自动重定向
-        setTimeout(detectAndRedirect, 3000);
-    </script>
-</head>
-<body>
-    <div class="container">
-        <h1>ADHDGoFly</h1>
-        <p style="margin-bottom: 30px;">请选择语言 / Please select language</p>
-        <div class="language-options">
-            <a href="index-cn.html" class="language-btn">中文版</a>
-            <a href="index-en.html" class="language-btn">English</a>
-        </div>
-        <p style="margin-top: 20px; color: #666; font-size: 14px;">
-            自动跳转中... / Auto redirecting...
-        </p>
-    </div>
-</body>
-</html>`;
-
-        // 写入重定向页面
-        const indexPath = path.join(outputDir, 'index.html');
-        fs.writeFileSync(indexPath, redirectTemplate);
         
         console.log('✅ 多语言页面生成完成');
-        console.log('   - index.html (语言选择页面)');
-        console.log('   - index-cn.html (中文版)');
+        console.log('   - index.html (中文版默认首页)');
         console.log('   - index-en.html (英文版)');
 
     } catch (error) {
@@ -845,8 +760,7 @@ async function main() {
     console.log('');
     console.log('🎉 构建完成！可以部署到 Cloudflare Pages 了');
     console.log('📋 部署文件列表:');
-    console.log(`   - index.html (语言选择页面)`);
-    console.log(`   - index-cn.html (中文版下载页面)`);
+    console.log(`   - index.html (中文版默认首页)`);
     console.log(`   - index-en.html (英文版下载页面)`);
     buildResults.forEach(result => {
         console.log(`   - ${result.zipName} (${result.browser.toUpperCase()} 版本, ${result.size}MB)`);
