@@ -21,13 +21,14 @@
     "current": "当前版本:",
     "latest": "最新版本:",
     "checking": "检查中...",
-    "updateTitle": "🎉 发现新版本！",
-    "updateDescription": "建议更新以获得最新功能和修复",
-    "officialDownload": "官方下载：",
-    "domesticLinks": "国内链接：",
-    "directDownload": "直链下载",
-    "updateNote": "💡 提示：如果GitHub访问较慢，建议使用国内链接",
-    "contactInfo": "如果都不可用，请联系 WeChat: zuoguyoupan2023"
+    "upToDate": "已是最新版本",
+    "checkFailed": "检查失败",
+    "autoUpdate": "自动更新",
+    "updateTitle": "🎉 发现新版本",
+    "downloadLabel": "📥 下载：",
+    "officialDownloadPage": "官方下载页面",
+    "slowTip": "💡 商店安装用户请耐心等待，会在1-7天内自动更新",
+    "contactInfo": "📞 WeChat: zuoguyoupan2023"
   },
   "buttons": {
     "toggle": "切换高亮",
@@ -51,6 +52,28 @@
     "title": "词典"
   },
   "pages": {
+    "home": {
+      "title": "首页",
+      "description": "欢迎使用ADHDGoFly插件",
+      "toggles": {
+        "title": "高亮控制",
+        "noun": "名词高亮",
+        "verb": "动词高亮",
+        "adj": "形容词高亮",
+        "comparative": "比较级/最高级高亮",
+        "nounSimple": "名词",
+        "verbSimple": "动词",
+        "adjSimple": "形容词",
+        "comparativeSimple": "比较级/最高级",
+        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
+      },
+      "preview": {
+        "noun": "名词",
+        "verb": "动词",
+        "adjective": "形容词"
+      },
+      "applyScheme": "应用方案"
+    },
     "dict": {
       "title": "词典管理",
       "description": "选择要使用的语言词典",
@@ -74,18 +97,23 @@
         "highContrast": "高对比度"
       },
       "toggles": {
-        "title": "高亮选项",
-        "noun": "高亮名词",
-        "verb": "高亮动词",
-        "adj": "高亮形容词",
-        "comparative": "高亮比较级/最高级",
-        "description": "选择要高亮显示的词性。英文比较级最高级会被特殊标记为紫色。"
+        "title": "高亮控制",
+        "noun": "名词高亮",
+        "verb": "动词高亮",
+        "adj": "形容词高亮",
+        "comparative": "比较级/最高级高亮",
+        "nounSimple": "名词",
+        "verbSimple": "动词",
+        "adjSimple": "形容词",
+        "comparativeSimple": "比较级/最高级",
+        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
       },
       "preview": {
         "noun": "名词",
         "verb": "动词",
         "adjective": "形容词"
-      }
+      },
+      "applyScheme": "应用方案"
     },
     "text": {
       "title": "文本样式",
@@ -126,32 +154,58 @@
         "title": "关于我们",
         "description": "ADHDGoFly 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。",
         "version": "版本：",
-        "developer": "开发者："
+        "developer": "开发者：",
+        "website": "官网："
+      },
+      "changelog": {
+        "title": "更新日志",
+        "v013": {
+          "title": "界面优化与功能增强",
+          "feature1": "支持 法西俄日 语言；主界面优化",
+          "feature2": "支持英语比较级最高级的紫色逻辑",
+          "feature3": "实现基础的设置管理和存储功能"
+        },
+        "v012": {
+          "title": "多语言支持与性能优化",
+          "feature1": "多种颜色方案：暖色、冷色、柔和、高对比度",
+          "feature2": "增加字号 行间距 词间距等逻辑"
+        },
+        "v011": {
+          "title": "基础功能发布",
+          "feature1": "支持中文、英文的词性识别",
+          "feature2": "提供名词、动词、形容词的颜色高亮"
+        }
+      },
+      "feedback": {
+        "wechat": "反馈与支持：微信 zuoguyoupan2023"
       },
       "dictionaries": {
         "title": "词典来源",
         "descriptions": {
-          "zh": "基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
-          "en": "基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。",
-          "fr": "来源于开源法语语言资源，包含基础词汇的词性信息。",
-          "ru": "基于开源俄语词典项目，提供基本的词性标注功能。",
-          "es": "来源于公开的西班牙语语言学资源，支持常用词汇识别。",
-          "ja": "基于开源日语词典，包含假名和汉字的词性信息。"
+          "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
+          "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。遵循WordNet许可协议。",
+          "fr": "基于Morphalou法语词典，来源于开源法语语言资源，包含基础词汇的词性信息。",
+          "ru": "基于OpenCorpora俄语词典项目，提供基本的词性标注功能。",
+          "es": "基于Apertium西班牙语词典，来源于公开的西班牙语语言学资源，支持常用词汇识别。",
+          "ja": "基于JMdict日语词典，包含假名和汉字的词性信息。"
         }
       }
     },
     "settings": {
       "title": "设置",
+      "version": {
+        "title": "版本信息"
+      },
       "dictionaries": {
          "title": "词典来源",
          "descriptions": {
-        "zh": "基于开源中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
-        "en": "基于WordNet和其他开源英语词典，提供准确的词性分类。遵循Creative Commons许可协议。",
-        "fr": "来源于开源法语语言资源，包含基础词汇的词性信息。",
-        "ru": "基于开源俄语词典项目，提供基本的词性标注功能。",
-        "es": "来源于公开的西班牙语语言学资源，支持常用词汇识别。",
-        "ja": "基于开源日语词典，包含假名和汉字的词性信息。"
-       }
+          "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
+          "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。",
+          "fr": "来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。",
+          "ru": "基于OpenCorpora开源俄语语料库项目，提供基本的词性标注功能。完全开放，支持商业使用。",
+          "es": "来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。",
+          "ja": "基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。"
+        }
      },
      "storage": {
        "title": "存储管理",

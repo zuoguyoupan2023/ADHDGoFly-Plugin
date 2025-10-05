@@ -1,10 +1,14 @@
 // Settings page functionality
 class SettingsManager {
     constructor() {
+        this.i18nManager = new I18nManager();
         this.init();
     }
 
-    init() {
+    async init() {
+        // 初始化i18n
+        await this.i18nManager.init();
+        
         this.bindEvents();
         this.loadData();
     }
@@ -312,70 +316,347 @@ class SettingsManager {
     }
 
     showMessage(message, type = 'success') {
-        // 创建消息提示
         const messageDiv = document.createElement('div');
-        messageDiv.className = `settings-message ${type}`;
+        messageDiv.className = `message ${type}`;
         messageDiv.textContent = message;
         
-        // 根据消息类型设置样式
-        let backgroundColor;
-        switch (type) {
-            case 'error':
-                backgroundColor = '#f44336';
-                break;
-            case 'info':
-                backgroundColor = '#2196F3';
-                break;
-            case 'warning':
-                backgroundColor = '#ff9800';
-                break;
-            default:
-                backgroundColor = '#4CAF50';
-        }
+        // 添加到页面顶部
+        document.body.insertBefore(messageDiv, document.body.firstChild);
         
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            border-radius: 4px;
-            color: white;
-            font-size: 14px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-            background-color: ${backgroundColor};
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-
-        // 添加滑入动画
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.body.appendChild(messageDiv);
-
         // 3秒后自动移除
         setTimeout(() => {
             if (messageDiv.parentNode) {
-                messageDiv.style.animation = 'slideOut 0.3s ease-in';
-                setTimeout(() => {
-                    if (messageDiv.parentNode) {
-                        messageDiv.remove();
-                    }
-                }, 300);
+                messageDiv.parentNode.removeChild(messageDiv);
             }
         }, 3000);
+    }
+
+    async checkVersion() {
+        try {
+            // 检测安装来源
+            const installSource = await this.detectInstallSource();
+            
+            // 显示当前版本
+            const manifest = chrome.runtime.getManifest();
+            const currentVersion = manifest.version;
+            
+            // 初始化版本信息缓存
+            this.versionInfo = {
+                currentVersion: currentVersion,
+                latestVersion: null,
+                isChecking: false,
+                hasUpdate: false,
+                error: null,
+                releaseUrl: null,
+                alternativeDownloads: null,
+                contactInfo: null,
+                installSource: installSource,
+                isManualInstall: installSource === 'manual'
+            };
+            
+            // 如果是官方商店安装，只显示当前版本和官网推广
+            if (!this.versionInfo.isManualInstall) {
+                this.versionInfo.officialWebsite = 'https://adhdgofly.online';
+                this.updateVersionUI();
+                return;
+            }
+            
+            // 手动安装才进行版本检查
+            // 检查今日是否已经检查过版本
+            const cachedVersionData = await this.getCachedVersionData();
+            if (cachedVersionData && this.isToday(cachedVersionData.timestamp)) {
+                console.log('使用今日缓存的版本信息');
+                this.versionInfo = { ...cachedVersionData.versionInfo, installSource, isManualInstall: true };
+                this.updateVersionUI();
+                return;
+            }
+            
+            // 设置检查状态
+            this.versionInfo.isChecking = true;
+            this.updateVersionUI();
+            
+            // 请求后台检查最新版本
+            chrome.runtime.sendMessage({ action: 'checkVersion' }, async (response) => {
+                this.versionInfo.isChecking = false;
+                
+                if (response && response.success) {
+                    this.versionInfo.latestVersion = response.latestVersion;
+                    this.versionInfo.hasUpdate = response.hasUpdate;
+                    this.versionInfo.releaseUrl = response.releaseUrl;
+                    this.versionInfo.alternativeDownloads = response.alternativeDownloads;
+                    this.versionInfo.contactInfo = response.contactInfo;
+                } else {
+                    this.versionInfo.error = response?.error || 'Unknown error';
+                }
+                
+                // 缓存今日的版本检查结果
+                await this.cacheVersionData(this.versionInfo);
+                
+                // 更新UI显示
+                this.updateVersionUI();
+            });
+        } catch (error) {
+            console.error('版本检测失败:', error);
+            this.versionInfo = {
+                currentVersion: '未知',
+                latestVersion: null,
+                isChecking: false,
+                hasUpdate: false,
+                error: error.message,
+                releaseUrl: null,
+                alternativeDownloads: null,
+                contactInfo: null,
+                installSource: 'unknown',
+                isManualInstall: true // 出错时默认为手动安装
+            };
+            this.updateVersionUI();
+        }
+    }
+
+    // 检测插件安装来源
+    async detectInstallSource() {
+        try {
+            const management = await chrome.management.getSelf();
+            const manifest = chrome.runtime.getManifest();
+            
+            console.log('=== 安装来源检测详细信息 ===');
+            console.log('Management信息:', {
+                installType: management.installType,
+                enabled: management.enabled,
+                id: management.id,
+                mayBeFromStore: management.mayBeFromStore,
+                name: management.name,
+                version: management.version
+            });
+            console.log('Manifest信息:', {
+                update_url: manifest.update_url,
+                version: manifest.version,
+                name: manifest.name
+            });
+            
+            // 开发者模式
+            if (management.installType === 'development') {
+                console.log('✅ 检测结果: 开发者模式');
+                return 'development';
+            }
+            
+            // 侧载安装（sideload）通常是手动安装
+            if (management.installType === 'sideload') {
+                console.log('✅ 检测结果: 侧载安装（手动安装）');
+                return 'manual';
+            }
+            
+            // 检查是否从Chrome Web Store安装
+            // Chrome Web Store安装的扩展有以下特征：
+            // 1. installType为'normal'
+            // 2. 扩展ID符合Chrome Web Store的格式（32位字符）
+            // 3. 没有自定义update_url，或者update_url包含google.com
+            if (management.installType === 'normal') {
+                console.log('检测到normal安装类型，进一步检查...');
+                
+                // 检查扩展ID是否符合Chrome Web Store格式（32位小写字母）
+                const isWebStoreId = /^[a-p]{32}$/.test(management.id);
+                console.log('ID格式检查:', {
+                    id: management.id,
+                    isWebStoreFormat: isWebStoreId,
+                    idLength: management.id.length
+                });
+                
+                // 检查update_url
+                const hasStoreUpdateUrl = !manifest.update_url || manifest.update_url.includes('clients2.google.com');
+                console.log('Update URL检查:', {
+                    update_url: manifest.update_url,
+                    hasStoreUpdateUrl: hasStoreUpdateUrl
+                });
+                
+                // 如果ID符合Web Store格式，且没有自定义update_url，则可能是从商店安装
+                if (isWebStoreId && hasStoreUpdateUrl) {
+                    console.log('✅ 检测结果: 可能来自Chrome Web Store');
+                    return 'webstore';
+                } else {
+                    console.log('✅ 检测结果: normal类型但非商店安装，判定为手动安装');
+                    return 'manual';
+                }
+            }
+            
+            // 其他情况视为手动安装
+            console.log('✅ 检测结果: 其他情况，判定为手动安装');
+            console.log('InstallType:', management.installType);
+            return 'manual';
+        } catch (error) {
+            console.warn('无法检测安装来源:', error);
+            // 如果检测失败，默认为手动安装（保守策略）
+            return 'manual';
+        }
+    }
+
+    // 获取缓存的版本数据
+    async getCachedVersionData() {
+        try {
+            const result = await chrome.storage.local.get(['versionCheckCache']);
+            return result.versionCheckCache || null;
+        } catch (error) {
+            console.error('获取版本缓存失败:', error);
+            return null;
+        }
+    }
+
+    // 缓存版本数据
+    async cacheVersionData(versionInfo) {
+        try {
+            const cacheData = {
+                timestamp: Date.now(),
+                versionInfo: { ...versionInfo }
+            };
+            await chrome.storage.local.set({ versionCheckCache: cacheData });
+            console.log('版本信息已缓存');
+        } catch (error) {
+            console.error('缓存版本信息失败:', error);
+        }
+    }
+
+    // 检查时间戳是否为今天
+    isToday(timestamp) {
+        const today = new Date();
+        const checkDate = new Date(timestamp);
+        
+        return today.getFullYear() === checkDate.getFullYear() &&
+               today.getMonth() === checkDate.getMonth() &&
+               today.getDate() === checkDate.getDate();
+    }
+
+    // 清理过期的版本缓存（在每日0点后首次访问时调用）
+    async clearExpiredVersionCache() {
+        const cachedData = await this.getCachedVersionData();
+        if (cachedData && !this.isToday(cachedData.timestamp)) {
+            await chrome.storage.local.remove(['versionCheckCache']);
+            console.log('已清理过期的版本缓存');
+        }
+    }
+    
+    updateVersionUI() {
+        if (!this.versionInfo) return;
+        
+        // 更新当前版本显示
+        const currentVersionElement = document.getElementById('currentVersion');
+        if (currentVersionElement) {
+            currentVersionElement.textContent = this.versionInfo.currentVersion;
+        }
+        
+        // 根据安装来源显示不同内容
+        if (!this.versionInfo.isManualInstall) {
+            // 官方商店安装：只显示当前版本和官网推广
+            this.showOfficialStoreUI();
+        } else {
+            // 手动安装：显示完整的版本检查功能
+            this.showManualInstallUI();
+        }
+    }
+    
+    // 显示官方商店用户的UI
+    showOfficialStoreUI() {
+        // 隐藏最新版本检查相关元素
+        const latestVersionElement = document.getElementById('latestVersion');
+        const updateNotice = document.getElementById('updateNotice');
+        
+        if (latestVersionElement) {
+            latestVersionElement.textContent = this.i18nManager.t('version.autoUpdate');
+        }
+        
+        if (updateNotice) {
+            updateNotice.style.display = 'none';
+        }
+        
+        // 显示官网推广
+        this.showOfficialWebsitePromotion();
+    }
+    
+    // 显示手动安装用户的UI
+    showManualInstallUI() {
+        // 更新最新版本显示
+        const latestVersionElement = document.getElementById('latestVersion');
+        if (latestVersionElement) {
+            if (this.versionInfo.isChecking) {
+                latestVersionElement.textContent = this.i18nManager.t('version.checking');
+            } else if (this.versionInfo.error) {
+                latestVersionElement.textContent = this.i18nManager.t('version.checkFailed');
+            } else {
+                latestVersionElement.textContent = this.versionInfo.latestVersion;
+            }
+        }
+        
+        // 处理更新提示
+        if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
+            const updateNotice = document.getElementById('updateNotice');
+            
+            // 设置官方GitHub链接
+            const githubLink = document.getElementById('githubLink');
+            if (githubLink && this.versionInfo.releaseUrl) {
+                githubLink.href = this.versionInfo.releaseUrl;
+            }
+            
+            // 设置替代下载链接
+            if (this.versionInfo.alternativeDownloads) {
+                const baiduLink = document.getElementById('baiduLink');
+                const giteeLink = document.getElementById('giteeLink');
+                const directLink = document.getElementById('directLink');
+                
+                if (baiduLink) baiduLink.href = this.versionInfo.alternativeDownloads.baidu;
+                if (giteeLink) giteeLink.href = this.versionInfo.alternativeDownloads.gitee;
+                if (directLink) directLink.href = this.versionInfo.alternativeDownloads.direct;
+            }
+            
+            // 设置联系信息
+            if (this.versionInfo.contactInfo) {
+                const contactInfoElement = document.querySelector('.contact-info');
+                if (contactInfoElement) {
+                    contactInfoElement.textContent = this.versionInfo.contactInfo;
+                }
+            }
+            
+            if (updateNotice) {
+                updateNotice.style.display = 'block';
+            }
+        } else {
+            // 隐藏更新提示
+            const updateNotice = document.getElementById('updateNotice');
+            if (updateNotice) {
+                updateNotice.style.display = 'none';
+            }
+        }
+    }
+    
+    // 显示官网推广
+    showOfficialWebsitePromotion() {
+        // 查找或创建官网推广区域
+        let promotionArea = document.getElementById('officialWebsitePromotion');
+        
+        if (!promotionArea) {
+            // 创建推广区域
+            promotionArea = document.createElement('div');
+            promotionArea.id = 'officialWebsitePromotion';
+            promotionArea.className = 'official-website-promotion';
+            
+            // 插入到版本信息区域后面
+            const versionSection = document.querySelector('.version-section');
+            if (versionSection) {
+                versionSection.appendChild(promotionArea);
+            }
+        }
+        
+        // 设置推广内容
+        promotionArea.innerHTML = `
+            <div class="promotion-content">
+                <h4>${this.i18nManager.t('version.officialWebsite')}</h4>
+                <p>${this.i18nManager.t('version.visitOfficialSite')}</p>
+                <a href="https://adhdgofly.online" target="_blank" class="official-website-link">
+                    🌐 adhdgofly.online
+                </a>
+                <p class="auto-update-note">${this.i18nManager.t('version.autoUpdateNote')}</p>
+            </div>
+        `;
+        
+        promotionArea.style.display = 'block';
     }
 }
 
