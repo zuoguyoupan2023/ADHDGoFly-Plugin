@@ -80,6 +80,160 @@
         "filePath": "dictionaries/RU_word.json",
         "enabled": true,
         "priority": 1
+      },
+      {
+        "id": "zh-animal-preset",
+        "name": "ZH_ANIMAL",
+        "displayName": {
+          "zh": "动物词典",
+          "en": "Animal Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "animal",
+        "filePath": "dictionaries/ZH/ZH_word_animal.json",
+        "enabled": false,
+        "priority": 10
+      },
+      {
+        "id": "zh-finance-preset",
+        "name": "ZH_FINANCE",
+        "displayName": {
+          "zh": "财经词典",
+          "en": "Finance Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "finance",
+        "filePath": "dictionaries/ZH/ZH_word_caijing.json",
+        "enabled": false,
+        "priority": 11
+      },
+      {
+        "id": "zh-automotive-preset",
+        "name": "ZH_AUTOMOTIVE",
+        "displayName": {
+          "zh": "汽车词典",
+          "en": "Automotive Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "automotive",
+        "filePath": "dictionaries/ZH/ZH_word_car.json",
+        "enabled": false,
+        "priority": 12
+      },
+      {
+        "id": "zh-idiom-preset",
+        "name": "ZH_IDIOM",
+        "displayName": {
+          "zh": "成语词典",
+          "en": "Idiom Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "idiom",
+        "filePath": "dictionaries/ZH/ZH_word_chengyu.json",
+        "enabled": false,
+        "priority": 13
+      },
+      {
+        "id": "zh-geography-preset",
+        "name": "ZH_GEOGRAPHY",
+        "displayName": {
+          "zh": "地名词典",
+          "en": "Geography Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "geography",
+        "filePath": "dictionaries/ZH/ZH_word_diming.json",
+        "enabled": false,
+        "priority": 14
+      },
+      {
+        "id": "zh-food-preset",
+        "name": "ZH_FOOD",
+        "displayName": {
+          "zh": "食物词典",
+          "en": "Food Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "food",
+        "filePath": "dictionaries/ZH/ZH_word_food.json",
+        "enabled": false,
+        "priority": 15
+      },
+      {
+        "id": "zh-technology-preset",
+        "name": "ZH_TECHNOLOGY",
+        "displayName": {
+          "zh": "IT词典",
+          "en": "IT Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "technology",
+        "filePath": "dictionaries/ZH/ZH_word_it.json",
+        "enabled": false,
+        "priority": 16
+      },
+      {
+        "id": "zh-legal-preset",
+        "name": "ZH_LEGAL",
+        "displayName": {
+          "zh": "法律词典",
+          "en": "Legal Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "legal",
+        "filePath": "dictionaries/ZH/ZH_word_law.json",
+        "enabled": false,
+        "priority": 17
+      },
+      {
+        "id": "zh-history-preset",
+        "name": "ZH_HISTORY",
+        "displayName": {
+          "zh": "历史人物词典",
+          "en": "Historical Figures Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "history",
+        "filePath": "dictionaries/ZH/ZH_word_lishimingren.json",
+        "enabled": false,
+        "priority": 18
+      },
+      {
+        "id": "zh-medical-preset",
+        "name": "ZH_MEDICAL",
+        "displayName": {
+          "zh": "医学词典",
+          "en": "Medical Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "medical",
+        "filePath": "dictionaries/ZH/ZH_word_medical.json",
+        "enabled": false,
+        "priority": 19
+      },
+      {
+        "id": "zh-literature-preset",
+        "name": "ZH_LITERATURE",
+        "displayName": {
+          "zh": "诗词词典",
+          "en": "Poetry Dictionary"
+        },
+        "language": "zh",
+        "type": "preset",
+        "domain": "literature",
+        "filePath": "dictionaries/ZH/ZH_word_poem.json",
+        "enabled": false,
+        "priority": 20
       }
     ],
     "downloaded": [],

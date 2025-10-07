@@ -27,7 +27,16 @@
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [{
-    "resources": ["dictionaries/*.json", "locales/*.json"],
+    "resources": [
+      "dictionaries/*.json",
+      "dictionaries/ZH/*.json",
+      "dictionaries/EN/*.json",
+      "dictionaries/FR/*.json",
+      "dictionaries/ES/*.json",
+      "dictionaries/RU/*.json",
+      "dictionaries/JA/*.json",
+      "locales/*.json"
+    ],
     "matches": ["<all_urls>"]
   }]
 }
