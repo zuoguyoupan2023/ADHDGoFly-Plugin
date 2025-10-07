@@ -277,6 +277,18 @@ class PopupController {
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
+      
+      // 如果是词典页面，初始化语言分组监听器
+      if (pageId === 'dict') {
+        console.log('Switching to dict page, initializing language group listeners...');
+        setTimeout(() => {
+          if (typeof initLanguageGroupListeners === 'function') {
+            initLanguageGroupListeners();
+          } else if (window.initLanguageGroupListeners) {
+            window.initLanguageGroupListeners();
+          }
+        }, 50);
+      }
     }
   }
 
@@ -1153,6 +1165,81 @@ class PopupController {
 // 全局引用，供HTML onclick使用
 let popupController;
 
+// 语言分组折叠展开功能
+function toggleLanguageGroup(language) {
+  console.log('toggleLanguageGroup called with:', language);
+  
+  const languageGroup = document.querySelector(`.language-group[data-language="${language}"]`);
+  console.log('languageGroup found:', languageGroup);
+  
+  if (!languageGroup) {
+    console.error('Language group not found for:', language);
+    return;
+  }
+  
+  const professionalDicts = languageGroup.querySelector('.professional-dicts');
+  const expandIcon = languageGroup.querySelector('.expand-icon');
+  
+  console.log('professionalDicts found:', professionalDicts);
+  console.log('expandIcon found:', expandIcon);
+  
+  if (!professionalDicts) {
+    console.error('Professional dicts not found');
+    return;
+  }
+  
+  const isExpanded = languageGroup.classList.contains('expanded');
+  console.log('isExpanded:', isExpanded);
+  
+  if (isExpanded) {
+    // 收起
+    console.log('Collapsing...');
+    languageGroup.classList.remove('expanded');
+    professionalDicts.style.display = 'none';
+    expandIcon.textContent = '▶';
+  } else {
+    // 展开
+    console.log('Expanding...');
+    languageGroup.classList.add('expanded');
+    professionalDicts.style.display = 'block';
+    expandIcon.textContent = '▼';
+  }
+}
+
+// 确保函数在全局作用域中可用
+window.toggleLanguageGroup = toggleLanguageGroup;
+window.initLanguageGroupListeners = initLanguageGroupListeners;
+
+// 初始化语言分组事件监听器
+function initLanguageGroupListeners() {
+  console.log('Initializing language group listeners...');
+  
+  // 为所有语言头部添加点击事件监听器
+  const languageHeaders = document.querySelectorAll('.language-header');
+  console.log('Found language headers:', languageHeaders.length);
+  
+  languageHeaders.forEach(header => {
+    const languageGroup = header.closest('.language-group');
+    const language = languageGroup ? languageGroup.getAttribute('data-language') : null;
+    
+    if (language) {
+      console.log('Adding listener for language:', language);
+      
+      // 移除可能存在的旧监听器
+      header.removeEventListener('click', header._clickHandler);
+      
+      // 创建新的点击处理器
+      header._clickHandler = () => {
+        console.log('Language header clicked:', language);
+        toggleLanguageGroup(language);
+      };
+      
+      // 添加新监听器
+      header.addEventListener('click', header._clickHandler);
+    }
+  });
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   // 确保i18n先初始化
@@ -1160,4 +1247,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 然后创建PopupController
   popupController = new PopupController();
+  
+  // 延迟初始化语言分组监听器，确保DOM完全加载
+  setTimeout(() => {
+    initLanguageGroupListeners();
+  }, 100);
 });

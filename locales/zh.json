@@ -89,6 +89,35 @@
         "es": "西班牙语词典",
         "ja": "日语词典"
       },
+      "languageGroups": {
+        "zh": {
+          "name": "中文",
+          "desc": "Chinese"
+        },
+        "en": {
+          "name": "英文",
+          "desc": "English"
+        },
+        "fr": {
+          "name": "法语",
+          "desc": "Français"
+        },
+        "es": {
+          "name": "西班牙语",
+          "desc": "Español"
+        },
+        "ru": {
+          "name": "俄语",
+          "desc": "Русский"
+        },
+        "ja": {
+          "name": "日语",
+          "desc": "日本語"
+        }
+      },
+      "empty": {
+        "professional": "专业词典即将推出"
+      },
       "domains": {
         "animal": "动物词典",
         "finance": "财经词典",

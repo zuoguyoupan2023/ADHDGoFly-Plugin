@@ -70,6 +70,35 @@
         "es": "Spanish Dictionary",
         "ja": "Japanese Dictionary"
       },
+      "languageGroups": {
+        "zh": {
+          "name": "Chinese",
+          "desc": "中文"
+        },
+        "en": {
+          "name": "English",
+          "desc": "English"
+        },
+        "fr": {
+          "name": "French",
+          "desc": "Français"
+        },
+        "es": {
+          "name": "Spanish",
+          "desc": "Español"
+        },
+        "ru": {
+          "name": "Russian",
+          "desc": "Русский"
+        },
+        "ja": {
+          "name": "Japanese",
+          "desc": "日本語"
+        }
+      },
+      "empty": {
+        "professional": "Professional dictionaries coming soon"
+      },
       "domains": {
         "animal": "Animal Dictionary",
         "finance": "Finance Dictionary",
