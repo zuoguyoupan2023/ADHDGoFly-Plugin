@@ -2154,6 +2154,20 @@ class TextSegmenter {
    * @returns {string|null} 标准化后的词性，如果不是支持的词性则返回null
    */
   normalizePartOfSpeech(pos) {
+    // 处理数组格式的词性（如 ["n"] 或 ["adj"]）
+    if (Array.isArray(pos)) {
+      if (pos.length > 0) {
+        pos = pos[0]; // 取第一个词性
+      } else {
+        return null;
+      }
+    }
+    
+    // 确保pos是字符串
+    if (typeof pos !== 'string') {
+      return null;
+    }
+    
     // 词性映射表 - 映射到CSS类名
     // 当前只支持名词(n)、动词(v)、形容词(a)三种词性的高亮
     const posMap = {
