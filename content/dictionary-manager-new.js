@@ -93,6 +93,28 @@ class DictionaryManager {
     }
 
     /**
+     * 获取词典的词汇数据（转换为旧格式）
+     * @param {string} id - 词典ID
+     * @returns {Object|null} 词典的words数据（转换为 {word: "pos"} 格式）
+     */
+    getDictionaryData(id) {
+        if (this.loadedDictionaries.has(id)) {
+            const dictData = this.loadedDictionaries.get(id);
+            if (dictData.words) {
+                // 转换为旧格式：{word: "pos"}
+                const converted = {};
+                for (const [word, info] of Object.entries(dictData.words)) {
+                    if (info.pos && info.pos.length > 0) {
+                        converted[word] = info.pos[0]; // 取第一个词性
+                    }
+                }
+                return converted;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 加载词典数据
      * @param {string} id - 词典ID
      * @param {boolean} useCache - 是否使用缓存
