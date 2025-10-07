@@ -27,7 +27,7 @@
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [{
-    "resources": ["dictionaries/*.json"],
+    "resources": ["dictionaries/*.json", "locales/*.json"],
     "matches": ["<all_urls>"]
   }]
 }
