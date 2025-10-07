@@ -92,7 +92,7 @@ async function main() {
         'settings.css',
         'content/',
         'dictionaries/',
-        'locales/'
+        '_locales/'
     ];
      
     // 检查必要文件
