@@ -77,13 +77,30 @@
     "dict": {
       "title": "词典管理",
       "description": "选择要使用的语言词典",
+      "groups": {
+        "basic": "基础词典",
+        "chinese": "中文专业词典"
+      },
       "languages": {
         "zh": "中文词典",
         "en": "英文词典",
-        "fr": "法文词典",
-        "ru": "俄文词典",
-        "es": "西班牙文词典",
-        "ja": "日文词典"
+        "fr": "法语词典",
+        "ru": "俄语词典",
+        "es": "西班牙语词典",
+        "ja": "日语词典"
+      },
+      "domains": {
+        "animal": "动物词典",
+        "finance": "财经词典",
+        "automotive": "汽车词典",
+        "idiom": "成语词典",
+        "geography": "地名词典",
+        "food": "食物词典",
+        "technology": "IT词典",
+        "legal": "法律词典",
+        "history": "历史人物词典",
+        "medical": "医学词典",
+        "literature": "诗词词典"
       }
     },
     "colors": {

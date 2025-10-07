@@ -5,12 +5,25 @@ class PopupController {
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
     this.dictSettings = {
-      zh: true,
-      en: true,
-      fr: false,
-      ru: false,
-      es: false,
-      ja: false
+      // 基础词典
+      'zh-preset': true,
+      'en-preset': true,
+      'fr-preset': false,
+      'es-preset': false,
+      'ru-preset': false,
+      'ja-preset': false,
+      // 中文专业词典
+      'zh-animal-preset': false,
+      'zh-finance-preset': false,
+      'zh-automotive-preset': false,
+      'zh-idiom-preset': false,
+      'zh-geography-preset': false,
+      'zh-food-preset': false,
+      'zh-technology-preset': false,
+      'zh-legal-preset': false,
+      'zh-history-preset': false,
+      'zh-medical-preset': false,
+      'zh-literature-preset': false
     };
     this.colorSchemes = {
       default: {
@@ -272,9 +285,9 @@ class PopupController {
     const dictCheckboxes = document.querySelectorAll('[id^="dict-"]');
     dictCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', (e) => {
-        const langCode = e.target.id.replace('dict-', '');
-        this.dictSettings[langCode] = e.target.checked;
-        console.log(`${langCode}词典:`, e.target.checked ? '启用' : '禁用');
+        const dictId = e.target.id.replace('dict-', '');
+        this.dictSettings[dictId] = e.target.checked;
+        console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
       });
     });
     
@@ -300,10 +313,10 @@ class PopupController {
   }
 
   updateDictUI() {
-    Object.keys(this.dictSettings).forEach(langCode => {
-      const checkbox = document.getElementById(`dict-${langCode}`);
+    Object.keys(this.dictSettings).forEach(dictId => {
+      const checkbox = document.getElementById(`dict-${dictId}`);
       if (checkbox) {
-        checkbox.checked = this.dictSettings[langCode];
+        checkbox.checked = this.dictSettings[dictId];
       }
     });
     
@@ -320,24 +333,31 @@ class PopupController {
     
     // 词典名称映射
     const dictNames = {
-      zh: 'ZH',
-      en: 'EN',
-      fr: 'FR',
-      ru: 'RU',
-      es: 'ES',
-      ja: 'JA'
+      'zh-preset': 'ZH',
+      'en-preset': 'EN',
+      'fr-preset': 'FR',
+      'ru-preset': 'RU',
+      'es-preset': 'ES',
+      'ja-preset': 'JA',
+      'zh-animal-preset': '动物',
+      'zh-finance-preset': '财经',
+      'zh-automotive-preset': '汽车',
+      'zh-idiom-preset': '成语',
+      'zh-geography-preset': '地名',
+      'zh-food-preset': '食物',
+      'zh-technology-preset': 'IT',
+      'zh-legal-preset': '法律',
+      'zh-history-preset': '历史',
+      'zh-medical-preset': '医学',
+      'zh-literature-preset': '诗词'
     };
     
-    // 只处理已知的词典语言代码
-    const validLangCodes = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
-    
     // 根据词典界面的实际复选框状态添加标签
-    validLangCodes.forEach(langCode => {
-      const checkbox = document.getElementById(`dict-${langCode}`);
-      if (checkbox && checkbox.checked && dictNames[langCode]) {
+    Object.keys(this.dictSettings).forEach(dictId => {
+      if (this.dictSettings[dictId] && dictNames[dictId]) {
         const tag = document.createElement('div');
         tag.className = 'dict-tag';
-        tag.textContent = dictNames[langCode];
+        tag.textContent = dictNames[dictId];
         dictTagsContainer.appendChild(tag);
       }
     });

@@ -58,6 +58,10 @@
     "dict": {
       "title": "Dictionary Management",
       "description": "Select language dictionaries to use",
+      "groups": {
+        "basic": "Basic Dictionaries",
+        "chinese": "Chinese Professional Dictionaries"
+      },
       "languages": {
         "zh": "Chinese Dictionary",
         "en": "English Dictionary",
@@ -65,6 +69,19 @@
         "ru": "Russian Dictionary",
         "es": "Spanish Dictionary",
         "ja": "Japanese Dictionary"
+      },
+      "domains": {
+        "animal": "Animal Dictionary",
+        "finance": "Finance Dictionary",
+        "automotive": "Automotive Dictionary",
+        "idiom": "Idiom Dictionary",
+        "geography": "Geography Dictionary",
+        "food": "Food Dictionary",
+        "technology": "IT Dictionary",
+        "legal": "Legal Dictionary",
+        "history": "Historical Figures Dictionary",
+        "medical": "Medical Dictionary",
+        "literature": "Poetry Dictionary"
       }
     },
     "colors": {
