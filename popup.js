@@ -1209,6 +1209,21 @@ function toggleLanguageGroup(language) {
 // 确保函数在全局作用域中可用
 window.toggleLanguageGroup = toggleLanguageGroup;
 window.initLanguageGroupListeners = initLanguageGroupListeners;
+window.hasActualProfessionalDicts = hasActualProfessionalDicts;
+
+// 检查语言组是否有实际的专业词典内容
+function hasActualProfessionalDicts(languageGroup) {
+  const professionalDicts = languageGroup.querySelector('.professional-dicts');
+  if (!professionalDicts) return false;
+  
+  // 检查是否只有空消息
+  const emptyMessage = professionalDicts.querySelector('.empty-message');
+  if (emptyMessage) return false;
+  
+  // 检查是否有实际的词典项
+  const dictItems = professionalDicts.querySelectorAll('.dict-item');
+  return dictItems.length > 0;
+}
 
 // 初始化语言分组事件监听器
 function initLanguageGroupListeners() {
@@ -1223,19 +1238,50 @@ function initLanguageGroupListeners() {
     const language = languageGroup ? languageGroup.getAttribute('data-language') : null;
     
     if (language) {
-      console.log('Adding listener for language:', language);
+      console.log('Processing language:', language);
       
-      // 移除可能存在的旧监听器
-      header.removeEventListener('click', header._clickHandler);
+      // 检查是否有实际的专业词典
+      const hasProDicts = hasActualProfessionalDicts(languageGroup);
+      const expandIcon = header.querySelector('.expand-icon');
       
-      // 创建新的点击处理器
-      header._clickHandler = () => {
-        console.log('Language header clicked:', language);
-        toggleLanguageGroup(language);
-      };
+      console.log(`Language ${language} has professional dicts:`, hasProDicts);
       
-      // 添加新监听器
-      header.addEventListener('click', header._clickHandler);
+      if (hasProDicts) {
+        // 有专业词典，显示折叠符号并添加点击事件
+        if (expandIcon) {
+          expandIcon.style.display = 'block';
+        }
+        
+        // 添加可点击样式
+        header.style.cursor = 'pointer';
+        
+        // 移除可能存在的旧监听器
+        header.removeEventListener('click', header._clickHandler);
+        
+        // 创建新的点击处理器
+        header._clickHandler = () => {
+          console.log('Language header clicked:', language);
+          toggleLanguageGroup(language);
+        };
+        
+        // 添加新监听器
+        header.addEventListener('click', header._clickHandler);
+        
+      } else {
+        // 没有专业词典，隐藏折叠符号
+        if (expandIcon) {
+          expandIcon.style.display = 'none';
+        }
+        
+        // 移除可点击样式
+        header.style.cursor = 'default';
+        
+        // 移除点击事件监听器
+        if (header._clickHandler) {
+          header.removeEventListener('click', header._clickHandler);
+          header._clickHandler = null;
+        }
+      }
     }
   });
 }
