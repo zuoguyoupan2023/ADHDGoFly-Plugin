@@ -7,10 +7,6 @@
     "processing": "Processing...",
     "switching": "Switching status..."
   },
-  "version": {
-    "checking": "Checking...",
-    "checkFailed": "Check failed"
-  },
   "errors": {
     "noTab": "Unable to get current tab",
     "notLoaded": "Extension not loaded or initialization failed",
@@ -111,6 +107,17 @@
         "history": "Historical Figures Dictionary",
         "medical": "Medical Dictionary",
         "literature": "Poetry Dictionary"
+      },
+      "userDictionaries": {
+        "title": "User Dictionaries",
+        "desc": "自建词典",
+        "create": "+ Create Dictionary",
+        "empty": "No user dictionaries yet, click the button above to create",
+        "edit": "Edit",
+        "delete": "Delete",
+        "export": "Export",
+        "enable": "Enable",
+        "disable": "Disable"
       }
     },
     "colors": {
@@ -262,5 +269,81 @@
   "languages": {
     "zh": "中文",
     "en": "English"
-  }
+  },
+  "dictEditor": {
+      "createTitle": "Create Dictionary",
+      "editTitle": "Edit Dictionary",
+      "back": "Back",
+      "basicInfo": "Basic Information",
+      "dictName": "Dictionary Name",
+      "namePlaceholder": {
+        "zh": "Chinese Name",
+        "en": "English Name"
+      },
+      "targetLanguage": "Target Language",
+      "languages": {
+        "zh": "Chinese",
+        "en": "English",
+        "fr": "French",
+        "es": "Spanish",
+        "ru": "Russian",
+        "ja": "Japanese"
+      },
+      "dictType": "Dictionary Type",
+      "domains": {
+        "general": "General Vocabulary",
+        "technology": "Technical Terms",
+        "medical": "Medical Terms",
+        "legal": "Legal Terms",
+        "business": "Business Terms",
+        "academic": "Academic Vocabulary",
+        "personal": "Personal Vocabulary",
+        "other": "Other"
+      },
+      "description": "Dictionary Description",
+      "descPlaceholder": {
+        "zh": "Chinese Description",
+        "en": "English Description"
+      },
+      "wordsManagement": "Words Management",
+      "addWord": "Add Word",
+      "importWords": "Batch Import",
+      "searchWords": "Search words...",
+      "allPos": "All Parts of Speech",
+      "pos": {
+        "noun": "Noun",
+        "verb": "Verb",
+        "adjective": "Adjective",
+        "adverb": "Adverb"
+      },
+      "sort": {
+        "alphabetical": "Alphabetical",
+        "time": "By Time Added",
+        "pos": "By Part of Speech"
+      },
+      "noWords": "No words yet, click 'Add Word' to start creating",
+      "save": "Save Dictionary",
+      "preview": "Preview Effect",
+      "cancel": "Cancel",
+      "addWordTitle": "Add Word",
+      "editWordTitle": "Edit Word",
+      "wordText": "Word",
+      "wordPlaceholder": "Enter word",
+      "wordPos": "Part of Speech",
+      "saveWord": "Save Word",
+      "importTitle": "Batch Import Words",
+      "importTabs": {
+        "text": "Text Paste",
+        "file": "File Upload"
+      },
+      "formatHelp": "Format: One word per line, optionally add part of speech",
+      "importPlaceholder": "Paste word list...",
+      "selectFile": "Select File",
+      "importPreview": "Import Preview",
+      "validWords": "Valid Words",
+      "duplicateWords": "Duplicate Words",
+      "invalidWords": "Invalid Words",
+      "previewImport": "Preview Import",
+      "confirmImport": "Confirm Import"
+    }
 }

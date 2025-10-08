@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="settings.css" />
+    <link rel="stylesheet" href="user-dictionary.css" />
     <script src="i18n.js"></script>
+    <script src="user-dictionary-manager.js"></script>
     <script src="popup.js"></script>
     <style>
       * {
@@ -1890,6 +1892,25 @@
           </div>
 
           <div class="dict-list">
+            <!-- 自建词典组 -->
+            <div class="language-group user-dictionaries" data-language="user">
+              <div class="language-header">
+                <div class="language-info">
+                  <span class="language-name" data-i18n="pages.dict.userDictionaries.title">自建词典</span>
+                  <span class="language-desc" data-i18n="pages.dict.userDictionaries.desc">User Dictionaries</span>
+                </div>
+                <div class="user-dict-actions">
+                  <button class="create-dict-btn" id="create-dict-btn" data-i18n="pages.dict.userDictionaries.create">+ 创建词典</button>
+                </div>
+              </div>
+
+              <!-- 用户词典列表 -->
+              <div class="user-dict-list" id="user-dict-list">
+                <!-- 动态生成用户词典项 -->
+                <div class="empty-message" data-i18n="pages.dict.userDictionaries.empty">暂无自建词典，点击上方按钮创建</div>
+              </div>
+            </div>
+
             <!-- 中文词典组 -->
             <div class="language-group" data-language="zh">
               <div class="language-header">
@@ -2733,6 +2754,202 @@
             >
               🔄 刷新分析
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 词典编辑页面 -->
+      <div class="page" id="dict-editor-page">
+        <div class="editor-header">
+          <button class="back-btn" id="back-to-dict-btn">← <span data-i18n="pages.dictEditor.back">返回</span></button>
+          <h3 id="editor-title" data-i18n="pages.dictEditor.createTitle">创建词典</h3>
+        </div>
+
+        <div class="editor-content">
+          <!-- 基本信息表单 -->
+          <div class="form-section">
+            <h4 data-i18n="pages.dictEditor.basicInfo">基本信息</h4>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.dictName">词典名称</label>
+              <div class="name-inputs">
+                <input type="text" id="dict-name-zh" data-i18n-placeholder="pages.dictEditor.namePlaceholder.zh" placeholder="中文名称" required>
+                <input type="text" id="dict-name-en" data-i18n-placeholder="pages.dictEditor.namePlaceholder.en" placeholder="English Name" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.targetLanguage">目标语言</label>
+              <select id="dict-language" required>
+                <option value="zh" data-i18n="pages.dictEditor.languages.zh">中文</option>
+                <option value="en" data-i18n="pages.dictEditor.languages.en">English</option>
+                <option value="fr" data-i18n="pages.dictEditor.languages.fr">Français</option>
+                <option value="es" data-i18n="pages.dictEditor.languages.es">Español</option>
+                <option value="ru" data-i18n="pages.dictEditor.languages.ru">Русский</option>
+                <option value="ja" data-i18n="pages.dictEditor.languages.ja">日本語</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.dictType">词典类型</label>
+              <select id="dict-domain">
+                <option value="general" data-i18n="pages.dictEditor.domains.general">通用词汇</option>
+                <option value="technology" data-i18n="pages.dictEditor.domains.technology">技术术语</option>
+                <option value="medical" data-i18n="pages.dictEditor.domains.medical">医学术语</option>
+                <option value="legal" data-i18n="pages.dictEditor.domains.legal">法律术语</option>
+                <option value="business" data-i18n="pages.dictEditor.domains.business">商业术语</option>
+                <option value="academic" data-i18n="pages.dictEditor.domains.academic">学术词汇</option>
+                <option value="personal" data-i18n="pages.dictEditor.domains.personal">个人词汇</option>
+                <option value="other" data-i18n="pages.dictEditor.domains.other">其他</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.description">词典描述</label>
+              <div class="desc-inputs">
+                <textarea id="dict-desc-zh" data-i18n-placeholder="pages.dictEditor.descPlaceholder.zh" placeholder="中文描述"></textarea>
+                <textarea id="dict-desc-en" data-i18n-placeholder="pages.dictEditor.descPlaceholder.en" placeholder="English Description"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 词汇管理区域 -->
+          <div class="words-section">
+            <div class="section-header">
+              <h4><span data-i18n="pages.dictEditor.wordsManagement">词汇管理</span> <span id="word-count">(0词)</span></h4>
+              <div class="word-actions">
+                <button id="add-word-btn" data-i18n="pages.dictEditor.addWord">添加词汇</button>
+                <button id="import-words-btn" data-i18n="pages.dictEditor.importWords">批量导入</button>
+              </div>
+            </div>
+            
+            <div class="words-controls">
+              <input type="text" id="word-search" data-i18n-placeholder="pages.dictEditor.searchWords" placeholder="搜索词汇...">
+              <select id="pos-filter">
+                <option value="" data-i18n="pages.dictEditor.allPos">所有词性</option>
+                <option value="n" data-i18n="pages.dictEditor.pos.noun">名词</option>
+                <option value="v" data-i18n="pages.dictEditor.pos.verb">动词</option>
+                <option value="adj" data-i18n="pages.dictEditor.pos.adjective">形容词</option>
+                <option value="adv" data-i18n="pages.dictEditor.pos.adverb">副词</option>
+              </select>
+              <select id="word-sort">
+                <option value="alpha" data-i18n="pages.dictEditor.sort.alphabetical">按字母排序</option>
+                <option value="time" data-i18n="pages.dictEditor.sort.time">按添加时间</option>
+                <option value="pos" data-i18n="pages.dictEditor.sort.pos">按词性分组</option>
+              </select>
+            </div>
+            
+            <div class="words-list" id="words-list">
+              <div class="empty-words-message" data-i18n="pages.dictEditor.noWords">暂无词汇，点击"添加词汇"开始创建</div>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div class="editor-actions">
+            <button id="save-dict-btn" class="primary-btn" data-i18n="pages.dictEditor.save">保存词典</button>
+            <button id="preview-dict-btn" data-i18n="pages.dictEditor.preview">预览效果</button>
+            <button id="cancel-edit-btn" data-i18n="pages.dictEditor.cancel">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 词汇编辑模态框 -->
+      <div id="word-editor-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 id="word-editor-title" data-i18n="pages.dictEditor.addWordTitle">添加词汇</h4>
+            <button class="close-btn" id="close-word-editor">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.wordText">词汇</label>
+              <input type="text" id="word-text" data-i18n-placeholder="pages.dictEditor.wordPlaceholder" placeholder="请输入词汇" required>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.wordPos">词性</label>
+              <div class="pos-checkboxes">
+                <label class="pos-checkbox">
+                  <input type="checkbox" value="n">
+                  <span data-i18n="pages.dictEditor.pos.noun">名词</span>
+                </label>
+                <label class="pos-checkbox">
+                  <input type="checkbox" value="v">
+                  <span data-i18n="pages.dictEditor.pos.verb">动词</span>
+                </label>
+                <label class="pos-checkbox">
+                  <input type="checkbox" value="adj">
+                  <span data-i18n="pages.dictEditor.pos.adjective">形容词</span>
+                </label>
+                <label class="pos-checkbox">
+                  <input type="checkbox" value="adv">
+                  <span data-i18n="pages.dictEditor.pos.adverb">副词</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button id="save-word-btn" class="primary-btn" data-i18n="pages.dictEditor.saveWord">保存词汇</button>
+            <button id="cancel-word-btn" data-i18n="pages.dictEditor.cancel">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 批量导入模态框 -->
+      <div id="import-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 data-i18n="pages.dictEditor.importTitle">批量导入词汇</h4>
+            <button class="close-btn" id="close-import-modal">×</button>
+          </div>
+          
+          <div class="import-tabs">
+            <button class="tab-btn active" data-tab="text" data-i18n="pages.dictEditor.importTabs.text">文本粘贴</button>
+            <button class="tab-btn" data-tab="file" data-i18n="pages.dictEditor.importTabs.file">文件上传</button>
+          </div>
+          
+          <div class="import-content">
+            <!-- 文本导入 -->
+            <div id="text-import" class="import-tab active">
+              <div class="format-help">
+                <p data-i18n="pages.dictEditor.formatHelp">格式说明：每行一个词汇，可选择性添加词性</p>
+                <div class="format-examples">
+                  <code>人工智能</code><br>
+                  <code>机器学习 名词</code><br>
+                  <code>深度学习 名词,形容词</code>
+                </div>
+              </div>
+              <textarea id="import-text" data-i18n-placeholder="pages.dictEditor.importPlaceholder" placeholder="请粘贴词汇列表..."></textarea>
+            </div>
+            
+            <!-- 文件导入 -->
+            <div id="file-import" class="import-tab">
+              <div class="file-upload">
+                <input type="file" id="import-file" accept=".txt,.csv,.json" hidden>
+                <button class="upload-btn" onclick="document.getElementById('import-file').click()" data-i18n="pages.dictEditor.selectFile">选择文件</button>
+                <div class="file-info" id="file-info"></div>
+              </div>
+              <div class="file-preview" id="file-preview"></div>
+            </div>
+          </div>
+          
+          <!-- 导入预览 -->
+          <div class="import-preview" id="import-preview" style="display: none;">
+            <h5 data-i18n="pages.dictEditor.importPreview">导入预览</h5>
+            <div class="preview-stats">
+              <span class="stat valid">✓ <span data-i18n="pages.dictEditor.validWords">有效词汇</span>: <span id="valid-count">0</span>个</span>
+              <span class="stat duplicate">⚠ <span data-i18n="pages.dictEditor.duplicateWords">重复词汇</span>: <span id="duplicate-count">0</span>个</span>
+              <span class="stat invalid">✗ <span data-i18n="pages.dictEditor.invalidWords">无效词汇</span>: <span id="invalid-count">0</span>个</span>
+            </div>
+            <div class="preview-list" id="preview-list"></div>
+          </div>
+          
+          <div class="modal-actions">
+            <button id="preview-import-btn" data-i18n="pages.dictEditor.previewImport">预览导入</button>
+            <button id="confirm-import-btn" class="primary-btn" disabled data-i18n="pages.dictEditor.confirmImport">确认导入</button>
+            <button id="cancel-import-btn" data-i18n="pages.dictEditor.cancel">取消</button>
           </div>
         </div>
       </div>

@@ -7,10 +7,6 @@
     "processing": "处理中...",
     "switching": "正在切换状态..."
   },
-  "version": {
-     "checking": "检查中...",
-     "checkFailed": "检查失败"
-   },
   "errors": {
     "noTab": "无法获取当前标签页",
     "notLoaded": "插件未加载或初始化失败",
@@ -130,6 +126,17 @@
         "history": "历史人物词典",
         "medical": "医学词典",
         "literature": "诗词词典"
+      },
+      "userDictionaries": {
+        "title": "自建词典",
+        "desc": "User Dictionaries",
+        "create": "+ 创建词典",
+        "empty": "暂无自建词典，点击上方按钮创建",
+        "edit": "编辑",
+        "delete": "删除",
+        "export": "导出",
+        "enable": "启用",
+        "disable": "禁用"
       }
     },
     "colors": {
@@ -295,5 +302,81 @@
   "languages": {
     "zh": "中文",
     "en": "English"
-  }
+  },
+  "dictEditor": {
+      "createTitle": "创建词典",
+      "editTitle": "编辑词典",
+      "back": "返回",
+      "basicInfo": "基本信息",
+      "dictName": "词典名称",
+      "namePlaceholder": {
+        "zh": "中文名称",
+        "en": "English Name"
+      },
+      "targetLanguage": "目标语言",
+      "languages": {
+        "zh": "中文",
+        "en": "English",
+        "fr": "Français",
+        "es": "Español",
+        "ru": "Русский",
+        "ja": "日本語"
+      },
+      "dictType": "词典类型",
+      "domains": {
+        "general": "通用词汇",
+        "technology": "技术术语",
+        "medical": "医学术语",
+        "legal": "法律术语",
+        "business": "商业术语",
+        "academic": "学术词汇",
+        "personal": "个人词汇",
+        "other": "其他"
+      },
+      "description": "词典描述",
+      "descPlaceholder": {
+        "zh": "中文描述",
+        "en": "English Description"
+      },
+      "wordsManagement": "词汇管理",
+      "addWord": "添加词汇",
+      "importWords": "批量导入",
+      "searchWords": "搜索词汇...",
+      "allPos": "所有词性",
+      "pos": {
+        "noun": "名词",
+        "verb": "动词",
+        "adjective": "形容词",
+        "adverb": "副词"
+      },
+      "sort": {
+        "alphabetical": "按字母排序",
+        "time": "按添加时间",
+        "pos": "按词性分组"
+      },
+      "noWords": "暂无词汇，点击"添加词汇"开始创建",
+      "save": "保存词典",
+      "preview": "预览效果",
+      "cancel": "取消",
+      "addWordTitle": "添加词汇",
+      "editWordTitle": "编辑词汇",
+      "wordText": "词汇",
+      "wordPlaceholder": "请输入词汇",
+      "wordPos": "词性",
+      "saveWord": "保存词汇",
+      "importTitle": "批量导入词汇",
+      "importTabs": {
+        "text": "文本粘贴",
+        "file": "文件上传"
+      },
+      "formatHelp": "格式说明：每行一个词汇，可选择性添加词性",
+      "importPlaceholder": "请粘贴词汇列表...",
+      "selectFile": "选择文件",
+      "importPreview": "导入预览",
+      "validWords": "有效词汇",
+      "duplicateWords": "重复词汇",
+      "invalidWords": "无效词汇",
+      "previewImport": "预览导入",
+      "confirmImport": "确认导入"
+    }
 }
