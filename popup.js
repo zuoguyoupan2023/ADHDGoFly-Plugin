@@ -466,7 +466,7 @@ class PopupController {
   // 绑定自建词典相关事件
   bindCustomDictEvents() {
     // 创建词典按钮
-    const createDictBtn = document.getElementById('create-custom-dict-btn');
+    const createDictBtn = document.getElementById('create-dict-btn');
     if (createDictBtn) {
       createDictBtn.addEventListener('click', () => {
         this.showCustomDictEditor();
@@ -497,7 +497,7 @@ class PopupController {
     }
 
     // 保存词典按钮
-    const saveCustomDictBtn = document.getElementById('save-custom-dict-btn');
+    const saveCustomDictBtn = document.getElementById('save-user-dict-btn');
     if (saveCustomDictBtn) {
       saveCustomDictBtn.addEventListener('click', () => {
         this.saveCustomDict();
@@ -505,10 +505,27 @@ class PopupController {
     }
 
     // 取消按钮
-    const cancelCustomDictBtn = document.getElementById('cancel-custom-dict-btn');
+    const cancelCustomDictBtn = document.getElementById('cancel-user-dict-btn');
     if (cancelCustomDictBtn) {
       cancelCustomDictBtn.addEventListener('click', () => {
         this.hideCustomDictEditor();
+      });
+    }
+
+    // 返回按钮
+    const backBtn = document.getElementById('back-to-dict-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        this.hideCustomDictEditor();
+      });
+    }
+
+    // 清空按钮
+    const clearBtn = document.getElementById('clear-all-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        this.currentCustomDict.words = [];
+        this.updateWordsPreview();
       });
     }
   }
@@ -516,7 +533,7 @@ class PopupController {
   // 显示自建词典编辑器
   showCustomDictEditor(dictData = null) {
     const dictPage = document.getElementById('dict-page');
-    const editorPage = document.getElementById('custom-dict-editor-page');
+    const editorPage = document.getElementById('user-dict-page');
     
     if (dictPage && editorPage) {
       dictPage.classList.remove('active');
@@ -537,7 +554,7 @@ class PopupController {
   // 隐藏自建词典编辑器
   hideCustomDictEditor() {
     const dictPage = document.getElementById('dict-page');
-    const editorPage = document.getElementById('custom-dict-editor-page');
+    const editorPage = document.getElementById('user-dict-page');
     
     if (dictPage && editorPage) {
       editorPage.classList.remove('active');
@@ -744,11 +761,11 @@ class PopupController {
 
   // 更新自建词典列表显示
   updateCustomDictsList(customDicts) {
-    const customDictsContainer = document.getElementById('custom-dicts-list');
+    const customDictsContainer = document.getElementById('user-dict-list');
     if (!customDictsContainer) return;
     
     if (customDicts.length === 0) {
-      customDictsContainer.innerHTML = '<div class="empty-custom-dicts">暂无自建词典</div>';
+      customDictsContainer.innerHTML = '<div class="empty-message">暂无自建词典，点击 + 创建第一个词典</div>';
       return;
     }
     

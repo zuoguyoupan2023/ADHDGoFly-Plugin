@@ -1,4 +1,434 @@
-/* 词性高亮样式 */
+/* 自建词典样式 */
+.user-dictionaries {
+  margin-bottom: 16px;
+}
+
+.create-dict-btn {
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.create-dict-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+.user-dict-list {
+  margin-top: 8px;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 20px;
+  font-style: italic;
+}
+
+.custom-dict-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.custom-dict-item:hover {
+  background: #e9ecef;
+  border-color: #007aff;
+}
+
+.custom-dict-info {
+  flex: 1;
+}
+
+.custom-dict-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.custom-dict-meta {
+  font-size: 11px;
+  color: #666;
+}
+
+.custom-dict-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.edit-btn, .delete-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: #007aff;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #0056b3;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
+/* 自建词典编辑页面样式 */
+.user-dict-page {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+}
+
+.user-dict-page.active {
+  display: flex;
+}
+
+.user-dict-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.form-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.form-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: #333;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+}
+
+.words-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+#word-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+.word-input-form {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#word-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+  color: #333;
+}
+
+#word-input:focus {
+  outline: none;
+  border-color: #007aff;
+}
+
+.pos-checkboxes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pos-checkboxes label {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pos-checkboxes input[type="checkbox"] {
+  margin-right: 4px;
+  width: auto;
+}
+
+#add-word-btn {
+  padding: 6px 12px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+#add-word-btn:hover {
+  background: #218838;
+}
+
+.words-preview {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 6px 6px 0 0;
+}
+
+.preview-header span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.clear-btn {
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.words-list {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.empty-words {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 40px 20px;
+}
+
+.word-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.word-item:hover {
+  background: #e9ecef;
+}
+
+.word-text {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+
+.word-pos {
+  font-size: 11px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.word-remove {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.word-remove:hover {
+  background: #ffebee;
+}
+
+.back-btn {
+  background: none;
+  border: 1px solid #ddd;
+  color: #666;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #f5f5f5;
+  border-color: #007aff;
+  color: #007aff;
+}
+
+.dict-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+.save-btn {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.save-btn:hover {
+  background: #218838;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  padding: 8px 16px;
+  background: none;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  color: #333;
+}
+
+/* 响应式调整 */
+@media (max-width: 400px) {
+  .input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pos-checkboxes {
+    justify-content: space-between;
+  }
+
+  #add-word-btn {
+    align-self: flex-end;
+  }
+}
 .adhd-n {
   color: #0066cc !important;
   background-color: rgba(0, 102, 204, 0.1) !important;
