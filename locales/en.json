@@ -125,7 +125,40 @@
         "title": "Manage Custom Dictionaries",
         "description": "Manage your created dictionaries",
         "placeholder": "No custom dictionaries yet"
+      },
+      "form": {
+        "name": "Dictionary Name",
+        "language": "Dictionary Language"
+      },
+      "preview": {
+        "title": "Word Preview",
+        "empty": "No words yet"
+      },
+      "buttons": {
+        "save": "Save Dictionary",
+        "edit": "Edit",
+        "delete": "Delete",
+        "saveEdit": "Save Changes",
+        "cancelEdit": "Cancel"
+      },
+      "messages": {
+        "saved": "Dictionary saved successfully",
+        "deleted": "Dictionary deleted successfully",
+        "updated": "Dictionary updated successfully",
+        "nameRequired": "Please enter dictionary name",
+        "wordsRequired": "Please add at least one word",
+        "confirmDelete": "Are you sure you want to delete this dictionary?",
+        "wordExists": "Word already exists"
       }
+    },
+    "languages": {
+      "zh": "中文",
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ru": "Русский",
+      "ja": "日本語"
+    }
     },
     "colors": {
       "title": "Color Schemes",

@@ -140,168 +140,201 @@
         "title": "管理自建词典",
         "description": "管理您已创建的词典",
         "placeholder": "暂无自建词典"
-      }
-    },
-    "colors": {
-      "title": "颜色方案",
-      "description": "选择高亮颜色方案",
-      "schemes": {
-        "default": "默认方案",
-        "warm": "暖色方案",
-        "cool": "冷色方案",
-        "pastel": "柔和方案",
-        "highContrast": "高对比度"
       },
-      "toggles": {
-        "title": "高亮控制",
-        "noun": "名词高亮",
-        "verb": "动词高亮",
-        "adj": "形容词高亮",
-        "comparative": "比较级/最高级高亮",
-        "nounSimple": "名词",
-        "verbSimple": "动词",
-        "adjSimple": "形容词",
-        "comparativeSimple": "比较级/最高级",
-        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
+      "form": {
+        "name": "词典名称",
+        "language": "词典语言"
       },
       "preview": {
-        "noun": "名词",
-        "verb": "动词",
-        "adjective": "形容词"
+        "title": "词汇预览",
+        "empty": "暂无词汇"
       },
-      "applyScheme": "应用方案"
-    },
-    "text": {
-      "title": "文本样式",
-      "description": "调整高亮词汇的显示样式（仅影响名词、动词、形容词等高亮词汇）",
-      "fontSize": "字号大小",
-      "fontSizeDesc": "调整高亮词汇的字体大小",
-      "letterSpacing": "字间距",
-      "letterSpacingDesc": "调整高亮词汇字符之间的间距",
-      "lineHeight": "行间距",
-      "lineHeightDesc": "调整高亮词汇的行间距",
-      "paragraphSpacing": "段间距",
-      "paragraphSpacingDesc": "调整包含高亮词汇段落的间距",
-      "previewTitle": "预览效果",
-      "previewText1": "这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.",
-      "previewText2": "第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect.",
-      "preview": "预览效果",
-      "apply": "应用设置",
-      "reset": "重置默认"
-    },
-    "ai": {
-      "title": "智能分析",
-      "description": "基于当前页面高亮内容的数据分析",
-      "stats": {
-        "title": "📊 页面统计",
-        "language": "语言分布",
-        "posDistribution": "词性分布"
+      "buttons": {
+        "save": "保存词典",
+        "edit": "编辑",
+        "delete": "删除",
+        "saveEdit": "保存修改",
+        "cancelEdit": "取消"
       },
-      "refresh": "🔄 刷新分析",
-      "analyzing": "分析中...",
-      "noData": "暂无数据",
-      "error": "分析失败，请重试"
-    },
-    "about": {
-      "title": "关于",
-      "about": {
-        "title": "关于我们",
-        "description": "ADHDGoFly 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。",
-        "version": "版本：",
-        "developer": "开发者：",
-        "website": "官网："
-      },
-      "changelog": {
-        "title": "更新日志",
-        "v013": {
-          "title": "界面优化与功能增强",
-          "feature1": "支持 法西俄日 语言；主界面优化",
-          "feature2": "支持英语比较级最高级的紫色逻辑",
-          "feature3": "实现基础的设置管理和存储功能"
-        },
-        "v012": {
-          "title": "多语言支持与性能优化",
-          "feature1": "多种颜色方案：暖色、冷色、柔和、高对比度",
-          "feature2": "增加字号 行间距 词间距等逻辑"
-        },
-        "v011": {
-          "title": "基础功能发布",
-          "feature1": "支持中文、英文的词性识别",
-          "feature2": "提供名词、动词、形容词的颜色高亮"
-        }
-      },
-      "feedback": {
-        "wechat": "反馈与支持：微信 zuoguyoupan2023"
-      },
-      "dictionaries": {
-        "title": "词典来源",
-        "descriptions": {
-          "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
-          "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。遵循WordNet许可协议。",
-          "fr": "基于Morphalou法语词典，来源于开源法语语言资源，包含基础词汇的词性信息。",
-          "ru": "基于OpenCorpora俄语词典项目，提供基本的词性标注功能。",
-          "es": "基于Apertium西班牙语词典，来源于公开的西班牙语语言学资源，支持常用词汇识别。",
-          "ja": "基于JMdict日语词典，包含假名和汉字的词性信息。"
-        }
+      "messages": {
+        "saved": "词典保存成功",
+        "deleted": "词典删除成功",
+        "updated": "词典更新成功",
+        "nameRequired": "请输入词典名称",
+        "wordsRequired": "请至少添加一个词汇",
+        "confirmDelete": "确定要删除这个词典吗？",
+        "wordExists": "词汇已存在"
       }
     },
-    "settings": {
-      "title": "设置",
-      "version": {
-        "title": "版本信息"
+    "languages": {
+      "zh": "中文",
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ru": "Русский",
+      "ja": "日本語"
+    }
+  },
+  "colors": {
+    "title": "颜色方案",
+    "description": "选择高亮颜色方案",
+    "schemes": {
+      "default": "默认方案",
+      "warm": "暖色方案",
+      "cool": "冷色方案",
+      "pastel": "柔和方案",
+      "highContrast": "高对比度"
+    },
+    "toggles": {
+      "title": "高亮控制",
+      "noun": "名词高亮",
+      "verb": "动词高亮",
+      "adj": "形容词高亮",
+      "comparative": "比较级/最高级高亮",
+      "nounSimple": "名词",
+      "verbSimple": "动词",
+      "adjSimple": "形容词",
+      "comparativeSimple": "比较级/最高级",
+      "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
+    },
+    "preview": {
+      "noun": "名词",
+      "verb": "动词",
+      "adjective": "形容词"
+    },
+    "applyScheme": "应用方案"
+  },
+  "text": {
+    "title": "文本样式",
+    "description": "调整高亮词汇的显示样式（仅影响名词、动词、形容词等高亮词汇）",
+    "fontSize": "字号大小",
+    "fontSizeDesc": "调整高亮词汇的字体大小",
+    "letterSpacing": "字间距",
+    "letterSpacingDesc": "调整高亮词汇字符之间的间距",
+    "lineHeight": "行间距",
+    "lineHeightDesc": "调整高亮词汇的行间距",
+    "paragraphSpacing": "段间距",
+    "paragraphSpacingDesc": "调整包含高亮词汇段落的间距",
+    "previewTitle": "预览效果",
+    "previewText1": "这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.",
+    "previewText2": "第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect.",
+    "preview": "预览效果",
+    "apply": "应用设置",
+    "reset": "重置默认"
+  },
+  "ai": {
+    "title": "智能分析",
+    "description": "基于当前页面高亮内容的数据分析",
+    "stats": {
+      "title": "📊 页面统计",
+      "language": "语言分布",
+      "posDistribution": "词性分布"
+    },
+    "refresh": "🔄 刷新分析",
+    "analyzing": "分析中...",
+    "noData": "暂无数据",
+    "error": "分析失败，请重试"
+  },
+  "about": {
+    "title": "关于",
+    "about": {
+      "title": "关于我们",
+      "description": "ADHDGoFly 是一款专为ADHD用户设计的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。",
+      "version": "版本：",
+      "developer": "开发者：",
+      "website": "官网："
+    },
+    "changelog": {
+      "title": "更新日志",
+      "v013": {
+        "title": "界面优化与功能增强",
+        "feature1": "支持 法西俄日 语言；主界面优化",
+        "feature2": "支持英语比较级最高级的紫色逻辑",
+        "feature3": "实现基础的设置管理和存储功能"
       },
-      "dictionaries": {
-        "title": "词典来源",
-        "descriptions": {
-          "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
-          "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。",
-          "fr": "来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。",
-          "ru": "基于OpenCorpora开源俄语语料库项目，提供基本的词性标注功能。完全开放，支持商业使用。",
-          "es": "来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。",
-          "ja": "基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。"
-        }
+      "v012": {
+        "title": "多语言支持与性能优化",
+        "feature1": "多种颜色方案：暖色、冷色、柔和、高对比度",
+        "feature2": "增加字号 行间距 词间距等逻辑"
       },
-      "storage": {
-        "title": "存储管理",
-        "retentionTime": "缓存保留时间",
-        "days3": "3天",
-        "days7": "7天",
-        "days14": "14天",
-        "days28": "28天",
-        "disabled": "禁用缓存",
-        "retentionDesc": "设置高亮缓存的保留时间，过期后自动清理",
-        "usage": "存储使用情况",
-        "cachedPages": "缓存页面",
-        "usedSpace": "已用空间",
-        "lastCleanup": "上次清理",
-        "cleanup": "缓存清理",
-        "cleanupExpired": "清理过期缓存",
-        "cleanupAll": "清除所有缓存",
-        "cleanupDesc": "手动清理缓存数据，释放存储空间",
-        "save": "保存存储设置"
-      },
-      "other": {
-        "title": "其他设置",
-        "autoUpdate": "自动检查更新",
-        "autoUpdateDesc": "启用后将自动检查插件更新",
-        "analytics": "匿名使用统计",
-        "analyticsDesc": "帮助我们改进产品（不收集个人信息）",
-        "reset": "重置所有设置"
+      "v011": {
+        "title": "基础功能发布",
+        "feature1": "支持中文、英文的词性识别",
+        "feature2": "提供名词、动词、形容词的颜色高亮"
+      }
+    },
+    "feedback": {
+      "wechat": "反馈与支持：微信 zuoguyoupan2023"
+    },
+    "dictionaries": {
+      "title": "词典来源",
+      "descriptions": {
+        "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
+        "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。遵循WordNet许可协议。",
+        "fr": "基于Morphalou法语词典，来源于开源法语语言资源，包含基础词汇的词性信息。",
+        "ru": "基于OpenCorpora俄语词典项目，提供基本的词性标注功能。",
+        "es": "基于Apertium西班牙语词典，来源于公开的西班牙语语言学资源，支持常用词汇识别。",
+        "ja": "基于JMdict日语词典，包含假名和汉字的词性信息。"
       }
     }
   },
-  "sidebar": {
-    "home": "首页",
-    "dict": "词典",
-    "colors": "颜色",
-    "text": "文本",
-    "ai": "AI分析",
-    "about": "关于",
-    "settings": "设置",
-    "language": "切换语言"
+  "settings": {
+    "title": "设置",
+    "version": {
+      "title": "版本信息"
+    },
+    "dictionaries": {
+      "title": "词典来源",
+      "descriptions": {
+        "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
+        "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。",
+        "fr": "来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。",
+        "ru": "基于OpenCorpora开源俄语语料库项目，提供基本的词性标注功能。完全开放，支持商业使用。",
+        "es": "来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。",
+        "ja": "基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。"
+      }
+    },
+    "storage": {
+      "title": "存储管理",
+      "retentionTime": "缓存保留时间",
+      "days3": "3天",
+      "days7": "7天",
+      "days14": "14天",
+      "days28": "28天",
+      "disabled": "禁用缓存",
+      "retentionDesc": "设置高亮缓存的保留时间，过期后自动清理",
+      "usage": "存储使用情况",
+      "cachedPages": "缓存页面",
+      "usedSpace": "已用空间",
+      "lastCleanup": "上次清理",
+      "cleanup": "缓存清理",
+      "cleanupExpired": "清理过期缓存",
+      "cleanupAll": "清除所有缓存",
+      "cleanupDesc": "手动清理缓存数据，释放存储空间",
+      "save": "保存存储设置"
+    },
+    "other": {
+      "title": "其他设置",
+      "autoUpdate": "自动检查更新",
+      "autoUpdateDesc": "启用后将自动检查插件更新",
+      "analytics": "匿名使用统计",
+      "analyticsDesc": "帮助我们改进产品（不收集个人信息）",
+      "reset": "重置所有设置"
+    }
   },
-  "languages": {
-    "zh": "中文",
-    "en": "English"
-  }
+
+"sidebar": {
+  "home": "首页",
+  "dict": "词典",
+  "colors": "颜色",
+  "text": "文本",
+  "ai": "AI分析",
+  "about": "关于",
+  "settings": "设置",
+  "language": "切换语言"
+},
+"languages": {
+  "zh": "中文",
+  "en": "English"
+}
 }
