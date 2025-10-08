@@ -303,8 +303,7 @@
     "zh": "中文",
     "en": "English"
   },
-  "pages": {
-    "dictEditor": {
+  "dictEditor": {
       "createTitle": "创建词典",
       "editTitle": "编辑词典",
       "back": "返回",
@@ -380,5 +379,4 @@
       "previewImport": "预览导入",
       "confirmImport": "确认导入"
     }
-  }
 }

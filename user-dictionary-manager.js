@@ -946,10 +946,5 @@ class UserDictionaryManager {
   }
 }
 
-// 延迟创建全局实例，等待i18n初始化完成
-window.addEventListener('DOMContentLoaded', () => {
-  // 等待i18n初始化完成后再创建用户词典管理器
-  setTimeout(() => {
-    window.userDictManager = new UserDictionaryManager();
-  }, 200);
-});
+// 创建全局实例
+window.userDictManager = new UserDictionaryManager();
