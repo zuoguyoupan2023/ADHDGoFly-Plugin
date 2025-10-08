@@ -13,7 +13,7 @@
       "en": "Dictionary containing ingredients, dishes, cooking methods, culinary terms and food-related vocabulary"
     },
     "license": {
-      "type": "Open Source",
+      "type": "MIT license",
       "source": "THUOCL",
       "url": "https://github.com/thunlp/THUOCL",
       "attribution": "THU Open Chinese Lexicon (THUOCL)"

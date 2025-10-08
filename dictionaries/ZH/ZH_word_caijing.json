@@ -13,7 +13,7 @@
       "en": "Dictionary containing professional terms in finance, economics, investment, banking and related fields"
     },
     "license": {
-      "type": "Open Source",
+      "type": "MIT license",
       "source": "THUOCL",
       "url": "https://github.com/thunlp/THUOCL",
       "attribution": "THU Open Chinese Lexicon (THUOCL)"

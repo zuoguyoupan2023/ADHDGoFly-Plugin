@@ -13,7 +13,7 @@
       "en": "Dictionary containing disease names, drug names, medical devices, medical terms and healthcare vocabulary"
     },
     "license": {
-      "type": "Open Source",
+      "type": "MIT license",
       "source": "THUOCL",
       "url": "https://github.com/thunlp/THUOCL",
       "attribution": "THU Open Chinese Lexicon (THUOCL)"

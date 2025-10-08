@@ -13,7 +13,7 @@
       "en": "Dictionary containing professional terms in computer science, internet, software development, AI and IT fields"
     },
     "license": {
-      "type": "Open Source",
+      "type": "MIT license",
       "source": "THUOCL",
       "url": "https://github.com/thunlp/THUOCL",
       "attribution": "THU Open Chinese Lexicon (THUOCL)"
