@@ -235,8 +235,65 @@ class DictionaryAdapter {
      * @returns {string|null} 词性或null
      */
     lookupWord(word, language) {
+        // 首先查找自建词典
+        const customResult = this.lookupInCustomDictionaries(word, language);
+        if (customResult) {
+            return customResult;
+        }
+        
+        // 然后查找预设词典
         const dictionary = this.getDictionary(language);
         return dictionary[word] || null;
+    }
+
+    /**
+     * 在自建词典中查找词汇
+     * @param {string} word 要查找的词汇
+     * @param {string} language 语言代码
+     * @returns {string|null} 词性或null
+     */
+    lookupInCustomDictionaries(word, language) {
+        if (!this.customDictionaries) {
+            return null;
+        }
+        
+        // 遍历所有自建词典
+        for (const dict of this.customDictionaries) {
+            // 检查词典是否启用且语言匹配
+            if (dict.enabled !== false && dict.language === language && dict.words) {
+                for (const wordData of dict.words) {
+                    if (wordData.word === word) {
+                        // 返回第一个匹配的词性
+                        return Array.isArray(wordData.pos) ? wordData.pos[0] : wordData.pos;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * 设置自建词典数据
+     * @param {Array} customDictionaries 自建词典数组
+     */
+    setCustomDictionaries(customDictionaries) {
+        this.customDictionaries = customDictionaries || [];
+        console.log('自建词典已更新:', this.customDictionaries.length, '个词典');
+    }
+
+    /**
+     * 刷新自建词典数据
+     */
+    async refreshCustomDictionaries() {
+        if (window.customDictDB) {
+            try {
+                const customDicts = await window.customDictDB.getAllDicts();
+                this.setCustomDictionaries(customDicts);
+            } catch (error) {
+                console.error('刷新自建词典失败:', error);
+            }
+        }
     }
 
     /**

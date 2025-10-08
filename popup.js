@@ -571,15 +571,19 @@ class PopupController {
     const languageSelect = document.getElementById('custom-dict-language');
     const typeSelect = document.getElementById('custom-dict-type');
     const wordInput = document.getElementById('word-input');
-    const posSelect = document.getElementById('word-pos');
-    const wordsPreview = document.getElementById('words-preview');
+    const wordsPreview = document.getElementById('words-list');
     
     if (nameInput) nameInput.value = '';
     if (languageSelect) languageSelect.value = 'zh';
     if (typeSelect) typeSelect.value = 'basic';
     if (wordInput) wordInput.value = '';
-    if (posSelect) posSelect.value = 'noun';
-    if (wordsPreview) wordsPreview.innerHTML = '';
+    
+    // 清空词性复选框
+    document.querySelectorAll('.pos-checkboxes input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+    });
+    
+    if (wordsPreview) wordsPreview.innerHTML = '<div class="empty-words">暂无词汇</div>';
     
     // 清空当前编辑的词典数据
     this.currentCustomDict = {
@@ -611,16 +615,25 @@ class PopupController {
   // 添加词汇到词典
   addWordToDict() {
     const wordInput = document.getElementById('word-input');
-    const posSelect = document.getElementById('word-pos');
+    const posCheckboxes = document.querySelectorAll('.pos-checkboxes input[type="checkbox"]:checked');
     
-    if (!wordInput || !posSelect) return;
+    if (!wordInput) return;
     
     const word = wordInput.value.trim();
-    const pos = posSelect.value;
     
     if (!word) {
       alert('请输入词汇');
       return;
+    }
+    
+    if (posCheckboxes.length === 0) {
+      alert('请选择至少一个词性');
+      return;
+    }
+    
+    // 确保currentCustomDict已初始化
+    if (!this.currentCustomDict) {
+      this.currentCustomDict = { words: [] };
     }
     
     // 检查是否已存在
@@ -629,14 +642,20 @@ class PopupController {
       return;
     }
     
+    // 获取选中的词性
+    const selectedPos = Array.from(posCheckboxes).map(cb => cb.value);
+    
     // 添加词汇
     this.currentCustomDict.words.push({
       word: word,
-      pos: pos
+      pos: selectedPos.length === 1 ? selectedPos[0] : selectedPos
     });
     
-    // 清空输入框
+    // 清空输入框和复选框
     wordInput.value = '';
+    document.querySelectorAll('.pos-checkboxes input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+    });
     
     // 更新预览
     this.updateWordsPreview();
@@ -644,8 +663,13 @@ class PopupController {
 
   // 更新词汇预览
   updateWordsPreview() {
-    const wordsPreview = document.getElementById('words-preview');
+    const wordsPreview = document.getElementById('words-list');
     if (!wordsPreview) return;
+    
+    // 确保currentCustomDict已初始化
+    if (!this.currentCustomDict) {
+      this.currentCustomDict = { words: [] };
+    }
     
     if (this.currentCustomDict.words.length === 0) {
       wordsPreview.innerHTML = '<div class="empty-words">暂无词汇</div>';
@@ -655,7 +679,7 @@ class PopupController {
     const wordsHtml = this.currentCustomDict.words.map((wordData, index) => `
       <div class="word-item">
         <span class="word-text">${wordData.word}</span>
-        <span class="word-pos pos-${wordData.pos}">${this.getPosDisplayName(wordData.pos)}</span>
+        <span class="word-pos pos-${Array.isArray(wordData.pos) ? wordData.pos[0] : wordData.pos}">${this.getPosDisplayName(wordData.pos)}</span>
         <button class="remove-word-btn" onclick="popupController.removeWordFromDict(${index})">×</button>
       </div>
     `).join('');
@@ -704,59 +728,70 @@ class PopupController {
       return;
     }
     
-    if (this.currentCustomDict.words.length === 0) {
+    if (!this.currentCustomDict || !this.currentCustomDict.words || this.currentCustomDict.words.length === 0) {
       alert('请至少添加一个词汇');
       return;
     }
     
-    // 构建词典数据
-    const dictData = {
-      id: this.currentCustomDict.id || `custom-${Date.now()}`,
-      name: name,
-      language: language,
-      type: type,
-      words: this.currentCustomDict.words,
-      createdAt: this.currentCustomDict.id ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
     try {
-      // 保存到存储（这里先用console.log模拟，后续会实现IndexedDB）
-      console.log('保存自建词典:', dictData);
+      // 准备保存的数据
+      const dictData = {
+        name: name,
+        language: language,
+        type: type,
+        words: this.currentCustomDict.words,
+        wordCount: this.currentCustomDict.words.length
+      };
       
-      // 显示成功消息
+      // 如果是编辑模式，保留原有ID
+      if (this.currentCustomDict.id) {
+        dictData.id = this.currentCustomDict.id;
+      }
+      
+      // 使用IndexedDB保存
+      const savedId = await window.customDictDB.saveDict(dictData);
+      
       alert('词典保存成功！');
       
-      // 返回词典页面
-      this.hideCustomDictEditor();
+      // 刷新词典列表
+      await this.loadCustomDicts();
       
-      // 刷新自建词典列表
-      this.loadCustomDicts();
+      // 通知content script刷新自建词典
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0]) {
+          await chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'refreshCustomDictionaries'
+          });
+        }
+      } catch (error) {
+        console.warn('通知content script刷新自建词典失败:', error);
+      }
+      
+      // 返回词典列表页面
+      this.hideCustomDictEditor();
       
     } catch (error) {
       console.error('保存词典失败:', error);
-      alert('保存失败，请重试');
+      alert('保存词典失败，请重试');
     }
   }
 
   // 加载自建词典列表
   async loadCustomDicts() {
-    // 这里先用模拟数据，后续会从IndexedDB加载
-    const mockCustomDicts = [
-      {
-        id: 'custom-1',
-        name: '我的专业词汇',
-        language: 'zh',
-        type: 'professional',
-        words: [
-          { word: '算法', pos: 'noun' },
-          { word: '数据结构', pos: 'noun' }
-        ],
-        createdAt: '2024-01-01T00:00:00.000Z'
-      }
-    ];
-    
-    this.updateCustomDictsList(mockCustomDicts);
+    try {
+      // 从IndexedDB获取所有词典
+      const customDicts = await window.customDictDB.getAllDicts();
+      console.log('加载自建词典:', customDicts);
+      
+      // 更新UI显示
+      this.updateCustomDictsList(customDicts);
+      
+    } catch (error) {
+      console.error('加载自建词典失败:', error);
+      // 如果加载失败，显示空列表
+      this.updateCustomDictsList([]);
+    }
   }
 
   // 更新自建词典列表显示
@@ -805,27 +840,34 @@ class PopupController {
   // 获取类型显示名称
   getTypeDisplayName(type) {
     const typeNames = {
-      'basic': '基础词典',
-      'professional': '专业词典'
+      'general': '通用词汇',
+      'technology': '技术术语',
+      'medical': '医学术语',
+      'legal': '法律术语',
+      'business': '商业术语',
+      'academic': '学术词汇',
+      'personal': '个人词汇',
+      'other': '其他'
     };
     return typeNames[type] || type;
   }
 
   // 编辑自建词典
   async editCustomDict(dictId) {
-    // 这里先用模拟数据，后续会从IndexedDB加载
-    const mockDict = {
-      id: dictId,
-      name: '我的专业词汇',
-      language: 'zh',
-      type: 'professional',
-      words: [
-        { word: '算法', pos: 'noun' },
-        { word: '数据结构', pos: 'noun' }
-      ]
-    };
-    
-    this.showCustomDictEditor(mockDict);
+    try {
+      // 从IndexedDB获取词典数据
+      const dictData = await window.customDictDB.getDictById(dictId);
+      
+      if (dictData) {
+        // 显示编辑器并填充数据
+        this.showCustomDictEditor(dictData);
+      } else {
+        alert('词典不存在');
+      }
+    } catch (error) {
+      console.error('加载词典数据失败:', error);
+      alert('加载词典数据失败');
+    }
   }
 
   // 删除自建词典
@@ -835,17 +877,29 @@ class PopupController {
     }
     
     try {
-      // 这里先用console.log模拟，后续会实现IndexedDB删除
-      console.log('删除自建词典:', dictId);
-      
-      // 刷新列表
-      this.loadCustomDicts();
+      // 从IndexedDB删除词典
+      await window.customDictDB.deleteDict(dictId);
       
       alert('词典删除成功！');
       
+      // 刷新词典列表
+      await this.loadCustomDicts();
+      
+      // 通知content script刷新自建词典
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0]) {
+          await chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'refreshCustomDictionaries'
+          });
+        }
+      } catch (error) {
+        console.warn('通知content script刷新自建词典失败:', error);
+      }
+      
     } catch (error) {
       console.error('删除词典失败:', error);
-      alert('删除失败，请重试');
+      alert('删除词典失败，请重试');
     }
   }
 
@@ -1923,6 +1977,10 @@ function initLanguageGroupListeners() {
 document.addEventListener('DOMContentLoaded', async () => {
   // 确保i18n先初始化
   await window.i18n.init();
+  
+  // 初始化IndexedDB
+  window.customDictDB = new CustomDictDB();
+  await window.customDictDB.init();
   
   // 然后创建PopupController
   popupController = new PopupController();
