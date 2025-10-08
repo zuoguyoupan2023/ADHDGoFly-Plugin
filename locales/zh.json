@@ -76,7 +76,7 @@
     },
     "dict": {
       "title": "词典管理",
-      "description": "选择要使用的语言词典",
+      "description": "勾选启用词典；默认显示基础词典",
       "groups": {
         "basic": "基础词典",
         "chinese": "中文专业词典"

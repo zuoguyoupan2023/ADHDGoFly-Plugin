@@ -57,7 +57,7 @@
   "pages": {
     "dict": {
       "title": "Dictionary Management",
-      "description": "Select language dictionaries to use",
+      "description": "Check to enable dictionaries; basic dictionaries shown by default",
       "groups": {
         "basic": "Basic Dictionaries",
         "chinese": "Chinese Professional Dictionaries"
