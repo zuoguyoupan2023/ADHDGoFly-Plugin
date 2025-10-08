@@ -451,6 +451,18 @@ class PopupController {
       saveDictBtn.addEventListener('click', () => this.saveDictSettings());
     }
 
+    // 自建词典按钮事件
+    const addDictBtn = document.getElementById('add-dict-btn');
+    if (addDictBtn) {
+      addDictBtn.addEventListener('click', () => this.showPage('custom-dict'));
+    }
+
+    // 返回词典页面按钮事件
+    const backToDictBtn = document.getElementById('back-to-dict-btn');
+    if (backToDictBtn) {
+      backToDictBtn.addEventListener('click', () => this.showPage('dict'));
+    }
+
     // 词典tooltip事件
     this.bindDictTooltipEvents();
   }

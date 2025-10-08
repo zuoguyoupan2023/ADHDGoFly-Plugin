@@ -7,7 +7,6 @@
     "processing": "处理中...",
     "switching": "正在切换状态..."
   },
-
   "errors": {
     "noTab": "无法获取当前标签页",
     "notLoaded": "插件未加载或初始化失败",
@@ -127,6 +126,20 @@
         "history": "历史人物词典",
         "medical": "医学词典",
         "literature": "诗词词典"
+      },
+      "customDict": "自建词典"
+    },
+    "customDict": {
+      "title": "自建词典",
+      "create": {
+        "title": "自建词典",
+        "description": "创建您自己的专业词典",
+        "placeholder": "功能开发中..."
+      },
+      "manage": {
+        "title": "管理自建词典",
+        "description": "管理您已创建的词典",
+        "placeholder": "暂无自建词典"
       }
     },
     "colors": {
@@ -184,10 +197,8 @@
         "language": "语言分布",
         "posDistribution": "词性分布"
       },
-
       "refresh": "🔄 刷新分析",
       "analyzing": "分析中...",
-
       "noData": "暂无数据",
       "error": "分析失败，请重试"
     },
@@ -240,8 +251,8 @@
         "title": "版本信息"
       },
       "dictionaries": {
-         "title": "词典来源",
-         "descriptions": {
+        "title": "词典来源",
+        "descriptions": {
           "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
           "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。",
           "fr": "来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。",
@@ -249,34 +260,34 @@
           "es": "来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。",
           "ja": "基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。"
         }
-     },
-     "storage": {
-       "title": "存储管理",
-       "retentionTime": "缓存保留时间",
-       "days3": "3天",
-       "days7": "7天",
-       "days14": "14天",
-       "days28": "28天",
-       "disabled": "禁用缓存",
-       "retentionDesc": "设置高亮缓存的保留时间，过期后自动清理",
-       "usage": "存储使用情况",
-       "cachedPages": "缓存页面",
-       "usedSpace": "已用空间",
-       "lastCleanup": "上次清理",
-       "cleanup": "缓存清理",
-       "cleanupExpired": "清理过期缓存",
-       "cleanupAll": "清除所有缓存",
-       "cleanupDesc": "手动清理缓存数据，释放存储空间",
-       "save": "保存存储设置"
-     },
-     "other": {
-       "title": "其他设置",
-       "autoUpdate": "自动检查更新",
-       "autoUpdateDesc": "启用后将自动检查插件更新",
-       "analytics": "匿名使用统计",
-       "analyticsDesc": "帮助我们改进产品（不收集个人信息）",
-       "reset": "重置所有设置"
-     }
+      },
+      "storage": {
+        "title": "存储管理",
+        "retentionTime": "缓存保留时间",
+        "days3": "3天",
+        "days7": "7天",
+        "days14": "14天",
+        "days28": "28天",
+        "disabled": "禁用缓存",
+        "retentionDesc": "设置高亮缓存的保留时间，过期后自动清理",
+        "usage": "存储使用情况",
+        "cachedPages": "缓存页面",
+        "usedSpace": "已用空间",
+        "lastCleanup": "上次清理",
+        "cleanup": "缓存清理",
+        "cleanupExpired": "清理过期缓存",
+        "cleanupAll": "清除所有缓存",
+        "cleanupDesc": "手动清理缓存数据，释放存储空间",
+        "save": "保存存储设置"
+      },
+      "other": {
+        "title": "其他设置",
+        "autoUpdate": "自动检查更新",
+        "autoUpdateDesc": "启用后将自动检查插件更新",
+        "analytics": "匿名使用统计",
+        "analyticsDesc": "帮助我们改进产品（不收集个人信息）",
+        "reset": "重置所有设置"
+      }
     }
   },
   "sidebar": {

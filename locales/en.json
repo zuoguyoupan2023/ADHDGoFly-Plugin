@@ -111,6 +111,20 @@
         "history": "Historical Figures Dictionary",
         "medical": "Medical Dictionary",
         "literature": "Poetry Dictionary"
+      },
+      "customDict": "Custom Dictionary"
+    },
+    "customDict": {
+      "title": "Custom Dictionary",
+      "create": {
+        "title": "Create Dictionary",
+        "description": "Create your own professional dictionary",
+        "placeholder": "Feature under development..."
+      },
+      "manage": {
+        "title": "Manage Custom Dictionaries",
+        "description": "Manage your created dictionaries",
+        "placeholder": "No custom dictionaries yet"
       }
     },
     "colors": {
