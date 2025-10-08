@@ -414,6 +414,27 @@
         font-size: 18px;
       }
 
+      /* 返回按钮通用样式 */
+      .back-btn {
+        background: none;
+        border: 1px solid #ddd;
+        color: #666;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .back-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+      }
+
       /* 页面切换 */
       .page {
         display: none;
@@ -656,6 +677,716 @@
       /* 词典项悬停效果增强 */
       .dict-item:hover {
         position: relative;
+      }
+
+      /* 用户词典分组样式 */
+      .user-dict-group {
+        margin-top: 20px;
+        border-top: 2px solid #e9ecef;
+        padding-top: 16px;
+      }
+
+      .user-dict-group .language-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      .user-dict-group .language-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .dict-count {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-left: 8px;
+      }
+
+      .user-dict-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .create-dict-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .create-dict-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+
+      .user-dicts-container {
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 8px;
+        min-height: 60px;
+      }
+
+      .empty-user-dicts {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      .user-dict-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        padding: 12px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .user-dict-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .user-dict-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .user-dict-checkbox {
+        width: 16px;
+        height: 16px;
+      }
+
+      .user-dict-details {
+        flex: 1;
+      }
+
+      .user-dict-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 2px;
+      }
+
+      .user-dict-meta {
+        font-size: 11px;
+        color: #666;
+      }
+
+      .user-dict-actions-btn {
+        display: flex;
+        gap: 6px;
+      }
+
+      .user-dict-actions-btn button {
+        background: none;
+        border: 1px solid #ddd;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .user-dict-actions-btn button:hover {
+        border-color: #667eea;
+        color: #667eea;
+      }
+
+      .edit-dict-btn {
+        color: #28a745;
+      }
+
+      .delete-dict-btn {
+        color: #dc3545;
+      }
+
+      .export-dict-btn {
+        color: #17a2b8;
+      }
+
+      /* 词典编辑页面样式 */
+      .dict-editor-content {
+        padding: 20px;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+
+      .form-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+
+      .form-section h4 {
+        margin: 0 0 16px 0;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        font-size: 12px;
+        color: #555;
+      }
+
+      .name-inputs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .name-inputs input {
+        flex: 1;
+      }
+
+      .desc-inputs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .desc-inputs textarea {
+        flex: 1;
+        min-height: 60px;
+        resize: vertical;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+        transition: border-color 0.2s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+      }
+
+      .field-error {
+        color: #dc3545;
+        font-size: 11px;
+        margin-top: 4px;
+        display: none;
+      }
+
+      .field-error.show {
+        display: block;
+      }
+
+      /* 词汇管理区域样式 */
+      .words-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .section-header h4 {
+        margin: 0;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .word-count {
+        font-size: 12px;
+        color: #666;
+        margin-left: 8px;
+      }
+
+      .word-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .action-btn:hover {
+        background: #5a67d8;
+        transform: translateY(-1px);
+      }
+
+      .words-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .words-controls input,
+      .words-controls select {
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 11px;
+      }
+
+      .words-controls input {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .words-list {
+        min-height: 100px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        background: #fafafa;
+      }
+
+      .empty-words {
+        text-align: center;
+        padding: 40px 20px;
+        color: #666;
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      .word-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-bottom: 1px solid #f0f0f0;
+        background: white;
+        transition: background-color 0.2s ease;
+      }
+
+      .word-item:hover {
+        background: #f8f9fa;
+      }
+
+      .word-item:last-child {
+        border-bottom: none;
+      }
+
+      .word-text {
+        font-weight: 500;
+        font-size: 12px;
+        color: #333;
+      }
+
+      .word-pos {
+        font-size: 11px;
+        color: #666;
+        margin-left: 12px;
+      }
+
+      .word-item-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .word-item-actions button {
+        background: none;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 2px;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .edit-word-btn {
+        color: #28a745;
+      }
+
+      .delete-word-btn {
+        color: #dc3545;
+      }
+
+      .word-item-actions button:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      /* 快速添加词汇样式 */
+      .quick-add-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #e8f4fd;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+      }
+
+      .quick-add-section h4 {
+        margin: 0 0 12px 0;
+        color: #0c5460;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .quick-add-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .pos-checkboxes {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .pos-checkboxes label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .pos-checkboxes input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+      }
+
+      .quick-add-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .quick-add-actions button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      #confirm-add-word-btn {
+        background: #28a745;
+        color: white;
+      }
+
+      #cancel-add-word-btn {
+        background: #6c757d;
+        color: white;
+      }
+
+      /* 模态框样式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80%;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .close-btn:hover {
+        color: #333;
+      }
+
+      /* 导入标签页样式 */
+      .import-tabs {
+        display: flex;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        color: #666;
+        transition: all 0.2s ease;
+      }
+
+      .tab-btn.active {
+        background: white;
+        color: #667eea;
+        border-bottom: 2px solid #667eea;
+      }
+
+      .tab-btn:hover {
+        background: #f8f9fa;
+      }
+
+      .import-content {
+        padding: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .import-tab {
+        display: none;
+      }
+
+      .import-tab.active {
+        display: block;
+      }
+
+      .format-help {
+        margin-bottom: 16px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border-left: 4px solid #17a2b8;
+      }
+
+      .format-help p {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: #333;
+      }
+
+      .format-examples {
+        font-size: 11px;
+        color: #666;
+      }
+
+      .format-examples code {
+        background: #e9ecef;
+        padding: 2px 4px;
+        border-radius: 2px;
+        font-family: monospace;
+      }
+
+      #import-text {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: monospace;
+        resize: vertical;
+      }
+
+      .file-upload {
+        text-align: center;
+        padding: 20px;
+        border: 2px dashed #ddd;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+
+      .upload-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .upload-btn:hover {
+        background: #5a67d8;
+      }
+
+      .file-info {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .import-preview {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+
+      .import-preview h4 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        color: #333;
+      }
+
+      .preview-stats {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .stat {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 3px;
+      }
+
+      .stat.valid {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .stat.duplicate {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .stat.invalid {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .preview-list {
+        max-height: 100px;
+        overflow-y: auto;
+        font-size: 11px;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 3px;
+        padding: 8px;
+      }
+
+      .modal-actions {
+        padding: 16px 20px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .modal-actions button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      #preview-import-btn {
+        background: #17a2b8;
+        color: white;
+      }
+
+      #confirm-import-btn {
+        background: #28a745;
+        color: white;
+      }
+
+      #confirm-import-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+
+      #cancel-import-btn {
+        background: #6c757d;
+        color: white;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 350px) {
+        .name-inputs,
+        .desc-inputs {
+          flex-direction: column;
+        }
+        
+        .word-actions,
+        .words-controls {
+          flex-direction: column;
+        }
+        
+        .preview-stats {
+          flex-direction: column;
+          gap: 8px;
+        }
       }
 
       /* 保留原有的dict-group样式以兼容其他地方 */
@@ -2303,6 +3034,28 @@
               保存设置
             </button>
           </div>
+
+          <!-- 用户自建词典分组 -->
+          <div class="language-group user-dict-group" data-language="user">
+            <div class="language-header">
+              <div class="language-info">
+                <span class="language-name" data-i18n="pages.dict.userDictionaries.title">自建词典</span>
+                <span class="dict-count" id="user-dict-count">(0个)</span>
+              </div>
+              <div class="user-dict-actions">
+                <button class="create-dict-btn" id="create-dict-btn" data-i18n="pages.dict.userDictionaries.create">+ 创建词典</button>
+                <span class="expand-icon">▼</span>
+              </div>
+            </div>
+            
+            <!-- 用户词典列表容器 -->
+            <div class="user-dicts-container" id="user-dicts-container">
+              <!-- 用户词典项将动态生成 -->
+              <div class="empty-user-dicts" id="empty-user-dicts">
+                <p data-i18n="pages.dict.userDictionaries.empty">还没有自建词典，点击上方按钮创建第一个词典</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 词典信息提示框 -->
@@ -3005,6 +3758,201 @@
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 词典编辑页面 -->
+      <div class="page" id="dict-editor-page">
+        <div class="header">
+          <button class="back-btn" id="back-from-editor-btn">← <span data-i18n="buttons.back">返回</span></button>
+          <h3 id="editor-title" data-i18n="pages.dictEditor.createTitle">创建词典</h3>
+          <div class="header-actions">
+            <button class="save-btn" id="save-dict-editor-btn" data-i18n="buttons.save">保存</button>
+          </div>
+        </div>
+
+        <div class="dict-editor-content">
+          <!-- 基本信息表单 -->
+          <div class="form-section">
+            <h4 data-i18n="pages.dictEditor.basicInfo">基本信息</h4>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.dictName">词典名称 *</label>
+              <div class="name-inputs">
+                <input type="text" id="dict-name-zh" placeholder="中文名称" maxlength="50" required>
+                <input type="text" id="dict-name-en" placeholder="English Name" maxlength="100">
+              </div>
+              <div class="field-error" id="dict-name-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.targetLanguage">目标语言 *</label>
+              <select id="dict-language" required>
+                <option value="" data-i18n="pages.dictEditor.selectLanguage">请选择语言</option>
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+                <option value="ru">Русский</option>
+                <option value="ja">日本語</option>
+              </select>
+              <div class="field-error" id="dict-language-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.dictType">词典类型</label>
+              <select id="dict-domain">
+                <option value="general" data-i18n="pages.dictEditor.types.general">通用词汇</option>
+                <option value="technology" data-i18n="pages.dictEditor.types.technology">技术术语</option>
+                <option value="medical" data-i18n="pages.dictEditor.types.medical">医学术语</option>
+                <option value="legal" data-i18n="pages.dictEditor.types.legal">法律术语</option>
+                <option value="business" data-i18n="pages.dictEditor.types.business">商业术语</option>
+                <option value="academic" data-i18n="pages.dictEditor.types.academic">学术词汇</option>
+                <option value="personal" data-i18n="pages.dictEditor.types.personal">个人词汇</option>
+                <option value="other" data-i18n="pages.dictEditor.types.other">其他</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.description">词典描述</label>
+              <div class="desc-inputs">
+                <textarea id="dict-desc-zh" placeholder="中文描述" maxlength="200"></textarea>
+                <textarea id="dict-desc-en" placeholder="English Description" maxlength="400"></textarea>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="pages.dictEditor.author">作者信息</label>
+              <input type="text" id="dict-author" placeholder="可选" maxlength="50">
+            </div>
+          </div>
+          
+          <!-- 词汇管理区域 -->
+          <div class="words-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.dictEditor.wordsManagement">词汇管理</h4>
+              <span id="word-count" class="word-count">(0词)</span>
+              <div class="word-actions">
+                <button id="import-words-btn" class="action-btn" data-i18n="pages.dictEditor.importWords">批量导入</button>
+                <button id="add-word-btn" class="action-btn" data-i18n="pages.dictEditor.addWord">添加词汇</button>
+                <button id="export-dict-btn" class="action-btn" data-i18n="pages.dictEditor.exportDict">导出词典</button>
+              </div>
+            </div>
+            
+            <div class="words-controls">
+              <input type="text" id="word-search" placeholder="搜索词汇..." data-i18n-placeholder="pages.dictEditor.searchWords">
+              <select id="pos-filter">
+                <option value="" data-i18n="pages.dictEditor.allPos">所有词性</option>
+                <option value="n" data-i18n="pages.dictEditor.pos.noun">名词</option>
+                <option value="v" data-i18n="pages.dictEditor.pos.verb">动词</option>
+                <option value="adj" data-i18n="pages.dictEditor.pos.adjective">形容词</option>
+                <option value="adv" data-i18n="pages.dictEditor.pos.adverb">副词</option>
+                <option value="prep" data-i18n="pages.dictEditor.pos.preposition">介词</option>
+                <option value="conj" data-i18n="pages.dictEditor.pos.conjunction">连词</option>
+              </select>
+              <select id="word-sort">
+                <option value="alpha" data-i18n="pages.dictEditor.sortAlpha">按字母排序</option>
+                <option value="time" data-i18n="pages.dictEditor.sortTime">按添加时间</option>
+                <option value="pos" data-i18n="pages.dictEditor.sortPos">按词性分组</option>
+              </select>
+            </div>
+            
+            <div class="words-list" id="words-list">
+              <div class="empty-words" id="empty-words">
+                <p data-i18n="pages.dictEditor.emptyWords">还没有添加词汇，点击"添加词汇"或"批量导入"开始</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 快速添加词汇表单 -->
+          <div class="quick-add-section" id="quick-add-section" style="display: none;">
+            <h4 data-i18n="pages.dictEditor.quickAdd">快速添加词汇</h4>
+            <div class="quick-add-form">
+              <input type="text" id="quick-word-input" placeholder="输入词汇" data-i18n-placeholder="pages.dictEditor.enterWord">
+              <div class="pos-checkboxes">
+                <label><input type="checkbox" value="n"> <span data-i18n="pages.dictEditor.pos.noun">名词</span></label>
+                <label><input type="checkbox" value="v"> <span data-i18n="pages.dictEditor.pos.verb">动词</span></label>
+                <label><input type="checkbox" value="adj"> <span data-i18n="pages.dictEditor.pos.adjective">形容词</span></label>
+                <label><input type="checkbox" value="adv"> <span data-i18n="pages.dictEditor.pos.adverb">副词</span></label>
+              </div>
+              <div class="quick-add-actions">
+                <button id="confirm-add-word-btn" data-i18n="pages.dictEditor.confirmAdd">确认添加</button>
+                <button id="cancel-add-word-btn" data-i18n="buttons.cancel">取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 批量导入模态框 -->
+      <div id="import-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 data-i18n="pages.import.title">批量导入词汇</h3>
+            <button class="close-btn" id="close-import-modal">×</button>
+          </div>
+          
+          <div class="import-tabs">
+            <button class="tab-btn active" data-tab="text" data-i18n="pages.import.textPaste">文本粘贴</button>
+            <button class="tab-btn" data-tab="csv" data-i18n="pages.import.csvFile">CSV文件</button>
+            <button class="tab-btn" data-tab="json" data-i18n="pages.import.jsonFile">JSON文件</button>
+          </div>
+          
+          <div class="import-content">
+            <!-- 文本导入 -->
+            <div id="text-import" class="import-tab active">
+              <div class="format-help">
+                <p data-i18n="pages.import.formatHelp">格式说明：每行一个词汇，可选择性添加词性</p>
+                <div class="format-examples">
+                  <code>人工智能</code><br>
+                  <code>机器学习 名词</code><br>
+                  <code>深度学习 名词,形容词</code>
+                </div>
+              </div>
+              <textarea id="import-text" placeholder="请粘贴词汇列表..." data-i18n-placeholder="pages.import.pasteWords"></textarea>
+            </div>
+            
+            <!-- CSV文件导入 -->
+            <div id="csv-import" class="import-tab">
+              <div class="file-upload">
+                <input type="file" id="csv-file" accept=".csv" hidden>
+                <button class="upload-btn" onclick="document.getElementById('csv-file').click()" data-i18n="pages.import.selectCsv">
+                  选择CSV文件
+                </button>
+                <div class="file-info" id="csv-file-info"></div>
+              </div>
+              <div class="csv-preview" id="csv-preview"></div>
+            </div>
+            
+            <!-- JSON文件导入 -->
+            <div id="json-import" class="import-tab">
+              <div class="file-upload">
+                <input type="file" id="json-file" accept=".json" hidden>
+                <button class="upload-btn" onclick="document.getElementById('json-file').click()" data-i18n="pages.import.selectJson">
+                  选择JSON文件
+                </button>
+                <div class="file-info" id="json-file-info"></div>
+              </div>
+              <div class="json-preview" id="json-preview"></div>
+            </div>
+          </div>
+          
+          <!-- 导入预览 -->
+          <div class="import-preview" id="import-preview" style="display: none;">
+            <h4 data-i18n="pages.import.previewTitle">导入预览</h4>
+            <div class="preview-stats">
+              <span class="stat valid">✓ <span data-i18n="pages.import.validWords">有效词汇</span>: <span id="valid-count">0</span>个</span>
+              <span class="stat duplicate">⚠ <span data-i18n="pages.import.duplicateWords">重复词汇</span>: <span id="duplicate-count">0</span>个</span>
+              <span class="stat invalid">✗ <span data-i18n="pages.import.invalidWords">无效词汇</span>: <span id="invalid-count">0</span>个</span>
+            </div>
+            <div class="preview-list" id="preview-list"></div>
+          </div>
+          
+          <div class="modal-actions">
+            <button id="preview-import-btn" data-i18n="pages.import.previewImport">预览导入</button>
+            <button id="confirm-import-btn" disabled data-i18n="pages.import.confirmImport">确认导入</button>
+            <button id="cancel-import-btn" data-i18n="buttons.cancel">取消</button>
           </div>
         </div>
       </div>
