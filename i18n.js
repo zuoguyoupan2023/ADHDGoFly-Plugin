@@ -158,6 +158,22 @@ class I18nManager {
       }
     });
 
+    // 处理占位符翻译
+    const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+    placeholderElements.forEach(element => {
+      const key = element.getAttribute('data-i18n-placeholder');
+      const translation = this.t(key);
+      element.placeholder = translation;
+    });
+
+    // 处理title属性翻译
+    const titleElements = document.querySelectorAll('[data-i18n-title]');
+    titleElements.forEach(element => {
+      const key = element.getAttribute('data-i18n-title');
+      const translation = this.t(key);
+      element.title = translation;
+    });
+
     // 处理特殊的HTML内容
     this.applySpecialTranslations();
   }

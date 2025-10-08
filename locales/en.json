@@ -169,16 +169,14 @@
     },
     "ai": {
       "title": "Smart Analysis",
-      "description": "Highlight analysis  based on current page content",
+      "description": "Highlight analysis based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
         "posDistribution": "Part of Speech Distribution"
       },
-
       "refresh": "🔄 Refresh Analysis",
       "analyzing": "Analyzing...",
-
       "noData": "No data available",
       "error": "Analysis failed, please try again"
     },
@@ -254,23 +252,8 @@
         "analyticsDesc": "Help us improve the product (no personal information collected)",
         "reset": "Reset All Settings"
       }
-    }
-  },
-  "sidebar": {
-    "home": "Home",
-    "dict": "Dictionary",
-    "colors": "Colors",
-    "text": "Text",
-    "ai": "AI Analysis",
-    "about": "About",
-    "settings": "Settings",
-    "language": "Switch Language"
-  },
-  "languages": {
-    "zh": "中文",
-    "en": "English"
-  },
-  "dictEditor": {
+    },
+    "dictEditor": {
       "createTitle": "Create Dictionary",
       "editTitle": "Edit Dictionary",
       "back": "Back",
@@ -346,4 +329,19 @@
       "previewImport": "Preview Import",
       "confirmImport": "Confirm Import"
     }
+  },
+  "sidebar": {
+    "home": "Home",
+    "dict": "Dictionary",
+    "colors": "Colors",
+    "text": "Text",
+    "ai": "AI Analysis",
+    "about": "About",
+    "settings": "Settings",
+    "language": "Switch Language"
+  },
+  "languages": {
+    "zh": "中文",
+    "en": "English"
+  }
 }
