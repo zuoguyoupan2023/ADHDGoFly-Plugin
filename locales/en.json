@@ -270,7 +270,8 @@
     "zh": "中文",
     "en": "English"
   },
-  "dictEditor": {
+  "pages": {
+    "dictEditor": {
       "createTitle": "Create Dictionary",
       "editTitle": "Edit Dictionary",
       "back": "Back",
@@ -346,4 +347,5 @@
       "previewImport": "Preview Import",
       "confirmImport": "Confirm Import"
     }
+  }
 }
