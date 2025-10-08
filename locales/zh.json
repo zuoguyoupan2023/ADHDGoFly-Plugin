@@ -40,9 +40,7 @@
     "applyStyle": "应用样式",
     "reset": "重置默认",
     "refresh": "🔄 刷新分析",
-    "resetAll": "重置所有设置",
-    "back": "返回",
-    "cancel": "取消"
+    "resetAll": "重置所有设置"
   },
   "legend": {
     "title": "词性颜色",
@@ -132,73 +130,7 @@
         "history": "历史人物词典",
         "medical": "医学词典",
         "literature": "诗词词典"
-      },
-      "userDictionaries": {
-        "title": "自建词典",
-        "create": "+ 创建词典",
-        "empty": "还没有自建词典，点击上方按钮创建第一个词典",
-        "edit": "编辑",
-        "delete": "删除",
-        "export": "导出"
       }
-    },
-    "dictEditor": {
-      "createTitle": "创建词典",
-      "editTitle": "编辑词典",
-      "basicInfo": "基本信息",
-      "dictName": "词典名称",
-      "targetLanguage": "目标语言",
-      "selectLanguage": "请选择语言",
-      "dictType": "词典类型",
-      "description": "词典描述",
-      "author": "作者信息",
-      "wordsManagement": "词汇管理",
-      "importWords": "批量导入",
-      "addWord": "添加词汇",
-      "exportDict": "导出词典",
-      "searchWords": "搜索词汇...",
-      "allPos": "所有词性",
-      "sortAlpha": "按字母排序",
-      "sortTime": "按添加时间",
-      "sortPos": "按词性分组",
-      "emptyWords": "还没有添加词汇，点击"添加词汇"或"批量导入"开始",
-      "quickAdd": "快速添加词汇",
-      "enterWord": "输入词汇",
-      "confirmAdd": "确认添加",
-      "types": {
-        "general": "通用词汇",
-        "technology": "技术术语",
-        "medical": "医学术语",
-        "legal": "法律术语",
-        "business": "商业术语",
-        "academic": "学术词汇",
-        "personal": "个人词汇",
-        "other": "其他"
-      },
-      "pos": {
-        "noun": "名词",
-        "verb": "动词",
-        "adjective": "形容词",
-        "adverb": "副词",
-        "preposition": "介词",
-        "conjunction": "连词"
-      }
-    },
-    "import": {
-      "title": "批量导入词汇",
-      "textPaste": "文本粘贴",
-      "csvFile": "CSV文件",
-      "jsonFile": "JSON文件",
-      "formatHelp": "格式说明：每行一个词汇，可选择性添加词性",
-      "pasteWords": "请粘贴词汇列表...",
-      "selectCsv": "选择CSV文件",
-      "selectJson": "选择JSON文件",
-      "previewTitle": "导入预览",
-      "validWords": "有效词汇",
-      "duplicateWords": "重复词汇",
-      "invalidWords": "无效词汇",
-      "previewImport": "预览导入",
-      "confirmImport": "确认导入"
     },
     "colors": {
       "title": "颜色方案",

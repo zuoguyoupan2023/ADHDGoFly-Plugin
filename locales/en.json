@@ -43,9 +43,7 @@
     "applyStyle": "Apply Style",
     "reset": "Reset Default",
     "refresh": "🔄 Refresh Analysis",
-    "resetAll": "Reset All Settings",
-    "back": "Back",
-    "cancel": "Cancel"
+    "resetAll": "Reset All Settings"
   },
   "legend": {
     "title": "Part of Speech Colors",
@@ -113,73 +111,7 @@
         "history": "Historical Figures Dictionary",
         "medical": "Medical Dictionary",
         "literature": "Poetry Dictionary"
-      },
-      "userDictionaries": {
-        "title": "Custom Dictionaries",
-        "create": "+ Create Dictionary",
-        "empty": "No custom dictionaries yet. Click the button above to create your first dictionary",
-        "edit": "Edit",
-        "delete": "Delete",
-        "export": "Export"
       }
-    },
-    "dictEditor": {
-      "createTitle": "Create Dictionary",
-      "editTitle": "Edit Dictionary",
-      "basicInfo": "Basic Information",
-      "dictName": "Dictionary Name",
-      "targetLanguage": "Target Language",
-      "selectLanguage": "Please select language",
-      "dictType": "Dictionary Type",
-      "description": "Description",
-      "author": "Author",
-      "wordsManagement": "Words Management",
-      "importWords": "Batch Import",
-      "addWord": "Add Word",
-      "exportDict": "Export Dictionary",
-      "searchWords": "Search words...",
-      "allPos": "All POS",
-      "sortAlpha": "Sort Alphabetically",
-      "sortTime": "Sort by Time",
-      "sortPos": "Group by POS",
-      "emptyWords": "No words added yet. Click 'Add Word' or 'Batch Import' to start",
-      "quickAdd": "Quick Add Word",
-      "enterWord": "Enter word",
-      "confirmAdd": "Confirm Add",
-      "types": {
-        "general": "General Vocabulary",
-        "technology": "Technical Terms",
-        "medical": "Medical Terms",
-        "legal": "Legal Terms",
-        "business": "Business Terms",
-        "academic": "Academic Vocabulary",
-        "personal": "Personal Vocabulary",
-        "other": "Other"
-      },
-      "pos": {
-        "noun": "Noun",
-        "verb": "Verb",
-        "adjective": "Adjective",
-        "adverb": "Adverb",
-        "preposition": "Preposition",
-        "conjunction": "Conjunction"
-      }
-    },
-    "import": {
-      "title": "Batch Import Words",
-      "textPaste": "Text Paste",
-      "csvFile": "CSV File",
-      "jsonFile": "JSON File",
-      "formatHelp": "Format: One word per line, optionally add part of speech",
-      "pasteWords": "Please paste word list...",
-      "selectCsv": "Select CSV File",
-      "selectJson": "Select JSON File",
-      "previewTitle": "Import Preview",
-      "validWords": "Valid Words",
-      "duplicateWords": "Duplicate Words",
-      "invalidWords": "Invalid Words",
-      "previewImport": "Preview Import",
-      "confirmImport": "Confirm Import"
     },
     "colors": {
       "title": "Color Schemes",
