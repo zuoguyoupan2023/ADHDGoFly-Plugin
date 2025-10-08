@@ -61,9 +61,6 @@ class ADHDHighlighter {
       // 初始化词典
       await this.dictionaryManager.initialize();
       
-      // 加载自建词典数据
-      await this.loadCustomDictionaries();
-      
       // 加载词典设置
       await this.loadDictSettings();
       
@@ -175,11 +172,6 @@ class ADHDHighlighter {
           sendResponse({ success: true, text: selectedText });
           break;
           
-        case 'refreshCustomDictionaries':
-          await this.refreshCustomDictionaries();
-          sendResponse({ success: true });
-          break;
-          
         default:
           sendResponse({ 
             success: false, 
@@ -207,41 +199,6 @@ class ADHDHighlighter {
       }
     } catch (error) {
       console.error('加载存储状态失败:', error);
-    }
-  }
-
-  /**
-   * 加载自建词典数据
-   * @private
-   */
-  async loadCustomDictionaries() {
-    try {
-      // 检查是否有自建词典数据库
-      if (window.customDictDB) {
-        const customDicts = await window.customDictDB.getAllDicts();
-        console.log('加载自建词典:', customDicts.length, '个词典');
-        
-        // 将自建词典数据传递给词典管理器
-        if (this.dictionaryManager && this.dictionaryManager.setCustomDictionaries) {
-          this.dictionaryManager.setCustomDictionaries(customDicts);
-        }
-      } else {
-        console.log('自建词典数据库未初始化');
-      }
-    } catch (error) {
-      console.error('加载自建词典失败:', error);
-    }
-  }
-
-  /**
-   * 刷新自建词典
-   */
-  async refreshCustomDictionaries() {
-    try {
-      await this.loadCustomDictionaries();
-      console.log('自建词典已刷新');
-    } catch (error) {
-      console.error('刷新自建词典失败:', error);
     }
   }
 

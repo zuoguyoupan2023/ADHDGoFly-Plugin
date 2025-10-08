@@ -74,7 +74,7 @@
   gap: 4px;
 }
 
-.edit-custom-dict-btn, .delete-custom-dict-btn {
+.edit-btn, .delete-btn {
   padding: 4px 8px;
   border: none;
   border-radius: 3px;
@@ -83,21 +83,21 @@
   transition: all 0.2s ease;
 }
 
-.edit-custom-dict-btn {
+.edit-btn {
   background: #007aff;
   color: white;
 }
 
-.edit-custom-dict-btn:hover {
+.edit-btn:hover {
   background: #0056b3;
 }
 
-.delete-custom-dict-btn {
+.delete-btn {
   background: #dc3545;
   color: white;
 }
 
-.delete-custom-dict-btn:hover {
+.delete-btn:hover {
   background: #c82333;
 }
 
