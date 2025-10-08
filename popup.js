@@ -66,6 +66,10 @@ class PopupController {
       comparative: true     // 比较级/最高级高亮开关
     };
 
+    // 初始化自建词典相关属性
+    this.customDictWords = [];
+    this.editingDictId = null;
+
     // 词典meta信息
     this.dictMeta = {
       'zh-preset': {
@@ -431,6 +435,14 @@ class PopupController {
           this.bindDictTooltipEvents();
         }, 50);
       }
+      
+      // 如果是自建词典页面，初始化自建词典事件
+      if (pageId === 'custom-dict') {
+        console.log('Switching to custom-dict page, initializing custom dict events...');
+        setTimeout(() => {
+          this.bindCustomDictEvents();
+        }, 50);
+      }
     }
   }
 
@@ -465,9 +477,6 @@ class PopupController {
 
     // 词典tooltip事件
     this.bindDictTooltipEvents();
-    
-    // 自建词典功能事件
-    this.bindCustomDictEvents();
   }
 
   bindDictTooltipEvents() {
@@ -1418,10 +1427,19 @@ class PopupController {
   // ========== 自建词典功能 ==========
 
   bindCustomDictEvents() {
+    console.log('Binding custom dict events...');
+    
     // 词典名称输入框事件
     const dictNameInput = document.getElementById('dict-name-input');
     if (dictNameInput) {
-      dictNameInput.addEventListener('input', () => this.validateDictForm());
+      // 移除旧的事件监听器（如果存在）
+      dictNameInput.removeEventListener('input', this.validateDictFormHandler);
+      // 创建绑定的处理函数
+      this.validateDictFormHandler = () => this.validateDictForm();
+      dictNameInput.addEventListener('input', this.validateDictFormHandler);
+      console.log('Dict name input event bound');
+    } else {
+      console.log('Dict name input not found');
     }
 
     // 词汇输入框事件
@@ -1429,13 +1447,28 @@ class PopupController {
     wordInputs.forEach(inputId => {
       const input = document.getElementById(inputId);
       if (input) {
-        input.addEventListener('input', (e) => this.handleWordInput(e));
-        input.addEventListener('keypress', (e) => {
+        // 移除旧的事件监听器
+        if (input._inputHandler) {
+          input.removeEventListener('input', input._inputHandler);
+        }
+        if (input._keypressHandler) {
+          input.removeEventListener('keypress', input._keypressHandler);
+        }
+        
+        // 创建新的事件处理函数
+        input._inputHandler = (e) => this.handleWordInput(e);
+        input._keypressHandler = (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
             this.addWordFromInput(inputId);
           }
-        });
+        };
+        
+        input.addEventListener('input', input._inputHandler);
+        input.addEventListener('keypress', input._keypressHandler);
+        console.log(`Word input ${inputId} events bound`);
+      } else {
+        console.log(`Word input ${inputId} not found`);
       }
     });
 
@@ -1444,22 +1477,46 @@ class PopupController {
     addButtons.forEach(btnId => {
       const btn = document.getElementById(btnId);
       if (btn) {
-        btn.addEventListener('click', () => {
+        // 移除旧的事件监听器
+        if (btn._clickHandler) {
+          btn.removeEventListener('click', btn._clickHandler);
+        }
+        
+        // 创建新的事件处理函数
+        btn._clickHandler = () => {
           const inputId = btnId.replace('add-', '').replace('-btn', '-input');
           this.addWordFromInput(inputId);
-        });
+        };
+        
+        btn.addEventListener('click', btn._clickHandler);
+        console.log(`Add button ${btnId} event bound`);
+      } else {
+        console.log(`Add button ${btnId} not found`);
       }
     });
 
     // 保存词典按钮事件
     const saveDictBtn = document.getElementById('save-dict-btn');
     if (saveDictBtn) {
-      saveDictBtn.addEventListener('click', () => this.saveCustomDict());
+      // 移除旧的事件监听器
+      if (saveDictBtn._clickHandler) {
+        saveDictBtn.removeEventListener('click', saveDictBtn._clickHandler);
+      }
+      
+      // 创建新的事件处理函数
+      saveDictBtn._clickHandler = () => this.saveCustomDict();
+      saveDictBtn.addEventListener('click', saveDictBtn._clickHandler);
+      console.log('Save dict button event bound');
+    } else {
+      console.log('Save dict button not found');
     }
 
     // 初始化自建词典数据
     this.customDictWords = [];
     this.loadCustomDictionaries();
+    
+    // 初始化表单验证状态
+    this.validateDictForm();
   }
 
   handleWordInput(e) {
@@ -1527,11 +1584,14 @@ class PopupController {
       <div class="word-item">
         <span class="word-text">${item.word}</span>
         <span class="word-pos">${this.getPosDisplayName(item.pos)}</span>
-        <button class="remove-word-btn" onclick="popupController.removeWord(${index})">×</button>
+        <button class="remove-word-btn" data-index="${index}">×</button>
       </div>
     `).join('');
 
     previewList.innerHTML = html;
+    
+    // 重新绑定删除按钮事件
+    this.bindRemoveWordEvents();
   }
 
   getPosDisplayName(pos) {
@@ -1543,6 +1603,16 @@ class PopupController {
     return posNames[pos] || pos;
   }
 
+  bindRemoveWordEvents() {
+    const removeButtons = document.querySelectorAll('.remove-word-btn');
+    removeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        this.removeWord(index);
+      });
+    });
+  }
+
   removeWord(index) {
     this.customDictWords.splice(index, 1);
     this.updateWordPreview();
@@ -1550,15 +1620,29 @@ class PopupController {
   }
 
   validateDictForm() {
+    console.log('validateDictForm called');
     const nameInput = document.getElementById('dict-name-input');
     const saveBtn = document.getElementById('save-dict-btn');
     
-    if (!nameInput || !saveBtn) return;
+    console.log('nameInput:', nameInput);
+    console.log('saveBtn:', saveBtn);
+    
+    if (!nameInput || !saveBtn) {
+      console.log('Missing elements, returning');
+      return;
+    }
 
     const hasName = nameInput.value.trim().length > 0;
-    const hasWords = this.customDictWords.length > 0;
+    const hasWords = this.customDictWords ? this.customDictWords.length > 0 : false;
     
-    saveBtn.disabled = !(hasName && hasWords);
+    console.log('hasName:', hasName, 'nameInput.value:', nameInput.value);
+    console.log('hasWords:', hasWords, 'customDictWords:', this.customDictWords);
+    
+    const shouldEnable = hasName && hasWords;
+    console.log('shouldEnable:', shouldEnable);
+    
+    saveBtn.disabled = !shouldEnable;
+    console.log('saveBtn.disabled set to:', saveBtn.disabled);
   }
 
   async saveCustomDict() {
@@ -1742,8 +1826,8 @@ class PopupController {
             </div>
           </div>
           <div class="dict-item-actions">
-            <button class="dict-action-btn" onclick="popupController.editCustomDict('${dict.id}')" data-i18n="pages.customDict.buttons.edit">编辑</button>
-            <button class="dict-action-btn delete" onclick="popupController.deleteCustomDict('${dict.id}')" data-i18n="pages.customDict.buttons.delete">删除</button>
+            <button class="dict-action-btn edit-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.edit">编辑</button>
+            <button class="dict-action-btn delete delete-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.delete">删除</button>
           </div>
         </div>
         <div class="dict-item-content" id="dict-content-${dict.id}">
@@ -1891,6 +1975,11 @@ class PopupController {
 // 全局引用，供HTML onclick使用
 let popupController;
 
+// 确保popupController在全局window对象上可访问
+if (typeof window !== 'undefined') {
+  window.popupController = null;
+}
+
 // 语言分组折叠展开功能
 function toggleLanguageGroup(language) {
   console.log('toggleLanguageGroup called with:', language);
@@ -2019,6 +2108,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 然后创建PopupController
   popupController = new PopupController();
+  
+  // 确保全局访问
+  if (typeof window !== 'undefined') {
+    window.popupController = popupController;
+  }
   
   // 延迟初始化语言分组监听器，确保DOM完全加载
   setTimeout(() => {
