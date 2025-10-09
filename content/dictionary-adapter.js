@@ -8,25 +8,16 @@ class DictionaryAdapter {
         this.legacyData = {};
         this.isLoaded = false;
         this.loadPromise = null;
-        
-        // 新架构：语言支持配置（系统级）- 所有语言默认支持
-        this.supportedLanguages = {
-            zh: { enabled: true, name: '中文', priority: 1 },
-            en: { enabled: true, name: 'English', priority: 2 },
-            fr: { enabled: true, name: 'Français', priority: 3 },
-            es: { enabled: true, name: 'Español', priority: 4 },
-            ru: { enabled: true, name: 'Русский', priority: 5 },
-            ja: { enabled: true, name: '日本語', priority: 6 }
+        this.enabledLanguages = {
+            zh: true,
+            en: true,
+            fr: false,
+            ru: false,
+            es: false,
+            ja: false
         };
-        
-        // 词典启用状态（用户级）
+        // 新增：词典ID级别的启用状态
         this.enabledDictionaries = {};
-        
-        // 兼容性：保留旧接口，通过计算得出
-        this.enabledLanguages = {};
-        
-        // 自建词典语言缓存
-        this.customDictionaryLanguages = new Map();
     }
 
     /**
@@ -211,8 +202,8 @@ class DictionaryAdapter {
             }
         }
         
-        // 向后兼容：检查语言是否启用
-        if (this.isLanguageEnabled(language)) {
+        // 向后兼容：使用语言级别的设置
+        if (this.enabledLanguages[language]) {
             return this.legacyData[language] || {};
         }
         
@@ -262,35 +253,14 @@ class DictionaryAdapter {
             // 新格式：使用词典ID
             this.updateEnabledDictionaries(enabledLanguages);
         } else {
-            // 旧格式：转换为语言支持配置
-            console.warn('updateEnabledLanguages with language codes is deprecated, converting to supportedLanguages');
-            this.updateSupportedLanguages(enabledLanguages);
-        }
-    }
-
-    /**
-     * 更新语言支持配置（新接口）
-     * @param {Object} config 语言支持配置
-     */
-    updateSupportedLanguages(config) {
-        console.log('Updating supported languages:', config);
-        
-        Object.keys(config).forEach(lang => {
-            if (this.supportedLanguages[lang]) {
-                this.supportedLanguages[lang].enabled = config[lang];
+            // 旧格式：使用语言代码
+            this.enabledLanguages = { ...this.enabledLanguages, ...enabledLanguages };
+            
+            // 如果使用新管理器，同步更新注册表中的启用状态
+            if (this.newManager) {
+                this._syncEnabledLanguagesToRegistry(enabledLanguages);
             }
-        });
-        
-        // 重新计算生效语言并更新兼容性缓存
-        this._updateLanguageStatusCache();
-    }
-
-    /**
-     * 获取语言支持状态
-     * @returns {Object} 语言支持配置的副本
-     */
-    getSupportedLanguages() {
-        return JSON.parse(JSON.stringify(this.supportedLanguages));
+        }
     }
 
     /**
@@ -301,8 +271,8 @@ class DictionaryAdapter {
         console.log('Updating enabled dictionaries:', enabledDictionaries);
         this.enabledDictionaries = { ...enabledDictionaries };
         
-        // 更新兼容性缓存
-        this._updateLanguageStatusCache();
+        // 同步更新语言状态
+        this._updateLanguageStatusFromDictionaries();
     }
 
     /**
@@ -317,124 +287,57 @@ class DictionaryAdapter {
     }
 
     /**
-     * 更新语言状态缓存（兼容性）
+     * 根据启用的词典更新语言状态
      * @private
-     */
-    _updateLanguageStatusCache() {
-        // 为了兼容性，更新 enabledLanguages 缓存
-        const effectiveLanguages = {};
-        Object.keys(this.supportedLanguages).forEach(lang => {
-            effectiveLanguages[lang] = this.isLanguageEnabled(lang);
-        });
-        
-        this.enabledLanguages = effectiveLanguages;
-        
-        console.log('Updated language status cache:', this.enabledLanguages);
-    }
-
-    /**
-     * 根据启用的词典更新语言状态（旧方法，保留兼容性）
-     * @private
-     * @deprecated 使用 _updateLanguageStatusCache 替代
      */
     _updateLanguageStatusFromDictionaries() {
-        console.warn('_updateLanguageStatusFromDictionaries is deprecated, use _updateLanguageStatusCache instead');
-        this._updateLanguageStatusCache();
+        if (!this.newManager) return;
+        
+        // 重置语言状态
+        const languageStatus = {
+            zh: false,
+            en: false,
+            fr: false,
+            ru: false,
+            es: false,
+            ja: false
+        };
+        
+        console.log('Updating language status from dictionaries:', this.enabledDictionaries);
+        
+        // 检查每个语言是否有启用的词典
+        Object.keys(this.enabledDictionaries).forEach(dictId => {
+            if (this.enabledDictionaries[dictId]) {
+                const dict = this.newManager.getDictionaryById(dictId);
+                console.log(`Dictionary ${dictId}:`, dict);
+                if (dict && dict.language) {
+                    languageStatus[dict.language] = true;
+                    console.log(`Enabled language: ${dict.language}`);
+                }
+            }
+        });
+        
+        // 更新语言启用状态
+        this.enabledLanguages = languageStatus;
+        
+        console.log('Updated language status from dictionaries:', this.enabledLanguages);
     }
 
     /**
-     * 检查语言是否启用（新实现：语言支持 && 有启用的词典）
+     * 检查语言是否启用
      * @param {string} language 语言代码
      * @returns {boolean} 是否启用
      */
     isLanguageEnabled(language) {
-        const langConfig = this.supportedLanguages[language];
-        if (!langConfig || !langConfig.enabled) {
-            return false;
-        }
-        
-        return this.hasEnabledDictionariesForLanguage(language);
+        return this.enabledLanguages[language] || false;
     }
 
     /**
-     * 获取启用的语言列表（新实现：动态计算）
+     * 获取启用的语言列表
      * @returns {Array<string>} 启用的语言代码数组
      */
     getEnabledLanguages() {
-        const enabledLanguages = [];
-        
-        Object.keys(this.supportedLanguages).forEach(lang => {
-            const langConfig = this.supportedLanguages[lang];
-            
-            // 语言支持 && 有启用的词典
-            if (langConfig.enabled && this.hasEnabledDictionariesForLanguage(lang)) {
-                enabledLanguages.push(lang);
-            }
-        });
-        
-        // 按优先级排序
-        return enabledLanguages.sort((a, b) => {
-            return this.supportedLanguages[a].priority - this.supportedLanguages[b].priority;
-        });
-    }
-
-    /**
-     * 检查指定语言是否有启用的词典
-     * @param {string} language 语言代码
-     * @returns {boolean} 是否有启用的词典
-     */
-    hasEnabledDictionariesForLanguage(language) {
-        return Object.keys(this.enabledDictionaries).some(dictId => {
-            if (!this.enabledDictionaries[dictId]) return false;
-            
-            // 预设词典检查
-            if (dictId.includes('-preset')) {
-                return dictId.startsWith(language + '-');
-            }
-            
-            // 自建词典检查
-            if (dictId.startsWith('custom-')) {
-                return this.getCustomDictionaryLanguage(dictId) === language;
-            }
-            
-            // 下载词典检查（未来扩展）
-            if (dictId.startsWith('downloaded-')) {
-                return this.getDownloadedDictionaryLanguage(dictId) === language;
-            }
-            
-            return false;
-        });
-    }
-
-    /**
-     * 获取自建词典的语言
-     * @param {string} dictId 自建词典ID
-     * @returns {string|null} 语言代码
-     */
-    getCustomDictionaryLanguage(dictId) {
-        // 从缓存中获取
-        if (this.customDictionaryLanguages.has(dictId)) {
-            return this.customDictionaryLanguages.get(dictId);
-        }
-        
-        // 如果缓存中没有，尝试从启用的自建词典中推断
-        // 这是一个临时方案，理想情况下应该从IndexedDB获取
-        console.log(`Getting language for custom dictionary ${dictId} - checking enabled dictionaries`);
-        
-        // 暂时假设自建词典支持中英文（这是最常见的情况）
-        // 在实际使用中，这个信息应该在 updateCustomDictionaries 时被设置
-        return 'zh'; // 默认返回中文，可以根据实际需求调整
-    }
-
-    /**
-     * 获取下载词典的语言（未来扩展）
-     * @param {string} dictId 下载词典ID
-     * @returns {string|null} 语言代码
-     */
-    getDownloadedDictionaryLanguage(dictId) {
-        // 未来实现
-        console.log(`Getting language for downloaded dictionary ${dictId} - not implemented yet`);
-        return null;
+        return Object.keys(this.enabledLanguages).filter(lang => this.enabledLanguages[lang]);
     }
 
     /**
@@ -519,102 +422,6 @@ class DictionaryAdapter {
             }
             return await this.initialize();
         }
-    }
-
-    // ========== 自建词典支持 ==========
-
-    /**
-     * 更新自建词典数据
-     * @param {Array} customDictionaries 自建词典数组
-     */
-    updateCustomDictionaries(customDictionaries) {
-        console.log('DictionaryAdapter: 更新自建词典数据:', customDictionaries);
-        
-        if (!customDictionaries || !Array.isArray(customDictionaries)) {
-            console.log('DictionaryAdapter: 自建词典数据为空或格式错误');
-            return;
-        }
-
-        // 记录自建词典涉及的语言
-        const customDictLanguages = new Set();
-
-        // 处理每个自建词典
-        customDictionaries.forEach(dict => {
-            if (dict.words && Array.isArray(dict.words)) {
-                console.log(`DictionaryAdapter: 处理自建词典 ${dict.name || dict.id}，包含 ${dict.words.length} 个词汇`);
-                
-                dict.words.forEach(wordObj => {
-                    const word = wordObj.word;
-                    const pos = wordObj.pos || 'n'; // 默认为名词
-                    
-                    // 检测词汇语言并分类存储
-                    const language = this._detectWordLanguage(word);
-                    customDictLanguages.add(language);
-                    
-                    // 缓存自建词典的语言信息
-                    this.customDictionaryLanguages.set(dict.id, language);
-                    
-                    // 确保语言词典存在
-                    if (!this.legacyData[language]) {
-                        this.legacyData[language] = {};
-                        console.log(`DictionaryAdapter: 创建新的语言词典 ${language}`);
-                    }
-                    
-                    // 添加词汇到对应语言词典
-                    this.legacyData[language][word] = pos;
-                });
-            }
-        });
-        
-        // 更新语言状态缓存
-        this._updateLanguageStatusCache();
-        
-        // 输出合并后的统计信息
-        const stats = Object.keys(this.legacyData).reduce((acc, lang) => {
-            acc[lang] = Object.keys(this.legacyData[lang]).length;
-            return acc;
-        }, {});
-        console.log('DictionaryAdapter: 自建词典合并完成，当前词典状态:', stats);
-        console.log('DictionaryAdapter: 更新后的语言启用状态:', this.getEnabledLanguages());
-    }
-
-    /**
-     * 检测单词语言
-     * @param {string} word 词汇
-     * @returns {string} 语言代码
-     * @private
-     */
-    _detectWordLanguage(word) {
-        // 中文字符检测
-        if (/[\u4e00-\u9fa5]/.test(word)) return 'zh';
-        
-        // 日文字符检测（平假名、片假名、汉字）
-        if (/[\u3040-\u309f\u30a0-\u30ff]/.test(word)) return 'ja';
-        
-        // 俄文字符检测（西里尔字母）
-        if (/[\u0400-\u04ff]/.test(word)) return 'ru';
-        
-        // 法文特殊字符检测
-        if (/[àâäéèêëïîôöùûüÿç]/i.test(word)) return 'fr';
-        
-        // 西班牙文特殊字符检测
-        if (/[ñáéíóúü¿¡]/i.test(word)) return 'es';
-        
-        // 默认英文
-        return 'en';
-    }
-
-    /**
-     * 设置自建词典的语言（手动指定）
-     * @param {string} dictId 自建词典ID
-     * @param {string} language 语言代码
-     */
-    setCustomDictionaryLanguage(dictId, language) {
-        this.customDictionaryLanguages.set(dictId, language);
-        console.log(`Set custom dictionary ${dictId} language to ${language}`);
-        
-        // 更新语言状态缓存
-        this._updateLanguageStatusCache();
     }
 }
 
