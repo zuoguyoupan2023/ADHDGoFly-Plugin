@@ -1,5 +1,5 @@
-// 旧版词典管理器模块（兼容性保留）
-class LegacyDictionaryManager {
+// 词典管理器模块
+class DictionaryManager {
   constructor() {
     this.dictionaries = {};
     this.isLoaded = false;
@@ -326,7 +326,7 @@ class LegacyDictionaryManager {
 
 // 导出模块
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = LegacyDictionaryManager;
+  module.exports = DictionaryManager;
 } else {
-  window.LegacyDictionaryManager = LegacyDictionaryManager;
+  window.DictionaryManager = DictionaryManager;
 }

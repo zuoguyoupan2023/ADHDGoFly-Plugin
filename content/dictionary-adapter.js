@@ -48,19 +48,19 @@ class DictionaryAdapter {
      */
     async _doInitialize() {
         try {
-            // 初始化现代词典管理器（通过向后兼容接口）
+            // 初始化新的词典管理器
             if (typeof DictionaryManager !== 'undefined') {
-                this.newManager = new DictionaryManager(); // 实际指向 ModernDictionaryManager
+                this.newManager = new DictionaryManager();
                 await this.newManager.initialize();
                 
                 // 加载所有预设词典
                 await this._loadAllPresetDictionaries();
                 
                 this.isLoaded = true;
-                console.log('DictionaryAdapter initialized successfully with ModernDictionaryManager');
+                console.log('DictionaryAdapter initialized successfully');
                 return true;
             } else {
-                throw new Error('ModernDictionaryManager not available');
+                throw new Error('DictionaryManager not available');
             }
         } catch (error) {
             console.error('Failed to initialize DictionaryAdapter:', error);
