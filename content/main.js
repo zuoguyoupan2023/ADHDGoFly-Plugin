@@ -92,7 +92,7 @@ class ADHDHighlighter {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log('收到消息:', message);
       this.handleMessage(message, sender, sendResponse);
-      return true; // 保持消息通道开放以支持异步响应
+      return true; // 保持消息通道开放
     });
   }
 
@@ -170,18 +170,6 @@ class ADHDHighlighter {
         case 'getSelectedText':
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
-          break;
-          
-        case 'updateCustomDictionaries':
-          // 处理自建词典更新
-          if (this.dictionaryManager && this.dictionaryManager.updateCustomDictionaries) {
-            this.dictionaryManager.updateCustomDictionaries(message.data);
-            console.log('DictionaryAdapter已更新自建词典:', message.data);
-            sendResponse({ success: true });
-          } else {
-            console.error('DictionaryAdapter未初始化或不支持自建词典更新');
-            sendResponse({ success: false, error: 'DictionaryAdapter not available' });
-          }
           break;
           
         default:
