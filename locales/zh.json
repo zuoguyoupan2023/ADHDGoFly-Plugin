@@ -152,6 +152,7 @@
       "buttons": {
         "save": "保存词典",
         "edit": "编辑",
+        "export": "导出",
         "delete": "删除",
         "saveEdit": "保存修改",
         "cancelEdit": "取消"
