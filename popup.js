@@ -433,6 +433,9 @@ class PopupController {
           }
           // 重新绑定tooltip事件
           this.bindDictTooltipEvents();
+          
+          // 加载自建词典到词典库
+          this.loadCustomDictionaries();
         }, 50);
       }
       
@@ -1513,6 +1516,22 @@ class PopupController {
       console.log('Save custom dict button not found');
     }
 
+    // 添加到词典库按钮事件
+    const addToLibraryBtn = document.getElementById('add-to-library-btn');
+    if (addToLibraryBtn) {
+      // 移除旧的事件监听器
+      if (addToLibraryBtn._clickHandler) {
+        addToLibraryBtn.removeEventListener('click', addToLibraryBtn._clickHandler);
+      }
+      
+      // 创建新的事件处理函数
+      addToLibraryBtn._clickHandler = () => this.addToLibrary();
+      addToLibraryBtn.addEventListener('click', addToLibraryBtn._clickHandler);
+      console.log('Add to library button event bound');
+    } else {
+      console.log('Add to library button not found');
+    }
+
     // 初始化自建词典数据
     this.customDictWords = [];
     this.loadCustomDictionaries();
@@ -1625,9 +1644,11 @@ class PopupController {
     console.log('validateDictForm called');
     const nameInput = document.getElementById('dict-name-input');
     const saveBtn = document.getElementById('save-custom-dict-btn');
+    const addToLibraryBtn = document.getElementById('add-to-library-btn');
     
     console.log('nameInput:', nameInput);
     console.log('saveBtn:', saveBtn);
+    console.log('addToLibraryBtn:', addToLibraryBtn);
     
     if (!nameInput || !saveBtn) {
       console.log('Missing elements, returning');
@@ -1644,6 +1665,9 @@ class PopupController {
     console.log('shouldEnable:', shouldEnable);
     
     saveBtn.disabled = !shouldEnable;
+    if (addToLibraryBtn) {
+      addToLibraryBtn.disabled = !shouldEnable;
+    }
     console.log('saveBtn.disabled set to:', saveBtn.disabled);
   }
 
@@ -1754,6 +1778,115 @@ class PopupController {
     console.log('Dict form reset completed');
   }
 
+  async addToLibrary() {
+    console.log('Adding dictionary to library...');
+    
+    const nameInput = document.getElementById('dict-name-input');
+    const languageSelect = document.getElementById('dict-language-select');
+    
+    if (!nameInput || !languageSelect) return;
+
+    const dictName = nameInput.value.trim();
+    const dictLanguage = languageSelect.value;
+
+    if (!dictName) {
+      this.showMessage(window.i18n.t('pages.customDict.messages.nameRequired') || '请输入词典名称', 'error');
+      return;
+    }
+
+    if (this.customDictWords.length === 0) {
+      this.showMessage(window.i18n.t('pages.customDict.messages.wordsRequired') || '请至少添加一个词汇', 'error');
+      return;
+    }
+
+    try {
+      // 创建词典数据
+      const dictData = {
+        id: `custom-${Date.now()}`,
+        name: dictName,
+        language: dictLanguage,
+        type: 'custom',
+        words: this.customDictWords,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        addedToLibrary: true // 标记为已添加到词典库
+      };
+
+      // 保存到IndexedDB
+      await this.saveToIndexedDB(dictData);
+      
+      // 显示成功消息
+      this.showMessage(window.i18n.t('pages.customDict.messages.addedToLibrary') || '词典已添加到词典库', 'success');
+      
+      // 在词典页面显示自建词典
+      this.displayCustomDictInLibrary(dictData);
+      
+      // 重置表单
+      this.resetDictForm();
+      
+      // 刷新管理列表
+      this.loadCustomDictionaries();
+      
+    } catch (error) {
+      console.error('添加到词典库失败:', error);
+      this.showMessage('添加失败，请重试', 'error');
+    }
+  }
+
+  displayCustomDictInLibrary(dictData) {
+    console.log('Displaying custom dict in library:', dictData);
+    
+    const containerId = `custom-dicts-${dictData.language}`;
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+      console.log(`Container not found: ${containerId}`);
+      return;
+    }
+
+    // 检查是否已存在
+    const existingDict = container.querySelector(`[data-dict-id="${dictData.id}"]`);
+    if (existingDict) {
+      console.log('Dictionary already exists in library');
+      return;
+    }
+
+    // 创建词典项HTML
+    const customBadge = window.i18n && window.i18n.getCurrentLanguage() === 'zh' ? '自建' : 'Custom';
+    const dictItemHtml = `
+      <div class="dict-item" data-dict-id="${dictData.id}">
+        <label class="dict-label">
+          <input type="checkbox" id="dict-${dictData.id}" />
+          <span class="checkmark"></span>
+          <div class="dict-info-text">
+            <span class="dict-name">${dictData.name}<span class="custom-dict-badge">${customBadge}</span></span>
+            <span class="dict-desc">${dictData.words.length} 个词汇</span>
+          </div>
+        </label>
+      </div>
+    `;
+
+    // 添加到容器
+    container.insertAdjacentHTML('beforeend', dictItemHtml);
+    
+    // 确保专业词典区域可见
+    const professionalDicts = container.closest('.professional-dicts');
+    if (professionalDicts && professionalDicts.style.display === 'none') {
+      // 如果专业词典区域是隐藏的，需要展开语言组
+      const languageGroup = professionalDicts.closest('.language-group');
+      if (languageGroup) {
+        const expandIcon = languageGroup.querySelector('.expand-icon');
+        if (expandIcon && expandIcon.textContent === '▶') {
+          // 模拟点击展开
+          expandIcon.textContent = '▼';
+          professionalDicts.style.display = 'block';
+        }
+      }
+    }
+    
+    console.log('Custom dictionary added to library successfully');
+  }
+
   async saveToIndexedDB(dictData) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('ADHDGoFly_CustomDicts', 1);
@@ -1785,9 +1918,26 @@ class PopupController {
     try {
       const dictionaries = await this.getFromIndexedDB();
       this.displayCustomDictionaries(dictionaries);
+      
+      // 同时加载已添加到词典库的自建词典
+      this.loadCustomDictsInLibrary(dictionaries);
     } catch (error) {
       console.error('加载自建词典失败:', error);
     }
+  }
+
+  loadCustomDictsInLibrary(dictionaries) {
+    console.log('Loading custom dictionaries in library...');
+    
+    // 过滤出已添加到词典库的词典
+    const libraryDicts = dictionaries.filter(dict => dict.addedToLibrary);
+    
+    // 为每个词典在对应语言组中显示
+    libraryDicts.forEach(dict => {
+      this.displayCustomDictInLibrary(dict);
+    });
+    
+    console.log(`Loaded ${libraryDicts.length} custom dictionaries in library`);
   }
 
   async getFromIndexedDB() {
