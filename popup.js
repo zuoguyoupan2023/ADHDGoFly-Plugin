@@ -457,10 +457,10 @@ class PopupController {
       });
     });
     
-    // 保存按钮事件
-    const saveDictBtn = document.getElementById('save-dict-btn');
-    if (saveDictBtn) {
-      saveDictBtn.addEventListener('click', () => this.saveDictSettings());
+    // 词典设置保存按钮事件
+    const saveDictSettingsBtn = document.getElementById('save-dict-settings-btn');
+    if (saveDictSettingsBtn) {
+      saveDictSettingsBtn.addEventListener('click', () => this.saveDictSettings());
     }
 
     // 自建词典按钮事件
@@ -656,15 +656,17 @@ class PopupController {
       }
       
       // 显示保存成功提示
-      const saveBtn = document.getElementById('save-dict-btn');
-      const originalText = saveBtn.textContent;
-      saveBtn.textContent = '已保存';
-      saveBtn.style.backgroundColor = '#28a745';
-      
-      setTimeout(() => {
-        saveBtn.textContent = originalText;
-        saveBtn.style.backgroundColor = '';
-      }, 1500);
+      const saveBtn = document.getElementById('save-dict-settings-btn');
+      if (saveBtn) {
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = '已保存';
+        saveBtn.style.backgroundColor = '#28a745';
+        
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.style.backgroundColor = '';
+        }, 1500);
+      }
       
       console.log('词典设置已保存:', this.dictSettings);
       
@@ -1495,20 +1497,20 @@ class PopupController {
       }
     });
 
-    // 保存词典按钮事件
-    const saveDictBtn = document.getElementById('save-dict-btn');
-    if (saveDictBtn) {
+    // 自建词典保存按钮事件
+    const saveCustomDictBtn = document.getElementById('save-custom-dict-btn');
+    if (saveCustomDictBtn) {
       // 移除旧的事件监听器
-      if (saveDictBtn._clickHandler) {
-        saveDictBtn.removeEventListener('click', saveDictBtn._clickHandler);
+      if (saveCustomDictBtn._clickHandler) {
+        saveCustomDictBtn.removeEventListener('click', saveCustomDictBtn._clickHandler);
       }
       
       // 创建新的事件处理函数
-      saveDictBtn._clickHandler = () => this.saveCustomDict();
-      saveDictBtn.addEventListener('click', saveDictBtn._clickHandler);
-      console.log('Save dict button event bound');
+      saveCustomDictBtn._clickHandler = () => this.saveCustomDict();
+      saveCustomDictBtn.addEventListener('click', saveCustomDictBtn._clickHandler);
+      console.log('Save custom dict button event bound');
     } else {
-      console.log('Save dict button not found');
+      console.log('Save custom dict button not found');
     }
 
     // 初始化自建词典数据
@@ -1622,7 +1624,7 @@ class PopupController {
   validateDictForm() {
     console.log('validateDictForm called');
     const nameInput = document.getElementById('dict-name-input');
-    const saveBtn = document.getElementById('save-dict-btn');
+    const saveBtn = document.getElementById('save-custom-dict-btn');
     
     console.log('nameInput:', nameInput);
     console.log('saveBtn:', saveBtn);
@@ -1740,7 +1742,7 @@ class PopupController {
     this.editingDictId = null;
     
     // 重置保存按钮文本和样式
-    const saveBtn = document.getElementById('save-dict-btn');
+    const saveBtn = document.getElementById('save-custom-dict-btn');
     if (saveBtn) {
       saveBtn.textContent = window.i18n.t('pages.customDict.buttons.save') || '保存词典';
       saveBtn.style.backgroundColor = ''; // 重置背景色
@@ -1952,7 +1954,7 @@ class PopupController {
       console.log('Set editing mode for dict:', dictId);
       
       // 更新保存按钮文本和样式
-      const saveBtn = document.getElementById('save-dict-btn');
+      const saveBtn = document.getElementById('save-custom-dict-btn');
       if (saveBtn) {
         saveBtn.textContent = window.i18n.t('pages.customDict.buttons.saveEdit') || '保存修改';
         saveBtn.style.backgroundColor = '#ffc107'; // 黄色表示编辑模式
