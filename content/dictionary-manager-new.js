@@ -1,8 +1,8 @@
 /**
- * 新版词典管理器
+ * 现代词典管理器
  * 负责词典的动态发现、加载和管理
  */
-class DictionaryManager {
+class ModernDictionaryManager {
     constructor() {
         this.registry = null;
         this.loadedDictionaries = new Map();
@@ -299,12 +299,13 @@ class DictionaryManager {
 }
 
 // 导出单例实例
-const dictionaryManager = new DictionaryManager();
+const modernDictionaryManager = new ModernDictionaryManager();
 
 // 兼容性：保持原有接口
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { DictionaryManager, dictionaryManager };
+    module.exports = { ModernDictionaryManager, modernDictionaryManager };
 } else if (typeof window !== 'undefined') {
-    window.DictionaryManager = DictionaryManager;
-    window.dictionaryManager = dictionaryManager;
+    window.DictionaryManager = ModernDictionaryManager;  // 保持向后兼容
+    window.ModernDictionaryManager = ModernDictionaryManager;
+    window.modernDictionaryManager = modernDictionaryManager;
 }
