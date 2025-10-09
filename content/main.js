@@ -148,7 +148,7 @@ class ADHDHighlighter {
           break;
           
         case 'updateDictSettings':
-          await this.updateDictSettings(message.dictSettings, message.customDictionaries);
+          await this.updateDictSettings(message.settings);
           sendResponse({ success: true });
           break;
           
@@ -687,9 +687,8 @@ class ADHDHighlighter {
    * 更新词典设置
    * @param {Object} dictSettings 词典设置
    */
-  async updateDictSettings(dictSettings, customDictionaries) {
+  async updateDictSettings(dictSettings) {
     console.log('更新词典设置:', dictSettings);
-    console.log('更新自建词典:', customDictionaries);
     
     // 检查是否为新格式（包含词典ID）
     const hasNewFormat = Object.keys(dictSettings).some(key => key.includes('-'));
@@ -700,11 +699,6 @@ class ADHDHighlighter {
     } else {
       // 旧格式：使用语言代码
       this.dictionaryManager.updateEnabledLanguages(dictSettings);
-    }
-    
-    // 更新自建词典数据
-    if (customDictionaries && Array.isArray(customDictionaries)) {
-      this.dictionaryManager.updateCustomDictionaries(customDictionaries);
     }
     
     // 如果当前已启用高亮，重新处理页面

@@ -2,7 +2,6 @@
 class DictionaryManager {
   constructor() {
     this.dictionaries = {};
-    this.customDictionaries = {}; // 存储自建词典
     this.isLoaded = false;
     this.loadPromise = null;
     this.enabledLanguages = {
@@ -120,11 +119,7 @@ class DictionaryManager {
     if (!this.enabledLanguages[language]) {
       return {};
     }
-    
-    // 合并预设词典和自建词典
-    const presetDict = this.dictionaries[language] || {};
-    const customDict = this.customDictionaries[language] || {};
-    return { ...presetDict, ...customDict };
+    return this.dictionaries[language] || {};
   }
 
   /**
@@ -183,132 +178,6 @@ class DictionaryManager {
   updateEnabledLanguages(enabledLanguages) {
     console.log('更新启用的语言:', enabledLanguages);
     this.enabledLanguages = { ...this.enabledLanguages, ...enabledLanguages };
-  }
-
-  /**
-   * 更新启用的词典列表（新格式，支持词典ID）
-   * @param {Object} dictSettings 词典设置对象，键为词典ID，值为是否启用
-   */
-  updateEnabledDictionaries(dictSettings) {
-    console.log('更新启用的词典:', dictSettings);
-    
-    // 重置所有语言为禁用状态
-    this.enabledLanguages = {
-      zh: false,
-      en: false,
-      fr: false,
-      ru: false,
-      es: false,
-      ja: false
-    };
-    
-    // 根据词典ID映射到语言
-    const dictToLanguageMap = {
-      'zh-preset': 'zh',
-      'en-preset': 'en',
-      'fr-preset': 'fr',
-      'ru-preset': 'ru',
-      'es-preset': 'es',
-      'ja-preset': 'ja',
-      // 专业词典也映射到对应语言
-      'zh-animal-preset': 'zh',
-      'zh-finance-preset': 'zh',
-      'zh-automotive-preset': 'zh',
-      'zh-idiom-preset': 'zh',
-      'zh-geography-preset': 'zh',
-      'zh-food-preset': 'zh',
-      'zh-technology-preset': 'zh',
-      'zh-legal-preset': 'zh',
-      'zh-history-preset': 'zh',
-      'zh-medical-preset': 'zh',
-      'zh-literature-preset': 'zh'
-    };
-    
-    // 检查启用的词典并映射到语言
-    let hasEnabledDict = false;
-    for (const [dictId, enabled] of Object.entries(dictSettings)) {
-      if (enabled) {
-        hasEnabledDict = true;
-        const language = dictToLanguageMap[dictId];
-        if (language) {
-          this.enabledLanguages[language] = true;
-          console.log(`启用语言 ${language} (通过词典 ${dictId})`);
-        } else {
-          // 可能是自建词典，暂时启用中英文以支持自建词典
-          console.log(`未知词典ID: ${dictId}，可能是自建词典`);
-          this.enabledLanguages.zh = true;
-          this.enabledLanguages.en = true;
-        }
-      }
-    }
-    
-    // 如果没有任何词典被启用，启用默认的中英文
-    if (!hasEnabledDict) {
-      console.log('没有启用的词典，使用默认设置');
-      this.enabledLanguages.zh = true;
-      this.enabledLanguages.en = true;
-    }
-    
-    console.log('最终启用的语言:', this.enabledLanguages);
-  }
-
-  /**
-   * 更新自建词典数据
-   * @param {Array} customDictionaries 自建词典数组
-   */
-  updateCustomDictionaries(customDictionaries) {
-    console.log('更新自建词典数据:', customDictionaries);
-    
-    // 清空现有自建词典
-    this.customDictionaries = {};
-    
-    // 处理每个自建词典
-    if (customDictionaries && Array.isArray(customDictionaries)) {
-      customDictionaries.forEach(dict => {
-        if (dict.words && Array.isArray(dict.words)) {
-          dict.words.forEach(wordObj => {
-            const word = wordObj.word;
-            const pos = wordObj.pos || 'n'; // 默认为名词
-            
-            // 检测词汇语言并分类存储
-            const language = this.detectWordLanguage(word);
-            
-            if (!this.customDictionaries[language]) {
-              this.customDictionaries[language] = {};
-            }
-            
-            this.customDictionaries[language][word] = pos;
-          });
-        }
-      });
-    }
-    
-    console.log('自建词典处理完成:', this.customDictionaries);
-  }
-
-  /**
-   * 检测单词语言
-   * @param {string} word 词汇
-   * @returns {string} 语言代码
-   */
-  detectWordLanguage(word) {
-    // 中文字符检测
-    if (/[\u4e00-\u9fa5]/.test(word)) return 'zh';
-    
-    // 日文字符检测（平假名、片假名、汉字）
-    if (/[\u3040-\u309f\u30a0-\u30ff]/.test(word)) return 'ja';
-    
-    // 俄文字符检测（西里尔字母）
-    if (/[\u0400-\u04ff]/.test(word)) return 'ru';
-    
-    // 法文特殊字符检测
-    if (/[àâäéèêëïîôöùûüÿç]/i.test(word)) return 'fr';
-    
-    // 西班牙文特殊字符检测
-    if (/[ñáéíóúü¿¡]/i.test(word)) return 'es';
-    
-    // 默认英文
-    return 'en';
   }
 
   /**
