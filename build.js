@@ -83,7 +83,6 @@ async function main() {
     // 需要包含的文件
     const includeFiles = [
         'background.js',
-        'content.js',
         'popup.html', 
         'popup.js',
         'styles.css',
