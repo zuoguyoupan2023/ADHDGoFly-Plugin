@@ -230,6 +230,9 @@ class PopupController {
     
     // 检查版本信息
     await this.checkVersion();
+    
+    // 初始化自建词典到DictionaryAdapter
+    await this.updateCustomDictionaries();
   }
 
   bindEvents() {
@@ -1720,6 +1723,9 @@ class PopupController {
       // 刷新管理列表
       this.loadCustomDictionaries();
       
+      // 更新自建词典到DictionaryAdapter
+      await this.updateCustomDictionaries();
+      
     } catch (error) {
       console.error('保存词典失败:', error);
       this.showMessage('保存失败，请重试', 'error');
@@ -2110,6 +2116,9 @@ class PopupController {
       // 刷新管理列表以更新UI
       this.loadCustomDictionaries();
       
+      // 更新自建词典到DictionaryAdapter
+      await this.updateCustomDictionaries();
+      
     } catch (error) {
       console.error('Failed to add dictionary to library:', error);
       this.showMessage('添加到词典库失败', 'error');
@@ -2405,6 +2414,71 @@ class PopupController {
     
     console.log('Converted to standard format:', standardFormat);
     return standardFormat;
+  }
+
+  /**
+   * 更新自建词典到DictionaryAdapter
+   */
+  async updateCustomDictionaries() {
+    try {
+      // 获取所有自建词典
+      const customDicts = await this.getFromIndexedDB();
+      
+      // 过滤出已添加到词典库的词典
+      const enabledDicts = customDicts.filter(dict => dict.addedToLibrary);
+      
+      if (enabledDicts.length === 0) {
+        console.log('没有启用的自建词典');
+        // 发送空数组给content script，清除自建词典
+        await this.sendMessageToContentScript({
+          action: 'updateCustomDictionaries',
+          data: []
+        });
+        return [];
+      }
+      
+      // 格式化词典数据 - 修复数据格式以匹配DictionaryAdapter期望
+      const formattedDicts = enabledDicts.map(dict => ({
+        id: dict.id,
+        name: dict.name,
+        language: dict.language,
+        type: 'custom',
+        enabled: true,
+        words: dict.words, // 直接传递数组格式 [{word: "词", pos: "n"}]
+        source: 'user-created'
+      }));
+      
+      // 通过消息传递机制通知content script中的DictionaryAdapter更新
+      await this.sendMessageToContentScript({
+        action: 'updateCustomDictionaries',
+        data: formattedDicts
+      });
+      
+      console.log('自建词典已通过消息传递更新到DictionaryAdapter:', formattedDicts);
+      
+      return formattedDicts;
+    } catch (error) {
+      console.error('更新自建词典失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 向content script发送消息
+   */
+  async sendMessageToContentScript(message) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        await chrome.tabs.sendMessage(tab.id, message);
+        console.log('消息已发送到content script:', message);
+      } else {
+        console.warn('未找到活动标签页，无法发送消息');
+      }
+    } catch (error) {
+      console.error('发送消息到content script失败:', error);
+      throw error;
+    }
   }
 
   // 下载JSON文件
