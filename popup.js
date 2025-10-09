@@ -587,13 +587,13 @@ class PopupController {
       }
       
       // 更新UI
-      this.updateDictUI();
+      await this.updateDictUI();
     } catch (error) {
       console.error('加载词典设置失败:', error);
     }
   }
 
-  updateDictUI() {
+  async updateDictUI() {
     Object.keys(this.dictSettings).forEach(dictId => {
       const checkbox = document.getElementById(`dict-${dictId}`);
       if (checkbox) {
@@ -602,10 +602,10 @@ class PopupController {
     });
     
     // 更新首页词典标签显示
-    this.updateDictTags();
+    await this.updateDictTags();
   }
   
-  updateDictTags() {
+  async updateDictTags() {
     const dictTagsContainer = document.getElementById('dictTags');
     if (!dictTagsContainer) return;
     
@@ -633,28 +633,53 @@ class PopupController {
       'zh-literature-preset': '诗词'
     };
     
+    // 获取自建词典数据
+    const customDictionaries = await this.getFromIndexedDB();
+    
     // 根据词典界面的实际复选框状态添加标签
     Object.keys(this.dictSettings).forEach(dictId => {
-      if (this.dictSettings[dictId] && dictNames[dictId]) {
-        const tag = document.createElement('div');
-        tag.className = 'dict-tag';
-        tag.textContent = dictNames[dictId];
-        dictTagsContainer.appendChild(tag);
+      if (this.dictSettings[dictId]) {
+        let dictName = dictNames[dictId];
+        
+        // 如果是自建词典，从IndexedDB数据中获取名称
+        if (!dictName) {
+          const customDict = customDictionaries.find(dict => dict.id === dictId);
+          if (customDict && customDict.addedToLibrary) {
+            dictName = customDict.name;
+          }
+        }
+        
+        if (dictName) {
+          const tag = document.createElement('div');
+          tag.className = 'dict-tag';
+          tag.textContent = dictName;
+          dictTagsContainer.appendChild(tag);
+        }
       }
     });
   }
 
   async saveDictSettings() {
+    console.log('Saving dict settings:', this.dictSettings);
     try {
       await chrome.storage.local.set({ dictSettings: this.dictSettings });
       
-      // 通知content script更新词典设置
+      // 获取自建词典数据
+      const customDictionaries = await this.getFromIndexedDB();
+      const enabledCustomDicts = customDictionaries.filter(dict => 
+        dict.addedToLibrary && this.dictSettings[dict.id]
+      );
+      
+      console.log('启用的自建词典:', enabledCustomDicts);
+      
+      // 通知content script更新词典设置，包含自建词典数据
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
           await chrome.tabs.sendMessage(tabs[0].id, {
             action: 'updateDictSettings',
-            settings: this.dictSettings
+            dictSettings: this.dictSettings,
+            customDictionaries: enabledCustomDicts // 传递启用的自建词典数据
           });
         }
       } catch (error) {
@@ -677,7 +702,7 @@ class PopupController {
       console.log('词典设置已保存:', this.dictSettings);
       
       // 更新首页词典标签显示
-      this.updateDictTags();
+      await this.updateDictTags();
       
     } catch (error) {
       console.error('保存词典设置失败:', error);
