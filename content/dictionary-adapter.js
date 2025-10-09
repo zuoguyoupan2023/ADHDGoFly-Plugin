@@ -39,24 +39,16 @@ class DictionaryAdapter {
      */
     async _doInitialize() {
         try {
-            // 初始化新的词典管理器
-            if (typeof DictionaryManager !== 'undefined') {
-                this.newManager = new DictionaryManager();
-                await this.newManager.initialize();
-                
-                // 加载所有预设词典
-                await this._loadAllPresetDictionaries();
-                
-                this.isLoaded = true;
-                console.log('DictionaryAdapter initialized successfully');
-                return true;
-            } else {
-                throw new Error('DictionaryManager not available');
-            }
-        } catch (error) {
-            console.error('Failed to initialize DictionaryAdapter:', error);
-            // 降级到传统加载方式
+            console.log('DictionaryAdapter: Starting initialization...');
+            
+            // 直接使用传统加载方式，因为新管理器的方法不完整
+            console.log('DictionaryAdapter: Using legacy dictionary loading...');
             await this._loadLegacyDictionaries();
+            return true;
+        } catch (error) {
+            console.error('DictionaryAdapter: Failed to initialize:', error);
+            // 最后的降级：使用备用词典
+            this._loadFallbackDictionaries();
             return false;
         }
     }
@@ -173,41 +165,21 @@ class DictionaryAdapter {
      * @returns {Object} 词典数据
      */
     getDictionary(language) {
-        console.log(`Getting dictionary for language: ${language}`);
+        console.log(`DictionaryAdapter: Getting dictionary for language: ${language}`);
+        console.log(`DictionaryAdapter: Language enabled: ${this.enabledLanguages[language]}`);
+        console.log(`DictionaryAdapter: Available languages:`, Object.keys(this.legacyData));
         
-        // 优先使用新的词典ID系统
-        if (this.newManager && Object.keys(this.enabledDictionaries).length > 0) {
-            const enabledDicts = this.newManager.getDictionariesByLanguage(language, false)
-                .filter(dict => this.enabledDictionaries[dict.id]);
-            
-            console.log(`Found ${enabledDicts.length} enabled dictionaries for ${language}:`, 
-                       enabledDicts.map(d => d.id));
-            
-            if (enabledDicts.length > 0) {
-                // 按优先级排序（数字越小优先级越高）
-                enabledDicts.sort((a, b) => (a.priority || 999) - (b.priority || 999));
-                
-                // 合并多个词典
-                const mergedDict = {};
-                for (const dict of enabledDicts) {
-                    const dictData = this.newManager.getDictionaryData(dict.id);
-                    if (dictData) {
-                        // 高优先级词典的词条会覆盖低优先级的
-                        Object.assign(mergedDict, dictData);
-                    }
-                }
-                
-                console.log(`Merged dictionary size: ${Object.keys(mergedDict).length}`);
-                return mergedDict;
-            }
+        // 检查语言是否启用
+        if (!this.enabledLanguages[language]) {
+            console.log(`DictionaryAdapter: Language ${language} is not enabled`);
+            return {};
         }
         
-        // 向后兼容：使用语言级别的设置
-        if (this.enabledLanguages[language]) {
-            return this.legacyData[language] || {};
-        }
+        // 获取基础词典数据
+        const baseDict = this.legacyData[language] || {};
+        console.log(`DictionaryAdapter: Base dictionary size for ${language}: ${Object.keys(baseDict).length}`);
         
-        return {};
+        return baseDict;
     }
 
     /**
@@ -291,8 +263,6 @@ class DictionaryAdapter {
      * @private
      */
     _updateLanguageStatusFromDictionaries() {
-        if (!this.newManager) return;
-        
         // 重置语言状态
         const languageStatus = {
             zh: false,
@@ -305,17 +275,62 @@ class DictionaryAdapter {
         
         console.log('Updating language status from dictionaries:', this.enabledDictionaries);
         
+        // 词典ID到语言的映射
+        const dictToLanguageMap = {
+            'zh-preset': 'zh',
+            'en-preset': 'en',
+            'fr-preset': 'fr',
+            'ru-preset': 'ru',
+            'es-preset': 'es',
+            'ja-preset': 'ja',
+            // 专业词典也映射到对应语言
+            'zh-animal-preset': 'zh',
+            'zh-finance-preset': 'zh',
+            'zh-automotive-preset': 'zh',
+            'zh-idiom-preset': 'zh',
+            'zh-geography-preset': 'zh',
+            'zh-food-preset': 'zh',
+            'zh-technology-preset': 'zh',
+            'zh-legal-preset': 'zh',
+            'zh-history-preset': 'zh',
+            'zh-medical-preset': 'zh',
+            'zh-literature-preset': 'zh'
+        };
+        
         // 检查每个语言是否有启用的词典
+        let hasEnabledDict = false;
         Object.keys(this.enabledDictionaries).forEach(dictId => {
             if (this.enabledDictionaries[dictId]) {
-                const dict = this.newManager.getDictionaryById(dictId);
-                console.log(`Dictionary ${dictId}:`, dict);
-                if (dict && dict.language) {
-                    languageStatus[dict.language] = true;
-                    console.log(`Enabled language: ${dict.language}`);
+                hasEnabledDict = true;
+                
+                // 先尝试从映射表获取语言
+                const language = dictToLanguageMap[dictId];
+                if (language) {
+                    languageStatus[language] = true;
+                    console.log(`Enabled language: ${language} (via dictionary ${dictId})`);
+                } else if (this.newManager) {
+                    // 如果有新管理器，尝试从新管理器获取
+                    const dict = this.newManager.getDictionaryById(dictId);
+                    console.log(`Dictionary ${dictId}:`, dict);
+                    if (dict && dict.language) {
+                        languageStatus[dict.language] = true;
+                        console.log(`Enabled language: ${dict.language} (via new manager)`);
+                    }
+                } else {
+                    // 可能是自建词典，启用中英文以支持自建词典
+                    console.log(`Unknown dictionary ID: ${dictId}, possibly custom dictionary`);
+                    languageStatus.zh = true;
+                    languageStatus.en = true;
                 }
             }
         });
+        
+        // 如果没有任何词典被启用，启用默认的中英文
+        if (!hasEnabledDict) {
+            console.log('No dictionaries enabled, using default settings');
+            languageStatus.zh = true;
+            languageStatus.en = true;
+        }
         
         // 更新语言启用状态
         this.enabledLanguages = languageStatus;
@@ -338,6 +353,85 @@ class DictionaryAdapter {
      */
     getEnabledLanguages() {
         return Object.keys(this.enabledLanguages).filter(lang => this.enabledLanguages[lang]);
+    }
+
+    /**
+     * 更新自建词典数据
+     * @param {Array} customDictionaries 自建词典数组
+     */
+    updateCustomDictionaries(customDictionaries) {
+        console.log('DictionaryAdapter: 更新自建词典数据:', customDictionaries);
+        
+        // 如果有新管理器，使用新管理器处理
+        if (this.newManager && typeof this.newManager.updateCustomDictionaries === 'function') {
+            this.newManager.updateCustomDictionaries(customDictionaries);
+        } else {
+            // 降级处理：直接合并到legacyData中
+            this._mergeCustomDictionaries(customDictionaries);
+        }
+    }
+
+    /**
+     * 合并自建词典到传统数据结构中
+     * @param {Array} customDictionaries 自建词典数组
+     * @private
+     */
+    _mergeCustomDictionaries(customDictionaries) {
+        if (!customDictionaries || !Array.isArray(customDictionaries)) {
+            return;
+        }
+
+        customDictionaries.forEach(dict => {
+            if (dict.words && Array.isArray(dict.words)) {
+                dict.words.forEach(wordObj => {
+                    const word = wordObj.word;
+                    const pos = wordObj.pos || 'n'; // 默认为名词
+                    
+                    // 检测词汇语言并分类存储
+                    const language = this._detectWordLanguage(word);
+                    
+                    // 确保语言词典存在
+                    if (!this.legacyData[language]) {
+                        this.legacyData[language] = {};
+                    }
+                    
+                    // 添加词汇到对应语言词典
+                    this.legacyData[language][word] = pos;
+                });
+            }
+        });
+        
+        console.log('DictionaryAdapter: 自建词典合并完成，当前词典状态:', 
+                   Object.keys(this.legacyData).reduce((acc, lang) => {
+                       acc[lang] = Object.keys(this.legacyData[lang]).length;
+                       return acc;
+                   }, {}));
+    }
+
+    /**
+     * 检测单词语言
+     * @param {string} word 词汇
+     * @returns {string} 语言代码
+     * @private
+     */
+    _detectWordLanguage(word) {
+        // 中文字符检测
+        if (/[\u4e00-\u9fa5]/.test(word)) return 'zh';
+        
+        // 日文字符检测（平假名、片假名、汉字）
+        if (/[\u3040-\u309f\u30a0-\u30ff]/.test(word)) return 'ja';
+        
+        // 俄文字符检测（西里尔字母）
+        if (/[\u0400-\u04ff]/.test(word)) return 'ru';
+        
+        // 法文特殊字符检测
+        if (/[àâäéèêëïîôöùûüÿç]/i.test(word)) return 'fr';
+        
+        // 西班牙文特殊字符检测
+        if (/[ñáéíóúü¿¡]/i.test(word)) return 'es';
+        
+        // 默认英文
+        return 'en';
     }
 
     /**
