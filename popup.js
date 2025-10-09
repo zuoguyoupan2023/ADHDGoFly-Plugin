@@ -1631,11 +1631,9 @@ class PopupController {
     console.log('validateDictForm called');
     const nameInput = document.getElementById('dict-name-input');
     const saveBtn = document.getElementById('save-custom-dict-btn');
-    const addToLibraryBtn = document.getElementById('add-to-library-btn');
     
     console.log('nameInput:', nameInput);
     console.log('saveBtn:', saveBtn);
-    console.log('addToLibraryBtn:', addToLibraryBtn);
     
     if (!nameInput || !saveBtn) {
       console.log('Missing elements, returning');
@@ -1652,9 +1650,6 @@ class PopupController {
     console.log('shouldEnable:', shouldEnable);
     
     saveBtn.disabled = !shouldEnable;
-    if (addToLibraryBtn) {
-      addToLibraryBtn.disabled = !shouldEnable;
-    }
     console.log('saveBtn.disabled set to:', saveBtn.disabled);
   }
 
