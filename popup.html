@@ -616,7 +616,7 @@
       }
 
       .dict-tooltip::before {
-        content: '';
+        content: "";
         position: absolute;
         top: -6px;
         left: 20px;
@@ -2777,7 +2777,9 @@
           <div class="custom-dict-entry">
             <button class="add-dict-btn" id="add-dict-btn">
               <span class="add-icon">+</span>
-              <span class="add-text" data-i18n="pages.dict.customDict">自建词典</span>
+              <span class="add-text" data-i18n="pages.dict.customDict"
+                >自建词典</span
+              >
             </button>
           </div>
 
@@ -2818,14 +2820,23 @@
               <div class="dict-basic-info">
                 <div class="input-group">
                   <label data-i18n="pages.customDict.form.name">词典名称</label>
-                  <input type="text" id="dict-name-input" placeholder="请输入词典名称" maxlength="20">
+                  <input
+                    type="text"
+                    id="dict-name-input"
+                    placeholder="请输入词典名称"
+                    maxlength="20"
+                  />
                 </div>
                 <div class="input-group">
-                  <label data-i18n="pages.customDict.form.language">词典语言</label>
+                  <label data-i18n="pages.customDict.form.language"
+                    >词典语言</label
+                  >
                   <select id="dict-language-select">
                     <option value="zh" data-i18n="languages.zh">中文</option>
                     <option value="en" data-i18n="languages.en">English</option>
-                    <option value="fr" data-i18n="languages.fr">Français</option>
+                    <option value="fr" data-i18n="languages.fr">
+                      Français
+                    </option>
                     <option value="es" data-i18n="languages.es">Español</option>
                     <option value="ru" data-i18n="languages.ru">Русский</option>
                     <option value="ja" data-i18n="languages.ja">日本語</option>
@@ -2838,22 +2849,43 @@
                 <div class="word-type-group">
                   <label data-i18n="legend.noun">名词</label>
                   <div class="word-input-row">
-                    <input type="text" id="noun-input" placeholder="输入名词，按回车添加" class="word-input">
-                    <button class="add-word-btn" id="add-noun-btn" disabled>+</button>
+                    <input
+                      type="text"
+                      id="noun-input"
+                      placeholder="输入名词，按回车添加"
+                      class="word-input"
+                    />
+                    <button class="add-word-btn" id="add-noun-btn" disabled>
+                      +
+                    </button>
                   </div>
                 </div>
                 <div class="word-type-group">
                   <label data-i18n="legend.verb">动词</label>
                   <div class="word-input-row">
-                    <input type="text" id="verb-input" placeholder="输入动词，按回车添加" class="word-input">
-                    <button class="add-word-btn" id="add-verb-btn" disabled>+</button>
+                    <input
+                      type="text"
+                      id="verb-input"
+                      placeholder="输入动词，按回车添加"
+                      class="word-input"
+                    />
+                    <button class="add-word-btn" id="add-verb-btn" disabled>
+                      +
+                    </button>
                   </div>
                 </div>
                 <div class="word-type-group">
                   <label data-i18n="legend.adjective">形容词</label>
                   <div class="word-input-row">
-                    <input type="text" id="adj-input" placeholder="输入形容词，按回车添加" class="word-input">
-                    <button class="add-word-btn" id="add-adj-btn" disabled>+</button>
+                    <input
+                      type="text"
+                      id="adj-input"
+                      placeholder="输入形容词，按回车添加"
+                      class="word-input"
+                    />
+                    <button class="add-word-btn" id="add-adj-btn" disabled>
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2862,13 +2894,25 @@
               <div class="word-preview-area">
                 <h5 data-i18n="pages.customDict.preview.title">词汇预览</h5>
                 <div class="word-preview-list" id="word-preview-list">
-                  <div class="empty-preview" data-i18n="pages.customDict.preview.empty">暂无词汇</div>
+                  <div
+                    class="empty-preview"
+                    data-i18n="pages.customDict.preview.empty"
+                  >
+                    暂无词汇
+                  </div>
                 </div>
               </div>
 
               <!-- 保存按钮 -->
               <div class="save-dict-area">
-                <button class="save-dict-btn" id="save-dict-btn" disabled data-i18n="pages.customDict.buttons.save">保存词典</button>
+                <button
+                  class="save-dict-btn"
+                  id="save-dict-btn"
+                  disabled
+                  data-i18n="pages.customDict.buttons.save"
+                >
+                  保存词典
+                </button>
               </div>
             </div>
           </div>
@@ -2878,7 +2922,12 @@
             <h4 data-i18n="pages.customDict.manage.title">2. 管理自建词典</h4>
             <div class="manage-dict-area">
               <div class="custom-dict-list" id="custom-dict-list">
-                <div class="empty-dict-list" data-i18n="pages.customDict.manage.placeholder">暂无自建词典</div>
+                <div
+                  class="empty-dict-list"
+                  data-i18n="pages.customDict.manage.placeholder"
+                >
+                  暂无自建词典
+                </div>
               </div>
             </div>
           </div>

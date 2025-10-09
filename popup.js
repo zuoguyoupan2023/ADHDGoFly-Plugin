@@ -1716,6 +1716,8 @@ class PopupController {
   }
 
   resetDictForm() {
+    console.log('Resetting dict form...');
+    
     // 清空表单
     const nameInput = document.getElementById('dict-name-input');
     const languageSelect = document.getElementById('dict-language-select');
@@ -1737,11 +1739,17 @@ class PopupController {
     // 重置编辑状态
     this.editingDictId = null;
     
-    // 重置保存按钮文本
+    // 重置保存按钮文本和样式
     const saveBtn = document.getElementById('save-dict-btn');
     if (saveBtn) {
       saveBtn.textContent = window.i18n.t('pages.customDict.buttons.save') || '保存词典';
+      saveBtn.style.backgroundColor = ''; // 重置背景色
     }
+    
+    // 隐藏编辑模式提示
+    this.hideEditModeIndicator();
+    
+    console.log('Dict form reset completed');
   }
 
   async saveToIndexedDB(dictData) {
@@ -1847,6 +1855,9 @@ class PopupController {
     `).join('');
 
     listContainer.innerHTML = html;
+    
+    // 绑定动态生成的按钮事件
+    this.bindDictActionEvents();
   }
 
   getLanguageDisplayName(langCode) {
@@ -1862,39 +1873,100 @@ class PopupController {
     return words.filter(word => word.pos === pos).length;
   }
 
+  // 绑定词典操作按钮事件
+  bindDictActionEvents() {
+    console.log('Binding dict action events...');
+    
+    // 绑定编辑按钮
+    document.querySelectorAll('.edit-dict-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const dictId = e.target.getAttribute('data-dict-id');
+        console.log('Edit button clicked for dict:', dictId);
+        this.editCustomDict(dictId);
+      });
+    });
+    
+    // 绑定删除按钮
+    document.querySelectorAll('.delete-dict-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const dictId = e.target.getAttribute('data-dict-id');
+        console.log('Delete button clicked for dict:', dictId);
+        this.deleteCustomDict(dictId);
+      });
+    });
+    
+    console.log('Dict action events bound successfully');
+  }
+
   async editCustomDict(dictId) {
+    console.log('Starting edit for dict:', dictId);
+    
     try {
       const dictionaries = await this.getFromIndexedDB();
       const dict = dictionaries.find(d => d.id === dictId);
       
-      if (!dict) return;
+      if (!dict) {
+        console.error('Dictionary not found:', dictId);
+        return;
+      }
+
+      console.log('Found dictionary to edit:', dict);
 
       // 填充编辑表单
       const nameInput = document.getElementById('dict-name-input');
       const languageSelect = document.getElementById('dict-language-select');
       
-      if (nameInput) nameInput.value = dict.name;
-      if (languageSelect) languageSelect.value = dict.language;
+      if (nameInput) {
+        nameInput.value = dict.name;
+        console.log('Set name input to:', dict.name);
+      } else {
+        console.error('Name input not found');
+      }
+      
+      if (languageSelect) {
+        languageSelect.value = dict.language;
+        console.log('Set language select to:', dict.language);
+      } else {
+        console.error('Language select not found');
+      }
       
       // 加载词汇
       this.customDictWords = [...dict.words];
+      console.log('Loaded words:', this.customDictWords);
+      
       this.updateWordPreview();
       this.validateDictForm();
       
       // 设置编辑模式
       this.editingDictId = dictId;
+      console.log('Set editing mode for dict:', dictId);
       
-      // 更新保存按钮文本
+      // 更新保存按钮文本和样式
       const saveBtn = document.getElementById('save-dict-btn');
       if (saveBtn) {
         saveBtn.textContent = window.i18n.t('pages.customDict.buttons.saveEdit') || '保存修改';
+        saveBtn.style.backgroundColor = '#ffc107'; // 黄色表示编辑模式
+        console.log('Updated save button text and style');
+      } else {
+        console.error('Save button not found');
       }
       
+      // 添加编辑模式提示
+      this.showEditModeIndicator(dict.name);
+      
       // 滚动到表单顶部
-      document.querySelector('.create-dict-area').scrollIntoView({ behavior: 'smooth' });
+      const createArea = document.querySelector('.create-dict-area');
+      if (createArea) {
+        createArea.scrollIntoView({ behavior: 'smooth' });
+        console.log('Scrolled to form area');
+      }
+      
+      // 显示成功消息
+      this.showMessage(`正在编辑词典: ${dict.name}`, 'info');
       
     } catch (error) {
       console.error('加载词典编辑数据失败:', error);
+      this.showMessage('加载编辑数据失败，请重试', 'error');
     }
   }
 
@@ -1969,6 +2041,67 @@ class PopupController {
         messageDiv.parentNode.removeChild(messageDiv);
       }
     }, 3000);
+  }
+
+  // 显示编辑模式提示
+  showEditModeIndicator(dictName) {
+    // 检查是否已存在提示
+    let indicator = document.getElementById('edit-mode-indicator');
+    
+    if (!indicator) {
+      // 创建编辑模式提示
+      indicator = document.createElement('div');
+      indicator.id = 'edit-mode-indicator';
+      indicator.style.cssText = `
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #856404;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      `;
+      
+      // 插入到创建词典区域的开头
+      const createArea = document.querySelector('.create-dict-area');
+      if (createArea) {
+        createArea.insertBefore(indicator, createArea.firstChild);
+      }
+    }
+    
+    indicator.innerHTML = `
+      <span style="font-size: 16px;">✏️</span>
+      <span><strong>编辑模式:</strong> 正在编辑词典 "${dictName}"</span>
+      <button onclick="popupController.cancelEdit()" style="
+        margin-left: auto;
+        padding: 2px 8px;
+        border: 1px solid #ffc107;
+        border-radius: 3px;
+        background: white;
+        color: #856404;
+        font-size: 11px;
+        cursor: pointer;
+      ">取消编辑</button>
+    `;
+  }
+
+  // 隐藏编辑模式提示
+  hideEditModeIndicator() {
+    const indicator = document.getElementById('edit-mode-indicator');
+    if (indicator) {
+      indicator.remove();
+    }
+  }
+
+  // 取消编辑
+  cancelEdit() {
+    if (confirm('确定要取消编辑吗？未保存的更改将丢失。')) {
+      this.resetDictForm();
+      this.showMessage('已取消编辑', 'info');
+    }
   }
 }
 
