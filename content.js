@@ -2,6 +2,7 @@
 class DictionaryManager {
   constructor() {
     this.dictionaries = {};
+    this.customDictionaries = {}; // 存储自建词典
     this.isLoaded = false;
     this.loadPromise = this.loadDictionaries();
   }
@@ -63,7 +64,62 @@ class DictionaryManager {
   }
 
   getDictionary(language) {
-    return this.dictionaries[language] || {};
+    // 合并预设词典和自建词典
+    const presetDict = this.dictionaries[language] || {};
+    const customDict = this.customDictionaries[language] || {};
+    return { ...presetDict, ...customDict };
+  }
+
+  // 更新自建词典数据
+  updateCustomDictionaries(customDictionaries) {
+    console.log('更新自建词典数据:', customDictionaries);
+    
+    // 清空现有自建词典
+    this.customDictionaries = {};
+    
+    // 处理每个自建词典
+    if (customDictionaries && Array.isArray(customDictionaries)) {
+      customDictionaries.forEach(dict => {
+        if (dict.words && Array.isArray(dict.words)) {
+          dict.words.forEach(wordObj => {
+            const word = wordObj.word;
+            const pos = wordObj.pos || 'n'; // 默认为名词
+            
+            // 检测词汇语言并分类存储
+            const language = this.detectWordLanguage(word);
+            
+            if (!this.customDictionaries[language]) {
+              this.customDictionaries[language] = {};
+            }
+            
+            this.customDictionaries[language][word] = pos;
+          });
+        }
+      });
+    }
+    
+    console.log('自建词典处理完成:', this.customDictionaries);
+  }
+
+  // 检测单词语言
+  detectWordLanguage(word) {
+    // 中文字符检测
+    if (/[\u4e00-\u9fa5]/.test(word)) return 'zh';
+    
+    // 日文字符检测（平假名、片假名、汉字）
+    if (/[\u3040-\u309f\u30a0-\u30ff]/.test(word)) return 'ja';
+    
+    // 俄文字符检测（西里尔字母）
+    if (/[\u0400-\u04ff]/.test(word)) return 'ru';
+    
+    // 法文特殊字符检测
+    if (/[àâäéèêëïîôöùûüÿç]/i.test(word)) return 'fr';
+    
+    // 西班牙文特殊字符检测
+    if (/[ñáéíóúü¿¡]/i.test(word)) return 'es';
+    
+    // 默认英文
+    return 'en';
   }
 
   async waitForLoad() {
@@ -101,16 +157,34 @@ class QuickHighlighter {
             this.processPage();
           }
         }
+      } else if (message.action === 'updateDictSettings') {
+        // 更新词典设置，包括自建词典数据
+        console.log('收到词典设置更新:', message);
+        
+        if (message.customDictionaries) {
+          this.dictionaryManager.updateCustomDictionaries(message.customDictionaries);
+          
+          // 如果当前已启用，重新处理页面以应用新的词典
+          if (this.enabled) {
+            this.removeHighlights();
+            this.processPage();
+          }
+        }
       }
     });
     
     // 检查存储的状态和设置
-    chrome.storage.local.get(['enabled', 'highlightingToggles'], (result) => {
+    chrome.storage.local.get(['enabled', 'highlightingToggles', 'dictSettings'], async (result) => {
       if (result.enabled) {
         this.enable();
       }
       if (result.highlightingToggles) {
         this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
+      }
+      
+      // 加载自建词典数据
+      if (result.dictSettings) {
+        await this.loadCustomDictionaries(result.dictSettings);
       }
     });
   }
@@ -129,6 +203,64 @@ class QuickHighlighter {
     this.enabled = false;
     this.removeHighlights();
     chrome.storage.local.set({ enabled: false });
+  }
+
+  // 加载自建词典数据
+  async loadCustomDictionaries(dictSettings) {
+    try {
+      console.log('开始加载自建词典数据...');
+      
+      // 获取所有自建词典数据
+      const customDictionaries = await this.getCustomDictionariesFromStorage();
+      
+      // 过滤出已启用的自建词典
+      const enabledCustomDicts = customDictionaries.filter(dict => 
+        dict.addedToLibrary && dictSettings[dict.id]
+      );
+      
+      console.log('启用的自建词典:', enabledCustomDicts);
+      
+      // 更新词典管理器中的自建词典数据
+      this.dictionaryManager.updateCustomDictionaries(enabledCustomDicts);
+      
+    } catch (error) {
+      console.error('加载自建词典数据失败:', error);
+    }
+  }
+
+  // 从IndexedDB获取自建词典数据
+  async getCustomDictionariesFromStorage() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('CustomDictionaryDB', 1);
+      
+      request.onerror = () => {
+        console.log('无法打开IndexedDB，可能没有自建词典');
+        resolve([]);
+      };
+      
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        
+        if (!db.objectStoreNames.contains('dictionaries')) {
+          console.log('没有找到词典存储，返回空数组');
+          resolve([]);
+          return;
+        }
+        
+        const transaction = db.transaction(['dictionaries'], 'readonly');
+        const store = transaction.objectStore('dictionaries');
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = () => {
+          resolve(getAllRequest.result || []);
+        };
+        
+        getAllRequest.onerror = () => {
+          console.error('获取自建词典数据失败');
+          resolve([]);
+        };
+      };
+    });
   }
 
   async processPage() {
