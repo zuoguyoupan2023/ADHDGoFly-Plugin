@@ -268,17 +268,12 @@ class PageProcessor {
       return text;
     }
     
-    // 如果只有一种语言启用，先检测文本语言再处理
+    // 如果只有一种语言启用，使用原有逻辑
     if (enabledLanguages.length === 1) {
-      const enabledLanguage = enabledLanguages[0];
-      const detectedLanguage = this.languageDetector.detectLanguage(text);
-      
-      // 只有当检测到的语言与启用的语言匹配时才处理
-      if (detectedLanguage === enabledLanguage) {
-        const dictionary = this.dictionaryManager.getDictionary(enabledLanguage);
-        if (dictionary && Object.keys(dictionary).length > 0) {
-          return this.textSegmenter.segmentText(text, enabledLanguage, dictionary, this.dictionaryManager);
-        }
+      const language = enabledLanguages[0];
+      const dictionary = this.dictionaryManager.getDictionary(language);
+      if (dictionary && Object.keys(dictionary).length > 0) {
+        return this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
       }
       return text;
     }
