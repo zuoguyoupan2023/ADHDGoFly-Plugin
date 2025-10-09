@@ -27,7 +27,7 @@
         "type": "preset",
         "filePath": "dictionaries/EN_word.json",
         "enabled": true,
-        "priority": 2
+        "priority": 1
       },
       {
         "id": "es-preset",
@@ -39,8 +39,8 @@
         "language": "es",
         "type": "preset",
         "filePath": "dictionaries/ES_word.json",
-        "enabled": false,
-        "priority": 3
+        "enabled": true,
+        "priority": 1
       },
       {
         "id": "fr-preset",
@@ -52,8 +52,8 @@
         "language": "fr",
         "type": "preset",
         "filePath": "dictionaries/FR_word.json",
-        "enabled": false,
-        "priority": 4
+        "enabled": true,
+        "priority": 1
       },
       {
         "id": "ja-preset",
@@ -65,8 +65,8 @@
         "language": "ja",
         "type": "preset",
         "filePath": "dictionaries/JA_word.json",
-        "enabled": false,
-        "priority": 5
+        "enabled": true,
+        "priority": 1
       },
       {
         "id": "ru-preset",
@@ -78,8 +78,8 @@
         "language": "ru",
         "type": "preset",
         "filePath": "dictionaries/RU_word.json",
-        "enabled": false,
-        "priority": 6
+        "enabled": true,
+        "priority": 1
       },
       {
         "id": "zh-animal-preset",
