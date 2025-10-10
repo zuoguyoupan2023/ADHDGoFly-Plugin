@@ -7,10 +7,6 @@
     "processing": "处理中...",
     "switching": "正在切换状态..."
   },
-  "version": {
-     "checking": "检查中...",
-     "checkFailed": "检查失败"
-   },
   "errors": {
     "noTab": "无法获取当前标签页",
     "notLoaded": "插件未加载或初始化失败",
