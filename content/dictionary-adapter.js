@@ -86,21 +86,41 @@ class DictionaryAdapter {
     }
 
     /**
-     * 转换词典格式：从新格式转换为旧格式
-     * @param {Object} dictData 新格式词典数据
-     * @returns {Object} 旧格式词典数据
+     * 转换词典格式
+     * @param {Object} dictData 原始词典数据
+     * @returns {Object} 转换后的词典数据
      * @private
      */
     _convertDictionaryFormat(dictData) {
-        const converted = {};
+        // 如果已经是旧格式 {word: "pos"}，直接返回
+        if (!dictData.words && typeof dictData === 'object') {
+            return dictData;
+        }
+        
+        // 如果是新格式 {words: {word: {pos: [...]}}}，转换为旧格式
         if (dictData.words) {
+            const converted = {};
             for (const [word, info] of Object.entries(dictData.words)) {
                 if (info.pos && info.pos.length > 0) {
-                    converted[word] = info.pos[0]; // 取第一个词性
+                    // 词性优先级：形容词 > 动词 > 名词 > 副词 > 其他
+                    const priorityOrder = ['n', 'noun', 'v', 'verb', 'adj', 'a', 'adv', 'adverb'];
+                    let selectedPos = info.pos[0]; // 默认取第一个
+                    
+                    for (const priority of priorityOrder) {
+                        const found = info.pos.find(pos => pos.toLowerCase().includes(priority));
+                        if (found) {
+                            selectedPos = found;
+                            break;
+                        }
+                    }
+                    
+                    converted[word] = selectedPos;
                 }
             }
+            return converted;
         }
-        return converted;
+        
+        return dictData;
     }
 
     /**
@@ -115,6 +135,9 @@ class DictionaryAdapter {
             const loadPromises = languages.map(async (lang) => {
                 try {
                     const response = await fetch(chrome.runtime.getURL(`dictionaries/${lang}_word.json`));
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
                     const data = await response.json();
                     const langCode = lang.toLowerCase();
                     this.legacyData[langCode] = this._convertDictionaryFormat(data);
@@ -124,12 +147,19 @@ class DictionaryAdapter {
                         version: data.version || '1.0'
                     };
                 } catch (error) {
-                    console.warn(`Failed to load ${lang} dictionary:`, error);
+                    console.warn(`Failed to load ${lang} dictionary:`, error.message);
                     return { lang: lang.toLowerCase(), count: 0, version: 'error' };
                 }
             });
             
             const results = await Promise.all(loadPromises);
+            const successfulLoads = results.filter(r => r.count > 0);
+            
+            if (successfulLoads.length === 0) {
+                console.warn('No dictionaries loaded successfully, using fallback');
+                this._loadFallbackDictionaries();
+                return;
+            }
             
             this.isLoaded = true;
             console.log('Legacy dictionaries loaded:', results.reduce((acc, result) => {
@@ -144,25 +174,29 @@ class DictionaryAdapter {
     }
 
     /**
-     * 加载备用词典（简化版）
+     * 加载备用词典（优化版 - 避免单字高亮）
      * @private
      */
     _loadFallbackDictionaries() {
-        console.log('Using fallback dictionaries');
+        console.log('Using optimized fallback dictionaries (multi-character words only)');
         
+        // 优化：只包含多字符词汇，避免单字高亮问题
         this.legacyData.en = {
-            'computer': 'n', 'book': 'n', 'table': 'n', 'person': 'n',
-            'good': 'a', 'bad': 'a', 'big': 'a', 'small': 'a',
-            'run': 'v', 'jump': 'v', 'read': 'v', 'write': 'v'
+            'computer': 'n', 'keyboard': 'n', 'monitor': 'n', 'software': 'n',
+            'beautiful': 'a', 'important': 'a', 'excellent': 'a', 'wonderful': 'a',
+            'develop': 'v', 'create': 'v', 'analyze': 'v', 'optimize': 'v',
+            'quickly': 'adv', 'carefully': 'adv', 'efficiently': 'adv'
         };
         
         this.legacyData.zh = {
-            '电脑': 'n', '书': 'n', '桌子': 'n', '人': 'n',
-            '好': 'a', '坏': 'a', '大': 'a', '小': 'a',
-            '跑': 'v', '跳': 'v', '读': 'v', '写': 'v'
+            '计算机': 'n', '键盘': 'n', '显示器': 'n', '软件': 'n',
+            '美丽': 'a', '重要': 'a', '优秀': 'a', '精彩': 'a',
+            '开发': 'v', '创建': 'v', '分析': 'v', '优化': 'v',
+            '快速': 'adv', '仔细': 'adv', '高效': 'adv'
         };
         
         this.isLoaded = true;
+        console.log('Fallback dictionaries loaded with multi-character words only');
     }
 
     // ========== 向后兼容的接口 ==========
@@ -204,9 +238,12 @@ class DictionaryAdapter {
         
         // 向后兼容：使用语言级别的设置
         if (this.enabledLanguages[language]) {
-            return this.legacyData[language] || {};
+            const dict = this.legacyData[language] || {};
+            console.log(`Using legacy dictionary for ${language}, size: ${Object.keys(dict).length}`);
+            return dict;
         }
         
+        console.log(`No dictionary available for language: ${language}`);
         return {};
     }
 
