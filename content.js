@@ -143,7 +143,7 @@ class QuickHighlighter {
 
   init() {
     // 监听来自 popup 的消息
-    chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === 'toggle') {
         this.toggle();
       } else if (message.action === 'updateColorScheme') {
@@ -163,25 +163,6 @@ class QuickHighlighter {
         
         if (message.customDictionaries) {
           this.dictionaryManager.updateCustomDictionaries(message.customDictionaries);
-          
-          // 如果当前已启用，重新处理页面以应用新的词典
-          if (this.enabled) {
-            this.removeHighlights();
-            this.processPage();
-          }
-        }
-      } else if (message.action === 'updateCustomDictionaries') {
-        // 专门处理自建词典更新
-        console.log('收到自建词典更新:', message);
-        
-        if (message.customDictionaries) {
-          // 使用DictionaryAdapter更新自建词典
-          if (window.dictionaryAdapter) {
-            await window.dictionaryAdapter.updateCustomDictionaries(message.customDictionaries);
-          } else {
-            // 兼容旧系统
-            this.dictionaryManager.updateCustomDictionaries(message.customDictionaries);
-          }
           
           // 如果当前已启用，重新处理页面以应用新的词典
           if (this.enabled) {

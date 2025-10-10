@@ -460,65 +460,6 @@ class DictionaryAdapter {
             return await this.initialize();
         }
     }
-
-    /**
-     * 更新自建词典数据
-     * @param {Array} customDictionaries 自建词典数组
-     */
-    async updateCustomDictionaries(customDictionaries) {
-        try {
-            console.log('DictionaryAdapter: 接收到自建词典数据:', customDictionaries);
-            
-            if (!customDictionaries || !Array.isArray(customDictionaries)) {
-                console.log('DictionaryAdapter: 没有有效的自建词典数据');
-                return;
-            }
-
-            // 清空现有自建词典数据
-            this.customDictionaries = {};
-
-            // 处理每个自建词典
-            customDictionaries.forEach(dict => {
-                if (dict.words && Array.isArray(dict.words)) {
-                    const language = dict.language;
-                    
-                    // 初始化语言词典
-                    if (!this.customDictionaries[language]) {
-                        this.customDictionaries[language] = {};
-                    }
-
-                    // 转换词汇格式
-                    dict.words.forEach(wordObj => {
-                        const word = wordObj.word;
-                        const pos = wordObj.pos || 'n';
-                        this.customDictionaries[language][word] = pos;
-                    });
-
-                    console.log(`DictionaryAdapter: 处理${language}自建词典，${dict.words.length}个词汇`);
-                }
-            });
-
-            // 合并自建词典到现有词典数据
-            Object.keys(this.customDictionaries).forEach(language => {
-                if (this.legacyData[language]) {
-                    // 合并到现有语言词典
-                    this.legacyData[language] = {
-                        ...this.legacyData[language],
-                        ...this.customDictionaries[language]
-                    };
-                } else {
-                    // 创建新的语言词典
-                    this.legacyData[language] = this.customDictionaries[language];
-                }
-                
-                console.log(`DictionaryAdapter: ${language}词典总词汇数:`, Object.keys(this.legacyData[language]).length);
-            });
-
-            console.log('DictionaryAdapter: 自建词典更新完成');
-        } catch (error) {
-            console.error('DictionaryAdapter: 更新自建词典失败:', error);
-        }
-    }
 }
 
 // 导出适配器
