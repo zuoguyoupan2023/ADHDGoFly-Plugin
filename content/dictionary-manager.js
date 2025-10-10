@@ -70,67 +70,43 @@ class DictionaryManager {
   }
 
   /**
-   * 转换词典格式
+   * 转换词典格式：从 {version: "1.0", words: {word: {pos: ["n"]}}} 到 {word: "n"}
    * @param {Object} dictData 原始词典数据
-   * @returns {Object} 转换后的词典数据
+   * @returns {Object} 转换后的词典
    * @private
    */
   convertDictionaryFormat(dictData) {
-    // 如果已经是旧格式 {word: "pos"}，直接返回
-    if (!dictData.words && typeof dictData === 'object') {
-      return dictData;
-    }
-    
-    // 如果是新格式 {words: {word: {pos: [...]}}}，转换为旧格式
+    const converted = {};
     if (dictData.words) {
-      const converted = {};
       for (const [word, info] of Object.entries(dictData.words)) {
         if (info.pos && info.pos.length > 0) {
-          // 词性优先级：形容词 > 动词 > 名词 > 副词 > 其他
-          const priorityOrder = ['adj', 'a', 'v', 'verb', 'n', 'noun', 'adv', 'adverb'];
-          let selectedPos = info.pos[0]; // 默认取第一个
-          
-          for (const priority of priorityOrder) {
-            const found = info.pos.find(pos => pos.toLowerCase().includes(priority));
-            if (found) {
-              selectedPos = found;
-              break;
-            }
-          }
-          
-          converted[word] = selectedPos;
+          converted[word] = info.pos[0]; // 取第一个词性
         }
       }
-      return converted;
     }
-    
-    return dictData;
+    return converted;
   }
 
   /**
-   * 加载备用词典（优化版 - 避免单字高亮）
+   * 加载备用词典（简化版）
    * @private
    */
   loadFallbackDictionaries() {
-    console.log('Loading optimized fallback dictionaries (multi-character words only)');
+    console.log('使用备用词典');
     
-    // 优化：只包含多字符词汇，避免单字高亮问题
     this.dictionaries.en = {
-      'computer': 'n', 'keyboard': 'n', 'monitor': 'n', 'software': 'n',
-      'beautiful': 'a', 'important': 'a', 'excellent': 'a', 'wonderful': 'a',
-      'develop': 'v', 'create': 'v', 'analyze': 'v', 'optimize': 'v',
-      'quickly': 'adv', 'carefully': 'adv', 'efficiently': 'adv'
+      'computer': 'n', 'book': 'n', 'table': 'n', 'person': 'n',
+      'good': 'a', 'bad': 'a', 'big': 'a', 'small': 'a',
+      'run': 'v', 'jump': 'v', 'read': 'v', 'write': 'v'
     };
     
     this.dictionaries.zh = {
-      '计算机': 'n', '键盘': 'n', '显示器': 'n', '软件': 'n',
-      '美丽': 'a', '重要': 'a', '优秀': 'a', '精彩': 'a',
-      '开发': 'v', '创建': 'v', '分析': 'v', '优化': 'v',
-      '快速': 'adv', '仔细': 'adv', '高效': 'adv'
+      '电脑': 'n', '书': 'n', '桌子': 'n', '人': 'n',
+      '好': 'a', '坏': 'a', '大': 'a', '小': 'a',
+      '跑': 'v', '跳': 'v', '读': 'v', '写': 'v'
     };
     
     this.isLoaded = true;
-    console.log('Fallback dictionaries loaded with multi-character words only');
   }
 
   /**
