@@ -457,9 +457,6 @@ class PopupController {
         const dictId = e.target.id.replace('dict-', '');
         this.dictSettings[dictId] = e.target.checked;
         console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
-        
-        // 自动保存设置
-        this.saveDictSettings();
       });
     });
     
@@ -1853,24 +1850,6 @@ class PopupController {
 
     // 添加到容器
     container.insertAdjacentHTML('beforeend', dictItemHtml);
-    
-    // 为新添加的复选框绑定事件
-    const newCheckbox = document.getElementById(`dict-${dictData.id}`);
-    if (newCheckbox) {
-      newCheckbox.addEventListener('change', (e) => {
-        const dictId = e.target.id.replace('dict-', '');
-        this.dictSettings[dictId] = e.target.checked;
-        console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
-        
-        // 自动保存设置
-        this.saveDictSettings();
-      });
-      
-      // 设置初始状态
-      if (this.dictSettings[dictData.id] !== undefined) {
-        newCheckbox.checked = this.dictSettings[dictData.id];
-      }
-    }
     
     // 确保专业词典区域可见
     const professionalDicts = container.closest('.professional-dicts');
