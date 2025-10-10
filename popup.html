@@ -751,125 +751,10 @@
         display: none; /* 隐藏所有词典描述 */
       }
 
-      /* 自建词典入口样式 */
-      .custom-dict-entry {
-        margin-top: 15px;
-        padding: 12px 0;
-        border-top: 1px solid #e0e0e0;
-        text-align: center;
-      }
-
-      .add-dict-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border: 2px dashed #007aff;
-        border-radius: 6px;
-        background: transparent;
-        color: #007aff;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .add-dict-btn:hover {
-        background: #f0f8ff;
-        border-color: #0056cc;
-        color: #0056cc;
-      }
-
-      .add-icon {
-        font-size: 16px;
-        font-weight: bold;
-      }
-
-      .add-text {
-        font-size: 12px;
-      }
-
       .dict-actions {
         margin-top: 15px;
         padding-top: 15px;
         border-top: 1px solid #e0e0e0;
-      }
-
-      /* 自建词典页面样式 */
-      .custom-dict-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        padding: 10px 0;
-      }
-
-      .custom-dict-section {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: white;
-        overflow: hidden;
-      }
-
-      .custom-dict-section h4 {
-        margin: 0;
-        padding: 12px 16px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e0e0e0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .create-dict-area,
-      .manage-dict-area {
-        padding: 16px;
-      }
-
-      .create-dict-area p,
-      .manage-dict-area p {
-        margin: 0 0 12px 0;
-        font-size: 13px;
-        color: #666;
-      }
-
-      .placeholder-content {
-        padding: 20px;
-        text-align: center;
-        background: #fafafa;
-        border: 1px dashed #ddd;
-        border-radius: 6px;
-        color: #999;
-        font-style: italic;
-      }
-
-      /* 返回按钮样式 */
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      }
-
-      .back-btn {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #d0d0d0;
-        border-radius: 6px;
-        background: white;
-        color: #666;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        transition: all 0.2s ease;
-      }
-
-      .back-btn:hover {
-        background: #f8f9fa;
-        border-color: #007aff;
-        color: #007aff;
       }
 
       /* 高亮开关控制样式 */
@@ -2409,14 +2294,6 @@
             </div>
           </div>
 
-          <!-- 自建词典入口 -->
-          <div class="custom-dict-entry">
-            <button class="add-dict-btn" id="add-dict-btn">
-              <span class="add-icon">+</span>
-              <span class="add-text" data-i18n="pages.dict.customDict">自建词典</span>
-            </button>
-          </div>
-
           <div class="dict-actions">
             <button
               class="save-btn"
@@ -2433,42 +2310,6 @@
           <div class="tooltip-title" id="tooltip-title"></div>
           <div class="tooltip-description" id="tooltip-description"></div>
           <div class="tooltip-source" id="tooltip-source"></div>
-        </div>
-      </div>
-
-      <!-- 自建词典页面 -->
-      <div class="page" id="custom-dict-page">
-        <div class="header">
-          <h3 data-i18n="pages.customDict.title">自建词典</h3>
-          <button class="back-btn" id="back-to-dict-btn">
-            <span>←</span>
-          </button>
-        </div>
-
-        <div class="custom-dict-content">
-          <!-- 自建词典部分 -->
-          <div class="custom-dict-section">
-            <h4 data-i18n="pages.customDict.create.title">1. 自建词典</h4>
-            <div class="create-dict-area">
-              <p data-i18n="pages.customDict.create.description">创建您自己的专业词典</p>
-              <!-- 这里将来添加创建词典的功能 -->
-              <div class="placeholder-content">
-                <span data-i18n="pages.customDict.create.placeholder">功能开发中...</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 管理自建词典部分 -->
-          <div class="custom-dict-section">
-            <h4 data-i18n="pages.customDict.manage.title">2. 管理自建词典</h4>
-            <div class="manage-dict-area">
-              <p data-i18n="pages.customDict.manage.description">管理您已创建的词典</p>
-              <!-- 这里将来添加管理词典的功能 -->
-              <div class="placeholder-content">
-                <span data-i18n="pages.customDict.manage.placeholder">暂无自建词典</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
