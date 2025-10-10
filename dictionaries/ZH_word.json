@@ -12,7 +12,7 @@
     "en": "Built-in Chinese dictionary with common Chinese vocabulary and part-of-speech tags"
   },
   "license": {
-    "type": "MIT",
+    "type": "MIT License",
     "source": "jieba",
     "url": "https://github.com/fxsjy/jieba",
     "attribution": "Based on jieba Chinese text segmentation"

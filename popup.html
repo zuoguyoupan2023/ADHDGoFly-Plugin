@@ -1,2198 +1,3306 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="settings.css">
-  <script src="i18n.js"></script>
-  <script src="popup.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body { 
-      width: 320px;
-      height: 400px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      background: #f8f9fa;
-    }
-    
-    /* 主内容区域 */
-    .main-content {
-      flex: 1;
-      padding: 20px;
-      background: white;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* 应用标题和状态区域 */
-    .app-header {
-      margin-bottom: 16px;
-    }
-    
-    .app-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    
-    .app-title h3 {
-      margin: 0;
-      color: #333;
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .status {
-      font-size: 0;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background-color: #ccc;
-    }
-    
-    .status.enabled {
-      background-color: #4CAF50;
-    }
-    
-    .status.disabled {
-      background-color: #F44336;
-    }
-    
-    /* 紧凑版本信息样式 */
-    .version-compact {
-      background-color: #F8F9FA;
-      border: 1px solid #E9ECEF;
-      border-radius: 6px;
-      padding: 8px 12px;
-      margin: 12px 0;
-      font-size: 11px;
-    }
-    
-    .version-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .version-text {
-      color: #666;
-      font-size: 11px;
-    }
-    
-    .version-text strong {
-      color: #333;
-      font-weight: 600;
-    }
-    
-    .version-update {
-      margin-top: 8px;
-      padding: 12px;
-      border-top: 1px solid #E0E0E0;
-      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
-      border-radius: 6px;
-      border: 1px solid #BBDEFB;
-    }
-    
-    .update-title {
-      font-weight: 600;
-      font-size: 13px;
-      color: #1565C0;
-      text-align: center;
-      margin-bottom: 6px;
-    }
-    
-    .update-description {
-      font-size: 11px;
-      color: #666;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    
-    .download-options {
-      margin-bottom: 8px;
-    }
-    
-    .download-section {
-      margin-bottom: 8px;
-    }
-    
-    .download-label {
-      font-size: 11px;
-      font-weight: 500;
-      color: #333;
-      margin-bottom: 4px;
-    }
-    
-    .alternative-links {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    
-    .download-link {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 11px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-    
-    .github-link {
-      background-color: #24292e;
-      color: white;
-    }
-    
-    .github-link:hover {
-      background-color: #1a1e22;
-    }
-    
-    .baidu-link {
-      background-color: #2932E1;
-      color: white;
-    }
-    
-    .baidu-link:hover {
-      background-color: #1f28b8;
-    }
-    
-    .gitee-link {
-      background-color: #C71D23;
-      color: white;
-    }
-    
-    .gitee-link:hover {
-      background-color: #a0171c;
-    }
-    
-    .direct-link {
-      background-color: #4CAF50;
-      color: white;
-    }
-    
-    .direct-link:hover {
-      background-color: #45a049;
-    }
-    
-    .update-note {
-      font-size: 10px;
-      color: #666;
-      text-align: center;
-      font-style: italic;
-    }
-    
-    .contact-info {
-      font-size: 10px;
-      color: #666;
-      text-align: center;
-      margin-top: 4px;
-    }
-    
-    .separator {
-      margin: 0 8px;
-      color: #ccc;
-      font-weight: normal;
-    }
-    
-    .download-section {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-    }
-    
-    /* 主要操作区域 */
-    .main-actions {
-      margin: 16px 0;
-      text-align: center;
-    }
-    
-    .toggle-btn {
-      width: auto;
-      min-width: 80px;
-      padding: 12px 20px; 
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background-color: #007AFF;
-      color: white;
-    }
-    
-    .toggle-btn:hover {
-      background-color: #0056CC;
-      transform: translateY(-1px);
-    }
-    
-    .toggle-btn.disabled {
-      background-color: #FF3B30;
-    }
-    
-    .toggle-btn.disabled:hover {
-      background-color: #D70015;
-    }
-    
-    .legend {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #666;
-    }
-    
-    .legend h4 {
-      margin-bottom: 10px;
-      color: #333;
-      font-size: 13px;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin: 6px 0;
-      padding: 4px 0;
-    }
-    
-    .legend-color {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      margin-right: 10px;
-      border: 1px solid rgba(0,0,0,0.1);
-    }
-    
-    .legend-noun { background-color: rgba(0, 102, 204, 0.3); }
-    .legend-verb { background-color: rgba(204, 0, 0, 0.3); }
-    .legend-adj { background-color: rgba(0, 153, 51, 0.3); }
-    
-    /* 紧凑图例样式 */
-    .legend-compact {
-      margin-top: 16px;
-      font-size: 11px;
-      color: #666;
-    }
-    
-    .legend-compact h4 {
-      margin-bottom: 8px;
-      color: #333;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .legend-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    
-    .legend-grid .legend-item {
-      display: flex;
-      align-items: center;
-      padding: 6px 8px;
-      background: #F8F9FA;
-      border-radius: 4px;
-      border: 1px solid #E9ECEF;
-      margin: 0;
-    }
-    
-    .legend-grid .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      margin-right: 6px;
-      border: 1px solid rgba(0,0,0,0.1);
-    }
-    
-    .legend-grid .legend-item span {
-      font-size: 10px;
-      font-weight: 500;
-      color: #555;
-    }
-    
-    .dict-summary {
-      margin-top: 12px;
-      padding: 8px 0;
-    }
-    
-    .dict-summary h4 {
-      margin: 0 0 8px 0;
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .dict-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    
-    .dict-tag {
-      display: inline-block;
-      padding: 4px 8px;
-      background-color: #f0f0f0;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 500;
-      color: #555;
-      white-space: nowrap;
-    }
-    
-    /* 右侧侧边栏 */
-    .sidebar {
-      width: 60px;
-      background: #f0f0f0;
-      border-left: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      gap: 8px;
-      overflow-y: auto;
-    }
-    
-    .sidebar-btn {
-      width: 36px;
-      height: 36px;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      color: #666;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-    
-    .sidebar-btn:hover {
-      background: #f8f9fa;
-      border-color: #007AFF;
-      color: #007AFF;
-      transform: translateY(-1px);
-    }
-    
-    .sidebar-btn.active {
-      background: #007AFF;
-      border-color: #007AFF;
-      color: white;
-      box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
-    }
-    
-    .language-switcher {
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .language-btn {
-      position: relative;
-    }
-    
-    .language-btn .language-icon {
-      font-size: 16px;
-    }
-    
-    .sidebar-btn span {
-      font-size: 18px;
-    }
-    
-    /* 页面切换 */
-    .page {
-      display: none;
-      flex-direction: column;
-      height: 100%;
-    }
-    
-    .page.active {
-      display: flex;
-    }
-    
-    /* 词典管理页面样式 */
-    .dict-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .dict-info {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border-left: 3px solid #007AFF;
-    }
-    
-    .dict-info p {
-      margin: 0;
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .dict-list {
-      flex: 1;
-      overflow-y: auto;
-    }
-    
-    .dict-item {
-      margin-bottom: 4px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: white;
-      transition: all 0.2s ease;
-    }
-    
-    .dict-item:hover {
-      border-color: #007AFF;
-      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
-    }
-    
-    .dict-label {
-      display: flex;
-      align-items: center;
-      padding: 8px 10px;
-      cursor: pointer;
-      position: relative;
-    }
-    
-    .dict-label input[type="checkbox"] {
-      display: none;
-    }
-    
-    .checkmark {
-      width: 16px;
-      height: 16px;
-      border: 2px solid #d0d0d0;
-      border-radius: 3px;
-      margin-right: 10px;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-    
-    .dict-label input[type="checkbox"]:checked + .checkmark {
-      background-color: #007AFF;
-      border-color: #007AFF;
-    }
-    
-    .dict-label input[type="checkbox"]:checked + .checkmark::after {
-      content: '✓';
-      position: absolute;
-      top: -2px;
-      left: 2px;
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    
-    .dict-info-text {
-      flex: 1;
-    }
-    
-    .dict-name {
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-      display: block;
-    }
-    
-    .dict-desc {
-      font-size: 11px;
-      color: #666;
-      margin-top: 1px;
-      display: block;
-    }
-    
-    .dict-actions {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    /* 高亮开关控制样式 */
-    .highlighting-toggles {
-      margin-top: 20px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
-    }
-    
-    .highlighting-toggles h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .toggle-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    
-    /* 按钮颜色方案 - 使用CSS变量实现动态切换 */
-    :root {
-      --noun-color: #0066cc;
-      --verb-color: #cc0000;
-      --adj-color: #009933;
-      --comparative-color: #9966cc;
-    }
-    
-    .toggle-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      border: 2px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      color: black;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      outline: none;
-      width: auto;
-      min-width: auto;
-    }
-    
-    .toggle-button:hover {
-      border-color: #999;
-      background: #f8f9fa;
-    }
-    
-    /* 名词按钮 */
-    .toggle-button[data-type="noun"].active {
-      background: var(--noun-color);
-      border-color: var(--noun-color);
-      color: white;
-    }
-    
-    .toggle-button[data-type="noun"].active:hover {
-      background: var(--noun-color);
-      border-color: var(--noun-color);
-      opacity: 0.8;
-    }
-    
-    /* 动词按钮 */
-    .toggle-button[data-type="verb"].active {
-      background: var(--verb-color);
-      border-color: var(--verb-color);
-      color: white;
-    }
-    
-    .toggle-button[data-type="verb"].active:hover {
-      background: var(--verb-color);
-      border-color: var(--verb-color);
-      opacity: 0.8;
-    }
-    
-    /* 形容词按钮 */
-    .toggle-button[data-type="adj"].active {
-      background: var(--adj-color);
-      border-color: var(--adj-color);
-      color: white;
-    }
-    
-    .toggle-button[data-type="adj"].active:hover {
-      background: var(--adj-color);
-      border-color: var(--adj-color);
-      opacity: 0.8;
-    }
-    
-    /* 比较级/最高级按钮 */
-    .toggle-button[data-type="comparative"].active {
-      background: var(--comparative-color);
-      border-color: var(--comparative-color);
-      color: white;
-    }
-    
-    .toggle-button[data-type="comparative"].active:hover {
-      background: var(--comparative-color);
-      border-color: var(--comparative-color);
-      opacity: 0.8;
-    }
-    
-    .toggle-description {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .toggle-description p {
-      margin: 0;
-      font-size: 12px;
-      color: #666;
-      font-style: italic;
-    }
-    
-    .save-btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      background-color: #28a745;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .save-btn:hover {
-      background-color: #218838;
-      transform: translateY(-1px);
-    }
-    
-    /* 颜色管理页面样式 */
-    .colors-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .colors-info {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 6px;
-    }
-    
-    .colors-info p {
-      margin: 0;
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .color-schemes {
-      flex: 1;
-      overflow-y: auto;
-    }
-    
-    .scheme-item {
-      margin-bottom: 8px;
-      border: 2px solid #e0e0e0;
-      border-radius: 6px;
-      background: white;
-      padding: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .scheme-item:hover {
-      border-color: #007AFF;
-      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
-    }
-    
-    .scheme-item.active {
-      border-color: #007AFF;
-      background: #f0f8ff;
-    }
-    
-    .scheme-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .scheme-header input[type="radio"] {
-      margin-right: 8px;
-    }
-    
-    .scheme-header label {
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-      cursor: pointer;
-    }
-    
-    .scheme-preview {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    
-    .preview-word {
-      padding: 4px 8px;
-      border-radius: 3px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    
-    /* 默认方案预览 */
-    .noun-default { color: #0066cc; background-color: rgba(0, 102, 204, 0.15); }
-    .verb-default { color: #cc0000; background-color: rgba(204, 0, 0, 0.15); }
-    .adj-default { color: #009933; background-color: rgba(0, 153, 51, 0.15); }
-    
-    /* 暖色方案预览 */
-    .noun-warm { color: #8b4513; background-color: rgba(139, 69, 19, 0.15); }
-    .verb-warm { color: #dc143c; background-color: rgba(220, 20, 60, 0.15); }
-    .adj-warm { color: #ff8c00; background-color: rgba(255, 140, 0, 0.15); }
-    
-    /* 冷色方案预览 */
-    .noun-cool { color: #191970; background-color: rgba(25, 25, 112, 0.15); }
-    .verb-cool { color: #008b8b; background-color: rgba(0, 139, 139, 0.15); }
-    .adj-cool { color: #4169E1; background-color: rgba(65, 105, 225, 0.15); }
-    
-    /* 柔和方案预览 */
-    .noun-pastel { color: #da70d6; background-color: rgba(218, 112, 214, 0.15); }
-    .verb-pastel { color: #20b2aa; background-color: rgba(32, 178, 170, 0.15); }
-    .adj-pastel { color: #f0e68c; background-color: rgba(240, 230, 140, 0.15); }
-    
-    /* 高对比度方案预览 */
-    .noun-high-contrast { color: #000080; background-color: rgba(0, 0, 128, 0.2); }
-    .verb-high-contrast { color: #8b0000; background-color: rgba(139, 0, 0, 0.2); }
-    .adj-high-contrast { color: #228b22; background-color: rgba(34, 139, 34, 0.2); }
-    
-    .colors-actions {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    /* 文本样式管理页面样式 */
-    .text-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .text-info {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border-left: 3px solid #007AFF;
-    }
-    
-    .text-info p {
-      margin: 0;
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .text-controls {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 15px;
-    }
-    
-    .control-group {
-      margin-bottom: 16px;
-      padding: 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: white;
-    }
-    
-    .control-label {
-      display: block;
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-      margin-bottom: 8px;
-    }
-    
-    .control-input {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    
-    .control-input input[type="range"] {
-      flex: 1;
-      height: 6px;
-      border-radius: 3px;
-      background: #e0e0e0;
-      outline: none;
-      -webkit-appearance: none;
-    }
-    
-    .control-input input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #007AFF;
-      cursor: pointer;
-    }
-    
-    .control-input input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #007AFF;
-      cursor: pointer;
-      border: none;
-    }
-    
-    .control-value {
-      font-size: 12px;
-      font-weight: 600;
-      color: #007AFF;
-      min-width: 50px;
-      text-align: right;
-    }
-    
-    .control-desc {
-      font-size: 11px;
-      color: #666;
-      margin-top: 4px;
-    }
-    
-    .text-preview {
-      margin-bottom: 15px;
-      padding: 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: #fafafa;
-    }
-    
-    .text-preview h4 {
-      font-size: 13px;
-      color: #333;
-      margin-bottom: 8px;
-    }
-    
-    .preview-content {
-      padding: 10px;
-      background: white;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    
-    .preview-content p {
-      margin: 0;
-    }
-    
-    .preview-content p + p {
-      margin-top: 0;
-    }
-    
-    .text-actions {
-      display: flex;
-      gap: 8px;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .reset-btn {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #6c757d;
-      border-radius: 6px;
-      background-color: white;
-      color: #6c757d;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .reset-btn:hover {
-      background-color: #6c757d;
-      color: white;
-      transform: translateY(-1px);
-    }
-    
-    /* AI分析页面样式 */
-    .ai-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .ai-info {
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border-left: 3px solid #007AFF;
-    }
-    
-    .ai-info p {
-      margin: 0;
-      font-size: 13px;
-      color: #666;
-    }
-    
-    .analysis-section {
-      margin-bottom: 20px;
-      padding: 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: white;
-    }
-    
-    .analysis-section h4 {
-      margin-bottom: 12px;
-      font-size: 14px;
-      color: #333;
-      border-bottom: 1px solid #f0f0f0;
-      padding-bottom: 6px;
-    }
-    
-    .stat-group, .recommendation-group {
-      margin-bottom: 12px;
-      padding: 8px;
-      background: #fafafa;
-      border-radius: 4px;
-    }
-    
-    .stat-title, .rec-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 6px;
-    }
-    
-    .stat-content, .rec-content {
-      font-size: 11px;
-      color: #666;
-    }
-    
-    .loading {
-      color: #999;
-      font-style: italic;
-    }
-    
-    .stat-bar {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-    }
-    
-    .stat-label {
-      width: 40px;
-      font-size: 10px;
-      color: #666;
-    }
-    
-    .stat-progress {
-      flex: 1;
-      height: 8px;
-      background: #e0e0e0;
-      border-radius: 4px;
-      margin: 0 6px;
-      overflow: hidden;
-    }
-    
-    .stat-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.3s ease;
-    }
-    
-    .stat-value {
-      font-size: 10px;
-      font-weight: 600;
-      color: #333;
-      min-width: 30px;
-      text-align: right;
-    }
-    
-    .recommendation-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 8px;
-      margin: 4px 0;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-    }
-    
-    .rec-name {
-      font-size: 11px;
-      font-weight: 500;
-      color: #333;
-    }
-    
-    .rec-reason {
-      font-size: 10px;
-      color: #666;
-      margin-top: 2px;
-    }
-    
-    .rec-apply {
-      padding: 4px 8px;
-      border: 1px solid #007AFF;
-      border-radius: 3px;
-      background: white;
-      color: #007AFF;
-      font-size: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .rec-apply:hover {
-      background: #007AFF;
-      color: white;
-    }
-    
-    .ai-actions {
-      margin-top: auto;
-      padding-top: 15px;
-      border-top: 1px solid #e0e0e0;
-    }
-    
-    .refresh-btn {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #007AFF;
-      border-radius: 6px;
-      background: white;
-      color: #007AFF;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .refresh-btn:hover {
-      background: #007AFF;
-      color: white;
-      transform: translateY(-1px);
-    }
-    
-    /* 统计图表颜色 */
-    .lang-zh .stat-fill { background: #ff6b6b; }
-    .lang-en .stat-fill { background: #4ecdc4; }
-    .lang-fr .stat-fill { background: #45b7d1; }
-    .lang-ru .stat-fill { background: #f9ca24; }
-    .lang-es .stat-fill { background: #6c5ce7; }
-    .lang-ja .stat-fill { background: #fd79a8; }
-    
-    .pos-n .stat-fill { background: #0066cc; }
-    .pos-v .stat-fill { background: #cc0000; }
-    .pos-a .stat-fill { background: #009933; }
-    
-    /* AI助手页面样式 */
-    .ai-assistant-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* AI配置区域样式 */
-    .ai-config-section {
-      margin-bottom: 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: white;
-    }
-    
-    .config-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
-      transition: all 0.2s ease;
-    }
-    
-    .config-header:hover {
-      background: #f8f9fa;
-    }
-    
-    .config-title {
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-    }
-    
-    .config-toggle {
-      font-size: 12px;
-      color: #666;
-      transition: transform 0.2s ease;
-    }
-    
-    .config-toggle.expanded {
-      transform: rotate(90deg);
-    }
-    
-    .config-content {
-      padding: 12px;
-      border-top: 1px solid #f0f0f0;
-    }
-    
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="settings.css" />
+    <script src="i18n.js"></script>
+    <script src="popup.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-
-    /* 配置页面样式 */
-    .config-section {
-      margin-bottom: 12px;
-      padding: 10px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: #fafafa;
-    }
-    
-    .config-section h4 {
-      margin-bottom: 8px;
-      font-size: 12px;
-      color: #333;
-      border-bottom: 1px solid #e0e0e0;
-      padding-bottom: 4px;
-    }
-    
-    /* AI功能区域样式 */
-    .ai-functions-container {
-      flex: 1;
-      display: flex;
-      gap: 8px;
-      overflow: hidden;
-    }
-    
-    .ai-function-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      background: white;
-      overflow: hidden;
-    }
-    
-    .panel-header {
-      padding: 8px 12px;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .panel-header h4 {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .panel-content {
-      flex: 1;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-    
-    .function-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-    
-    .ai-provider-list {
-      max-height: 120px;
-      overflow-y: auto;
-    }
-    
-    .provider-item {
-      margin-bottom: 6px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: white;
-      transition: all 0.2s ease;
-    }
-    
-    .provider-item:hover {
-      border-color: #007AFF;
-      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
-    }
-    
-    .provider-label {
-      display: flex;
-      align-items: center;
-      padding: 8px 10px;
-      cursor: pointer;
-      position: relative;
-    }
-    
-    .provider-label input[type="radio"] {
-      display: none;
-    }
-    
-    .provider-checkmark {
-      width: 14px;
-      height: 14px;
-      border: 2px solid #d0d0d0;
-      border-radius: 50%;
-      margin-right: 10px;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-    
-    .provider-label input[type="radio"]:checked + .provider-checkmark {
-      background-color: #007AFF;
-      border-color: #007AFF;
-    }
-    
-    .provider-label input[type="radio"]:checked + .provider-checkmark::after {
-      content: '';
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: white;
-    }
-    
-    .provider-info {
-      flex: 1;
-    }
-    
-    .provider-name {
-      font-weight: 600;
-      font-size: 12px;
-      color: #333;
-      display: block;
-      margin-bottom: 1px;
-    }
-    
-    .provider-desc {
-      font-size: 10px;
-      color: #666;
-      display: block;
-    }
-    
-    /* 模型选择样式 */
-    .model-selector {
-      margin-top: 8px;
-    }
-    
-    .model-select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #d0d0d0;
-      border-radius: 4px;
-      background: white;
-      font-size: 12px;
-      color: #333;
-      cursor: pointer;
-    }
-    
-    .model-select:focus {
-      outline: none;
-      border-color: #007AFF;
-      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
-    }
-    
-    /* API密钥输入样式 */
-    .apikey-input-group {
-      display: flex;
-      align-items: center;
-      margin-top: 8px;
-      border: 1px solid #d0d0d0;
-      border-radius: 4px;
-      background: white;
-    }
-    
-    .apikey-input {
-      flex: 1;
-      padding: 8px 12px;
-      border: none;
-      background: transparent;
-      font-size: 12px;
-      color: #333;
-    }
-    
-    .apikey-input:focus {
-      outline: none;
-    }
-    
-    .apikey-input-group:focus-within {
-      border-color: #007AFF;
-      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
-    }
-    
-    .toggle-visibility-btn {
-      padding: 8px;
-      border: none;
-      background: transparent;
-      color: #666;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    
-    .toggle-visibility-btn:hover {
-      color: #007AFF;
-    }
-    
-    .apikey-status {
-      margin-top: 6px;
-      font-size: 11px;
-    }
-    
-    .status-text {
-      color: #666;
-    }
-    
-    .status-text.configured {
-      color: #28a745;
-    }
-    
-    .status-text.error {
-      color: #dc3545;
-    }
-    
-    /* 功能按钮样式 */
-    .function-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      padding: 8px 10px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: white;
-      color: #333;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 11px;
-    }
-    
-    .function-btn:hover {
-      border-color: #007AFF;
-      box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
-      transform: translateY(-1px);
-    }
-    
-    .function-btn:active {
-      transform: translateY(0);
-    }
-    
-    .function-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .function-btn.compact {
-      padding: 6px 8px;
-    }
-    
-    .function-icon {
-      font-size: 14px;
-      margin-right: 8px;
-    }
-    
-    .function-name {
-      font-weight: 500;
-      font-size: 11px;
-      color: #333;
-    }
-    
-    .function-info {
-      flex: 1;
-      text-align: left;
-    }
-    
-    .function-desc {
-      font-size: 10px;
-      color: #666;
-      display: block;
-      margin-top: 1px;
-    }
-    
-    /* 选中状态样式 */
-    .selection-status {
-      padding: 12px;
-      text-align: center;
-      border: 1px dashed #e0e0e0;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      background: #fafafa;
-    }
-    
-    .status-message {
-      font-size: 11px;
-      color: #666;
-    }
-    
-    .selection-status.has-selection {
-      border-color: #007AFF;
-      background: #f0f8ff;
-    }
-    
-    .selection-status.has-selection .status-message {
-      color: #007AFF;
-    }
-    
-    /* AI结果样式 */
-    .ai-result {
-      margin-top: 10px;
-      padding: 8px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      background: #fafafa;
-    }
-    
-    .ai-result h5 {
-      margin: 0 0 6px 0;
-      font-size: 11px;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .result-content {
-      padding: 6px 8px;
-      background: white;
-      border-radius: 3px;
-      border: 1px solid #e0e0e0;
-      font-size: 10px;
-      line-height: 1.4;
-      color: #333;
-      max-height: 80px;
-      overflow-y: auto;
-    }
-    
-    .result-content.loading {
-      text-align: center;
-      color: #666;
-      font-style: italic;
-    }
-    
-    .result-content.error {
-      color: #dc3545;
-      background: #fff5f5;
-    }
-    
-    /* 响应式调整 */
-    @media (max-height: 450px) {
       body {
-        height: 350px;
+        width: 320px;
+        height: 400px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        display: flex;
+        background: #f8f9fa;
       }
-      
+
+      /* 主内容区域 */
       .main-content {
-        padding: 15px;
+        flex: 1;
+        padding: 20px;
+        background: white;
+        display: flex;
+        flex-direction: column;
       }
-      
+
+      /* 应用标题和状态区域 */
+      .app-header {
+        margin-bottom: 16px;
+      }
+
+      .app-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .app-title h3 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .status {
+        font-size: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: #ccc;
+      }
+
+      .status.enabled {
+        background-color: #4caf50;
+      }
+
+      .status.disabled {
+        background-color: #f44336;
+      }
+
+      /* 紧凑版本信息样式 */
+      .version-compact {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin: 12px 0;
+        font-size: 11px;
+      }
+
+      .version-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .version-text {
+        color: #666;
+        font-size: 11px;
+      }
+
+      .version-text strong {
+        color: #333;
+        font-weight: 600;
+      }
+
+      .version-update {
+        margin-top: 8px;
+        padding: 12px;
+        border-top: 1px solid #e0e0e0;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-radius: 6px;
+        border: 1px solid #bbdefb;
+      }
+
+      .update-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1565c0;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      .update-description {
+        font-size: 11px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .download-options {
+        margin-bottom: 8px;
+      }
+
+      .download-section {
+        margin-bottom: 8px;
+      }
+
+      .download-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 4px;
+      }
+
+      .alternative-links {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .download-link {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .github-link {
+        background-color: #24292e;
+        color: white;
+      }
+
+      .github-link:hover {
+        background-color: #1a1e22;
+      }
+
+      .baidu-link {
+        background-color: #2932e1;
+        color: white;
+      }
+
+      .baidu-link:hover {
+        background-color: #1f28b8;
+      }
+
+      .gitee-link {
+        background-color: #c71d23;
+        color: white;
+      }
+
+      .gitee-link:hover {
+        background-color: #a0171c;
+      }
+
+      .direct-link {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .direct-link:hover {
+        background-color: #45a049;
+      }
+
+      .update-note {
+        font-size: 10px;
+        color: #666;
+        text-align: center;
+        font-style: italic;
+      }
+
+      .contact-info {
+        font-size: 10px;
+        color: #666;
+        text-align: center;
+        margin-top: 4px;
+      }
+
+      .separator {
+        margin: 0 8px;
+        color: #ccc;
+        font-weight: normal;
+      }
+
+      .download-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+      }
+
+      /* 主要操作区域 */
+      .main-actions {
+        margin: 16px 0;
+        text-align: center;
+      }
+
+      .toggle-btn {
+        width: auto;
+        min-width: 80px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #007aff;
+        color: white;
+      }
+
+      .toggle-btn:hover {
+        background-color: #0056cc;
+        transform: translateY(-1px);
+      }
+
+      .toggle-btn.disabled {
+        background-color: #ff3b30;
+      }
+
+      .toggle-btn.disabled:hover {
+        background-color: #d70015;
+      }
+
+      .legend {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .legend h4 {
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 13px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 6px 0;
+        padding: 4px 0;
+      }
+
+      .legend-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        margin-right: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .legend-noun {
+        background-color: rgba(0, 102, 204, 0.3);
+      }
+      .legend-verb {
+        background-color: rgba(204, 0, 0, 0.3);
+      }
+      .legend-adj {
+        background-color: rgba(0, 153, 51, 0.3);
+      }
+
+      /* 紧凑图例样式 */
+      .legend-compact {
+        margin-top: 16px;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .legend-compact h4 {
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .legend-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+      }
+
+      .legend-grid .legend-item {
+        display: flex;
+        align-items: center;
+        padding: 6px 8px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+        margin: 0;
+      }
+
+      .legend-grid .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        margin-right: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .legend-grid .legend-item span {
+        font-size: 10px;
+        font-weight: 500;
+        color: #555;
+      }
+
+      .dict-summary {
+        margin-top: 12px;
+        padding: 8px 0;
+      }
+
+      .dict-summary h4 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .dict-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .dict-tag {
+        display: inline-block;
+        padding: 4px 8px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        color: #555;
+        white-space: nowrap;
+      }
+
+      /* 右侧侧边栏 */
       .sidebar {
+        width: 60px;
+        background: #f0f0f0;
+        border-left: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         padding: 10px 0;
-        gap: 10px;
+        gap: 8px;
+        overflow-y: auto;
       }
-    }
-  </style>
-</head>
-<body>
-  <!-- 主内容区域 -->
-  <div class="main-content">
-    <!-- 主页面 -->
-    <div class="page active" id="home-page">
-      <!-- 应用标题和状态 -->
-      <div class="app-header">
-        <div class="app-title">
-          <h3 data-i18n="appName">ADHDGoFly</h3>
-          <div class="status" id="status">状态检查中...</div>
+
+      .sidebar-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #d0d0d0;
+        border-radius: 6px;
+        background: white;
+        color: #666;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+
+      .sidebar-btn:hover {
+        background: #f8f9fa;
+        border-color: #007aff;
+        color: #007aff;
+        transform: translateY(-1px);
+      }
+
+      .sidebar-btn.active {
+        background: #007aff;
+        border-color: #007aff;
+        color: white;
+        box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+      }
+
+      .language-switcher {
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .language-btn {
+        position: relative;
+      }
+
+      .language-btn .language-icon {
+        font-size: 16px;
+      }
+
+      .sidebar-btn span {
+        font-size: 18px;
+      }
+
+      /* 页面切换 */
+      .page {
+        display: none;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .page.active {
+        display: flex;
+      }
+
+      /* 词典管理页面样式 */
+      .dict-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dict-info {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007aff;
+      }
+
+      .dict-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .dict-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      /* 语言分组样式 */
+      .language-group {
+        margin-bottom: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+      }
+
+      .language-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px;
+        background: #ffffff;
+        border-bottom: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+      }
+
+      .language-header[style*="cursor: pointer"]:hover {
+        background: #f0f8ff;
+      }
+
+      .language-header[style*="cursor: default"] {
+        background: #f8f9fa;
+      }
+
+      .language-info {
+        flex: 1;
+      }
+
+      .language-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+      }
+
+      .language-desc {
+        display: none; /* 隐藏语言描述 */
+      }
+
+      .expand-icon {
+        font-size: 12px;
+        color: #666;
+        transition: transform 0.2s ease;
+        user-select: none;
+      }
+
+      .language-group.expanded .expand-icon {
+        transform: rotate(90deg);
+      }
+
+      /* 基础词典样式 */
+      .basic-dict {
+        margin: 0;
+        background: white;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .basic-dict:last-child {
+        border-bottom: none;
+      }
+
+      /* 专业词典容器样式 */
+      .professional-dicts {
+        background: #fafafa;
+        border-top: 1px solid #e9ecef;
+        padding: 8px;
+      }
+
+      /* 专业词典弹性布局 */
+      .professional-dicts-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: flex-start;
+      }
+
+      .professional-dicts .dict-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        margin: 0;
+        transition: all 0.2s ease;
+        flex: 0 0 auto;
+        width: auto;
+        min-width: fit-content;
+      }
+
+      .professional-dicts .dict-item:hover {
+        background: #f0f8ff;
+        border-color: #007aff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
+      }
+
+      /* 紧凑的词典标签样式 */
+      .professional-dicts .dict-label {
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        width: auto;
+      }
+
+      .professional-dicts .checkmark {
+        width: 14px;
+        height: 14px;
+        margin-right: 0;
+        flex-shrink: 0;
+      }
+
+      .professional-dicts .dict-info-text {
+        flex: 0 0 auto;
+        width: auto;
+      }
+
+      .professional-dicts .dict-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        line-height: 1.2;
+      }
+
+      .professional-dicts .dict-desc {
+        display: none; /* 隐藏专业词典描述 */
+      }
+
+      /* 空消息样式 */
+      .empty-message {
+        padding: 16px;
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      /* 词典信息提示框样式 */
+      .dict-tooltip {
+        position: absolute;
+        background: #2c3e50;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+        max-width: 280px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        pointer-events: none;
+      }
+
+      .dict-tooltip.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .dict-tooltip::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 20px;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-bottom: 6px solid #2c3e50;
+      }
+
+      .tooltip-title {
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 8px;
+        color: #ecf0f1;
+        border-bottom: 1px solid #34495e;
+        padding-bottom: 4px;
+      }
+
+      .tooltip-description {
+        margin-bottom: 8px;
+        color: #bdc3c7;
+        line-height: 1.3;
+      }
+
+      .tooltip-source {
+        font-size: 11px;
+        color: #95a5a6;
+        border-top: 1px solid #34495e;
+        padding-top: 6px;
+      }
+
+      .tooltip-source strong {
+        color: #ecf0f1;
+      }
+
+      /* 词典项悬停效果增强 */
+      .dict-item:hover {
+        position: relative;
+      }
+
+      /* 保留原有的dict-group样式以兼容其他地方 */
+      .dict-group {
+        margin-bottom: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #e9ecef;
+      }
+
+      .dict-group-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 12px 0;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #007aff;
+      }
+
+      .dict-item {
+        margin-bottom: 4px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: white;
+        transition: all 0.2s ease;
+      }
+
+      .dict-group .dict-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+      }
+
+      .dict-group .dict-item:hover {
+        background: #f0f8ff;
+        border-color: #007aff;
+      }
+
+      .dict-item:hover {
+        border-color: #007aff;
+        box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+      }
+
+      .dict-label {
+        display: flex;
+        align-items: center;
+        padding: 6px 10px;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .dict-label input[type="checkbox"] {
+        display: none;
+      }
+
+      .checkmark {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #d0d0d0;
+        border-radius: 3px;
+        margin-right: 10px;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .dict-label input[type="checkbox"]:checked + .checkmark {
+        background-color: #007aff;
+        border-color: #007aff;
+      }
+
+      .dict-label input[type="checkbox"]:checked + .checkmark::after {
+        content: "✓";
+        position: absolute;
+        top: -2px;
+        left: 2px;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .dict-info-text {
+        flex: 1;
+      }
+
+      .dict-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+        display: block;
+      }
+
+      .dict-desc {
+        display: none; /* 隐藏所有词典描述 */
+      }
+
+      .dict-actions {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      /* 高亮开关控制样式 */
+      .highlighting-toggles {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+
+      .highlighting-toggles h4 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .toggle-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      /* 按钮颜色方案 - 使用CSS变量实现动态切换 */
+      :root {
+        --noun-color: #0066cc;
+        --verb-color: #cc0000;
+        --adj-color: #009933;
+        --comparative-color: #9966cc;
+      }
+
+      .toggle-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border: 2px solid #d0d0d0;
+        border-radius: 6px;
+        background: white;
+        color: black;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        outline: none;
+        width: auto;
+        min-width: auto;
+      }
+
+      .toggle-button:hover {
+        border-color: #999;
+        background: #f8f9fa;
+      }
+
+      /* 名词按钮 */
+      .toggle-button[data-type="noun"].active {
+        background: var(--noun-color);
+        border-color: var(--noun-color);
+        color: white;
+      }
+
+      .toggle-button[data-type="noun"].active:hover {
+        background: var(--noun-color);
+        border-color: var(--noun-color);
+        opacity: 0.8;
+      }
+
+      /* 动词按钮 */
+      .toggle-button[data-type="verb"].active {
+        background: var(--verb-color);
+        border-color: var(--verb-color);
+        color: white;
+      }
+
+      .toggle-button[data-type="verb"].active:hover {
+        background: var(--verb-color);
+        border-color: var(--verb-color);
+        opacity: 0.8;
+      }
+
+      /* 形容词按钮 */
+      .toggle-button[data-type="adj"].active {
+        background: var(--adj-color);
+        border-color: var(--adj-color);
+        color: white;
+      }
+
+      .toggle-button[data-type="adj"].active:hover {
+        background: var(--adj-color);
+        border-color: var(--adj-color);
+        opacity: 0.8;
+      }
+
+      /* 比较级/最高级按钮 */
+      .toggle-button[data-type="comparative"].active {
+        background: var(--comparative-color);
+        border-color: var(--comparative-color);
+        color: white;
+      }
+
+      .toggle-button[data-type="comparative"].active:hover {
+        background: var(--comparative-color);
+        border-color: var(--comparative-color);
+        opacity: 0.8;
+      }
+
+      .toggle-description {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .toggle-description p {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+      }
+
+      .save-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        background-color: #28a745;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .save-btn:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+      }
+
+      /* 颜色管理页面样式 */
+      .colors-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .colors-info {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+
+      .colors-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .color-schemes {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .scheme-item {
+        margin-bottom: 8px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .scheme-item:hover {
+        border-color: #007aff;
+        box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
+      }
+
+      .scheme-item.active {
+        border-color: #007aff;
+        background: #f0f8ff;
+      }
+
+      .scheme-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .scheme-header input[type="radio"] {
+        margin-right: 8px;
+      }
+
+      .scheme-header label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+        cursor: pointer;
+      }
+
+      .scheme-preview {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .preview-word {
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      /* 默认方案预览 */
+      .noun-default {
+        color: #0066cc;
+        background-color: rgba(0, 102, 204, 0.15);
+      }
+      .verb-default {
+        color: #cc0000;
+        background-color: rgba(204, 0, 0, 0.15);
+      }
+      .adj-default {
+        color: #009933;
+        background-color: rgba(0, 153, 51, 0.15);
+      }
+
+      /* 暖色方案预览 */
+      .noun-warm {
+        color: #8b4513;
+        background-color: rgba(139, 69, 19, 0.15);
+      }
+      .verb-warm {
+        color: #dc143c;
+        background-color: rgba(220, 20, 60, 0.15);
+      }
+      .adj-warm {
+        color: #ff8c00;
+        background-color: rgba(255, 140, 0, 0.15);
+      }
+
+      /* 冷色方案预览 */
+      .noun-cool {
+        color: #191970;
+        background-color: rgba(25, 25, 112, 0.15);
+      }
+      .verb-cool {
+        color: #008b8b;
+        background-color: rgba(0, 139, 139, 0.15);
+      }
+      .adj-cool {
+        color: #4169e1;
+        background-color: rgba(65, 105, 225, 0.15);
+      }
+
+      /* 柔和方案预览 */
+      .noun-pastel {
+        color: #da70d6;
+        background-color: rgba(218, 112, 214, 0.15);
+      }
+      .verb-pastel {
+        color: #20b2aa;
+        background-color: rgba(32, 178, 170, 0.15);
+      }
+      .adj-pastel {
+        color: #f0e68c;
+        background-color: rgba(240, 230, 140, 0.15);
+      }
+
+      /* 高对比度方案预览 */
+      .noun-high-contrast {
+        color: #000080;
+        background-color: rgba(0, 0, 128, 0.2);
+      }
+      .verb-high-contrast {
+        color: #8b0000;
+        background-color: rgba(139, 0, 0, 0.2);
+      }
+      .adj-high-contrast {
+        color: #228b22;
+        background-color: rgba(34, 139, 34, 0.2);
+      }
+
+      .colors-actions {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      /* 文本样式管理页面样式 */
+      .text-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .text-info {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007aff;
+      }
+
+      .text-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .text-controls {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 15px;
+      }
+
+      .control-group {
+        margin-bottom: 16px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+      }
+
+      .control-label {
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .control-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+
+      .control-input input[type="range"] {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: #e0e0e0;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .control-input input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007aff;
+        cursor: pointer;
+      }
+
+      .control-input input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007aff;
+        cursor: pointer;
+        border: none;
+      }
+
+      .control-value {
+        font-size: 12px;
+        font-weight: 600;
+        color: #007aff;
+        min-width: 50px;
+        text-align: right;
+      }
+
+      .control-desc {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      .text-preview {
+        margin-bottom: 15px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: #fafafa;
+      }
+
+      .text-preview h4 {
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .preview-content {
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .preview-content p {
+        margin: 0;
+      }
+
+      .preview-content p + p {
+        margin-top: 0;
+      }
+
+      .text-actions {
+        display: flex;
+        gap: 8px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .reset-btn {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #6c757d;
+        border-radius: 6px;
+        background-color: white;
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .reset-btn:hover {
+        background-color: #6c757d;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      /* AI分析页面样式 */
+      .ai-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ai-info {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007aff;
+      }
+
+      .ai-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .analysis-section {
+        margin-bottom: 20px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+      }
+
+      .analysis-section h4 {
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #333;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 6px;
+      }
+
+      .stat-group,
+      .recommendation-group {
+        margin-bottom: 12px;
+        padding: 8px;
+        background: #fafafa;
+        border-radius: 4px;
+      }
+
+      .stat-title,
+      .rec-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 6px;
+      }
+
+      .stat-content,
+      .rec-content {
+        font-size: 11px;
+        color: #666;
+      }
+
+      .loading {
+        color: #999;
+        font-style: italic;
+      }
+
+      .stat-bar {
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+      }
+
+      .stat-label {
+        width: 40px;
+        font-size: 10px;
+        color: #666;
+      }
+
+      .stat-progress {
+        flex: 1;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        margin: 0 6px;
+        overflow: hidden;
+      }
+
+      .stat-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+
+      .stat-value {
+        font-size: 10px;
+        font-weight: 600;
+        color: #333;
+        min-width: 30px;
+        text-align: right;
+      }
+
+      .recommendation-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 8px;
+        margin: 4px 0;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+      }
+
+      .rec-name {
+        font-size: 11px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .rec-reason {
+        font-size: 10px;
+        color: #666;
+        margin-top: 2px;
+      }
+
+      .rec-apply {
+        padding: 4px 8px;
+        border: 1px solid #007aff;
+        border-radius: 3px;
+        background: white;
+        color: #007aff;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .rec-apply:hover {
+        background: #007aff;
+        color: white;
+      }
+
+      .ai-actions {
+        margin-top: auto;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .refresh-btn {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #007aff;
+        border-radius: 6px;
+        background: white;
+        color: #007aff;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .refresh-btn:hover {
+        background: #007aff;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      /* 统计图表颜色 */
+      .lang-zh .stat-fill {
+        background: #ff6b6b;
+      }
+      .lang-en .stat-fill {
+        background: #4ecdc4;
+      }
+      .lang-fr .stat-fill {
+        background: #45b7d1;
+      }
+      .lang-ru .stat-fill {
+        background: #f9ca24;
+      }
+      .lang-es .stat-fill {
+        background: #6c5ce7;
+      }
+      .lang-ja .stat-fill {
+        background: #fd79a8;
+      }
+
+      .pos-n .stat-fill {
+        background: #0066cc;
+      }
+      .pos-v .stat-fill {
+        background: #cc0000;
+      }
+      .pos-a .stat-fill {
+        background: #009933;
+      }
+
+      /* AI助手页面样式 */
+      .ai-assistant-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* AI配置区域样式 */
+      .ai-config-section {
+        margin-bottom: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+      }
+
+      .config-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+      }
+
+      .config-header:hover {
+        background: #f8f9fa;
+      }
+
+      .config-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+      }
+
+      .config-toggle {
+        font-size: 12px;
+        color: #666;
+        transition: transform 0.2s ease;
+      }
+
+      .config-toggle.expanded {
+        transform: rotate(90deg);
+      }
+
+      .config-content {
+        padding: 12px;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      /* 配置页面样式 */
+      .config-section {
+        margin-bottom: 12px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: #fafafa;
+      }
+
+      .config-section h4 {
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 4px;
+      }
+
+      /* AI功能区域样式 */
+      .ai-functions-container {
+        flex: 1;
+        display: flex;
+        gap: 8px;
+        overflow: hidden;
+      }
+
+      .ai-function-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .panel-header h4 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .panel-content {
+        flex: 1;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .function-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .ai-provider-list {
+        max-height: 120px;
+        overflow-y: auto;
+      }
+
+      .provider-item {
+        margin-bottom: 6px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: white;
+        transition: all 0.2s ease;
+      }
+
+      .provider-item:hover {
+        border-color: #007aff;
+        box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+      }
+
+      .provider-label {
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .provider-label input[type="radio"] {
+        display: none;
+      }
+
+      .provider-checkmark {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #d0d0d0;
+        border-radius: 50%;
+        margin-right: 10px;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .provider-label input[type="radio"]:checked + .provider-checkmark {
+        background-color: #007aff;
+        border-color: #007aff;
+      }
+
+      .provider-label input[type="radio"]:checked + .provider-checkmark::after {
+        content: "";
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: white;
+      }
+
+      .provider-info {
+        flex: 1;
+      }
+
+      .provider-name {
+        font-weight: 600;
+        font-size: 12px;
+        color: #333;
+        display: block;
+        margin-bottom: 1px;
+      }
+
+      .provider-desc {
+        font-size: 10px;
+        color: #666;
+        display: block;
+      }
+
+      /* 模型选择样式 */
+      .model-selector {
+        margin-top: 8px;
+      }
+
+      .model-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        background: white;
+        font-size: 12px;
+        color: #333;
+        cursor: pointer;
+      }
+
+      .model-select:focus {
+        outline: none;
+        border-color: #007aff;
+        box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+      }
+
+      /* API密钥输入样式 */
+      .apikey-input-group {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        background: white;
+      }
+
+      .apikey-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        background: transparent;
+        font-size: 12px;
+        color: #333;
+      }
+
+      .apikey-input:focus {
+        outline: none;
+      }
+
+      .apikey-input-group:focus-within {
+        border-color: #007aff;
+        box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+      }
+
+      .toggle-visibility-btn {
+        padding: 8px;
+        border: none;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .toggle-visibility-btn:hover {
+        color: #007aff;
+      }
+
+      .apikey-status {
+        margin-top: 6px;
+        font-size: 11px;
+      }
+
+      .status-text {
+        color: #666;
+      }
+
+      .status-text.configured {
+        color: #28a745;
+      }
+
+      .status-text.error {
+        color: #dc3545;
+      }
+
+      /* 功能按钮样式 */
+      .function-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: white;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 11px;
+      }
+
+      .function-btn:hover {
+        border-color: #007aff;
+        box-shadow: 0 1px 2px rgba(0, 122, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .function-btn:active {
+        transform: translateY(0);
+      }
+
+      .function-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .function-btn.compact {
+        padding: 6px 8px;
+      }
+
+      .function-icon {
+        font-size: 14px;
+        margin-right: 8px;
+      }
+
+      .function-name {
+        font-weight: 500;
+        font-size: 11px;
+        color: #333;
+      }
+
+      .function-info {
+        flex: 1;
+        text-align: left;
+      }
+
+      .function-desc {
+        font-size: 10px;
+        color: #666;
+        display: block;
+        margin-top: 1px;
+      }
+
+      /* 选中状态样式 */
+      .selection-status {
+        padding: 12px;
+        text-align: center;
+        border: 1px dashed #e0e0e0;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        background: #fafafa;
+      }
+
+      .status-message {
+        font-size: 11px;
+        color: #666;
+      }
+
+      .selection-status.has-selection {
+        border-color: #007aff;
+        background: #f0f8ff;
+      }
+
+      .selection-status.has-selection .status-message {
+        color: #007aff;
+      }
+
+      /* AI结果样式 */
+      .ai-result {
+        margin-top: 10px;
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: #fafafa;
+      }
+
+      .ai-result h5 {
+        margin: 0 0 6px 0;
+        font-size: 11px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .result-content {
+        padding: 6px 8px;
+        background: white;
+        border-radius: 3px;
+        border: 1px solid #e0e0e0;
+        font-size: 10px;
+        line-height: 1.4;
+        color: #333;
+        max-height: 80px;
+        overflow-y: auto;
+      }
+
+      .result-content.loading {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+      }
+
+      .result-content.error {
+        color: #dc3545;
+        background: #fff5f5;
+      }
+
+      /* 响应式调整 */
+      @media (max-height: 450px) {
+        body {
+          height: 350px;
+        }
+
+        .main-content {
+          padding: 15px;
+        }
+
+        .sidebar {
+          padding: 10px 0;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <!-- 主页面 -->
+      <div class="page active" id="home-page">
+        <!-- 应用标题和状态 -->
+        <div class="app-header">
+          <div class="app-title">
+            <h3 data-i18n="appName">ADHDGoFly</h3>
+            <div class="status" id="status">状态检查中...</div>
+          </div>
         </div>
-      </div>
-      
-      <!-- 版本信息（紧凑版） -->
-      <div class="version-compact" id="versionInfo">
-        <div class="version-row">
-          <span class="version-text">
-            <span data-i18n="version.current">当前版本:</span> 
-            <strong id="currentVersion" data-i18n="version.checking">检查中...</strong>
-          </span>
-          <span class="version-text">
-            <span data-i18n="version.latest">最新版本:</span> 
-            <strong id="latestVersion" data-i18n="version.checking">检查中...</strong>
-          </span>
-        </div>
-        <div class="version-update" id="updateNotice" style="display: none;">
-          <div class="update-title" data-i18n="version.updateTitle">🎉 发现新版本</div>
-          <div class="download-options">
-            <div class="download-section">
-              <span data-i18n="version.downloadLabel">📥 下载：</span>
-              <a href="https://download.adhdgofly.online" target="_blank" class="download-link official-page-link" data-i18n="version.officialDownloadPage">官方下载</a>
+
+        <!-- 版本信息（紧凑版） -->
+        <div class="version-compact" id="versionInfo">
+          <div class="version-row">
+            <span class="version-text">
+              <span data-i18n="version.current">当前版本:</span>
+              <strong id="currentVersion" data-i18n="version.checking"
+                >检查中...</strong
+              >
+            </span>
+            <span class="version-text">
+              <span data-i18n="version.latest">最新版本:</span>
+              <strong id="latestVersion" data-i18n="version.checking"
+                >检查中...</strong
+              >
+            </span>
+          </div>
+          <div class="version-update" id="updateNotice" style="display: none">
+            <div class="update-title" data-i18n="version.updateTitle">
+              🎉 发现新版本
+            </div>
+            <div class="download-options">
+              <div class="download-section">
+                <span data-i18n="version.downloadLabel">📥 下载：</span>
+                <a
+                  href="https://download.adhdgofly.online"
+                  target="_blank"
+                  class="download-link official-page-link"
+                  data-i18n="version.officialDownloadPage"
+                  >官方下载</a
+                >
+              </div>
+            </div>
+            <div class="slow-tip" data-i18n="version.slowTip">
+              💡 商店安装用户请耐心等待，会在1-7天内自动更新
+            </div>
+            <div class="contact-info" data-i18n="version.contactInfo">
+              💡 微信/WeChat: zuoguyoupan2023
             </div>
           </div>
-          <div class="slow-tip" data-i18n="version.slowTip">💡 商店安装用户请耐心等待，会在1-7天内自动更新</div>
-          <div class="contact-info" data-i18n="version.contactInfo">💡 微信/WeChat: zuoguyoupan2023</div>
+        </div>
+
+        <!-- 主要操作按钮 -->
+        <div class="main-actions">
+          <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">
+            切换高亮
+          </button>
+        </div>
+
+        <!-- 词性颜色图例（紧凑版） -->
+        <div class="legend-compact">
+          <h4 data-i18n="legend.title">词性颜色</h4>
+          <div class="legend-grid">
+            <div class="legend-item">
+              <div class="legend-color legend-noun"></div>
+              <span data-i18n="legend.noun">名词</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color legend-verb"></div>
+              <span data-i18n="legend.verb">动词</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color legend-adj"></div>
+              <span data-i18n="legend.adjective">形容词</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 词典状态显示 -->
+        <div class="dict-summary">
+          <h4 data-i18n="dict.title">词典</h4>
+          <div class="dict-tags" id="dictTags">
+            <!-- 动态生成已启用的词典标签 -->
+          </div>
         </div>
       </div>
 
-      
-      <!-- 主要操作按钮 -->
-      <div class="main-actions">
-        <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">切换高亮</button>
-      </div>
-      
-      <!-- 词性颜色图例（紧凑版） -->
-      <div class="legend-compact">
-        <h4 data-i18n="legend.title">词性颜色</h4>
-        <div class="legend-grid">
-          <div class="legend-item">
-            <div class="legend-color legend-noun"></div>
-            <span data-i18n="legend.noun">名词</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color legend-verb"></div>
-            <span data-i18n="legend.verb">动词</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color legend-adj"></div>
-            <span data-i18n="legend.adjective">形容词</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 词典状态显示 -->
-      <div class="dict-summary">
-        <h4 data-i18n="dict.title">词典</h4>
-        <div class="dict-tags" id="dictTags">
-          <!-- 动态生成已启用的词典标签 -->
-        </div>
-      </div>
-    </div>
-
-    <!-- 词典管理页面 -->
-    <div class="page" id="dict-page">
-      <div class="header">
-        <h3 data-i18n="pages.dict.title">词典管理</h3>
-      </div>
-      
-      <div class="dict-content">
-        <div class="dict-info">
-          <p data-i18n="pages.dict.description">选择要使用的语言词典</p>
-        </div>
-        
-        <div class="dict-list">
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-zh" checked>
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">ZH</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.zh">中文词典</span>
-              </div>
-            </label>
-          </div>
-          
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-en" checked>
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">EN</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.en">英文词典</span>
-              </div>
-            </label>
-          </div>
-          
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-fr">
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">FR</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.fr">法文词典</span>
-              </div>
-            </label>
-          </div>
-          
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-ru">
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">RU</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.ru">俄文词典</span>
-              </div>
-            </label>
-          </div>
-          
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-es">
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">ES</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.es">西班牙文词典</span>
-              </div>
-            </label>
-          </div>
-          
-          <div class="dict-item">
-            <label class="dict-label">
-              <input type="checkbox" id="dict-ja">
-              <span class="checkmark"></span>
-              <div class="dict-info-text">
-                <span class="dict-name">JA</span>
-                <span class="dict-desc" data-i18n="pages.dict.languages.ja">日文词典</span>
-              </div>
-            </label>
-          </div>
-        </div>
-        
-        <div class="dict-actions">
-          <button class="save-btn" id="save-dict-btn" data-i18n="buttons.save">保存设置</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 颜色管理页面 -->
-    <div class="page" id="colors-page">
-      <div class="header">
-        <h3 data-i18n="pages.colors.title">颜色方案</h3>
-      </div>
-      
-      <div class="colors-content">
-        <!-- 高亮开关控制 -->
-        <div class="highlighting-toggles">
-          <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
-          <div class="toggle-group">
-            <button class="toggle-button active" id="highlight-noun" data-type="noun">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.nounSimple">名词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-verb" data-type="verb">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.verbSimple">动词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-adj" data-type="adj">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.adjSimple">形容词</span>
-            </button>
-            <button class="toggle-button active" id="highlight-comparative" data-type="comparative">
-              <span class="toggle-text" data-i18n="pages.colors.toggles.comparativeSimple">比较级/最高级</span>
-            </button>
-          </div>
-          <div class="toggle-description">
-            <p data-i18n="pages.colors.toggles.description">点击按钮可开启或关闭对应类型词汇的高亮显示</p>
-          </div>
-        </div>
-        
-        <div class="colors-info">
-          <p data-i18n="pages.colors.description">选择高亮颜色方案</p>
-        </div>
-        
-        <div class="color-schemes">
-          <div class="scheme-item active" data-scheme="default">
-            <div class="scheme-header">
-              <input type="radio" name="colorScheme" id="scheme-default" checked>
-              <label for="scheme-default" data-i18n="pages.colors.schemes.default">默认方案</label>
-            </div>
-            <div class="scheme-preview">
-              <span class="preview-word noun-default" data-i18n="pages.colors.preview.noun">名词</span>
-              <span class="preview-word verb-default" data-i18n="pages.colors.preview.verb">动词</span>
-              <span class="preview-word adj-default" data-i18n="pages.colors.preview.adjective">形容词</span>
-            </div>
-          </div>
-          
-          <div class="scheme-item" data-scheme="warm">
-            <div class="scheme-header">
-              <input type="radio" name="colorScheme" id="scheme-warm">
-              <label for="scheme-warm" data-i18n="pages.colors.schemes.warm">暖色方案</label>
-            </div>
-            <div class="scheme-preview">
-              <span class="preview-word noun-warm" data-i18n="pages.colors.preview.noun">名词</span>
-              <span class="preview-word verb-warm" data-i18n="pages.colors.preview.verb">动词</span>
-              <span class="preview-word adj-warm" data-i18n="pages.colors.preview.adjective">形容词</span>
-            </div>
-          </div>
-          
-          <div class="scheme-item" data-scheme="cool">
-            <div class="scheme-header">
-              <input type="radio" name="colorScheme" id="scheme-cool">
-              <label for="scheme-cool" data-i18n="pages.colors.schemes.cool">冷色方案</label>
-            </div>
-            <div class="scheme-preview">
-              <span class="preview-word noun-cool" data-i18n="pages.colors.preview.noun">名词</span>
-              <span class="preview-word verb-cool" data-i18n="pages.colors.preview.verb">动词</span>
-              <span class="preview-word adj-cool" data-i18n="pages.colors.preview.adjective">形容词</span>
-            </div>
-          </div>
-          
-          <div class="scheme-item" data-scheme="pastel">
-            <div class="scheme-header">
-              <input type="radio" name="colorScheme" id="scheme-pastel">
-              <label for="scheme-pastel" data-i18n="pages.colors.schemes.pastel">柔和方案</label>
-            </div>
-            <div class="scheme-preview">
-              <span class="preview-word noun-pastel" data-i18n="pages.colors.preview.noun">名词</span>
-              <span class="preview-word verb-pastel" data-i18n="pages.colors.preview.verb">动词</span>
-              <span class="preview-word adj-pastel" data-i18n="pages.colors.preview.adjective">形容词</span>
-            </div>
-          </div>
-          
-          <div class="scheme-item" data-scheme="high-contrast">
-            <div class="scheme-header">
-              <input type="radio" name="colorScheme" id="scheme-high-contrast">
-              <label for="scheme-high-contrast" data-i18n="pages.colors.schemes.highContrast">高对比度</label>
-            </div>
-            <div class="scheme-preview">
-              <span class="preview-word noun-high-contrast" data-i18n="pages.colors.preview.noun">名词</span>
-              <span class="preview-word verb-high-contrast" data-i18n="pages.colors.preview.verb">动词</span>
-              <span class="preview-word adj-high-contrast" data-i18n="pages.colors.preview.adjective">形容词</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="colors-actions">
-          <button class="save-btn" id="save-colors-btn" data-i18n="pages.colors.applyScheme">应用方案</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 文本样式管理页面 -->
-    <div class="page" id="text-page">
-      <div class="header">
-        <h3 data-i18n="pages.text.title">文本样式</h3>
-      </div>
-      
-      <div class="text-content">
-        <div class="text-info">
-          <p data-i18n="pages.text.description">调整页面文本的显示样式</p>
-        </div>
-        
-        <div class="text-controls">
-          <!-- 字号设置 -->
-          <div class="control-group">
-            <label class="control-label" data-i18n="pages.text.fontSize">字号大小</label>
-            <div class="control-input">
-              <input type="range" id="fontSize" min="80" max="150" step="5" value="100">
-              <span class="control-value" id="fontSizeValue">100%</span>
-            </div>
-            <div class="control-desc" data-i18n="pages.text.fontSizeDesc">调整页面文字大小</div>
-          </div>
-          
-          <!-- 字间距设置 -->
-          <div class="control-group">
-            <label class="control-label" data-i18n="pages.text.letterSpacing">字间距</label>
-            <div class="control-input">
-              <input type="range" id="letterSpacing" min="0" max="3" step="0.1" value="0">
-              <span class="control-value" id="letterSpacingValue">0px</span>
-            </div>
-            <div class="control-desc" data-i18n="pages.text.letterSpacingDesc">调整字符之间的间距</div>
-          </div>
-          
-          <!-- 行间距设置 -->
-          <div class="control-group">
-            <label class="control-label" data-i18n="pages.text.lineHeight">行间距</label>
-            <div class="control-input">
-              <input type="range" id="lineHeight" min="1.0" max="2.5" step="0.1" value="1.5">
-              <span class="control-value" id="lineHeightValue">1.5</span>
-            </div>
-            <div class="control-desc" data-i18n="pages.text.lineHeightDesc">调整行与行之间的间距</div>
-          </div>
-          
-          <!-- 段间距设置 -->
-          <div class="control-group">
-            <label class="control-label" data-i18n="pages.text.paragraphSpacing">段间距</label>
-            <div class="control-input">
-              <input type="range" id="paragraphSpacing" min="0" max="20" step="1" value="0">
-              <span class="control-value" id="paragraphSpacingValue">0px</span>
-            </div>
-            <div class="control-desc" data-i18n="pages.text.paragraphSpacingDesc">调整段落之间的间距</div>
-          </div>
-        </div>
-        
-        <!-- 预览区域 -->
-        <div class="text-preview">
-          <h4 data-i18n="pages.text.preview">预览效果</h4>
-          <div class="preview-content" id="textPreview">
-            <p>这是一段示例文本，用于预览字体样式效果。This is sample text for previewing font style effects.</p>
-            <p>第二段文本，可以看到段落间距的效果。Second paragraph to show paragraph spacing effect.</p>
-          </div>
-        </div>
-        
-        <div class="text-actions">
-          <button class="save-btn" id="save-text-btn" data-i18n="pages.text.apply">应用样式</button>
-          <button class="reset-btn" id="reset-text-btn" data-i18n="pages.text.reset">重置默认</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI分析页面 -->
-    <div class="page" id="ai-page">
-      <div class="header">
-        <h3 data-i18n="pages.ai.title">智能分析</h3>
-      </div>
-      
-      <div class="ai-content">
-        <div class="ai-info">
-          <p data-i18n="pages.ai.description">基于当前页面高亮内容的数据分析</p>
-        </div>
-        
-        <!-- 页面统计信息 -->
-        <div class="analysis-section">
-          <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
-          
-          <!-- 语言分布 -->
-          <div class="stat-group">
-            <div class="stat-title" data-i18n="pages.ai.stats.language">语言分布</div>
-            <div class="stat-content" id="languageStats">
-              <div class="loading">分析中...</div>
-            </div>
-          </div>
-          
-          <!-- 词性分布 -->
-          <div class="stat-group">
-            <div class="stat-title" data-i18n="pages.ai.stats.posDistribution">词性分布</div>
-            <div class="stat-content" id="posStats">
-              <div class="loading">分析中...</div>
-            </div>
-          </div>
-          
-          <!-- 高亮统计UI已隐藏 - 逻辑代码保留但不显示UI -->
-        </div>
-        
-        <!-- 推荐功能已彻底删除 -->
-        
-        <div class="ai-actions">
-          <button class="refresh-btn" id="refresh-analysis-btn" data-i18n="pages.ai.refresh">🔄 刷新分析</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 关于页面 -->
-    <div class="page" id="about-page">
-      <div class="header">
-        <h3 data-i18n="pages.about.title">关于</h3>
-      </div>
-      
-      <div class="about-content">
-        <!-- 关于我们 -->
-        <div class="about-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.about.about.title">关于我们</h4>
-          </div>
-          <div class="section-content">
-            <div class="about-info">
-              <p data-i18n="pages.about.about.description">ADHDGoFly 是一款ADHD友好的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。</p>
-              <div class="version-info">
-                <p><strong data-i18n="pages.about.about.version">版本：</strong>0.1.3</p>
-                <p><strong data-i18n="pages.about.about.developer">开发者：</strong>ADHDGoFly Team</p>
-                <p><strong data-i18n="pages.about.about.website">官网：</strong><a href="https://adhdgofly.online" target="_blank" class="website-link">adhdgofly.online</a></p>
-              </div>
-            </div>
-          </div>
+      <!-- 词典管理页面 -->
+      <div class="page" id="dict-page">
+        <div class="header">
+          <h3 data-i18n="pages.dict.title">词典管理</h3>
         </div>
 
-        <!-- 更新日志 -->
-        <div class="about-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.about.changelog.title">更新日志</h4>
+        <div class="dict-content">
+          <div class="dict-info">
+            <p data-i18n="pages.dict.description">选择要使用的语言词典</p>
           </div>
-          <div class="section-content">
-            <div class="changelog">
-              <div class="changelog-item">
-                <div class="changelog-header" data-toggle="v013">
-                  <div class="changelog-version">
-                    <span class="version-tag">v0.1.3</span>
-                    <span class="version-date">2025-10-5</span>
+
+          <div class="dict-list">
+            <!-- 中文词典组 -->
+            <div class="language-group" data-language="zh">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.zh.name"
+                    >中文</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.zh.desc"
+                    >Chinese</span
+                  >
+                </div>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-zh-preset" checked />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">ZH</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.zh"
+                      >中文词典</span
+                    >
                   </div>
-                  <div class="toggle-icon">▼</div>
-                </div>
-                <div class="changelog-content" id="changelog-v013">
-                  <h5 data-i18n="pages.about.changelog.v013.title">界面优化与功能增强</h5>
-                  <ul>
-                    <li data-i18n="pages.about.changelog.v013.feature1">支持 法西俄日 语言；主界面优化</li>
-                    <li data-i18n="pages.about.changelog.v013.feature2">支持英语比较级最高级的紫色逻辑</li>
-                    <li data-i18n="pages.about.changelog.v013.feature3">实现基础的设置管理和存储功能</li>
-                  </ul>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="professional-dicts-grid">
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-animal-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">动物</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-finance-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">财经</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-automotive-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">汽车</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.automotive"
+                          >汽车词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-idiom-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">成语</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.idiom"
+                          >成语词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-geography-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">地名</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.geography"
+                          >地名词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-food-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">食物</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.food"
+                          >食物词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-technology-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">IT</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.technology"
+                          >IT词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-legal-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">法律</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.legal"
+                          >法律词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-history-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">历史</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.history"
+                          >历史人物词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-medical-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">医学</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.medical"
+                          >医学词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="dict-item">
+                    <label class="dict-label">
+                      <input type="checkbox" id="dict-zh-literature-preset" />
+                      <span class="checkmark"></span>
+                      <div class="dict-info-text">
+                        <span class="dict-name">诗词</span>
+                        <span
+                          class="dict-desc"
+                          data-i18n="pages.dict.domains.literature"
+                          >诗词词典</span
+                        >
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
-              
-              <div class="changelog-item">
-                <div class="changelog-header" data-toggle="v012">
-                  <div class="changelog-version">
-                    <span class="version-tag">v0.1.2</span>
-                    <span class="version-date">2025-09-28</span>
-                  </div>
-                  <div class="toggle-icon">▼</div>
+            </div>
+
+            <!-- 英文词典组 -->
+            <div class="language-group" data-language="en">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.en.name"
+                    >英文</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.en.desc"
+                    >English</span
+                  >
                 </div>
-                <div class="changelog-content" id="changelog-v012">
-                  <h5 data-i18n="pages.about.changelog.v012.title">多语言支持与性能优化</h5>
-                  <ul>
-                    <li data-i18n="pages.about.changelog.v012.feature1">多种颜色方案：暖色、冷色、柔和、高对比度</li>
-                    <li data-i18n="pages.about.changelog.v012.feature2">增加字号 行间距 词间距等逻辑</li>
-                  </ul>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-en-preset" checked />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">EN</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.en"
+                      >英文词典</span
+                    >
+                  </div>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏，暂时为空） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="empty-message">
+                  <span data-i18n="pages.dict.empty.professional"
+                    >专业词典即将推出</span
+                  >
                 </div>
               </div>
-              
-              <div class="changelog-item">
-                <div class="changelog-header" data-toggle="v011">
-                  <div class="changelog-version">
-                    <span class="version-tag">v0.1.1</span>
-                    <span class="version-date">2025-09-19</span>
-                  </div>
-                  <div class="toggle-icon">▼</div>
+            </div>
+
+            <!-- 法语词典组 -->
+            <div class="language-group" data-language="fr">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.fr.name"
+                    >法语</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.fr.desc"
+                    >Français</span
+                  >
                 </div>
-                <div class="changelog-content" id="changelog-v011">
-                  <h5 data-i18n="pages.about.changelog.v011.title">基础功能发布</h5>
-                  <ul>
-                    <li data-i18n="pages.about.changelog.v011.feature1">支持中文、英文的词性识别</li>
-                    <li data-i18n="pages.about.changelog.v011.feature2">提供名词、动词、形容词的颜色高亮</li> 
-                  </ul>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-fr-preset" />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">FR</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.fr"
+                      >法语词典</span
+                    >
+                  </div>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏，暂时为空） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="empty-message">
+                  <span data-i18n="pages.dict.empty.professional"
+                    >专业词典即将推出</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- 西班牙语词典组 -->
+            <div class="language-group" data-language="es">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.es.name"
+                    >西班牙语</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.es.desc"
+                    >Español</span
+                  >
+                </div>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-es-preset" />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">ES</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.es"
+                      >西班牙语词典</span
+                    >
+                  </div>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏，暂时为空） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="empty-message">
+                  <span data-i18n="pages.dict.empty.professional"
+                    >专业词典即将推出</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- 俄语词典组 -->
+            <div class="language-group" data-language="ru">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.ru.name"
+                    >俄语</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.ru.desc"
+                    >Русский</span
+                  >
+                </div>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-ru-preset" />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">RU</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.ru"
+                      >俄语词典</span
+                    >
+                  </div>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏，暂时为空） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="empty-message">
+                  <span data-i18n="pages.dict.empty.professional"
+                    >专业词典即将推出</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- 日语词典组 -->
+            <div class="language-group" data-language="ja">
+              <div class="language-header">
+                <div class="language-info">
+                  <span
+                    class="language-name"
+                    data-i18n="pages.dict.languageGroups.ja.name"
+                    >日语</span
+                  >
+                  <span
+                    class="language-desc"
+                    data-i18n="pages.dict.languageGroups.ja.desc"
+                    >日本語</span
+                  >
+                </div>
+                <span class="expand-icon">▶</span>
+              </div>
+
+              <!-- 基础词典 -->
+              <div class="dict-item basic-dict">
+                <label class="dict-label">
+                  <input type="checkbox" id="dict-ja-preset" />
+                  <span class="checkmark"></span>
+                  <div class="dict-info-text">
+                    <span class="dict-name">JA</span>
+                    <span class="dict-desc" data-i18n="pages.dict.languages.ja"
+                      >日语词典</span
+                    >
+                  </div>
+                </label>
+              </div>
+
+              <!-- 专业词典（默认隐藏，暂时为空） -->
+              <div class="professional-dicts" style="display: none">
+                <div class="empty-message">
+                  <span data-i18n="pages.dict.empty.professional"
+                    >专业词典即将推出</span
+                  >
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="dict-actions">
+            <button
+              class="save-btn"
+              id="save-dict-btn"
+              data-i18n="buttons.save"
+            >
+              保存设置
+            </button>
+          </div>
         </div>
 
+        <!-- 词典信息提示框 -->
+        <div class="dict-tooltip" id="dict-tooltip">
+          <div class="tooltip-title" id="tooltip-title"></div>
+          <div class="tooltip-description" id="tooltip-description"></div>
+          <div class="tooltip-source" id="tooltip-source"></div>
+        </div>
+      </div>
 
+      <!-- 颜色管理页面 -->
+      <div class="page" id="colors-page">
+        <div class="header">
+          <h3 data-i18n="pages.colors.title">颜色方案</h3>
+        </div>
 
-        <!-- 词典来源 -->
-        <div class="about-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.about.dictionaries.title">词典来源</h4>
-          </div>
-          <div class="section-content">
-            <div class="dictionary-sources">
-              <div class="source-item">
-                <div class="source-header" data-toggle="zh-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>中文词典 (ZH) - Jieba</h5>
-                </div>
-                <div class="source-content" id="zh-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.zh">基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。</p>
-                  <p><strong>许可证:</strong> MIT License</p>
-                  <p><strong>官方网站:</strong> <a href="https://github.com/fxsjy/jieba" target="_blank">https://github.com/fxsjy/jieba</a></p>
-                </div>
-              </div>
-              <div class="source-item">
-                <div class="source-header" data-toggle="en-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>英文词典 (EN) - WordNet</h5>
-                </div>
-                <div class="source-content" id="en-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.en">基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。</p>
-                  <p><strong>许可证:</strong> WordNet 3.0 License</p>
-                  <p><strong>官方网站:</strong> <a href="https://wordnet.princeton.edu/" target="_blank">https://wordnet.princeton.edu/</a></p>
-                </div>
-              </div>
-              <div class="source-item">
-                <div class="source-header" data-toggle="fr-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>法语词典 (FR) - Morphalou</h5>
-                </div>
-                <div class="source-content" id="fr-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.fr">来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。</p>
-                  <p><strong>许可证:</strong> Libre License</p>
-                  <p><strong>官方网站:</strong> <a href="https://www.ortolang.fr/market/item/morphalou/3.0" target="_blank">https://www.ortolang.fr/market/item/morphalou/3.0</a></p>
-                </div>
-              </div>
-              <div class="source-item">
-                <div class="source-header" data-toggle="ru-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>俄语词典 (RU) - OpenCorpora</h5>
-                </div>
-                <div class="source-content" id="ru-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.ru">基于OpenCorpora开源俄语语料库项目，提供基本的词性标注功能。完全开放，支持商业使用。</p>
-                  <p><strong>许可证:</strong> CC-BY-SA License</p>
-                  <p><strong>官方网站:</strong> <a href="https://opencorpora.org/" target="_blank">https://opencorpora.org/</a></p>
-                </div>
-              </div>
-              <div class="source-item">
-                <div class="source-header" data-toggle="es-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>西班牙语词典 (ES) - Apertium</h5>
-                </div>
-                <div class="source-content" id="es-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.es">来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。</p>
-                  <p><strong>许可证:</strong> GPL 2.0 License</p>
-                  <p><strong>官方网站:</strong> <a href="https://github.com/apertium/apertium" target="_blank">https://github.com/apertium/apertium</a></p>
-                </div>
-              </div>
-              <div class="source-item">
-                <div class="source-header" data-toggle="ja-content">
-                  <span class="toggle-icon">▼</span>
-                  <h5>日语词典 (JA) - JMdict</h5>
-                </div>
-                <div class="source-content" id="ja-content">
-                  <p data-i18n="pages.about.dictionaries.descriptions.ja">基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。</p>
-                  <p><strong>许可证:</strong> CC-BY-SA 4.0 License</p>
-                  <p><strong>官方网站:</strong> <a href="http://www.edrdg.org/jmdict/j_jmdict.html" target="_blank">http://www.edrdg.org/jmdict/j_jmdict.html</a></p>
-                </div>
-              </div>
+        <div class="colors-content">
+          <!-- 高亮开关控制 -->
+          <div class="highlighting-toggles">
+            <h4 data-i18n="pages.colors.toggles.title">高亮控制</h4>
+            <div class="toggle-group">
+              <button
+                class="toggle-button active"
+                id="highlight-noun"
+                data-type="noun"
+              >
+                <span
+                  class="toggle-text"
+                  data-i18n="pages.colors.toggles.nounSimple"
+                  >名词</span
+                >
+              </button>
+              <button
+                class="toggle-button active"
+                id="highlight-verb"
+                data-type="verb"
+              >
+                <span
+                  class="toggle-text"
+                  data-i18n="pages.colors.toggles.verbSimple"
+                  >动词</span
+                >
+              </button>
+              <button
+                class="toggle-button active"
+                id="highlight-adj"
+                data-type="adj"
+              >
+                <span
+                  class="toggle-text"
+                  data-i18n="pages.colors.toggles.adjSimple"
+                  >形容词</span
+                >
+              </button>
+              <button
+                class="toggle-button active"
+                id="highlight-comparative"
+                data-type="comparative"
+              >
+                <span
+                  class="toggle-text"
+                  data-i18n="pages.colors.toggles.comparativeSimple"
+                  >比较级/最高级</span
+                >
+              </button>
             </div>
-          </div>
-        </div>
-
-        <!-- 简化的反馈信息 -->
-        <div class="about-section">
-          <div class="section-content">
-            <div style="text-align: center; padding: 20px; border-top: 1px solid #e0e0e0; margin-top: 20px;">
-              <p style="margin: 0; color: #666; font-size: 14px;" data-i18n="pages.about.feedback.wechat">
-                反馈与支持：微信 zuoguyoupan2023
+            <div class="toggle-description">
+              <p data-i18n="pages.colors.toggles.description">
+                点击按钮可开启或关闭对应类型词汇的高亮显示
               </p>
             </div>
           </div>
+
+          <div class="colors-info">
+            <p data-i18n="pages.colors.description">选择高亮颜色方案</p>
+          </div>
+
+          <div class="color-schemes">
+            <div class="scheme-item active" data-scheme="default">
+              <div class="scheme-header">
+                <input
+                  type="radio"
+                  name="colorScheme"
+                  id="scheme-default"
+                  checked
+                />
+                <label
+                  for="scheme-default"
+                  data-i18n="pages.colors.schemes.default"
+                  >默认方案</label
+                >
+              </div>
+              <div class="scheme-preview">
+                <span
+                  class="preview-word noun-default"
+                  data-i18n="pages.colors.preview.noun"
+                  >名词</span
+                >
+                <span
+                  class="preview-word verb-default"
+                  data-i18n="pages.colors.preview.verb"
+                  >动词</span
+                >
+                <span
+                  class="preview-word adj-default"
+                  data-i18n="pages.colors.preview.adjective"
+                  >形容词</span
+                >
+              </div>
+            </div>
+
+            <div class="scheme-item" data-scheme="warm">
+              <div class="scheme-header">
+                <input type="radio" name="colorScheme" id="scheme-warm" />
+                <label for="scheme-warm" data-i18n="pages.colors.schemes.warm"
+                  >暖色方案</label
+                >
+              </div>
+              <div class="scheme-preview">
+                <span
+                  class="preview-word noun-warm"
+                  data-i18n="pages.colors.preview.noun"
+                  >名词</span
+                >
+                <span
+                  class="preview-word verb-warm"
+                  data-i18n="pages.colors.preview.verb"
+                  >动词</span
+                >
+                <span
+                  class="preview-word adj-warm"
+                  data-i18n="pages.colors.preview.adjective"
+                  >形容词</span
+                >
+              </div>
+            </div>
+
+            <div class="scheme-item" data-scheme="cool">
+              <div class="scheme-header">
+                <input type="radio" name="colorScheme" id="scheme-cool" />
+                <label for="scheme-cool" data-i18n="pages.colors.schemes.cool"
+                  >冷色方案</label
+                >
+              </div>
+              <div class="scheme-preview">
+                <span
+                  class="preview-word noun-cool"
+                  data-i18n="pages.colors.preview.noun"
+                  >名词</span
+                >
+                <span
+                  class="preview-word verb-cool"
+                  data-i18n="pages.colors.preview.verb"
+                  >动词</span
+                >
+                <span
+                  class="preview-word adj-cool"
+                  data-i18n="pages.colors.preview.adjective"
+                  >形容词</span
+                >
+              </div>
+            </div>
+
+            <div class="scheme-item" data-scheme="pastel">
+              <div class="scheme-header">
+                <input type="radio" name="colorScheme" id="scheme-pastel" />
+                <label
+                  for="scheme-pastel"
+                  data-i18n="pages.colors.schemes.pastel"
+                  >柔和方案</label
+                >
+              </div>
+              <div class="scheme-preview">
+                <span
+                  class="preview-word noun-pastel"
+                  data-i18n="pages.colors.preview.noun"
+                  >名词</span
+                >
+                <span
+                  class="preview-word verb-pastel"
+                  data-i18n="pages.colors.preview.verb"
+                  >动词</span
+                >
+                <span
+                  class="preview-word adj-pastel"
+                  data-i18n="pages.colors.preview.adjective"
+                  >形容词</span
+                >
+              </div>
+            </div>
+
+            <div class="scheme-item" data-scheme="high-contrast">
+              <div class="scheme-header">
+                <input
+                  type="radio"
+                  name="colorScheme"
+                  id="scheme-high-contrast"
+                />
+                <label
+                  for="scheme-high-contrast"
+                  data-i18n="pages.colors.schemes.highContrast"
+                  >高对比度</label
+                >
+              </div>
+              <div class="scheme-preview">
+                <span
+                  class="preview-word noun-high-contrast"
+                  data-i18n="pages.colors.preview.noun"
+                  >名词</span
+                >
+                <span
+                  class="preview-word verb-high-contrast"
+                  data-i18n="pages.colors.preview.verb"
+                  >动词</span
+                >
+                <span
+                  class="preview-word adj-high-contrast"
+                  data-i18n="pages.colors.preview.adjective"
+                  >形容词</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="colors-actions">
+            <button
+              class="save-btn"
+              id="save-colors-btn"
+              data-i18n="pages.colors.applyScheme"
+            >
+              应用方案
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文本样式管理页面 -->
+      <div class="page" id="text-page">
+        <div class="header">
+          <h3 data-i18n="pages.text.title">文本样式</h3>
+        </div>
+
+        <div class="text-content">
+          <div class="text-info">
+            <p data-i18n="pages.text.description">调整页面文本的显示样式</p>
+          </div>
+
+          <div class="text-controls">
+            <!-- 字号设置 -->
+            <div class="control-group">
+              <label class="control-label" data-i18n="pages.text.fontSize"
+                >字号大小</label
+              >
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="fontSize"
+                  min="80"
+                  max="150"
+                  step="5"
+                  value="100"
+                />
+                <span class="control-value" id="fontSizeValue">100%</span>
+              </div>
+              <div class="control-desc" data-i18n="pages.text.fontSizeDesc">
+                调整页面文字大小
+              </div>
+            </div>
+
+            <!-- 字间距设置 -->
+            <div class="control-group">
+              <label class="control-label" data-i18n="pages.text.letterSpacing"
+                >字间距</label
+              >
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="letterSpacing"
+                  min="0"
+                  max="3"
+                  step="0.1"
+                  value="0"
+                />
+                <span class="control-value" id="letterSpacingValue">0px</span>
+              </div>
+              <div
+                class="control-desc"
+                data-i18n="pages.text.letterSpacingDesc"
+              >
+                调整字符之间的间距
+              </div>
+            </div>
+
+            <!-- 行间距设置 -->
+            <div class="control-group">
+              <label class="control-label" data-i18n="pages.text.lineHeight"
+                >行间距</label
+              >
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="lineHeight"
+                  min="1.0"
+                  max="2.5"
+                  step="0.1"
+                  value="1.5"
+                />
+                <span class="control-value" id="lineHeightValue">1.5</span>
+              </div>
+              <div class="control-desc" data-i18n="pages.text.lineHeightDesc">
+                调整行与行之间的间距
+              </div>
+            </div>
+
+            <!-- 段间距设置 -->
+            <div class="control-group">
+              <label
+                class="control-label"
+                data-i18n="pages.text.paragraphSpacing"
+                >段间距</label
+              >
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="paragraphSpacing"
+                  min="0"
+                  max="20"
+                  step="1"
+                  value="0"
+                />
+                <span class="control-value" id="paragraphSpacingValue"
+                  >0px</span
+                >
+              </div>
+              <div
+                class="control-desc"
+                data-i18n="pages.text.paragraphSpacingDesc"
+              >
+                调整段落之间的间距
+              </div>
+            </div>
+          </div>
+
+          <!-- 预览区域 -->
+          <div class="text-preview">
+            <h4 data-i18n="pages.text.preview">预览效果</h4>
+            <div class="preview-content" id="textPreview">
+              <p>
+                这是一段示例文本，用于预览字体样式效果。This is sample text for
+                previewing font style effects.
+              </p>
+              <p>
+                第二段文本，可以看到段落间距的效果。Second paragraph to show
+                paragraph spacing effect.
+              </p>
+            </div>
+          </div>
+
+          <div class="text-actions">
+            <button
+              class="save-btn"
+              id="save-text-btn"
+              data-i18n="pages.text.apply"
+            >
+              应用样式
+            </button>
+            <button
+              class="reset-btn"
+              id="reset-text-btn"
+              data-i18n="pages.text.reset"
+            >
+              重置默认
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI分析页面 -->
+      <div class="page" id="ai-page">
+        <div class="header">
+          <h3 data-i18n="pages.ai.title">智能分析</h3>
+        </div>
+
+        <div class="ai-content">
+          <div class="ai-info">
+            <p data-i18n="pages.ai.description">
+              基于当前页面高亮内容的数据分析
+            </p>
+          </div>
+
+          <!-- 页面统计信息 -->
+          <div class="analysis-section">
+            <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
+
+            <!-- 语言分布 -->
+            <div class="stat-group">
+              <div class="stat-title" data-i18n="pages.ai.stats.language">
+                语言分布
+              </div>
+              <div class="stat-content" id="languageStats">
+                <div class="loading">分析中...</div>
+              </div>
+            </div>
+
+            <!-- 词性分布 -->
+            <div class="stat-group">
+              <div
+                class="stat-title"
+                data-i18n="pages.ai.stats.posDistribution"
+              >
+                词性分布
+              </div>
+              <div class="stat-content" id="posStats">
+                <div class="loading">分析中...</div>
+              </div>
+            </div>
+
+            <!-- 高亮统计UI已隐藏 - 逻辑代码保留但不显示UI -->
+          </div>
+
+          <!-- 推荐功能已彻底删除 -->
+
+          <div class="ai-actions">
+            <button
+              class="refresh-btn"
+              id="refresh-analysis-btn"
+              data-i18n="pages.ai.refresh"
+            >
+              🔄 刷新分析
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关于页面 -->
+      <div class="page" id="about-page">
+        <div class="header">
+          <h3 data-i18n="pages.about.title">关于</h3>
+        </div>
+
+        <div class="about-content">
+          <!-- 关于我们 -->
+          <div class="about-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.about.about.title">关于我们</h4>
+            </div>
+            <div class="section-content">
+              <div class="about-info">
+                <p data-i18n="pages.about.about.description">
+                  ADHDGoFly
+                  是一款ADHD友好的文本高亮插件，通过智能词性识别和颜色标记，帮助用户更好地理解和阅读网页内容。
+                </p>
+                <div class="version-info">
+                  <p>
+                    <strong data-i18n="pages.about.about.version">版本：</strong
+                    >0.1.3
+                  </p>
+                  <p>
+                    <strong data-i18n="pages.about.about.developer"
+                      >开发者：</strong
+                    >ADHDGoFly Team
+                  </p>
+                  <p>
+                    <strong data-i18n="pages.about.about.website">官网：</strong
+                    ><a
+                      href="https://adhdgofly.online"
+                      target="_blank"
+                      class="website-link"
+                      >adhdgofly.online</a
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 更新日志 -->
+          <div class="about-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.about.changelog.title">更新日志</h4>
+            </div>
+            <div class="section-content">
+              <div class="changelog">
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v013">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.3</span>
+                      <span class="version-date">2025-10-5</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v013">
+                    <h5 data-i18n="pages.about.changelog.v013.title">
+                      界面优化与功能增强
+                    </h5>
+                    <ul>
+                      <li data-i18n="pages.about.changelog.v013.feature1">
+                        支持 法西俄日 语言；主界面优化
+                      </li>
+                      <li data-i18n="pages.about.changelog.v013.feature2">
+                        支持英语比较级最高级的紫色逻辑
+                      </li>
+                      <li data-i18n="pages.about.changelog.v013.feature3">
+                        实现基础的设置管理和存储功能
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v012">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.2</span>
+                      <span class="version-date">2025-09-28</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v012">
+                    <h5 data-i18n="pages.about.changelog.v012.title">
+                      多语言支持与性能优化
+                    </h5>
+                    <ul>
+                      <li data-i18n="pages.about.changelog.v012.feature1">
+                        多种颜色方案：暖色、冷色、柔和、高对比度
+                      </li>
+                      <li data-i18n="pages.about.changelog.v012.feature2">
+                        增加字号 行间距 词间距等逻辑
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v011">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.1</span>
+                      <span class="version-date">2025-09-19</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v011">
+                    <h5 data-i18n="pages.about.changelog.v011.title">
+                      基础功能发布
+                    </h5>
+                    <ul>
+                      <li data-i18n="pages.about.changelog.v011.feature1">
+                        支持中文、英文的词性识别
+                      </li>
+                      <li data-i18n="pages.about.changelog.v011.feature2">
+                        提供名词、动词、形容词的颜色高亮
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 词典来源 -->
+          <div class="about-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.about.dictionaries.title">词典来源</h4>
+            </div>
+            <div class="section-content">
+              <div class="dictionary-sources">
+                <div class="source-item">
+                  <div class="source-header" data-toggle="zh-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>中文词典 (ZH) - Jieba</h5>
+                  </div>
+                  <div class="source-content" id="zh-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.zh">
+                      基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。
+                    </p>
+                    <p><strong>许可证:</strong> MIT License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a href="https://github.com/fxsjy/jieba" target="_blank"
+                        >https://github.com/fxsjy/jieba</a
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="source-item">
+                  <div class="source-header" data-toggle="en-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>英文词典 (EN) - WordNet</h5>
+                  </div>
+                  <div class="source-content" id="en-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.en">
+                      基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。
+                    </p>
+                    <p><strong>许可证:</strong> WordNet 3.0 License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a href="https://wordnet.princeton.edu/" target="_blank"
+                        >https://wordnet.princeton.edu/</a
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="source-item">
+                  <div class="source-header" data-toggle="fr-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>法语词典 (FR) - Morphalou</h5>
+                  </div>
+                  <div class="source-content" id="fr-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.fr">
+                      来源于Morphalou法语形态词典，包含基础词汇的词性信息和形态学分析。
+                    </p>
+                    <p><strong>许可证:</strong> Libre License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a
+                        href="https://www.ortolang.fr/market/item/morphalou/3.0"
+                        target="_blank"
+                        >https://www.ortolang.fr/market/item/morphalou/3.0</a
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="source-item">
+                  <div class="source-header" data-toggle="ru-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>俄语词典 (RU) - OpenCorpora</h5>
+                  </div>
+                  <div class="source-content" id="ru-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.ru">
+                      基于OpenCorpora开源俄语语料库项目，提供基本的词性标注功能。完全开放，支持商业使用。
+                    </p>
+                    <p><strong>许可证:</strong> CC-BY-SA License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a href="https://opencorpora.org/" target="_blank"
+                        >https://opencorpora.org/</a
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="source-item">
+                  <div class="source-header" data-toggle="es-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>西班牙语词典 (ES) - Apertium</h5>
+                  </div>
+                  <div class="source-content" id="es-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.es">
+                      来源于Apertium开源机器翻译平台的西班牙语语言学资源，支持常用词汇识别。
+                    </p>
+                    <p><strong>许可证:</strong> GPL 2.0 License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a
+                        href="https://github.com/apertium/apertium"
+                        target="_blank"
+                        >https://github.com/apertium/apertium</a
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="source-item">
+                  <div class="source-header" data-toggle="ja-content">
+                    <span class="toggle-icon">▼</span>
+                    <h5>日语词典 (JA) - JMdict</h5>
+                  </div>
+                  <div class="source-content" id="ja-content">
+                    <p data-i18n="pages.about.dictionaries.descriptions.ja">
+                      基于JMdict开源日语多语言词典，包含假名和汉字的词性信息。完全开放，支持商业使用。
+                    </p>
+                    <p><strong>许可证:</strong> CC-BY-SA 4.0 License</p>
+                    <p>
+                      <strong>官方网站:</strong>
+                      <a
+                        href="http://www.edrdg.org/jmdict/j_jmdict.html"
+                        target="_blank"
+                        >http://www.edrdg.org/jmdict/j_jmdict.html</a
+                      >
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 简化的反馈信息 -->
+          <div class="about-section">
+            <div class="section-content">
+              <div
+                style="
+                  text-align: center;
+                  padding: 20px;
+                  border-top: 1px solid #e0e0e0;
+                  margin-top: 20px;
+                "
+              >
+                <p
+                  style="margin: 0; color: #666; font-size: 14px"
+                  data-i18n="pages.about.feedback.wechat"
+                >
+                  反馈与支持：微信 zuoguyoupan2023
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置页面 -->
+      <div class="page" id="settings-page">
+        <div class="header">
+          <h3 data-i18n="pages.settings.title">设置</h3>
+        </div>
+
+        <div class="settings-content">
+          <!-- 存储管理设置 -->
+          <div class="settings-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.settings.storage.title">存储管理</h4>
+            </div>
+            <div class="section-content">
+              <!-- 存储时间设置 -->
+              <div class="setting-item">
+                <label class="setting-label-text">
+                  <span data-i18n="pages.settings.storage.retentionTime"
+                    >缓存保留时间</span
+                  >
+                </label>
+                <div class="radio-group">
+                  <label class="radio-option">
+                    <input
+                      type="radio"
+                      name="storage-retention"
+                      value="3"
+                      id="retention-3"
+                    />
+                    <span class="radio-mark"></span>
+                    <span data-i18n="pages.settings.storage.days3">3天</span>
+                  </label>
+                  <label class="radio-option">
+                    <input
+                      type="radio"
+                      name="storage-retention"
+                      value="7"
+                      id="retention-7"
+                      checked
+                    />
+                    <span class="radio-mark"></span>
+                    <span data-i18n="pages.settings.storage.days7">7天</span>
+                  </label>
+                  <label class="radio-option">
+                    <input
+                      type="radio"
+                      name="storage-retention"
+                      value="14"
+                      id="retention-14"
+                    />
+                    <span class="radio-mark"></span>
+                    <span data-i18n="pages.settings.storage.days14">14天</span>
+                  </label>
+                  <label class="radio-option">
+                    <input
+                      type="radio"
+                      name="storage-retention"
+                      value="28"
+                      id="retention-28"
+                    />
+                    <span class="radio-mark"></span>
+                    <span data-i18n="pages.settings.storage.days28">28天</span>
+                  </label>
+                  <label class="radio-option">
+                    <input
+                      type="radio"
+                      name="storage-retention"
+                      value="0"
+                      id="retention-disabled"
+                    />
+                    <span class="radio-mark"></span>
+                    <span data-i18n="pages.settings.storage.disabled"
+                      >禁用缓存</span
+                    >
+                  </label>
+                </div>
+                <p
+                  class="setting-desc"
+                  data-i18n="pages.settings.storage.retentionDesc"
+                >
+                  设置高亮缓存的保留时间，过期后自动清理
+                </p>
+              </div>
+
+              <!-- 存储使用情况 -->
+              <div class="setting-item">
+                <label class="setting-label-text">
+                  <span data-i18n="pages.settings.storage.usage"
+                    >存储使用情况</span
+                  >
+                </label>
+                <div class="storage-stats">
+                  <div class="stat-item">
+                    <span
+                      class="stat-label"
+                      data-i18n="pages.settings.storage.cachedPages"
+                      >缓存页面:</span
+                    >
+                    <span class="stat-value" id="cached-pages-count">-</span>
+                  </div>
+                  <div class="stat-item">
+                    <span
+                      class="stat-label"
+                      data-i18n="pages.settings.storage.usedSpace"
+                      >已用空间:</span
+                    >
+                    <span class="stat-value" id="used-storage-space">-</span>
+                  </div>
+                  <div class="stat-item">
+                    <span
+                      class="stat-label"
+                      data-i18n="pages.settings.storage.lastCleanup"
+                      >上次清理:</span
+                    >
+                    <span class="stat-value" id="last-cleanup-time">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 手动清理选项 -->
+              <div class="setting-item">
+                <label class="setting-label-text">
+                  <span data-i18n="pages.settings.storage.cleanup"
+                    >缓存清理</span
+                  >
+                </label>
+                <div class="cleanup-actions">
+                  <button
+                    class="cleanup-btn"
+                    id="cleanup-expired"
+                    data-i18n="pages.settings.storage.cleanupExpired"
+                  >
+                    清理过期缓存
+                  </button>
+                  <button
+                    class="cleanup-btn danger"
+                    id="cleanup-all"
+                    data-i18n="pages.settings.storage.cleanupAll"
+                  >
+                    清除所有缓存
+                  </button>
+                </div>
+                <p
+                  class="setting-desc"
+                  data-i18n="pages.settings.storage.cleanupDesc"
+                >
+                  手动清理缓存数据，释放存储空间
+                </p>
+              </div>
+
+              <!-- 保存按钮 -->
+              <div class="setting-actions">
+                <button
+                  class="save-btn"
+                  id="save-storage-btn"
+                  data-i18n="pages.settings.storage.save"
+                >
+                  保存存储设置
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 其他设置 -->
+          <div class="settings-section">
+            <div class="section-header">
+              <h4 data-i18n="pages.settings.other.title">其他设置</h4>
+            </div>
+            <div class="section-content">
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="auto-update" checked />
+                  <span class="checkmark"></span>
+                  <span data-i18n="pages.settings.other.autoUpdate"
+                    >自动检查更新</span
+                  >
+                </label>
+                <p
+                  class="setting-desc"
+                  data-i18n="pages.settings.other.autoUpdateDesc"
+                >
+                  启用后将自动检查插件更新
+                </p>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="analytics" checked />
+                  <span class="checkmark"></span>
+                  <span data-i18n="pages.settings.other.analytics"
+                    >匿名使用统计</span
+                  >
+                </label>
+                <p
+                  class="setting-desc"
+                  data-i18n="pages.settings.other.analyticsDesc"
+                >
+                  帮助我们改进产品（不收集个人信息）
+                </p>
+              </div>
+              <div class="setting-actions">
+                <button
+                  class="reset-btn"
+                  id="reset-settings"
+                  data-i18n="pages.settings.other.reset"
+                >
+                  重置所有设置
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 设置页面 -->
-    <div class="page" id="settings-page">
-      <div class="header">
-        <h3 data-i18n="pages.settings.title">设置</h3>
-      </div>
-      
-      <div class="settings-content">
-
-        <!-- 存储管理设置 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.settings.storage.title">存储管理</h4>
-          </div>
-          <div class="section-content">
-            <!-- 存储时间设置 -->
-            <div class="setting-item">
-              <label class="setting-label-text">
-                <span data-i18n="pages.settings.storage.retentionTime">缓存保留时间</span>
-              </label>
-              <div class="radio-group">
-                <label class="radio-option">
-                  <input type="radio" name="storage-retention" value="3" id="retention-3">
-                  <span class="radio-mark"></span>
-                  <span data-i18n="pages.settings.storage.days3">3天</span>
-                </label>
-                <label class="radio-option">
-                  <input type="radio" name="storage-retention" value="7" id="retention-7" checked>
-                  <span class="radio-mark"></span>
-                  <span data-i18n="pages.settings.storage.days7">7天</span>
-                </label>
-                <label class="radio-option">
-                  <input type="radio" name="storage-retention" value="14" id="retention-14">
-                  <span class="radio-mark"></span>
-                  <span data-i18n="pages.settings.storage.days14">14天</span>
-                </label>
-                <label class="radio-option">
-                  <input type="radio" name="storage-retention" value="28" id="retention-28">
-                  <span class="radio-mark"></span>
-                  <span data-i18n="pages.settings.storage.days28">28天</span>
-                </label>
-                <label class="radio-option">
-                  <input type="radio" name="storage-retention" value="0" id="retention-disabled">
-                  <span class="radio-mark"></span>
-                  <span data-i18n="pages.settings.storage.disabled">禁用缓存</span>
-                </label>
-              </div>
-              <p class="setting-desc" data-i18n="pages.settings.storage.retentionDesc">设置高亮缓存的保留时间，过期后自动清理</p>
-            </div>
-
-            <!-- 存储使用情况 -->
-            <div class="setting-item">
-              <label class="setting-label-text">
-                <span data-i18n="pages.settings.storage.usage">存储使用情况</span>
-              </label>
-              <div class="storage-stats">
-                <div class="stat-item">
-                  <span class="stat-label" data-i18n="pages.settings.storage.cachedPages">缓存页面:</span>
-                  <span class="stat-value" id="cached-pages-count">-</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label" data-i18n="pages.settings.storage.usedSpace">已用空间:</span>
-                  <span class="stat-value" id="used-storage-space">-</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label" data-i18n="pages.settings.storage.lastCleanup">上次清理:</span>
-                  <span class="stat-value" id="last-cleanup-time">-</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 手动清理选项 -->
-            <div class="setting-item">
-              <label class="setting-label-text">
-                <span data-i18n="pages.settings.storage.cleanup">缓存清理</span>
-              </label>
-              <div class="cleanup-actions">
-                <button class="cleanup-btn" id="cleanup-expired" data-i18n="pages.settings.storage.cleanupExpired">清理过期缓存</button>
-                <button class="cleanup-btn danger" id="cleanup-all" data-i18n="pages.settings.storage.cleanupAll">清除所有缓存</button>
-              </div>
-              <p class="setting-desc" data-i18n="pages.settings.storage.cleanupDesc">手动清理缓存数据，释放存储空间</p>
-            </div>
-
-            <!-- 保存按钮 -->
-            <div class="setting-actions">
-              <button class="save-btn" id="save-storage-btn" data-i18n="pages.settings.storage.save">保存存储设置</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 其他设置 -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h4 data-i18n="pages.settings.other.title">其他设置</h4>
-          </div>
-          <div class="section-content">
-            <div class="setting-item">
-              <label class="setting-label">
-                <input type="checkbox" id="auto-update" checked>
-                <span class="checkmark"></span>
-                <span data-i18n="pages.settings.other.autoUpdate">自动检查更新</span>
-              </label>
-              <p class="setting-desc" data-i18n="pages.settings.other.autoUpdateDesc">启用后将自动检查插件更新</p>
-            </div>
-            <div class="setting-item">
-              <label class="setting-label">
-                <input type="checkbox" id="analytics" checked>
-                <span class="checkmark"></span>
-                <span data-i18n="pages.settings.other.analytics">匿名使用统计</span>
-              </label>
-              <p class="setting-desc" data-i18n="pages.settings.other.analyticsDesc">帮助我们改进产品（不收集个人信息）</p>
-            </div>
-            <div class="setting-actions">
-              <button class="reset-btn" id="reset-settings" data-i18n="pages.settings.other.reset">重置所有设置</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-  </div>
-  
-  <!-- 右侧侧边栏 -->
-  <div class="sidebar">
-    <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home">
-      <span>🏠</span>
-    </button>
-    
-    <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict">
-      <span>📚</span>
-    </button>
-    
-    <button class="sidebar-btn" id="colors-btn" title="颜色" data-i18n-title="sidebar.colors">
-      <span>🎨</span>
-    </button>
-    
-    <button class="sidebar-btn" id="text-btn" title="文本" data-i18n-title="sidebar.text">
-      <span>文</span>
-    </button>
-    
-    <button class="sidebar-btn" id="ai-btn" title="AI" data-i18n-title="sidebar.ai">
-      <span>🤖</span>
-    </button>
-    
-    <button class="sidebar-btn" id="about-btn" title="关于" data-i18n-title="sidebar.about">
-      <span>ℹ️</span>
-    </button>
-    
-    <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings">
-      <span>⚙️</span>
-    </button>
-    
-    <!-- 语言切换按钮 -->
-    <div class="language-switcher">
-      <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language">
-        <span class="language-icon">🌐</span>
+    <!-- 右侧侧边栏 -->
+    <div class="sidebar">
+      <button
+        class="sidebar-btn active"
+        id="home-btn"
+        title="主页"
+        data-i18n-title="sidebar.home"
+      >
+        <span>🏠</span>
       </button>
+
+      <button
+        class="sidebar-btn"
+        id="dict-btn"
+        title="词典"
+        data-i18n-title="sidebar.dict"
+      >
+        <span>📚</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="colors-btn"
+        title="颜色"
+        data-i18n-title="sidebar.colors"
+      >
+        <span>🎨</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="text-btn"
+        title="文本"
+        data-i18n-title="sidebar.text"
+      >
+        <span>文</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="ai-btn"
+        title="AI"
+        data-i18n-title="sidebar.ai"
+      >
+        <span>🤖</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="about-btn"
+        title="关于"
+        data-i18n-title="sidebar.about"
+      >
+        <span>ℹ️</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="settings-btn"
+        title="设置"
+        data-section="settings"
+        data-i18n-title="sidebar.settings"
+      >
+        <span>⚙️</span>
+      </button>
+
+      <!-- 语言切换按钮 -->
+      <div class="language-switcher">
+        <button
+          id="languageToggle"
+          class="sidebar-btn language-btn"
+          title="切换语言"
+          data-i18n-title="sidebar.language"
+        >
+          <span class="language-icon">🌐</span>
+        </button>
+      </div>
     </div>
-  </div>
-  
-  <script src="settings.js"></script>
-</body>
+
+    <script src="settings.js"></script>
+  </body>
 </html>

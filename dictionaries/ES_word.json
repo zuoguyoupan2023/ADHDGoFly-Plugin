@@ -12,10 +12,10 @@
     "en": "Built-in Spanish dictionary with common Spanish vocabulary and part-of-speech tags"
   },
   "license": {
-    "type": "Open Source",
-    "source": "Various open sources",
-    "url": "",
-    "attribution": "Compiled from various open source dictionaries"
+    "type": "GPL v2+ License",
+    "source": "Apertium",
+    "url": "https://github.com/apertium",
+    "attribution": "Apertium"
   }
 }, "version": "1.0",
 "lastUpdated": "2025-04-24T14:35:09.111Z",

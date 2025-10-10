@@ -7,10 +7,6 @@
     "processing": "处理中...",
     "switching": "正在切换状态..."
   },
-  "version": {
-     "checking": "检查中...",
-     "checkFailed": "检查失败"
-   },
   "errors": {
     "noTab": "无法获取当前标签页",
     "notLoaded": "插件未加载或初始化失败",
@@ -76,14 +72,60 @@
     },
     "dict": {
       "title": "词典管理",
-      "description": "选择要使用的语言词典",
+      "description": "勾选启用词典；默认显示基础词典",
+      "groups": {
+        "basic": "基础词典",
+        "chinese": "中文专业词典"
+      },
       "languages": {
         "zh": "中文词典",
         "en": "英文词典",
-        "fr": "法文词典",
-        "ru": "俄文词典",
-        "es": "西班牙文词典",
-        "ja": "日文词典"
+        "fr": "法语词典",
+        "ru": "俄语词典",
+        "es": "西班牙语词典",
+        "ja": "日语词典"
+      },
+      "languageGroups": {
+        "zh": {
+          "name": "中文",
+          "desc": "Chinese"
+        },
+        "en": {
+          "name": "英文",
+          "desc": "English"
+        },
+        "fr": {
+          "name": "法语",
+          "desc": "Français"
+        },
+        "es": {
+          "name": "西班牙语",
+          "desc": "Español"
+        },
+        "ru": {
+          "name": "俄语",
+          "desc": "Русский"
+        },
+        "ja": {
+          "name": "日语",
+          "desc": "日本語"
+        }
+      },
+      "empty": {
+        "professional": "专业词典即将推出"
+      },
+      "domains": {
+        "animal": "动物词典",
+        "finance": "财经词典",
+        "automotive": "汽车词典",
+        "idiom": "成语词典",
+        "geography": "地名词典",
+        "food": "食物词典",
+        "technology": "IT词典",
+        "legal": "法律词典",
+        "history": "历史人物词典",
+        "medical": "医学词典",
+        "literature": "诗词词典"
       }
     },
     "colors": {

@@ -6,11 +6,7 @@
     "disabled": "Highlighting disabled",
     "processing": "Processing...",
     "switching": "Switching status..."
-  },
-  "version": {
-    "checking": "Checking...",
-    "checkFailed": "Check failed"
-  },
+  }, 
   "errors": {
     "noTab": "Unable to get current tab",
     "notLoaded": "Extension not loaded or initialization failed",
@@ -57,7 +53,11 @@
   "pages": {
     "dict": {
       "title": "Dictionary Management",
-      "description": "Select language dictionaries to use",
+      "description": "Check to enable dictionaries; basic dictionaries shown by default",
+      "groups": {
+        "basic": "Basic Dictionaries",
+        "chinese": "Chinese Professional Dictionaries"
+      },
       "languages": {
         "zh": "Chinese Dictionary",
         "en": "English Dictionary",
@@ -65,6 +65,48 @@
         "ru": "Russian Dictionary",
         "es": "Spanish Dictionary",
         "ja": "Japanese Dictionary"
+      },
+      "languageGroups": {
+        "zh": {
+          "name": "Chinese",
+          "desc": "中文"
+        },
+        "en": {
+          "name": "English",
+          "desc": "English"
+        },
+        "fr": {
+          "name": "French",
+          "desc": "Français"
+        },
+        "es": {
+          "name": "Spanish",
+          "desc": "Español"
+        },
+        "ru": {
+          "name": "Russian",
+          "desc": "Русский"
+        },
+        "ja": {
+          "name": "Japanese",
+          "desc": "日本語"
+        }
+      },
+      "empty": {
+        "professional": "Professional dictionaries coming soon"
+      },
+      "domains": {
+        "animal": "Animal Dictionary",
+        "finance": "Finance Dictionary",
+        "automotive": "Automotive Dictionary",
+        "idiom": "Idiom Dictionary",
+        "geography": "Geography Dictionary",
+        "food": "Food Dictionary",
+        "technology": "IT Dictionary",
+        "legal": "Legal Dictionary",
+        "history": "Historical Figures Dictionary",
+        "medical": "Medical Dictionary",
+        "literature": "Poetry Dictionary"
       }
     },
     "colors": {

@@ -5,12 +5,25 @@ class PopupController {
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
     this.dictSettings = {
-      zh: true,
-      en: true,
-      fr: false,
-      ru: false,
-      es: false,
-      ja: false
+      // 基础词典
+      'zh-preset': true,
+      'en-preset': true,
+      'fr-preset': false,
+      'es-preset': false,
+      'ru-preset': false,
+      'ja-preset': false,
+      // 中文专业词典
+      'zh-animal-preset': false,
+      'zh-finance-preset': false,
+      'zh-automotive-preset': false,
+      'zh-idiom-preset': false,
+      'zh-geography-preset': false,
+      'zh-food-preset': false,
+      'zh-technology-preset': false,
+      'zh-legal-preset': false,
+      'zh-history-preset': false,
+      'zh-medical-preset': false,
+      'zh-literature-preset': false
     };
     this.colorSchemes = {
       default: {
@@ -51,6 +64,146 @@ class PopupController {
       verb: true,           // 动词高亮开关
       adj: true,            // 形容词高亮开关
       comparative: true     // 比较级/最高级高亮开关
+    };
+
+    // 词典meta信息
+    this.dictMeta = {
+      'zh-preset': {
+        description: {
+          zh: '基于Jieba中文分词词典，包含常用词汇的词性标注',
+          en: 'Based on Jieba Chinese word segmentation dictionary with POS tagging'
+        },
+        source: 'Jieba分词项目',
+        license: 'MIT License'
+      },
+      'en-preset': {
+        description: {
+          zh: '基于WordNet英语词典，提供准确的词性分类和语义关系',
+          en: 'Based on WordNet English dictionary with accurate POS classification'
+        },
+        source: 'Princeton University WordNet',
+        license: 'WordNet License'
+      },
+      'fr-preset': {
+        description: {
+          zh: '基于Morphalou法语词典，包含基础词汇的词性信息',
+          en: 'Based on Morphalou French dictionary with basic POS information'
+        },
+        source: 'Morphalou项目',
+        license: 'LGPL-LR License '
+      },
+      'es-preset': {
+        description: {
+          zh: '基于Apertium西班牙语词典，支持常用词汇识别',
+          en: 'Based on Apertium Spanish dictionary for common vocabulary'
+        },
+        source: 'Apertium项目',
+        license: 'GPL v2+ License'
+      },
+      'ru-preset': {
+        description: {
+          zh: '基于OpenCorpora俄语词典，提供基本的词性标注功能',
+          en: 'Based on OpenCorpora Russian dictionary with basic POS tagging'
+        },
+        source: 'OpenCorpora项目',
+        license: 'Creative Commons BY-SA'
+      },
+      'ja-preset': {
+        description: {
+          zh: '基于JMdict日语词典，包含假名和汉字的词性信息',
+          en: 'Based on JMdict Japanese dictionary with kana and kanji POS info'
+        },
+        source: 'JMdict项目',
+        license: 'Creative Commons BY-SA'
+      },
+      'zh-animal-preset': {
+        description: {
+          zh: '包含动物名称、生物学术语等相关词汇的专业词典',
+          en: 'Professional dictionary containing animal names and biological terms'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-finance-preset': {
+        description: {
+          zh: '涵盖金融、经济、投资等领域的专业术语词典',
+          en: 'Professional dictionary covering finance, economics, and investment terms'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-automotive-preset': {
+        description: {
+          zh: '汽车工业相关术语和品牌名称的专业词典',
+          en: 'Professional dictionary for automotive industry terms and brand names'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-idiom-preset': {
+        description: {
+          zh: '中文成语、俗语和固定搭配的专业词典',
+          en: 'Professional dictionary of Chinese idioms, proverbs, and fixed expressions'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-geography-preset': {
+        description: {
+          zh: '地名、地理术语和行政区划的专业词典',
+          en: 'Professional dictionary of place names, geographical terms, and administrative divisions'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-food-preset': {
+        description: {
+          zh: '食物名称、烹饪术语和餐饮相关词汇的专业词典',
+          en: 'Professional dictionary of food names, culinary terms, and dining vocabulary'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-technology-preset': {
+        description: {
+          zh: 'IT技术、计算机科学和互联网相关术语的专业词典',
+          en: 'Professional dictionary of IT, computer science, and internet-related terms'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-legal-preset': {
+        description: {
+          zh: '法律条文、司法术语和法学概念的专业词典',
+          en: 'Professional dictionary of legal provisions, judicial terms, and legal concepts'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-history-preset': {
+        description: {
+          zh: '历史人物、朝代名称和历史事件的专业词典',
+          en: 'Professional dictionary of historical figures, dynasties, and historical events'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-medical-preset': {
+        description: {
+          zh: '医学术语、疾病名称和药物相关词汇的专业词典',
+          en: 'Professional dictionary of medical terms, disease names, and pharmaceutical vocabulary'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      },
+      'zh-literature-preset': {
+        description: {
+          zh: '古典诗词、文学作品和文学术语的专业词典',
+          en: 'Professional dictionary of classical poetry, literary works, and literary terms'
+        },
+        source: 'THUOCL (清华大学开放中文词库)',
+        license: 'MIT License'
+      }
     };
 
     this.init();
@@ -264,6 +417,20 @@ class PopupController {
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
+      
+      // 如果是词典页面，初始化语言分组监听器和tooltip事件
+      if (pageId === 'dict') {
+        console.log('Switching to dict page, initializing language group listeners...');
+        setTimeout(() => {
+          if (typeof initLanguageGroupListeners === 'function') {
+            initLanguageGroupListeners();
+          } else if (window.initLanguageGroupListeners) {
+            window.initLanguageGroupListeners();
+          }
+          // 重新绑定tooltip事件
+          this.bindDictTooltipEvents();
+        }, 50);
+      }
     }
   }
 
@@ -272,9 +439,9 @@ class PopupController {
     const dictCheckboxes = document.querySelectorAll('[id^="dict-"]');
     dictCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', (e) => {
-        const langCode = e.target.id.replace('dict-', '');
-        this.dictSettings[langCode] = e.target.checked;
-        console.log(`${langCode}词典:`, e.target.checked ? '启用' : '禁用');
+        const dictId = e.target.id.replace('dict-', '');
+        this.dictSettings[dictId] = e.target.checked;
+        console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
       });
     });
     
@@ -283,6 +450,103 @@ class PopupController {
     if (saveDictBtn) {
       saveDictBtn.addEventListener('click', () => this.saveDictSettings());
     }
+
+    // 词典tooltip事件
+    this.bindDictTooltipEvents();
+  }
+
+  bindDictTooltipEvents() {
+    // 为所有词典项添加鼠标悬停事件
+    const dictItems = document.querySelectorAll('.dict-item');
+    const tooltip = document.getElementById('dict-tooltip');
+    
+    if (!tooltip) return;
+
+    dictItems.forEach(item => {
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      if (!checkbox) return;
+
+      const dictId = checkbox.id.replace('dict-', '');
+      const meta = this.dictMeta[dictId];
+      
+      if (!meta) return;
+
+      item.addEventListener('mouseenter', (e) => {
+        this.showDictTooltip(e.target, dictId, meta);
+      });
+
+      item.addEventListener('mouseleave', () => {
+        this.hideDictTooltip();
+      });
+    });
+  }
+
+  showDictTooltip(element, dictId, meta) {
+    const tooltip = document.getElementById('dict-tooltip');
+    const titleEl = document.getElementById('tooltip-title');
+    const descEl = document.getElementById('tooltip-description');
+    const sourceEl = document.getElementById('tooltip-source');
+    
+    if (!tooltip || !titleEl || !descEl || !sourceEl) return;
+
+    // 获取当前语言
+    const currentLang = window.i18n ? window.i18n.getCurrentLanguage() : 'zh';
+    
+    // 设置tooltip内容
+    const dictName = this.getDictDisplayName(dictId);
+    titleEl.textContent = dictName;
+    descEl.textContent = meta.description[currentLang] || meta.description.zh;
+    
+    // 根据当前语言设置来源标签
+    const sourceLabel = currentLang === 'en' ? 'Source' : '来源';
+    const licenseLabel = currentLang === 'en' ? 'License' : '许可';
+    sourceEl.innerHTML = `<strong>${sourceLabel}:</strong> ${meta.source}<br><strong>${licenseLabel}:</strong> ${meta.license}`;
+
+    // 计算tooltip位置
+    const rect = element.getBoundingClientRect();
+    const popupRect = document.body.getBoundingClientRect();
+    
+    // 设置位置（在元素下方，相对于popup窗口）
+    const left = Math.max(10, rect.left - popupRect.left - 20);
+    const top = rect.bottom - popupRect.top + 8;
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+    
+    // 显示tooltip
+    tooltip.classList.add('show');
+  }
+
+  hideDictTooltip() {
+    const tooltip = document.getElementById('dict-tooltip');
+    if (tooltip) {
+      tooltip.classList.remove('show');
+    }
+  }
+
+  getDictDisplayName(dictId) {
+    // 词典显示名称映射
+    const dictNames = {
+      'zh-preset': 'ZH - 中文词典',
+      'en-preset': 'EN - 英文词典',
+      'fr-preset': 'FR - 法语词典',
+      'es-preset': 'ES - 西班牙语词典',
+      'ru-preset': 'RU - 俄语词典',
+      'ja-preset': 'JA - 日语词典',
+      'zh-animal-preset': '动物词典',
+      'zh-finance-preset': '财经词典',
+      'zh-automotive-preset': '汽车词典',
+      'zh-idiom-preset': '成语词典',
+      'zh-geography-preset': '地名词典',
+      'zh-food-preset': '食物词典',
+      'zh-technology-preset': 'IT词典',
+      'zh-legal-preset': '法律词典',
+      'zh-history-preset': '历史词典',
+      'zh-medical-preset': '医学词典',
+      'zh-literature-preset': '诗词词典'
+    };
+    
+    return dictNames[dictId] || dictId;
   }
 
   async loadDictSettings() {
@@ -300,10 +564,10 @@ class PopupController {
   }
 
   updateDictUI() {
-    Object.keys(this.dictSettings).forEach(langCode => {
-      const checkbox = document.getElementById(`dict-${langCode}`);
+    Object.keys(this.dictSettings).forEach(dictId => {
+      const checkbox = document.getElementById(`dict-${dictId}`);
       if (checkbox) {
-        checkbox.checked = this.dictSettings[langCode];
+        checkbox.checked = this.dictSettings[dictId];
       }
     });
     
@@ -320,24 +584,31 @@ class PopupController {
     
     // 词典名称映射
     const dictNames = {
-      zh: 'ZH',
-      en: 'EN',
-      fr: 'FR',
-      ru: 'RU',
-      es: 'ES',
-      ja: 'JA'
+      'zh-preset': 'ZH',
+      'en-preset': 'EN',
+      'fr-preset': 'FR',
+      'ru-preset': 'RU',
+      'es-preset': 'ES',
+      'ja-preset': 'JA',
+      'zh-animal-preset': '动物',
+      'zh-finance-preset': '财经',
+      'zh-automotive-preset': '汽车',
+      'zh-idiom-preset': '成语',
+      'zh-geography-preset': '地名',
+      'zh-food-preset': '食物',
+      'zh-technology-preset': 'IT',
+      'zh-legal-preset': '法律',
+      'zh-history-preset': '历史',
+      'zh-medical-preset': '医学',
+      'zh-literature-preset': '诗词'
     };
     
-    // 只处理已知的词典语言代码
-    const validLangCodes = ['zh', 'en', 'fr', 'ru', 'es', 'ja'];
-    
     // 根据词典界面的实际复选框状态添加标签
-    validLangCodes.forEach(langCode => {
-      const checkbox = document.getElementById(`dict-${langCode}`);
-      if (checkbox && checkbox.checked && dictNames[langCode]) {
+    Object.keys(this.dictSettings).forEach(dictId => {
+      if (this.dictSettings[dictId] && dictNames[dictId]) {
         const tag = document.createElement('div');
         tag.className = 'dict-tag';
-        tag.textContent = dictNames[langCode];
+        tag.textContent = dictNames[dictId];
         dictTagsContainer.appendChild(tag);
       }
     });
@@ -1133,6 +1404,127 @@ class PopupController {
 // 全局引用，供HTML onclick使用
 let popupController;
 
+// 语言分组折叠展开功能
+function toggleLanguageGroup(language) {
+  console.log('toggleLanguageGroup called with:', language);
+  
+  const languageGroup = document.querySelector(`.language-group[data-language="${language}"]`);
+  console.log('languageGroup found:', languageGroup);
+  
+  if (!languageGroup) {
+    console.error('Language group not found for:', language);
+    return;
+  }
+  
+  const professionalDicts = languageGroup.querySelector('.professional-dicts');
+  const expandIcon = languageGroup.querySelector('.expand-icon');
+  
+  console.log('professionalDicts found:', professionalDicts);
+  console.log('expandIcon found:', expandIcon);
+  
+  if (!professionalDicts) {
+    console.error('Professional dicts not found');
+    return;
+  }
+  
+  const isExpanded = languageGroup.classList.contains('expanded');
+  console.log('isExpanded:', isExpanded);
+  
+  if (isExpanded) {
+    // 收起
+    console.log('Collapsing...');
+    languageGroup.classList.remove('expanded');
+    professionalDicts.style.display = 'none';
+    expandIcon.textContent = '▶';
+  } else {
+    // 展开
+    console.log('Expanding...');
+    languageGroup.classList.add('expanded');
+    professionalDicts.style.display = 'block';
+    expandIcon.textContent = '▼';
+  }
+}
+
+// 确保函数在全局作用域中可用
+window.toggleLanguageGroup = toggleLanguageGroup;
+window.initLanguageGroupListeners = initLanguageGroupListeners;
+window.hasActualProfessionalDicts = hasActualProfessionalDicts;
+
+// 检查语言组是否有实际的专业词典内容
+function hasActualProfessionalDicts(languageGroup) {
+  const professionalDicts = languageGroup.querySelector('.professional-dicts');
+  if (!professionalDicts) return false;
+  
+  // 检查是否只有空消息
+  const emptyMessage = professionalDicts.querySelector('.empty-message');
+  if (emptyMessage) return false;
+  
+  // 检查是否有实际的词典项
+  const dictItems = professionalDicts.querySelectorAll('.dict-item');
+  return dictItems.length > 0;
+}
+
+// 初始化语言分组事件监听器
+function initLanguageGroupListeners() {
+  console.log('Initializing language group listeners...');
+  
+  // 为所有语言头部添加点击事件监听器
+  const languageHeaders = document.querySelectorAll('.language-header');
+  console.log('Found language headers:', languageHeaders.length);
+  
+  languageHeaders.forEach(header => {
+    const languageGroup = header.closest('.language-group');
+    const language = languageGroup ? languageGroup.getAttribute('data-language') : null;
+    
+    if (language) {
+      console.log('Processing language:', language);
+      
+      // 检查是否有实际的专业词典
+      const hasProDicts = hasActualProfessionalDicts(languageGroup);
+      const expandIcon = header.querySelector('.expand-icon');
+      
+      console.log(`Language ${language} has professional dicts:`, hasProDicts);
+      
+      if (hasProDicts) {
+        // 有专业词典，显示折叠符号并添加点击事件
+        if (expandIcon) {
+          expandIcon.style.display = 'block';
+        }
+        
+        // 添加可点击样式
+        header.style.cursor = 'pointer';
+        
+        // 移除可能存在的旧监听器
+        header.removeEventListener('click', header._clickHandler);
+        
+        // 创建新的点击处理器
+        header._clickHandler = () => {
+          console.log('Language header clicked:', language);
+          toggleLanguageGroup(language);
+        };
+        
+        // 添加新监听器
+        header.addEventListener('click', header._clickHandler);
+        
+      } else {
+        // 没有专业词典，隐藏折叠符号
+        if (expandIcon) {
+          expandIcon.style.display = 'none';
+        }
+        
+        // 移除可点击样式
+        header.style.cursor = 'default';
+        
+        // 移除点击事件监听器
+        if (header._clickHandler) {
+          header.removeEventListener('click', header._clickHandler);
+          header._clickHandler = null;
+        }
+      }
+    }
+  });
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   // 确保i18n先初始化
@@ -1140,4 +1532,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 然后创建PopupController
   popupController = new PopupController();
+  
+  // 延迟初始化语言分组监听器，确保DOM完全加载
+  setTimeout(() => {
+    initLanguageGroupListeners();
+  }, 100);
 });
