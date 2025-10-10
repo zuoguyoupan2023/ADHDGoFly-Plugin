@@ -1517,7 +1517,20 @@ class PopupController {
     }
 
     // 添加到词典库按钮事件
-    // 注意：添加到词典库按钮已移到管理区域的每个词典项中
+    const addToLibraryBtn = document.getElementById('add-to-library-btn');
+    if (addToLibraryBtn) {
+      // 移除旧的事件监听器
+      if (addToLibraryBtn._clickHandler) {
+        addToLibraryBtn.removeEventListener('click', addToLibraryBtn._clickHandler);
+      }
+      
+      // 创建新的事件处理函数
+      addToLibraryBtn._clickHandler = () => this.addToLibrary();
+      addToLibraryBtn.addEventListener('click', addToLibraryBtn._clickHandler);
+      console.log('Add to library button event bound');
+    } else {
+      console.log('Add to library button not found');
+    }
 
     // 初始化自建词典数据
     this.customDictWords = [];
@@ -1973,10 +1986,6 @@ class PopupController {
             </div>
           </div>
           <div class="dict-item-actions">
-            ${dict.addedToLibrary ? 
-              '<span class="library-status">已添加到词典库</span>' : 
-              `<button class="dict-action-btn add-to-library add-to-library-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.addToLibrary">添加到词典库</button>`
-            }
             <button class="dict-action-btn edit-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.edit">编辑</button>
             <button class="dict-action-btn export export-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.export">导出</button>
             <button class="dict-action-btn delete delete-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.delete">删除</button>
@@ -2048,56 +2057,7 @@ class PopupController {
       });
     });
     
-    // 绑定添加到词典库按钮
-    document.querySelectorAll('.add-to-library-dict-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const dictId = e.target.getAttribute('data-dict-id');
-        console.log('Add to library button clicked for dict:', dictId);
-        this.addDictToLibrary(dictId);
-      });
-    });
-    
     console.log('Dict action events bound successfully');
-  }
-
-  // 将指定词典添加到词典库
-  async addDictToLibrary(dictId) {
-    console.log('Adding dictionary to library:', dictId);
-    
-    try {
-      const dictionaries = await this.getFromIndexedDB();
-      const dict = dictionaries.find(d => d.id === dictId);
-      
-      if (!dict) {
-        console.error('Dictionary not found:', dictId);
-        return;
-      }
-
-      if (dict.addedToLibrary) {
-        this.showMessage('词典已经在词典库中', 'warning');
-        return;
-      }
-
-      // 更新词典状态
-      dict.addedToLibrary = true;
-      dict.updatedAt = new Date().toISOString();
-
-      // 保存到IndexedDB
-      await this.saveToIndexedDB(dict);
-      
-      // 在词典页面显示自建词典
-      this.displayCustomDictInLibrary(dict);
-      
-      // 显示成功消息
-      this.showMessage(window.i18n.t('pages.customDict.messages.addedToLibrary') || '词典已添加到词典库', 'success');
-      
-      // 刷新管理列表以更新UI
-      this.loadCustomDictionaries();
-      
-    } catch (error) {
-      console.error('Failed to add dictionary to library:', error);
-      this.showMessage('添加到词典库失败', 'error');
-    }
   }
 
   async editCustomDict(dictId) {
