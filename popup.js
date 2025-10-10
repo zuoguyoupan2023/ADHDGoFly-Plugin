@@ -679,6 +679,9 @@ class PopupController {
       // 更新首页词典标签显示
       this.updateDictTags();
       
+      // 更新自建词典数据到content script
+      await this.updateCustomDictionaries();
+      
     } catch (error) {
       console.error('保存词典设置失败:', error);
     }
@@ -1812,6 +1815,9 @@ class PopupController {
       // 刷新管理列表
       this.loadCustomDictionaries();
       
+      // 更新自建词典数据到content script
+      await this.updateCustomDictionaries();
+      
     } catch (error) {
       console.error('添加到词典库失败:', error);
       this.showMessage('添加失败，请重试', 'error');
@@ -2109,6 +2115,9 @@ class PopupController {
       
       // 刷新管理列表以更新UI
       this.loadCustomDictionaries();
+      
+      // 更新自建词典数据到content script
+      await this.updateCustomDictionaries();
       
     } catch (error) {
       console.error('Failed to add dictionary to library:', error);
@@ -2424,6 +2433,52 @@ class PopupController {
     
     URL.revokeObjectURL(url);
     console.log('JSON file downloaded:', filename);
+  }
+
+  // 更新自建词典到系统
+  async updateCustomDictionaries() {
+    try {
+      console.log('开始更新自建词典...');
+      
+      // 获取所有自建词典
+      const customDicts = await this.getFromIndexedDB();
+      console.log('获取到自建词典:', customDicts.length);
+      
+      // 获取当前词典设置
+      const result = await chrome.storage.sync.get(['dictSettings']);
+      const dictSettings = result.dictSettings || {};
+      console.log('当前词典设置:', dictSettings);
+      
+      // 筛选已添加到库且启用的词典
+      const enabledDicts = customDicts.filter(dict => 
+        dict.addedToLibrary && dictSettings[dict.id]
+      );
+      console.log('启用的自建词典:', enabledDicts.length);
+      
+      // 格式化数据
+      const formattedDicts = enabledDicts.map(dict => ({
+        id: dict.id,
+        name: dict.name,
+        language: dict.language,
+        words: dict.words
+      }));
+      
+      // 发送消息给content script
+      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'UPDATE_CUSTOM_DICTIONARIES',
+            customDictionaries: formattedDicts
+          }).catch(error => {
+            console.log('发送自建词典消息失败（页面可能未加载插件）:', error);
+          });
+        }
+      });
+      
+      console.log('自建词典更新完成:', formattedDicts.length, '个词典');
+    } catch (error) {
+      console.error('更新自建词典失败:', error);
+    }
   }
 }
 
