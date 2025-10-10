@@ -132,12 +132,12 @@
     "customDict": {
       "title": "自建词典",
       "create": {
-        "title": "创建词典",
+        "title": "自建词典",
         "description": "创建您自己的专业词典",
         "placeholder": "功能开发中..."
       },
       "manage": {
-        "title": "管理词典",
+        "title": "管理自建词典",
         "description": "管理您已创建的词典",
         "placeholder": "暂无自建词典"
       },
@@ -151,7 +151,6 @@
       },
       "buttons": {
         "save": "保存词典",
-        "addToLibrary": "添加到词典库",
         "edit": "编辑",
         "export": "导出",
         "delete": "删除",
@@ -160,7 +159,6 @@
       },
       "messages": {
         "saved": "词典保存成功",
-        "addedToLibrary": "词典已添加到词典库",
         "deleted": "词典删除成功",
         "updated": "词典更新成功",
         "nameRequired": "请输入词典名称",

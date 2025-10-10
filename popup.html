@@ -800,16 +800,15 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
         padding: 10px 0;
-        overflow-y: auto; /* 整个页面垂直滚动 */
       }
 
       .custom-dict-section {
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         background: white;
-        overflow: visible; /* 允许内容正常显示 */
+        overflow: hidden;
       }
 
       .custom-dict-section h4 {
@@ -876,7 +875,6 @@
       /* 自建词典表单样式 */
       .dict-basic-info {
         display: flex;
-        flex-direction: row;
         gap: 12px;
         margin-bottom: 20px;
       }
@@ -993,8 +991,8 @@
       .word-preview-list {
         padding: 12px 16px;
         min-height: 60px;
-        max-height: 150px; /* 限制最大高度 */
-        overflow-y: auto; /* 内容过多时可滚动 */
+        max-height: 200px;
+        overflow-y: auto;
       }
 
       .empty-preview {
@@ -1056,9 +1054,7 @@
 
       /* 保存按钮样式 */
       .save-dict-area {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        text-align: center;
         padding-top: 16px;
         border-top: 1px solid #e0e0e0;
       }
@@ -1085,45 +1081,9 @@
         transform: translateY(-1px);
       }
 
-      .add-to-library-btn {
-        padding: 10px 24px;
-        border: none;
-        border-radius: 6px;
-        background: #007AFF;
-        color: white;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        margin-left: 10px;
-      }
-
-      .add-to-library-btn:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-      }
-
-      .add-to-library-btn:not(:disabled):hover {
-        background: #0056b3;
-        transform: translateY(-1px);
-      }
-
-      /* 自建词典标识样式 */
-      .custom-dict-badge {
-        display: inline-block;
-        background: #007AFF;
-        color: white;
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 8px;
-        margin-left: 6px;
-        font-weight: 500;
-      }
-
       /* 管理词典区域样式 */
       .custom-dict-list {
         min-height: 100px;
-        max-height: 300px; /* 限制最大高度 */
-        overflow-y: auto; /* 内容过多时可滚动 */
       }
 
       .empty-dict-list {
@@ -2603,11 +2563,6 @@
                       </div>
                     </label>
                   </div>
-
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-zh">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
                 </div>
               </div>
             </div>
@@ -2646,12 +2601,6 @@
 
               <!-- 专业词典（默认隐藏，暂时为空） -->
               <div class="professional-dicts" style="display: none">
-                <div class="professional-dicts-grid">
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-en">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
-                </div>
                 <div class="empty-message">
                   <span data-i18n="pages.dict.empty.professional"
                     >专业词典即将推出</span
@@ -2694,12 +2643,6 @@
 
               <!-- 专业词典（默认隐藏，暂时为空） -->
               <div class="professional-dicts" style="display: none">
-                <div class="professional-dicts-grid">
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-fr">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
-                </div>
                 <div class="empty-message">
                   <span data-i18n="pages.dict.empty.professional"
                     >专业词典即将推出</span
@@ -2742,12 +2685,6 @@
 
               <!-- 专业词典（默认隐藏，暂时为空） -->
               <div class="professional-dicts" style="display: none">
-                <div class="professional-dicts-grid">
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-es">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
-                </div>
                 <div class="empty-message">
                   <span data-i18n="pages.dict.empty.professional"
                     >专业词典即将推出</span
@@ -2790,12 +2727,6 @@
 
               <!-- 专业词典（默认隐藏，暂时为空） -->
               <div class="professional-dicts" style="display: none">
-                <div class="professional-dicts-grid">
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-ru">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
-                </div>
                 <div class="empty-message">
                   <span data-i18n="pages.dict.empty.professional"
                     >专业词典即将推出</span
@@ -2838,12 +2769,6 @@
 
               <!-- 专业词典（默认隐藏，暂时为空） -->
               <div class="professional-dicts" style="display: none">
-                <div class="professional-dicts-grid">
-                  <!-- 自建词典区域 -->
-                  <div class="custom-dicts-container" id="custom-dicts-ja">
-                    <!-- 自建词典将动态添加到这里 -->
-                  </div>
-                </div>
                 <div class="empty-message">
                   <span data-i18n="pages.dict.empty.professional"
                     >专业词典即将推出</span
@@ -2894,7 +2819,7 @@
         <div class="custom-dict-content">
           <!-- 自建词典部分 -->
           <div class="custom-dict-section">
-            <h4 data-i18n="pages.customDict.create.title">创建词典</h4>
+            <h4 data-i18n="pages.customDict.create.title">1. 自建词典</h4>
             <div class="create-dict-area">
               <!-- 词典基本信息 -->
               <div class="dict-basic-info">
@@ -2993,21 +2918,13 @@
                 >
                   保存词典
                 </button>
-                <button
-                  class="add-to-library-btn"
-                  id="add-to-library-btn"
-                  disabled
-                  data-i18n="pages.customDict.buttons.addToLibrary"
-                >
-                  添加到词典库
-                </button>
               </div>
             </div>
           </div>
 
           <!-- 管理自建词典部分 -->
           <div class="custom-dict-section">
-            <h4 data-i18n="pages.customDict.manage.title">管理词典</h4>
+            <h4 data-i18n="pages.customDict.manage.title">2. 管理自建词典</h4>
             <div class="manage-dict-area">
               <div class="custom-dict-list" id="custom-dict-list">
                 <div
