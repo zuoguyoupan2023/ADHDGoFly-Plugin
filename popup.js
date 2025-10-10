@@ -2442,7 +2442,7 @@ class PopupController {
       
       // 获取所有自建词典
       const customDicts = await this.getFromIndexedDB();
-      console.log('获取到自建词典:', customDicts.length);
+      console.log('获取到自建词典:', customDicts.length, customDicts);
       
       // 获取当前词典设置
       const result = await chrome.storage.sync.get(['dictSettings']);
@@ -2450,10 +2450,13 @@ class PopupController {
       console.log('当前词典设置:', dictSettings);
       
       // 筛选已添加到库且启用的词典
-      const enabledDicts = customDicts.filter(dict => 
-        dict.addedToLibrary && dictSettings[dict.id]
-      );
-      console.log('启用的自建词典:', enabledDicts.length);
+      const enabledDicts = customDicts.filter(dict => {
+        const isAddedToLibrary = dict.addedToLibrary;
+        const isEnabled = dictSettings[dict.id];
+        console.log(`词典 ${dict.name} (${dict.id}): addedToLibrary=${isAddedToLibrary}, enabled=${isEnabled}`);
+        return isAddedToLibrary && isEnabled;
+      });
+      console.log('启用的自建词典:', enabledDicts.length, enabledDicts);
       
       // 格式化数据
       const formattedDicts = enabledDicts.map(dict => ({
