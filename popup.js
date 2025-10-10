@@ -1835,7 +1835,6 @@ class PopupController {
           </div>
           <div class="dict-item-actions">
             <button class="dict-action-btn edit-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.edit">编辑</button>
-            <button class="dict-action-btn export export-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.export">导出</button>
             <button class="dict-action-btn delete delete-dict-btn" data-dict-id="${dict.id}" data-i18n="pages.customDict.buttons.delete">删除</button>
           </div>
         </div>
@@ -1884,15 +1883,6 @@ class PopupController {
         const dictId = e.target.getAttribute('data-dict-id');
         console.log('Edit button clicked for dict:', dictId);
         this.editCustomDict(dictId);
-      });
-    });
-    
-    // 绑定导出按钮
-    document.querySelectorAll('.export-dict-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const dictId = e.target.getAttribute('data-dict-id');
-        console.log('Export button clicked for dict:', dictId);
-        this.exportCustomDict(dictId);
       });
     });
     
@@ -2112,110 +2102,6 @@ class PopupController {
       this.resetDictForm();
       this.showMessage('已取消编辑', 'info');
     }
-  }
-
-  // 导出词典
-  async exportCustomDict(dictId) {
-    console.log('Starting export for dict:', dictId);
-    
-    try {
-      const dictionaries = await this.getFromIndexedDB();
-      const dict = dictionaries.find(d => d.id === dictId);
-      
-      if (!dict) {
-        console.error('Dictionary not found for export:', dictId);
-        this.showMessage('词典不存在，无法导出', 'error');
-        return;
-      }
-
-      console.log('Found dictionary to export:', dict);
-
-      // 转换为标准格式
-      const exportData = this.convertToStandardFormat(dict);
-      
-      // 创建下载
-      this.downloadJSON(exportData, `${dict.name}.json`);
-      
-      this.showMessage(`词典 "${dict.name}" 导出成功`, 'success');
-      
-    } catch (error) {
-      console.error('导出词典失败:', error);
-      this.showMessage('导出失败，请重试', 'error');
-    }
-  }
-
-  // 转换为标准词典格式
-  convertToStandardFormat(dict) {
-    const currentLang = window.i18n ? window.i18n.getCurrentLanguage() : 'zh';
-    
-    // 生成显示名称
-    const displayName = {
-      zh: dict.name,
-      en: dict.name
-    };
-    
-    // 生成描述
-    const wordCount = dict.words.length;
-    const wordText = wordCount === 1 ? 'word' : 'words';
-    const description = {
-      zh: `用户自建的${this.getLanguageDisplayName(dict.language)}词典，包含${wordCount}个词汇`,
-      en: `User-created ${this.getLanguageDisplayName(dict.language)} dictionary containing ${wordCount} ${wordText}`
-    };
-    
-    // 转换词汇格式
-    const words = {};
-    dict.words.forEach(wordItem => {
-      words[wordItem.word] = {
-        pos: [wordItem.pos]
-      };
-    });
-    
-    // 构建标准格式
-    const standardFormat = {
-      meta: {
-        id: dict.id,
-        name: dict.name.toUpperCase().replace(/\s+/g, '_'),
-        displayName: displayName,
-        language: dict.language,
-        type: "custom",
-        domain: "custom",
-        description: description,
-        license: {
-          type: "Custom",
-          source: "User",
-          url: null,
-          attribution: "User Created Dictionary"
-        },
-        author: "User Created",
-        homepage: null
-      },
-      version: "1.0",
-      lastUpdated: dict.updatedAt || dict.createdAt,
-      domain: "custom",
-      words: words
-    };
-    
-    console.log('Converted to standard format:', standardFormat);
-    return standardFormat;
-  }
-
-  // 下载JSON文件
-  downloadJSON(data, filename) {
-    const jsonString = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    URL.revokeObjectURL(url);
-    console.log('JSON file downloaded:', filename);
   }
 }
 

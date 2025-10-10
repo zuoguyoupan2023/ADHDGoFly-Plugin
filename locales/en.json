@@ -137,7 +137,6 @@
       "buttons": {
         "save": "Save Dictionary",
         "edit": "Edit",
-        "export": "Export",
         "delete": "Delete",
         "saveEdit": "Save Changes",
         "cancelEdit": "Cancel"
