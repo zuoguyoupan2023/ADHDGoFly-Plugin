@@ -18,10 +18,6 @@ class DictionaryAdapter {
         };
         // 新增：词典ID级别的启用状态
         this.enabledDictionaries = {};
-        
-        // IndexedDB词典缓存
-        this.indexedDBCache = {};
-        this.indexedDBInitialized = false;
     }
 
     /**
@@ -51,9 +47,6 @@ class DictionaryAdapter {
                 // 加载所有预设词典
                 await this._loadAllPresetDictionaries();
                 
-                // 初始化IndexedDB管理器
-                await this._initializeIndexedDB();
-                
                 this.isLoaded = true;
                 console.log('DictionaryAdapter initialized successfully');
                 return true;
@@ -65,27 +58,6 @@ class DictionaryAdapter {
             // 降级到传统加载方式
             await this._loadLegacyDictionaries();
             return false;
-        }
-    }
-
-    /**
-     * 初始化IndexedDB管理器
-     * @private
-     */
-    async _initializeIndexedDB() {
-        try {
-            if (typeof IndexedDBDictionaryManager !== 'undefined') {
-                this.indexedDBDictionaryManager = new IndexedDBDictionaryManager();
-                await this.indexedDBDictionaryManager.init();
-                this.indexedDBInitialized = true;
-                console.log('IndexedDB dictionary manager initialized');
-            } else {
-                console.warn('IndexedDBDictionaryManager not available');
-                this.indexedDBInitialized = false;
-            }
-        } catch (error) {
-            console.error('Failed to initialize IndexedDB dictionary manager:', error);
-            this.indexedDBInitialized = false;
         }
     }
 
@@ -262,33 +234,9 @@ class DictionaryAdapter {
      * @param {string} language 语言代码
      * @returns {string|null} 词性或null
      */
-    /**
-     * 查找词汇的词性
-     * @param {string} word 要查找的词汇
-     * @param {string} language 语言代码
-     * @returns {string|null} 词性或null
-     */
-    async lookupWord(word, language) {
-        // 1. 首先在预设词典中查找
+    lookupWord(word, language) {
         const dictionary = this.getDictionary(language);
-        const presetResult = dictionary[word];
-        if (presetResult) {
-            return presetResult;
-        }
-
-        // 2. 在IndexedDB导入词典中查找
-        try {
-            if (typeof indexedDBDictionaryManager !== 'undefined') {
-                const indexedDBResult = await indexedDBDictionaryManager.lookupWord(word, language);
-                if (indexedDBResult) {
-                    return indexedDBResult;
-                }
-            }
-        } catch (error) {
-            console.error('IndexedDB词典查询失败:', error);
-        }
-
-        return null;
+        return dictionary[word] || null;
     }
 
     /**
