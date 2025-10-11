@@ -91,7 +91,14 @@ class DictionaryManager {
             dictionaries = [
                 ...this.registry.dictionaries.preset,
                 ...this.registry.dictionaries.downloaded,
-                ...this.registry.dictionaries.local
+                ...(this.registry.dictionaries.local || []),  // 从 dictionaries.local 访问
+                ...(this.registry.local || [])  // 同时也从根级别的 local 访问（兼容性）
+            ];
+        } else if (type === 'local') {
+            // 对于 local 类型，同时检查两个位置
+            dictionaries = [
+                ...(this.registry.dictionaries.local || []),
+                ...(this.registry.local || [])
             ];
         } else if (this.registry.dictionaries[type]) {
             dictionaries = this.registry.dictionaries[type];
