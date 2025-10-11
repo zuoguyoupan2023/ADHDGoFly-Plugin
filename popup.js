@@ -565,21 +565,13 @@ class PopupController {
       importedAt: new Date().toISOString()
     };
 
-    // 获取现有的导入词典列表
-    const result = await chrome.storage.local.get(['importedDictionaries']);
-    const importedDicts = result.importedDictionaries || [];
-    
-    // 添加新词典
-    importedDicts.push(importedDict);
-    
-    // 保存到Chrome Storage
-    await chrome.storage.local.set({ importedDictionaries: importedDicts });
+    // 使用IndexedDB存储
+    await window.importedDictStorage.saveDictionary(importedDict);
   }
 
   async loadImportedDictionaries() {
     try {
-      const result = await chrome.storage.local.get(['importedDictionaries']);
-      return result.importedDictionaries || [];
+      return await window.importedDictStorage.getAllDictionaries();
     } catch (error) {
       console.error('加载导入词典失败:', error);
       return [];
@@ -646,14 +638,8 @@ class PopupController {
     if (!confirmed) return;
 
     try {
-      // 获取当前词典列表
-      const importedDicts = await this.loadImportedDictionaries();
-      
-      // 过滤掉要删除的词典
-      const updatedDicts = importedDicts.filter(dict => dict.id !== dictId);
-      
-      // 保存更新后的列表
-      await chrome.storage.local.set({ importedDictionaries: updatedDicts });
+      // 从IndexedDB删除词典
+      await window.importedDictStorage.deleteDictionary(dictId);
       
       // 刷新显示
       this.updateImportedDictsDisplay();
