@@ -892,6 +892,112 @@
         transform: translateY(-1px);
       }
 
+      /* 导入词典区域样式 */
+      .dict-import-section {
+        margin-top: 20px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+      }
+
+      .import-header {
+        margin-bottom: 16px;
+      }
+
+      .import-header h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .import-desc {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .import-actions {
+        margin-bottom: 20px;
+      }
+
+      .import-btn {
+        padding: 10px 16px;
+        border: 2px solid #007AFF;
+        border-radius: 6px;
+        background: white;
+        color: #007AFF;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .import-btn:hover {
+        background: #007AFF;
+        color: white;
+      }
+
+      .imported-dicts {
+        border-top: 1px solid #dee2e6;
+        padding-top: 16px;
+      }
+
+      .imported-header h5 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .imported-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .imported-dict-item {
+        padding: 12px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+
+      .imported-dict-item:hover {
+        border-color: #007AFF;
+        box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
+      }
+
+      .imported-dict-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+      }
+
+      .imported-dict-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .imported-dict-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .imported-dict-empty {
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        font-style: italic;
+      }
+
       /* 颜色管理页面样式 */
       .colors-content {
         flex: 1;
@@ -2302,6 +2408,33 @@
             >
               保存设置
             </button>
+          </div>
+
+          <!-- 导入词典区域 -->
+          <div class="dict-import-section">
+            <div class="import-header">
+              <h4 data-i18n="pages.dict.import.title">导入自定义词典</h4>
+              <p class="import-desc" data-i18n="pages.dict.import.description">
+                支持导入JSON格式的词典文件
+              </p>
+            </div>
+            
+            <div class="import-actions">
+              <input type="file" id="dict-file-input" accept=".json" style="display: none;" />
+              <button class="import-btn" id="import-dict-btn" data-i18n="buttons.import">
+                导入词典
+              </button>
+            </div>
+
+            <!-- 已导入词典列表 -->
+            <div class="imported-dicts" id="imported-dicts">
+              <div class="imported-header">
+                <h5 data-i18n="pages.dict.import.imported">已导入的词典</h5>
+              </div>
+              <div class="imported-list" id="imported-list">
+                <!-- 动态生成已导入的词典 -->
+              </div>
+            </div>
           </div>
         </div>
 
