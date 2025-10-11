@@ -172,11 +172,6 @@ class ADHDHighlighter {
           sendResponse({ success: true, text: selectedText });
           break;
           
-        case 'updateImportedDictionaries':
-          await this.updateImportedDictionaries(message.dictId, message.enabled);
-          sendResponse({ success: true });
-          break;
-          
         default:
           sendResponse({ 
             success: false, 
@@ -824,30 +819,6 @@ class ADHDHighlighter {
         highlights: { totalWords: 0, processedNodes: 0 },
         summary: {}
       };
-    }
-  }
-
-  /**
-   * 更新导入词典状态
-   * @param {string} dictId 词典ID
-   * @param {boolean} enabled 是否启用
-   */
-  async updateImportedDictionaries(dictId, enabled) {
-    try {
-      console.log(`更新导入词典状态: ${dictId} -> ${enabled}`);
-      
-      // 通知DictionaryManager更新导入词典状态
-      if (this.dictionaryManager && this.dictionaryManager.updateImportedDictionary) {
-        await this.dictionaryManager.updateImportedDictionary(dictId, enabled);
-      }
-      
-      // 如果当前已启用高亮，重新处理页面
-      if (this.enabled) {
-        await this.reprocessPage();
-      }
-      
-    } catch (error) {
-      console.error('更新导入词典状态失败:', error);
     }
   }
 
