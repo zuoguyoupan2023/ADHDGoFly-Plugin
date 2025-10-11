@@ -3220,6 +3220,49 @@
             </div>
           </div>
 
+          <!-- 调试工具 -->
+          <div class="settings-section">
+            <div class="section-header">
+              <h4>🔧 调试工具</h4>
+            </div>
+            <div class="section-content">
+              <div class="setting-item">
+                <label class="setting-label-text">
+                  <span>存储数据检查</span>
+                </label>
+                <div class="debug-actions">
+                  <button class="debug-btn" id="check-storage-btn">
+                    检查存储数据
+                  </button>
+                  <button class="debug-btn" id="check-custom-dicts-btn">
+                    检查自定义词典
+                  </button>
+                  <button class="debug-btn" id="test-external-dict-btn">
+                    测试外部词典加载
+                  </button>
+                </div>
+                <div class="debug-output" id="debug-output" style="display: none;">
+                  <h5>调试输出：</h5>
+                  <pre id="debug-content"></pre>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <label class="setting-label-text">
+                  <span>词典测试</span>
+                </label>
+                <div class="dict-test">
+                  <input type="text" id="test-word-input" placeholder="输入测试词汇（如：测试、走、开发）" />
+                  <button class="debug-btn" id="test-word-btn">测试高亮</button>
+                </div>
+                <div class="test-result" id="test-result" style="display: none;">
+                  <h5>测试结果：</h5>
+                  <div id="test-content"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 其他设置 -->
           <div class="settings-section">
             <div class="section-header">

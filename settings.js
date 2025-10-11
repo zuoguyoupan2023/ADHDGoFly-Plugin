@@ -3,6 +3,7 @@ class SettingsManager {
     constructor() {
         this.i18nManager = new I18nManager();
         this.init();
+        this.initDebugTools(); // 初始化调试工具
     }
 
     async init() {
@@ -75,6 +76,252 @@ class SettingsManager {
             saveStorageBtn.addEventListener('click', () => {
                 this.saveCurrentStorageSettings();
             });
+        }
+    }
+
+    // 调试工具功能
+    initDebugTools() {
+        // 检查存储数据按钮
+        const checkStorageBtn = document.getElementById('check-storage-btn');
+        if (checkStorageBtn) {
+            checkStorageBtn.addEventListener('click', () => this.checkStorageData());
+        }
+
+        // 检查自定义词典按钮
+        const checkCustomDictsBtn = document.getElementById('check-custom-dicts-btn');
+        if (checkCustomDictsBtn) {
+            checkCustomDictsBtn.addEventListener('click', () => this.checkCustomDictionaries());
+        }
+
+        // 测试外部词典加载按钮
+        const testExternalDictBtn = document.getElementById('test-external-dict-btn');
+        if (testExternalDictBtn) {
+            testExternalDictBtn.addEventListener('click', () => this.testExternalDictLoading());
+        }
+
+        // 测试词汇高亮按钮
+        const testWordBtn = document.getElementById('test-word-btn');
+        if (testWordBtn) {
+            testWordBtn.addEventListener('click', () => this.testWordHighlight());
+        }
+    }
+
+    async checkStorageData() {
+        try {
+            this.showDebugOutput('正在检查存储数据...');
+            
+            // 发送消息到background script获取存储数据
+            const response = await chrome.runtime.sendMessage({
+                action: 'getStorage'
+            });
+
+            if (response && response.success) {
+                const data = response.data;
+                let output = '=== Chrome Storage 数据 ===\n\n';
+                
+                // 显示customDictRegistry
+                if (data.customDictRegistry) {
+                    output += '📚 customDictRegistry:\n';
+                    output += JSON.stringify(data.customDictRegistry, null, 2) + '\n\n';
+                } else {
+                    output += '❌ customDictRegistry: 未找到\n\n';
+                }
+
+                // 显示词典设置
+                if (data.dictSettings) {
+                    output += '⚙️ dictSettings:\n';
+                    output += JSON.stringify(data.dictSettings, null, 2) + '\n\n';
+                } else {
+                    output += '❌ dictSettings: 未找到\n\n';
+                }
+
+                // 显示以dictionary_开头的键
+                const dictKeys = Object.keys(data).filter(key => key.startsWith('dictionary_'));
+                if (dictKeys.length > 0) {
+                    output += '📖 词典数据键:\n';
+                    dictKeys.forEach(key => {
+                        const dictData = data[key];
+                        output += `  ${key}: ${dictData ? dictData.length + ' 个词条' : '空'}\n`;
+                    });
+                    output += '\n';
+                } else {
+                    output += '❌ 未找到以dictionary_开头的存储键\n\n';
+                }
+
+                // 显示其他相关键
+                const otherKeys = Object.keys(data).filter(key => 
+                    !key.startsWith('dictionary_') && 
+                    key !== 'customDictRegistry' && 
+                    key !== 'dictSettings'
+                );
+                if (otherKeys.length > 0) {
+                    output += '🔧 其他存储键:\n';
+                    otherKeys.forEach(key => {
+                        output += `  ${key}: ${typeof data[key]}\n`;
+                    });
+                }
+
+                this.showDebugOutput(output);
+            } else {
+                this.showDebugOutput('❌ 获取存储数据失败: ' + (response?.error || '未知错误'));
+            }
+        } catch (error) {
+            this.showDebugOutput('❌ 检查存储数据时发生错误: ' + error.message);
+        }
+    }
+
+    async checkCustomDictionaries() {
+        try {
+            this.showDebugOutput('正在检查自定义词典...');
+            
+            const result = await chrome.storage.local.get(['customDictRegistry']);
+            let output = '=== 自定义词典检查 ===\n\n';
+            
+            if (result.customDictRegistry) {
+                const registry = result.customDictRegistry;
+                output += '📚 自定义词典注册表:\n';
+                output += JSON.stringify(registry, null, 2) + '\n\n';
+                
+                // 检查每个自定义词典的数据
+                if (registry.dictionaries && registry.dictionaries.local) {
+                    output += '🔍 检查本地词典数据:\n';
+                    for (const dict of registry.dictionaries.local) {
+                        const dictKey = `dictionary_${dict.id}`;
+                        const dictResult = await chrome.storage.local.get([dictKey]);
+                        if (dictResult[dictKey]) {
+                            output += `  ✅ ${dict.name} (${dict.id}): ${dictResult[dictKey].length} 个词条\n`;
+                            // 显示前几个词条作为示例
+                            const sampleWords = dictResult[dictKey].slice(0, 5);
+                            output += `     示例词条: ${sampleWords.join(', ')}\n`;
+                        } else {
+                            output += `  ❌ ${dict.name} (${dict.id}): 数据未找到\n`;
+                        }
+                    }
+                } else {
+                    output += '❌ 注册表中没有本地词典\n';
+                }
+            } else {
+                output += '❌ 未找到自定义词典注册表\n';
+            }
+            
+            this.showDebugOutput(output);
+        } catch (error) {
+            this.showDebugOutput('❌ 检查自定义词典时发生错误: ' + error.message);
+        }
+    }
+
+    async testExternalDictLoading() {
+        try {
+            this.showDebugOutput('正在测试外部词典加载...');
+            
+            // 发送消息到content script测试词典加载
+            const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+            if (tabs.length > 0) {
+                const response = await chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'testDictionaryLoading'
+                });
+                
+                if (response && response.success) {
+                    let output = '=== 词典加载测试结果 ===\n\n';
+                    output += `📊 总词典数: ${response.totalDictionaries}\n`;
+                    output += `✅ 成功加载: ${response.loadedDictionaries}\n`;
+                    output += `❌ 加载失败: ${response.failedDictionaries}\n\n`;
+                    
+                    if (response.details) {
+                        output += '📋 详细信息:\n';
+                        response.details.forEach(detail => {
+                            output += `  ${detail.status === 'success' ? '✅' : '❌'} ${detail.name}: ${detail.message}\n`;
+                        });
+                    }
+                    
+                    this.showDebugOutput(output);
+                } else {
+                    this.showDebugOutput('❌ 测试词典加载失败: ' + (response?.error || '未知错误'));
+                }
+            } else {
+                this.showDebugOutput('❌ 未找到活动标签页');
+            }
+        } catch (error) {
+            this.showDebugOutput('❌ 测试外部词典加载时发生错误: ' + error.message);
+        }
+    }
+
+    async testWordHighlight() {
+        try {
+            const testWordInput = document.getElementById('test-word-input');
+            const testWord = testWordInput.value.trim();
+            
+            if (!testWord) {
+                this.showTestResult('请输入要测试的词汇');
+                return;
+            }
+            
+            this.showTestResult('正在测试词汇高亮...');
+            
+            // 发送消息到content script测试词汇高亮
+            const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+            if (tabs.length > 0) {
+                const response = await chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'testWordHighlight',
+                    word: testWord
+                });
+                
+                if (response && response.success) {
+                    let resultHtml = `<div style="margin-bottom: 10px;">测试词汇: <strong>${testWord}</strong></div>`;
+                    
+                    if (response.matches && response.matches.length > 0) {
+                        resultHtml += '<div style="margin-bottom: 10px;">✅ 找到匹配的词典:</div>';
+                        response.matches.forEach(match => {
+                            resultHtml += `<div style="margin-left: 20px; margin-bottom: 5px;">`;
+                            resultHtml += `📚 ${match.dictionary} - ${match.category}`;
+                            if (match.color) {
+                                resultHtml += ` <span style="display: inline-block; width: 20px; height: 20px; background-color: ${match.color}; border: 1px solid #ccc; vertical-align: middle;"></span>`;
+                            }
+                            resultHtml += `</div>`;
+                        });
+                        
+                        // 显示高亮效果预览
+                        resultHtml += '<div style="margin-top: 15px;">高亮效果预览:</div>';
+                        resultHtml += `<div style="padding: 10px; border: 1px solid #ddd; background: white; margin-top: 5px;">`;
+                        resultHtml += `这是一个包含 <span style="background-color: ${response.matches[0].color}; padding: 2px 4px; border-radius: 2px;">${testWord}</span> 的测试句子。`;
+                        resultHtml += `</div>`;
+                    } else {
+                        resultHtml += '<div>❌ 未找到匹配的词典</div>';
+                    }
+                    
+                    this.showTestResult(resultHtml);
+                } else {
+                    this.showTestResult('❌ 测试词汇高亮失败: ' + (response?.error || '未知错误'));
+                }
+            } else {
+                this.showTestResult('❌ 未找到活动标签页');
+            }
+        } catch (error) {
+            this.showTestResult('❌ 测试词汇高亮时发生错误: ' + error.message);
+        }
+    }
+
+    showDebugOutput(content) {
+        const debugOutput = document.getElementById('debug-output');
+        const debugContent = document.getElementById('debug-content');
+        
+        if (debugOutput && debugContent) {
+            debugContent.textContent = content;
+            debugOutput.style.display = 'block';
+        }
+    }
+
+    showTestResult(content) {
+        const testResult = document.getElementById('test-result');
+        const testContent = document.getElementById('test-content');
+        
+        if (testResult && testContent) {
+            if (typeof content === 'string' && content.includes('<')) {
+                testContent.innerHTML = content;
+            } else {
+                testContent.textContent = content;
+            }
+            testResult.style.display = 'block';
         }
     }
 

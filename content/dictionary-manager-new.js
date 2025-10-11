@@ -31,11 +31,41 @@ class DictionaryManager {
      */
     async loadRegistry() {
         try {
+            // 首先加载默认注册表
             const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
             if (!response.ok) {
                 throw new Error(`Failed to load registry: ${response.status}`);
             }
             this.registry = await response.json();
+            
+            // 然后加载自定义注册表（如果存在）
+            const customRegistryResult = await new Promise((resolve) => {
+                chrome.storage.local.get(['customDictRegistry'], (result) => {
+                    resolve(result);
+                });
+            });
+            
+            if (customRegistryResult.customDictRegistry) {
+                console.log('🔍 Found custom dictionary registry in storage');
+                const customRegistry = customRegistryResult.customDictRegistry;
+                
+                // 合并自定义词典到注册表
+                if (customRegistry.local && Array.isArray(customRegistry.local)) {
+                    if (!this.registry.local) {
+                        this.registry.local = [];
+                    }
+                    
+                    // 添加自定义词典，避免重复
+                    for (const customDict of customRegistry.local) {
+                        const exists = this.registry.local.find(dict => dict.id === customDict.id);
+                        if (!exists) {
+                            this.registry.local.push(customDict);
+                            console.log(`✅ Added custom dictionary to registry: ${customDict.displayName} (${customDict.id})`);
+                        }
+                    }
+                }
+            }
+            
             console.log('Dictionary registry loaded:', this.registry);
         } catch (error) {
             console.error('Error loading dictionary registry:', error);
@@ -151,12 +181,36 @@ class DictionaryManager {
         }
 
         try {
-            const response = await fetch(chrome.runtime.getURL(dictionaryInfo.filePath));
-            if (!response.ok) {
-                throw new Error(`Failed to load dictionary: ${response.status}`);
-            }
+            let dictionaryData = null;
             
-            const dictionaryData = await response.json();
+            // 检查是否是外部词典（通过 popup 添加的）
+            if (dictionaryInfo.type === 'local' && dictionaryInfo.source === 'external') {
+                console.log(`🔍 Loading external dictionary from storage: ${id}`);
+                
+                // 从 Chrome 存储中加载外部词典数据
+                const result = await new Promise((resolve) => {
+                    chrome.storage.local.get([`dictionary_${id}`], (result) => {
+                        resolve(result);
+                    });
+                });
+                
+                if (result[`dictionary_${id}`]) {
+                    dictionaryData = result[`dictionary_${id}`];
+                    console.log(`✅ External dictionary loaded from storage: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
+                } else {
+                    throw new Error(`External dictionary data not found in storage: ${id}`);
+                }
+            } else {
+                // 从文件系统加载预设词典
+                console.log(`📄 Loading preset dictionary from file: ${dictionaryInfo.filePath}`);
+                const response = await fetch(chrome.runtime.getURL(dictionaryInfo.filePath));
+                if (!response.ok) {
+                    throw new Error(`Failed to load dictionary: ${response.status}`);
+                }
+                
+                dictionaryData = await response.json();
+                console.log(`✅ Preset dictionary loaded from file: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
+            }
             
             // 验证词典数据结构
             if (!this.validateDictionaryData(dictionaryData)) {
@@ -165,7 +219,7 @@ class DictionaryManager {
 
             // 缓存词典数据
             this.loadedDictionaries.set(id, dictionaryData);
-            console.log(`Dictionary loaded: ${id}`);
+            console.log(`Dictionary cached: ${id}`);
             
             return dictionaryData;
         } catch (error) {

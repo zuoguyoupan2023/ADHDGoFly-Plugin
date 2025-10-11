@@ -562,6 +562,7 @@ class PopupController {
         displayName: nameInput.value.trim(),
         language: language,
         type: 'local',
+        source: 'external',  // 标记为外部词典
         domain: domain,
         filePath: `dictionaries/${language.toUpperCase()}/${dictId}.json`,
         enabled: true,
@@ -612,6 +613,7 @@ class PopupController {
         displayName: dictEntry.displayName,
         language: dictEntry.language,
         type: dictEntry.type,
+        source: dictEntry.source,  // 保存source标记
         domain: dictEntry.domain,
         filePath: dictEntry.filePath,
         enabled: dictEntry.enabled,
@@ -621,7 +623,7 @@ class PopupController {
       // 保存到storage（因为无法直接修改扩展文件）
       await chrome.storage.local.set({
         customDictRegistry: registry,
-        [`customDict_${dictEntry.id}`]: dictEntry.data
+        [`dictionary_${dictEntry.id}`]: dictEntry.data  // 修改存储键名以匹配加载逻辑
       });
 
       console.log('词典注册表已更新');

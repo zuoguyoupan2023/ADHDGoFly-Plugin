@@ -198,6 +198,16 @@ class ADHDHighlighter {
           sendResponse({ success: true, text: selectedText });
           break;
           
+        case 'testDictionaryLoading':
+          const testResult = await this.testDictionaryLoading();
+          sendResponse(testResult);
+          break;
+          
+        case 'testWordHighlight':
+          const highlightResult = await this.testWordHighlight(message.word);
+          sendResponse(highlightResult);
+          break;
+          
         default:
           sendResponse({ 
             success: false, 
@@ -869,7 +879,137 @@ class ADHDHighlighter {
   }
 
   /**
-   * 获取当前选中的文本
+   * 测试词典加载功能
+   * @returns {Object} 测试结果
+   */
+  async testDictionaryLoading() {
+    try {
+      console.log('🔧 开始测试词典加载...');
+      
+      // 获取所有可用词典
+      const availableDictionaries = await this.dictionaryManager.getAvailableDictionaries();
+      const totalDictionaries = availableDictionaries.length;
+      
+      let loadedDictionaries = 0;
+      let failedDictionaries = 0;
+      const details = [];
+      
+      // 测试每个词典的加载状态
+      for (const dict of availableDictionaries) {
+        try {
+          // 检查词典是否已加载
+          const isLoaded = this.dictionaryManager.isDictionaryLoaded(dict.id);
+          const dictData = this.dictionaryManager.getDictionaryData(dict.id);
+          
+          if (isLoaded && dictData && dictData.length > 0) {
+            loadedDictionaries++;
+            details.push({
+              name: dict.name,
+              id: dict.id,
+              status: 'success',
+              message: `已加载 ${dictData.length} 个词条`
+            });
+          } else {
+            failedDictionaries++;
+            details.push({
+              name: dict.name,
+              id: dict.id,
+              status: 'failed',
+              message: isLoaded ? '词典数据为空' : '词典未加载'
+            });
+          }
+        } catch (error) {
+          failedDictionaries++;
+          details.push({
+            name: dict.name,
+            id: dict.id,
+            status: 'failed',
+            message: `加载错误: ${error.message}`
+          });
+        }
+      }
+      
+      console.log(`🔧 词典加载测试完成: ${loadedDictionaries}/${totalDictionaries} 成功`);
+      
+      return {
+        success: true,
+        totalDictionaries,
+        loadedDictionaries,
+        failedDictionaries,
+        details
+      };
+    } catch (error) {
+      console.error('🔧 测试词典加载失败:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 测试词汇高亮功能
+   * @param {string} word 要测试的词汇
+   * @returns {Object} 测试结果
+   */
+  async testWordHighlight(word) {
+    try {
+      console.log(`🔧 开始测试词汇高亮: ${word}`);
+      
+      if (!word || typeof word !== 'string') {
+        return {
+          success: false,
+          error: '无效的测试词汇'
+        };
+      }
+      
+      const matches = [];
+      
+      // 获取所有已启用的词典
+      const enabledDictionaries = this.dictionaryManager.getEnabledDictionaries();
+      
+      for (const dictId of Object.keys(enabledDictionaries)) {
+        if (!enabledDictionaries[dictId]) continue;
+        
+        try {
+          const dictData = this.dictionaryManager.getDictionaryData(dictId);
+          const dictInfo = await this.dictionaryManager.getDictionaryInfo(dictId);
+          
+          if (dictData && dictData.includes(word)) {
+            // 获取词汇的分类和颜色
+            const category = this.dictionaryManager.getWordCategory(word, dictId);
+            const color = this.dictionaryManager.getWordColor(word, dictId, category);
+            
+            matches.push({
+              dictionary: dictInfo?.name || dictId,
+              category: category || '未知',
+              color: color || '#ffeb3b',
+              dictId: dictId
+            });
+          }
+        } catch (error) {
+          console.warn(`🔧 检查词典 ${dictId} 时出错:`, error);
+        }
+      }
+      
+      console.log(`🔧 词汇高亮测试完成: 找到 ${matches.length} 个匹配`);
+      
+      return {
+        success: true,
+        word: word,
+        matches: matches
+      };
+    } catch (error) {
+      console.error('🔧 测试词汇高亮失败:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 获取选中的文本
    * @returns {string} 选中的文本
    */
   getSelectedText() {
