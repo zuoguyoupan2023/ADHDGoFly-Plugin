@@ -544,33 +544,6 @@
                     </div>
                 </div>
 
-                <!-- 文本库面板 -->
-                <div class="text-library-section" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px;">
-                    <div class="text-library-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleTextLibrary()">
-                        <h3 style="margin: 0; font-size: 14px; color: #495057;">文本库</h3>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="textLibraryCount" style="font-size: 12px; color: #666; background: #e9ecef; padding: 2px 8px; border-radius: 12px;">0 条记录</span>
-                            <span id="textLibraryToggle" style="font-size: 16px; color: #666; transition: transform 0.3s;">▼</span>
-                        </div>
-                    </div>
-                    
-                    <div id="textLibraryContent" style="margin-top: 15px; display: none;">
-                        <div style="margin-bottom: 10px; display: flex; gap: 8px; align-items: center;">
-                            <button onclick="clearTextLibrary()" 
-                                style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                清空文本库
-                            </button>
-                            <span style="font-size: 11px; color: #666;">点击文本条目可加载到预览区</span>
-                        </div>
-                        
-                        <div id="textLibraryList" style="max-height: 300px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 4px; background: white;">
-                            <div style="padding: 20px; text-align: center; color: #666; font-size: 13px;">
-                                暂无保存的文本
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 搜索 -->
                 <div class="form-group" style="margin-top: 20px;">
                     <input type="text" id="searchWord" class="form-control" placeholder="搜索词汇..." oninput="filterWords()" data-i18n-placeholder="search-words-placeholder">
@@ -1447,20 +1420,9 @@
                 finishedText.textContent = content;
                 finishedContent.style.display = 'block';
                 
-                // 保存到文本库
-                saveTextToLibrary(content).then(() => {
-                    // 重新加载并渲染文本库
-                    loadAndRenderTextLibrary();
-                }).catch(error => {
-                    console.error('保存到文本库失败:', error);
-                });
-                
                 // 清空输入区
                 textInput.value = '';
                 document.getElementById('textPreview').textContent = '预览内容将在这里显示...';
-                
-                // 清除localStorage中的临时文本
-                clearTextFromStorage();
                 
                 // 更新状态
                 processingStatus.textContent = '处理完成';
@@ -1591,211 +1553,19 @@
                 }
             }
             
-            // 从文本库恢复最新的文本到预览区
-            loadLatestTextFromLibrary().then(latestText => {
-                if (latestText) {
-                    const textInput = document.getElementById('textInput');
-                    const textPreview = document.getElementById('textPreview');
-                    if (textInput && textPreview) {
-                        textInput.value = latestText.content;
-                        updateTextPreview();
+            // 从IndexedDB恢复完成的内容
+            loadContentFromIndexedDB().then(content => {
+                if (content) {
+                    const finishedContent = document.getElementById('finishedContent');
+                    const finishedText = document.getElementById('finishedText');
+                    if (finishedContent && finishedText) {
+                        finishedText.textContent = content;
+                        finishedContent.style.display = 'block';
                     }
                 }
             }).catch(error => {
-                console.error('从文本库恢复最新文本失败:', error);
+                console.error('从IndexedDB恢复内容失败:', error);
             });
-            
-            // 加载并显示文本库
-            loadAndRenderTextLibrary();
-        }
-
-        // 文本库相关功能
-        function toggleTextLibrary() {
-            const content = document.getElementById('textLibraryContent');
-            const toggle = document.getElementById('textLibraryToggle');
-            
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                toggle.style.transform = 'rotate(180deg)';
-                toggle.textContent = '▲';
-            } else {
-                content.style.display = 'none';
-                toggle.style.transform = 'rotate(0deg)';
-                toggle.textContent = '▼';
-            }
-        }
-
-        function initTextLibraryDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('TextLibraryDB', 1);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => resolve(request.result);
-                
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains('textLibrary')) {
-                        const store = db.createObjectStore('textLibrary', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('timestamp', 'timestamp', { unique: false });
-                        store.createIndex('title', 'title', { unique: false });
-                    }
-                };
-            });
-        }
-
-        function saveTextToLibrary(content) {
-            return initTextLibraryDB().then(db => {
-                return new Promise((resolve, reject) => {
-                    const transaction = db.transaction(['textLibrary'], 'readwrite');
-                    const store = transaction.objectStore('textLibrary');
-                    
-                    const now = new Date();
-                    const data = {
-                        content: content,
-                        title: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
-                        timestamp: now.toISOString(),
-                        dateString: now.toLocaleString('zh-CN'),
-                        wordCount: content.length
-                    };
-                    
-                    const request = store.add(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        function loadTextLibrary() {
-            return initTextLibraryDB().then(db => {
-                return new Promise((resolve, reject) => {
-                    const transaction = db.transaction(['textLibrary'], 'readonly');
-                    const store = transaction.objectStore('textLibrary');
-                    const index = store.index('timestamp');
-                    const request = index.openCursor(null, 'prev'); // 按时间倒序
-                    
-                    const results = [];
-                    request.onsuccess = (event) => {
-                        const cursor = event.target.result;
-                        if (cursor) {
-                            results.push(cursor.value);
-                            cursor.continue();
-                        } else {
-                            resolve(results);
-                        }
-                    };
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        function loadLatestTextFromLibrary() {
-            return initTextLibraryDB().then(db => {
-                return new Promise((resolve, reject) => {
-                    const transaction = db.transaction(['textLibrary'], 'readonly');
-                    const store = transaction.objectStore('textLibrary');
-                    const index = store.index('timestamp');
-                    const request = index.openCursor(null, 'prev'); // 获取最新的一条
-                    
-                    request.onsuccess = (event) => {
-                        const cursor = event.target.result;
-                        resolve(cursor ? cursor.value : null);
-                    };
-                    request.onerror = () => reject(request.error);
-                });
-            });
-        }
-
-        function renderTextLibrary(texts) {
-            const listContainer = document.getElementById('textLibraryList');
-            const countElement = document.getElementById('textLibraryCount');
-            
-            countElement.textContent = `${texts.length} 条记录`;
-            
-            if (texts.length === 0) {
-                listContainer.innerHTML = `
-                    <div style="padding: 20px; text-align: center; color: #666; font-size: 13px;">
-                        暂无保存的文本
-                    </div>
-                `;
-                return;
-            }
-            
-            const itemsHtml = texts.map(text => `
-                <div class="text-library-item" 
-                     style="padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background-color 0.2s;"
-                     onclick="loadTextFromLibrary(${text.id})"
-                     onmouseover="this.style.backgroundColor='#f8f9fa'"
-                     onmouseout="this.style.backgroundColor='white'">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                        <div style="font-weight: 500; font-size: 13px; color: #333; flex: 1; margin-right: 10px;">
-                            ${text.title}
-                        </div>
-                        <div style="font-size: 11px; color: #666; white-space: nowrap;">
-                            ${text.dateString}
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #888;">
-                        字符数: ${text.wordCount} | ID: ${text.id}
-                    </div>
-                </div>
-            `).join('');
-            
-            listContainer.innerHTML = itemsHtml;
-        }
-
-        function loadAndRenderTextLibrary() {
-            loadTextLibrary().then(texts => {
-                renderTextLibrary(texts);
-            }).catch(error => {
-                console.error('加载文本库失败:', error);
-            });
-        }
-
-        function loadTextFromLibrary(textId) {
-            initTextLibraryDB().then(db => {
-                const transaction = db.transaction(['textLibrary'], 'readonly');
-                const store = transaction.objectStore('textLibrary');
-                const request = store.get(textId);
-                
-                request.onsuccess = () => {
-                    const text = request.result;
-                    if (text) {
-                        const textInput = document.getElementById('textInput');
-                        const textPreview = document.getElementById('textPreview');
-                        
-                        if (textInput && textPreview) {
-                            textInput.value = text.content;
-                            updateTextPreview();
-                            
-                            // 滚动到文本输入区
-                            textInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }
-                };
-                
-                request.onerror = () => {
-                    console.error('加载文本失败');
-                };
-            });
-        }
-
-        function clearTextLibrary() {
-            if (confirm('确定要清空整个文本库吗？此操作不可恢复。')) {
-                initTextLibraryDB().then(db => {
-                    const transaction = db.transaction(['textLibrary'], 'readwrite');
-                    const store = transaction.objectStore('textLibrary');
-                    const request = store.clear();
-                    
-                    request.onsuccess = () => {
-                        loadAndRenderTextLibrary();
-                        alert('文本库已清空');
-                    };
-                    
-                    request.onerror = () => {
-                        alert('清空文本库失败');
-                    };
-                });
-            }
         }
 
         // 点击模态框外部关闭
@@ -1812,14 +1582,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             updatePreview();
             renderWordList();
-            
-            // 初始化文本库数据库
-            initTextLibraryDB().then(() => {
-                restoreContent(); // 恢复保存的内容
-            }).catch(error => {
-                console.error('初始化文本库数据库失败:', error);
-                restoreContent(); // 即使数据库初始化失败也尝试恢复其他内容
-            });
+            restoreContent(); // 恢复保存的内容
             
             // 为文本输入区添加事件监听器
             const textInput = document.getElementById('textInput');
@@ -1834,12 +1597,7 @@
         // 页面加载完成后的延迟初始化
         window.onload = function() {
             setTimeout(() => {
-                // 确保文本库数据库已初始化后再次尝试恢复内容
-                initTextLibraryDB().then(() => {
-                    restoreContent(); // 再次尝试恢复内容
-                }).catch(error => {
-                    console.error('延迟初始化文本库数据库失败:', error);
-                });
+                restoreContent(); // 再次尝试恢复内容
             }, 100);
         };
     </script>
