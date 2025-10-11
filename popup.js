@@ -482,6 +482,14 @@ class PopupController {
 
   async handleDictImport(file) {
     try {
+      // 检查文件大小（添加大文件警告）
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB > 50) {
+        if (!confirm(`文件大小为 ${fileSizeMB.toFixed(1)}MB，可能需要较长时间处理。是否继续？`)) {
+          return;
+        }
+      }
+
       // 验证文件类型
       if (!file.name.endsWith('.json')) {
         alert('请选择JSON格式的词典文件');
@@ -499,7 +507,7 @@ class PopupController {
         return;
       }
 
-      // 保存到Chrome Storage
+      // 保存到IndexedDB
       await this.saveImportedDictionary(dictData, file.name);
       
       // 更新显示
@@ -509,7 +517,13 @@ class PopupController {
       
     } catch (error) {
       console.error('导入词典失败:', error);
-      alert('导入失败，请检查文件格式');
+      if (error.name === 'SyntaxError') {
+        alert('JSON文件格式错误，请检查文件内容');
+      } else if (error.message.includes('quota')) {
+        alert('存储空间不足，请删除一些已导入的词典后重试');
+      } else {
+        alert('导入失败，请检查文件格式');
+      }
     }
   }
 
@@ -534,13 +548,43 @@ class PopupController {
     }
 
     const meta = dictData.meta;
-    if (!meta.name || !meta.language || !meta.version) {
-      return { valid: false, error: 'meta信息不完整，需要name、language、version字段' };
+    // 检查必需的meta字段
+    if (!meta.name || !meta.language) {
+      return { valid: false, error: 'meta信息不完整，需要name、language字段' };
     }
 
-    // 检查词典数据
-    if (!dictData.words || !Array.isArray(dictData.words)) {
-      return { valid: false, error: '缺少words数组或格式错误' };
+    // 检查version字段（可能在meta内部或外部）
+    if (!meta.version && !dictData.version) {
+      return { valid: false, error: '缺少version字段' };
+    }
+
+    // 检查词典数据 - 支持对象格式
+    if (!dictData.words) {
+      return { valid: false, error: '缺少words字段' };
+    }
+
+    // 支持words为对象格式（新格式）或数组格式（旧格式）
+    if (typeof dictData.words !== 'object') {
+      return { valid: false, error: 'words字段格式错误，应为对象或数组' };
+    }
+
+    // 如果是对象格式，检查是否有词条
+    if (!Array.isArray(dictData.words)) {
+      const wordKeys = Object.keys(dictData.words);
+      if (wordKeys.length === 0) {
+        return { valid: false, error: 'words对象为空' };
+      }
+      
+      // 验证词条格式
+      for (const word of wordKeys.slice(0, 5)) { // 只检查前5个词条以提高性能
+        const wordData = dictData.words[word];
+        if (!wordData || typeof wordData !== 'object') {
+          return { valid: false, error: `词条"${word}"格式错误` };
+        }
+        if (!wordData.pos || !Array.isArray(wordData.pos)) {
+          return { valid: false, error: `词条"${word}"缺少pos字段或格式错误` };
+        }
+      }
     }
 
     // 验证语言代码
@@ -553,33 +597,22 @@ class PopupController {
   }
 
   async saveImportedDictionary(dictData, fileName) {
-    // 生成唯一ID
-    const dictId = `imported_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // 准备存储数据
-    const importedDict = {
-      id: dictId,
-      fileName: fileName,
-      meta: dictData.meta,
-      words: dictData.words,
-      importedAt: new Date().toISOString()
-    };
-
-    // 获取现有的导入词典列表
-    const result = await chrome.storage.local.get(['importedDictionaries']);
-    const importedDicts = result.importedDictionaries || [];
-    
-    // 添加新词典
-    importedDicts.push(importedDict);
-    
-    // 保存到Chrome Storage
-    await chrome.storage.local.set({ importedDictionaries: importedDicts });
+    // 使用IndexedDB管理器保存词典
+    try {
+      const dictId = await indexedDBDictionaryManager.saveDictionary(dictData, fileName);
+      console.log(`词典保存成功，ID: ${dictId}`);
+      return dictId;
+    } catch (error) {
+      console.error('保存词典到IndexedDB失败:', error);
+      throw error;
+    }
   }
 
   async loadImportedDictionaries() {
     try {
-      const result = await chrome.storage.local.get(['importedDictionaries']);
-      return result.importedDictionaries || [];
+      // 从IndexedDB获取词典元数据
+      const metadata = await indexedDBDictionaryManager.getAllDictionaryMetadata();
+      return metadata;
     } catch (error) {
       console.error('加载导入词典失败:', error);
       return [];
@@ -597,16 +630,25 @@ class PopupController {
       return;
     }
 
-    importedList.innerHTML = importedDicts.map(dict => `
-      <div class="imported-dict-item" data-dict-id="${dict.id}">
-        <div class="imported-dict-name">${dict.meta.name}</div>
-        <div class="imported-dict-meta">
-          <span>🌐 ${this.getLanguageDisplayName(dict.meta.language)}</span>
-          <span>📚 ${dict.words.length} 词条</span>
-          <span>📅 ${new Date(dict.importedAt).toLocaleDateString()}</span>
+    importedList.innerHTML = importedDicts.map(dict => {
+      // 获取显示名称 - 支持displayName字段
+      let displayName = dict.name;
+      if (dict.displayName) {
+        const currentLang = document.documentElement.lang || 'zh';
+        displayName = dict.displayName[currentLang] || dict.displayName.zh || dict.displayName.en || dict.name;
+      }
+
+      return `
+        <div class="imported-dict-item" data-dict-id="${dict.id}">
+          <div class="imported-dict-name">${displayName}</div>
+          <div class="imported-dict-meta">
+            <span>🌐 ${this.getLanguageDisplayName(dict.language)}</span>
+            <span>📚 ${dict.wordCount} 词条</span>
+            <span>📅 ${new Date(dict.importedAt).toLocaleDateString()}</span>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   getLanguageDisplayName(langCode) {
@@ -1695,6 +1737,9 @@ function initLanguageGroupListeners() {
 document.addEventListener('DOMContentLoaded', async () => {
   // 确保i18n先初始化
   await window.i18n.init();
+  
+  // 初始化IndexedDB管理器
+  await indexedDBDictionaryManager.init();
   
   // 然后创建PopupController
   popupController = new PopupController();
