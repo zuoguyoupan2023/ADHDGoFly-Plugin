@@ -498,6 +498,52 @@
                     </div>
                 </div>
 
+                <!-- 文本输入和预览区域 -->
+                <div class="text-processing-section" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px;">
+                    <h3 style="margin-bottom: 15px; font-size: 14px; color: #495057;">文本处理区域</h3>
+                    
+                    <!-- 文本输入区 -->
+                    <div class="form-group">
+                        <label for="textInput" style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">文本输入区</label>
+                        <textarea id="textInput" class="form-control" 
+                                  placeholder="在此输入文本内容..." 
+                                  style="height: 120px; resize: vertical;"
+                                  oninput="updateTextPreview()"></textarea>
+                    </div>
+                    
+                    <!-- 预览区 -->
+                    <div class="form-group">
+                        <label for="textPreview" style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">文本预览区</label>
+                        <div id="textPreview" 
+                             style="min-height: 120px; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.5; color: #495057;">
+                            预览内容将在这里显示...
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button id="startProcessingBtn" onclick="startProcessing()" 
+                            style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">
+                            开始处理
+                        </button>
+                        <button onclick="clearContent()" 
+                            style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                            清空内容
+                        </button>
+                        <button onclick="refreshPage()" 
+                            style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">
+                            刷新页面
+                        </button>
+                        <span id="processingStatus" style="font-size: 11px; color: #666; margin-left: 8px; align-self: center;"></span>
+                    </div>
+                    
+                    <!-- 完成状态区域 -->
+                    <div id="finishedContent" style="margin-top: 15px; padding: 12px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; display: none;">
+                        <h4 style="margin-bottom: 8px; font-size: 13px; color: #155724;">处理完成的内容：</h4>
+                        <div id="finishedText" style="white-space: pre-wrap; font-size: 13px; color: #155724;"></div>
+                    </div>
+                </div>
+
                 <!-- 搜索 -->
                 <div class="form-group" style="margin-top: 20px;">
                     <input type="text" id="searchWord" class="form-control" placeholder="搜索词汇..." oninput="filterWords()" data-i18n-placeholder="search-words-placeholder">
@@ -1326,6 +1372,202 @@
             localStorage.removeItem('dictionary_editor_draft');
         }
 
+        // 文本预览和处理功能
+        function updateTextPreview() {
+            const textInput = document.getElementById('textInput');
+            const textPreview = document.getElementById('textPreview');
+            
+            if (textInput && textPreview) {
+                const inputText = textInput.value;
+                if (inputText.trim()) {
+                    // 简单的HTML转义和格式化
+                    const escapedText = inputText
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                    
+                    textPreview.innerHTML = escapedText;
+                } else {
+                    textPreview.textContent = '预览内容将在这里显示...';
+                }
+                
+                // 自动保存到存储
+                saveTextToStorage(inputText);
+            }
+        }
+
+        function startProcessing() {
+            const textInput = document.getElementById('textInput');
+            const finishedContent = document.getElementById('finishedContent');
+            const finishedText = document.getElementById('finishedText');
+            const processingStatus = document.getElementById('processingStatus');
+            
+            if (!textInput || !textInput.value.trim()) {
+                alert('请先输入一些文本内容');
+                return;
+            }
+            
+            const content = textInput.value.trim();
+            
+            // 显示处理状态
+            processingStatus.textContent = '正在处理...';
+            
+            // 保存内容到IndexedDB
+            saveContentToIndexedDB(content).then(() => {
+                // 将内容移动到完成状态区域
+                finishedText.textContent = content;
+                finishedContent.style.display = 'block';
+                
+                // 清空输入区
+                textInput.value = '';
+                document.getElementById('textPreview').textContent = '预览内容将在这里显示...';
+                
+                // 更新状态
+                processingStatus.textContent = '处理完成';
+                
+                // 3秒后清除状态
+                setTimeout(() => {
+                    processingStatus.textContent = '';
+                }, 3000);
+                
+            }).catch(error => {
+                console.error('保存失败:', error);
+                processingStatus.textContent = '处理失败';
+                setTimeout(() => {
+                    processingStatus.textContent = '';
+                }, 3000);
+            });
+        }
+
+        function clearContent() {
+            const textInput = document.getElementById('textInput');
+            const textPreview = document.getElementById('textPreview');
+            const finishedContent = document.getElementById('finishedContent');
+            const processingStatus = document.getElementById('processingStatus');
+            
+            if (textInput) textInput.value = '';
+            if (textPreview) textPreview.textContent = '预览内容将在这里显示...';
+            if (finishedContent) finishedContent.style.display = 'none';
+            if (processingStatus) processingStatus.textContent = '';
+            
+            // 清除存储
+            clearTextFromStorage();
+        }
+
+        function refreshPage() {
+            if (confirm('确定要刷新页面吗？未保存的内容将会丢失。')) {
+                window.location.reload();
+            }
+        }
+
+        // IndexedDB 存储功能
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('TextProcessorDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('textContent')) {
+                        const store = db.createObjectStore('textContent', { keyPath: 'id' });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+            });
+        }
+
+        function saveContentToIndexedDB(content) {
+            return initIndexedDB().then(db => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['textContent'], 'readwrite');
+                    const store = transaction.objectStore('textContent');
+                    
+                    const data = {
+                        id: 'current_content',
+                        content: content,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            });
+        }
+
+        function loadContentFromIndexedDB() {
+            return initIndexedDB().then(db => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['textContent'], 'readonly');
+                    const store = transaction.objectStore('textContent');
+                    const request = store.get('current_content');
+                    
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        resolve(result ? result.content : null);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            });
+        }
+
+        // localStorage 临时存储功能
+        function saveTextToStorage(text) {
+            try {
+                localStorage.setItem('text_processor_input', text);
+            } catch (error) {
+                console.error('保存到localStorage失败:', error);
+            }
+        }
+
+        function loadTextFromStorage() {
+            try {
+                return localStorage.getItem('text_processor_input') || '';
+            } catch (error) {
+                console.error('从localStorage加载失败:', error);
+                return '';
+            }
+        }
+
+        function clearTextFromStorage() {
+            try {
+                localStorage.removeItem('text_processor_input');
+            } catch (error) {
+                console.error('清除localStorage失败:', error);
+            }
+        }
+
+        // 页面加载时恢复内容
+        function restoreContent() {
+            // 从localStorage恢复输入内容
+            const savedInput = loadTextFromStorage();
+            if (savedInput) {
+                const textInput = document.getElementById('textInput');
+                if (textInput) {
+                    textInput.value = savedInput;
+                    updateTextPreview();
+                }
+            }
+            
+            // 从IndexedDB恢复完成的内容
+            loadContentFromIndexedDB().then(content => {
+                if (content) {
+                    const finishedContent = document.getElementById('finishedContent');
+                    const finishedText = document.getElementById('finishedText');
+                    if (finishedContent && finishedText) {
+                        finishedText.textContent = content;
+                        finishedContent.style.display = 'block';
+                    }
+                }
+            }).catch(error => {
+                console.error('从IndexedDB恢复内容失败:', error);
+            });
+        }
+
         // 点击模态框外部关闭
         window.onclick = function(event) {
             const modals = document.querySelectorAll('.modal');
@@ -1335,6 +1577,29 @@
                 }
             });
         }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePreview();
+            renderWordList();
+            restoreContent(); // 恢复保存的内容
+            
+            // 为文本输入区添加事件监听器
+            const textInput = document.getElementById('textInput');
+            if (textInput) {
+                textInput.addEventListener('input', updateTextPreview);
+                textInput.addEventListener('paste', function() {
+                    setTimeout(updateTextPreview, 10); // 延迟执行以确保粘贴内容已处理
+                });
+            }
+        });
+
+        // 页面加载完成后的延迟初始化
+        window.onload = function() {
+            setTimeout(() => {
+                restoreContent(); // 再次尝试恢复内容
+            }, 100);
+        };
     </script>
 </body>
 </html>
