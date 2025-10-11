@@ -599,12 +599,7 @@ class PopupController {
 
     importedList.innerHTML = importedDicts.map(dict => `
       <div class="imported-dict-item" data-dict-id="${dict.id}">
-        <div class="imported-dict-header">
-          <div class="imported-dict-name">${dict.meta.name}</div>
-          <button class="delete-dict-btn" data-dict-id="${dict.id}" title="删除词典">
-            <span class="delete-icon">×</span>
-          </button>
-        </div>
+        <div class="imported-dict-name">${dict.meta.name}</div>
         <div class="imported-dict-meta">
           <span>🌐 ${this.getLanguageDisplayName(dict.meta.language)}</span>
           <span>📚 ${dict.words.length} 词条</span>
@@ -612,9 +607,6 @@ class PopupController {
         </div>
       </div>
     `).join('');
-
-    // 绑定删除按钮事件
-    this.bindDeleteEvents();
   }
 
   getLanguageDisplayName(langCode) {
@@ -627,42 +619,6 @@ class PopupController {
       'ru': 'Русский'
     };
     return langMap[langCode.toLowerCase()] || langCode;
-  }
-
-  bindDeleteEvents() {
-    const deleteButtons = document.querySelectorAll('.delete-dict-btn');
-    deleteButtons.forEach(button => {
-      button.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const dictId = button.getAttribute('data-dict-id');
-        await this.handleDeleteDictionary(dictId);
-      });
-    });
-  }
-
-  async handleDeleteDictionary(dictId) {
-    // 显示确认对话框
-    const confirmed = confirm('确定要删除这个词典吗？删除后无法恢复。');
-    if (!confirmed) return;
-
-    try {
-      // 获取当前词典列表
-      const importedDicts = await this.loadImportedDictionaries();
-      
-      // 过滤掉要删除的词典
-      const updatedDicts = importedDicts.filter(dict => dict.id !== dictId);
-      
-      // 保存更新后的列表
-      await chrome.storage.local.set({ importedDictionaries: updatedDicts });
-      
-      // 刷新显示
-      this.updateImportedDictsDisplay();
-      
-      console.log('词典删除成功:', dictId);
-    } catch (error) {
-      console.error('删除词典失败:', error);
-      alert('删除词典失败，请重试。');
-    }
   }
 
   bindDictTooltipEvents() {
