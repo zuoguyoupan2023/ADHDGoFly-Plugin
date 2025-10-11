@@ -44,8 +44,33 @@ class ADHDHighlighter {
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
+    // 启动时扫描dictionaries文件夹
+    this.scanDictionariesOnStartup();
+    
     // 初始化
     this.init();
+  }
+
+  /**
+   * 启动时扫描dictionaries文件夹中的所有json文件
+   */
+  async scanDictionariesOnStartup() {
+    try {
+      console.log('🚀 插件启动，开始扫描dictionaries文件夹...');
+      
+      // 确保目录扫描器已加载
+      if (typeof directoryScanner !== 'undefined') {
+        const jsonFiles = await directoryScanner.scanAllJsonFiles();
+        console.log('📋 Dictionaries文件夹中的所有json文件:');
+        jsonFiles.forEach(file => {
+          console.log(`  📄 ${file}`);
+        });
+      } else {
+        console.warn('⚠️ 目录扫描器未加载');
+      }
+    } catch (error) {
+      console.error('❌ 启动扫描失败:', error);
+    }
   }
 
   /**
