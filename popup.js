@@ -534,18 +534,13 @@ class PopupController {
     }
 
     const meta = dictData.meta;
-    if (!meta.name || !meta.language) {
-      return { valid: false, error: 'meta信息不完整，需要name、language字段' };
-    }
-
-    // 检查根级别的version字段
-    if (!dictData.version) {
-      return { valid: false, error: '缺少version字段' };
+    if (!meta.name || !meta.language || !meta.version) {
+      return { valid: false, error: 'meta信息不完整，需要name、language、version字段' };
     }
 
     // 检查词典数据
-    if (!dictData.words || typeof dictData.words !== 'object') {
-      return { valid: false, error: '缺少words对象或格式错误' };
+    if (!dictData.words || !Array.isArray(dictData.words)) {
+      return { valid: false, error: '缺少words数组或格式错误' };
     }
 
     // 验证语言代码

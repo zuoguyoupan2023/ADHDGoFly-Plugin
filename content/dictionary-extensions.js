@@ -41,13 +41,13 @@ const DICTIONARY_TYPES = {
  * 词典验证规则
  */
 const DICTIONARY_VALIDATION_RULES = {
-    requiredFields: ['meta', 'version', 'lastUpdated', 'domain', 'words'],
-    metaRequiredFields: ['id', 'name', 'displayName', 'language', 'type', 'domain', 'description', 'license', 'author', 'homepage'],
+    requiredFields: ['meta', 'version', 'words'],
+    metaRequiredFields: ['id', 'name', 'language', 'type'],
     maxWords: 1000000,
     minWords: 100,
     supportedLanguages: ['zh', 'en', 'es', 'fr', 'ja', 'ru', 'de', 'it', 'pt', 'ko'],
     maxFileSize: 100 * 1024 * 1024 // 100MB
-}
+};
 
 // ========== 接口定义 ==========
 
