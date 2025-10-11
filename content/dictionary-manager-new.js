@@ -89,7 +89,25 @@ class DictionaryManager {
      */
     getDictionaryById(id) {
         const allDictionaries = this.getAvailableDictionaries('all', false);
-        return allDictionaries.find(dict => dict.id === id) || null;
+        
+        // 特别调试111词典
+        if (id === 'custom-1760195631107') {
+            console.log('🔍 Searching for 111 dictionary in registry...');
+            console.log('All available dictionaries:', allDictionaries.map(d => ({ id: d.id, name: d.name, language: d.language })));
+            console.log('Registry structure:', this.registry ? {
+                preset: this.registry.dictionaries.preset.length,
+                downloaded: this.registry.dictionaries.downloaded.length,
+                local: this.registry.dictionaries.local.length
+            } : 'Registry not loaded');
+        }
+        
+        const found = allDictionaries.find(dict => dict.id === id) || null;
+        
+        if (id === 'custom-1760195631107') {
+            console.log('🔍 Search result for 111 dictionary:', found);
+        }
+        
+        return found;
     }
 
     /**

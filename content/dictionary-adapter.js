@@ -349,9 +349,19 @@ class DictionaryAdapter {
             if (this.enabledDictionaries[dictId]) {
                 const dict = this.newManager.getDictionaryById(dictId);
                 console.log(`Dictionary ${dictId}:`, dict);
+                
+                // 特别调试111词典 - 检查两个可能的ID
+                if (dictId === 'custom-1760195631107' || dictId === 'custom-1760202653658') {
+                    console.log('🔍 Found 111 dictionary in enabled list!');
+                    console.log('Dictionary object:', dict);
+                    console.log('Dictionary language:', dict ? dict.language : 'undefined');
+                }
+                
                 if (dict && dict.language) {
                     languageStatus[dict.language] = true;
-                    console.log(`Enabled language: ${dict.language}`);
+                    console.log(`✅ Enabled language: ${dict.language} (from dictionary: ${dictId})`);
+                } else {
+                    console.log(`❌ Dictionary ${dictId} not found or has no language property`);
                 }
             }
         });

@@ -641,6 +641,36 @@ class PopupController {
         this.customDictionaries = registry.local;
         this.updateCustomDictList();
         this.addCustomDictsToUI(); // 添加到词典管理界面
+        
+        // 确保设置中包含这些词典，并清理旧的ID
+        let settingsChanged = false;
+        
+        // 清理所有旧的custom-开头的设置
+        const oldCustomIds = Object.keys(this.dictSettings).filter(key => key.startsWith('custom-'));
+        for (const oldId of oldCustomIds) {
+          // 检查这个ID是否还在当前的词典列表中
+          const stillExists = this.customDictionaries.find(dict => dict.id === oldId);
+          if (!stillExists) {
+            delete this.dictSettings[oldId];
+            settingsChanged = true;
+            console.log(`🧹 清理旧的词典设置ID: ${oldId}`);
+          }
+        }
+        
+        // 添加当前词典的正确设置
+        for (const dict of this.customDictionaries) {
+          if (this.dictSettings[dict.id] === undefined) {
+            this.dictSettings[dict.id] = dict.enabled || true;
+            settingsChanged = true;
+            console.log(`✅ 添加词典设置: ${dict.id} = ${dict.enabled || true}`);
+          }
+        }
+        
+        // 如果设置有变化，保存更新的设置
+        if (settingsChanged) {
+          console.log('🔄 词典设置已更新，正在保存...');
+          await this.saveDictSettings();
+        }
       }
       
       // 同时从storage加载（如果有的话）
@@ -686,6 +716,8 @@ class PopupController {
     const existingCustomDicts = professionalDicts.querySelectorAll('.custom-dict-item');
     existingCustomDicts.forEach(item => item.remove());
 
+    let settingsChanged = false;
+
     // 添加自定义词典
     customDicts.forEach(dict => {
       const dictItem = document.createElement('div');
@@ -713,9 +745,19 @@ class PopupController {
         await this.saveDictSettings();
       });
       
-      // 添加到dictSettings
-      this.dictSettings[dict.id] = dict.enabled;
+      // 添加到dictSettings，如果设置发生变化则标记需要保存
+      if (this.dictSettings[dict.id] === undefined) {
+        this.dictSettings[dict.id] = dict.enabled;
+        settingsChanged = true;
+        console.log(`🔧 Added custom dictionary to settings: ${dict.id} = ${dict.enabled}`);
+      }
     });
+
+    // 如果有新的自定义词典设置，立即保存
+    if (settingsChanged) {
+      console.log('🔧 Saving updated dictionary settings with custom dictionaries...');
+      this.saveDictSettings();
+    }
   }
 
   updateCustomDictList() {

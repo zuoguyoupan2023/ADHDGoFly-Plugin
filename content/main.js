@@ -238,6 +238,24 @@ class ADHDHighlighter {
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
         
+        // 特别检查111词典的设置
+        const dict111Id = 'custom-1760195631107';
+        const newDict111Id = 'custom-1760202653658';
+        
+        if (result.dictSettings[dict111Id] !== undefined) {
+          console.log(`🔍 Found 111 dictionary in settings: ${dict111Id} = ${result.dictSettings[dict111Id]}`);
+        } else if (result.dictSettings[newDict111Id] !== undefined) {
+          console.log(`🔍 Found 111 dictionary with new ID in settings: ${newDict111Id} = ${result.dictSettings[newDict111Id]}`);
+        } else {
+          console.log(`❌ 111 dictionary not found in settings. Available keys:`, Object.keys(result.dictSettings));
+          
+          // 检查是否有任何custom-开头的词典ID
+          const customDictIds = Object.keys(result.dictSettings).filter(key => key.startsWith('custom-'));
+          if (customDictIds.length > 0) {
+            console.log(`🔍 Found custom dictionary IDs in settings:`, customDictIds);
+          }
+        }
+        
         // 检查是否为新格式（包含词典ID）
         const hasNewFormat = Object.keys(result.dictSettings).some(key => key.includes('-'));
         
@@ -513,6 +531,8 @@ class ADHDHighlighter {
       console.log('[Edge调试] 当前页面URL:', window.location.href);
       console.log('[Edge调试] 处理模式:', this.processingMode);
       console.log('[Edge调试] 启用的语言:', this.dictionaryManager.getEnabledLanguages());
+      console.log('[Edge调试] 语言状态详情:', this.dictionaryManager.enabledLanguages);
+      console.log('[Edge调试] zh语言是否启用:', this.dictionaryManager.isLanguageEnabled('zh'));
     }
     
     try {
