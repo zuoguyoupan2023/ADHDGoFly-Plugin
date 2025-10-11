@@ -91,46 +91,26 @@ class DirectoryScanner {
                 'RU_word.json'
             );
         } else {
-            // 子目录可能的文件
-            // 数字文件 (1-100)
-            for (let i = 1; i <= 100; i++) {
-                possibleFiles.push(`${i}.json`);
-            }
+            // 基于实际存在的文件模式，只检查已知的文件类型
             
-            // 三位数字文件 (100-999)
-            for (let i = 100; i <= 999; i++) {
-                possibleFiles.push(`${i}.json`);
-            }
-            
-            // 常见的词典类型
-            const domains = [
-                'animal', 'caijing', 'car', 'chengyu', 'diming', 'food', 'it', 
-                'law', 'lishimingren', 'medical', 'poem', 'sport', 'tech', 
-                'business', 'science', 'art', 'music', 'travel', 'cooking',
-                'fashion', 'health', 'education', 'finance', 'politics'
-            ];
-            
-            domains.forEach(domain => {
-                possibleFiles.push(`${directory}_word_${domain}.json`);
-                possibleFiles.push(`${directory.toLowerCase()}_word_${domain}.json`);
-                possibleFiles.push(`${domain}.json`);
-                possibleFiles.push(`word_${domain}.json`);
+            // 已知存在的数字文件（基于实际文件夹内容）
+            const knownNumbers = [111]; // 只检查已知存在的数字文件
+            knownNumbers.forEach(num => {
+                possibleFiles.push(`${num}.json`);
             });
             
-            // 其他可能的文件名
+            // 已知的词典域名（基于实际文件夹内容）
+            const knownDomains = [
+                'animal', 'caijing', 'car', 'chengyu', 'diming', 'food', 'it', 
+                'law', 'lishimingren', 'medical', 'poem'
+            ];
+            
+            knownDomains.forEach(domain => {
+                possibleFiles.push(`${directory}_word_${domain}.json`);
+            });
+            
+            // 基本文件名模式
             possibleFiles.push(
-                'custom.json',
-                'user.json',
-                'local.json',
-                'temp.json',
-                'backup.json',
-                'test.json',
-                'main.json',
-                'index.json',
-                'data.json',
-                'words.json',
-                'dict.json',
-                'dictionary.json',
                 `${directory}.json`,
                 `${directory.toLowerCase()}.json`,
                 `${directory}_dict.json`,
@@ -143,7 +123,7 @@ class DirectoryScanner {
     }
 
     /**
-     * 检查文件是否存在
+     * 检查文件是否存在（静默模式，不输出错误）
      * @param {string} filePath 文件路径
      * @returns {Promise<boolean>} 文件是否存在
      */
@@ -161,6 +141,7 @@ class DirectoryScanner {
             });
             return response.ok;
         } catch (error) {
+            // 静默处理错误，不输出到控制台
             return false;
         }
     }

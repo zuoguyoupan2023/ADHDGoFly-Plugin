@@ -67,6 +67,7 @@ class DictionaryAdapter {
      */
     async _loadAllPresetDictionaries() {
         try {
+            // 加载预设词典
             const presetDictionaries = this.newManager.getAvailableDictionaries('preset', false);
             
             for (const dictInfo of presetDictionaries) {
@@ -79,8 +80,46 @@ class DictionaryAdapter {
                     console.log(`Loaded dictionary: ${dictInfo.language} (${Object.keys(converted).length} words)`);
                 }
             }
+            
+            // 加载本地词典
+            const localDictionaries = this.newManager.getAvailableDictionaries('local', false);
+            
+            for (const dictInfo of localDictionaries) {
+                const dictData = await this.newManager.loadDictionary(dictInfo.id);
+                if (dictData && dictData.words) {
+                    // 转换为旧格式：{word: "pos"}
+                    const converted = this._convertDictionaryFormat(dictData);
+                    
+                    // 合并到对应语言的词典中
+                    if (!this.legacyData[dictInfo.language]) {
+                        this.legacyData[dictInfo.language] = {};
+                    }
+                    Object.assign(this.legacyData[dictInfo.language], converted);
+                    
+                    console.log(`Loaded local dictionary: ${dictInfo.displayName} (${Object.keys(converted).length} words)`);
+                }
+            }
+            
+            // 加载下载的词典
+            const downloadedDictionaries = this.newManager.getAvailableDictionaries('downloaded', false);
+            
+            for (const dictInfo of downloadedDictionaries) {
+                const dictData = await this.newManager.loadDictionary(dictInfo.id);
+                if (dictData && dictData.words) {
+                    // 转换为旧格式：{word: "pos"}
+                    const converted = this._convertDictionaryFormat(dictData);
+                    
+                    // 合并到对应语言的词典中
+                    if (!this.legacyData[dictInfo.language]) {
+                        this.legacyData[dictInfo.language] = {};
+                    }
+                    Object.assign(this.legacyData[dictInfo.language], converted);
+                    
+                    console.log(`Loaded downloaded dictionary: ${dictInfo.displayName} (${Object.keys(converted).length} words)`);
+                }
+            }
         } catch (error) {
-            console.error('Error loading preset dictionaries:', error);
+            console.error('Error loading dictionaries:', error);
             throw error;
         }
     }

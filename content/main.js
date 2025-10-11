@@ -58,15 +58,16 @@ class ADHDHighlighter {
     try {
       console.log('🚀 插件启动，开始扫描dictionaries文件夹...');
       
-      // 确保目录扫描器已加载
-      if (typeof directoryScanner !== 'undefined') {
-        const jsonFiles = await directoryScanner.scanAllJsonFiles();
+      // 使用新的文件清单扫描器
+      if (typeof fileListScanner !== 'undefined') {
+        const jsonFiles = await fileListScanner.getAllJsonFiles();
         console.log('📋 Dictionaries文件夹中的所有json文件:');
         jsonFiles.forEach(file => {
           console.log(`  📄 ${file}`);
         });
+        fileListScanner.generateReport();
       } else {
-        console.warn('⚠️ 目录扫描器未加载');
+        console.warn('⚠️ 文件清单扫描器未加载');
       }
     } catch (error) {
       console.error('❌ 启动扫描失败:', error);

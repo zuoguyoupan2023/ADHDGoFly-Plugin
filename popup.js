@@ -4,6 +4,7 @@ class PopupController {
     this.currentStatus = null;
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
+    this.customDictionaries = []; // 自定义词典列表
     this.dictSettings = {
       // 基础词典
       'zh-preset': true,
@@ -226,6 +227,12 @@ class PopupController {
     
     // 检查版本信息
     await this.checkVersion();
+    
+    // 加载自定义词典
+    await this.loadCustomDictionaries();
+    
+    // 加载词典设置
+    await this.loadDictSettings();
   }
 
   bindEvents() {
@@ -453,6 +460,320 @@ class PopupController {
 
     // 词典tooltip事件
     this.bindDictTooltipEvents();
+    
+    // 自定义词典管理事件
+    this.bindCustomDictEvents();
+  }
+
+  bindCustomDictEvents() {
+    // 添加词典按钮事件
+    const addDictBtn = document.getElementById('add-custom-dict-btn');
+    if (addDictBtn) {
+      addDictBtn.addEventListener('click', () => this.showAddDictForm());
+    }
+
+    // 取消添加按钮事件
+    const cancelBtn = document.getElementById('cancel-add-dict');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.hideAddDictForm());
+    }
+
+    // 确认添加按钮事件
+    const confirmBtn = document.getElementById('confirm-add-dict');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => this.addCustomDict());
+    }
+
+    // 文件选择事件
+    const fileInput = document.getElementById('dict-file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+    }
+  }
+
+  showAddDictForm() {
+    const form = document.getElementById('add-dict-form');
+    if (form) {
+      form.style.display = 'block';
+    }
+  }
+
+  hideAddDictForm() {
+    const form = document.getElementById('add-dict-form');
+    if (form) {
+      form.style.display = 'none';
+      // 清空表单
+      document.getElementById('dict-file-input').value = '';
+      document.getElementById('dict-name-input').value = '';
+      document.getElementById('dict-language-select').value = 'zh';
+      document.getElementById('dict-domain-input').value = '';
+    }
+  }
+
+  handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      // 自动填充词典名称（去掉.json后缀）
+      const nameInput = document.getElementById('dict-name-input');
+      if (nameInput && !nameInput.value) {
+        nameInput.value = file.name.replace('.json', '');
+      }
+    }
+  }
+
+  async addCustomDict() {
+    const fileInput = document.getElementById('dict-file-input');
+    const nameInput = document.getElementById('dict-name-input');
+    const languageSelect = document.getElementById('dict-language-select');
+    const domainInput = document.getElementById('dict-domain-input');
+
+    if (!fileInput.files[0]) {
+      alert('请选择词典文件');
+      return;
+    }
+
+    if (!nameInput.value.trim()) {
+      alert('请输入词典名称');
+      return;
+    }
+
+    try {
+      const file = fileInput.files[0];
+      const fileContent = await this.readFileAsText(file);
+      
+      // 验证JSON格式
+      let dictData;
+      try {
+        dictData = JSON.parse(fileContent);
+      } catch (error) {
+        alert('词典文件格式错误，请确保是有效的JSON文件');
+        return;
+      }
+
+      // 生成唯一ID
+      const dictId = `custom-${Date.now()}`;
+      const language = languageSelect.value;
+      const domain = domainInput.value.trim() || 'general';
+
+      // 创建词典条目
+      const dictEntry = {
+        id: dictId,
+        name: nameInput.value.trim(),
+        displayName: nameInput.value.trim(),
+        language: language,
+        type: 'local',
+        domain: domain,
+        filePath: `dictionaries/${language.toUpperCase()}/${dictId}.json`,
+        enabled: true,
+        priority: 1,
+        data: dictData
+      };
+
+      // 添加到自定义词典列表
+      this.customDictionaries.push(dictEntry);
+
+      // 更新注册表
+      await this.updateDictionaryRegistry(dictEntry);
+
+      // 更新UI
+      this.updateCustomDictList();
+      this.hideAddDictForm();
+
+      alert('词典添加成功！');
+
+    } catch (error) {
+      console.error('添加词典失败:', error);
+      alert('添加词典失败，请检查文件格式');
+    }
+  }
+
+  readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  }
+
+  async updateDictionaryRegistry(dictEntry) {
+    try {
+      // 获取当前注册表
+      const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+      const registry = await response.json();
+
+      // 添加到local数组
+      if (!registry.local) {
+        registry.local = [];
+      }
+      registry.local.push({
+        id: dictEntry.id,
+        name: dictEntry.name,
+        displayName: dictEntry.displayName,
+        language: dictEntry.language,
+        type: dictEntry.type,
+        domain: dictEntry.domain,
+        filePath: dictEntry.filePath,
+        enabled: dictEntry.enabled,
+        priority: dictEntry.priority
+      });
+
+      // 保存到storage（因为无法直接修改扩展文件）
+      await chrome.storage.local.set({
+        customDictRegistry: registry,
+        [`customDict_${dictEntry.id}`]: dictEntry.data
+      });
+
+      console.log('词典注册表已更新');
+    } catch (error) {
+      console.error('更新注册表失败:', error);
+      throw error;
+    }
+  }
+
+  async loadCustomDictionaries() {
+    try {
+      // 从注册表加载自定义词典
+      const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+      const registry = await response.json();
+      
+      if (registry.local && registry.local.length > 0) {
+        this.customDictionaries = registry.local;
+        this.updateCustomDictList();
+        this.addCustomDictsToUI(); // 添加到词典管理界面
+      }
+      
+      // 同时从storage加载（如果有的话）
+      const result = await chrome.storage.local.get(['customDictRegistry']);
+      if (result.customDictRegistry && result.customDictRegistry.local) {
+        const storageDicts = result.customDictRegistry.local;
+        // 合并注册表中的词典和storage中的词典
+        const allDicts = [...this.customDictionaries];
+        storageDicts.forEach(dict => {
+          if (!allDicts.find(d => d.id === dict.id)) {
+            allDicts.push(dict);
+          }
+        });
+        this.customDictionaries = allDicts;
+        this.updateCustomDictList();
+        this.addCustomDictsToUI();
+      }
+    } catch (error) {
+      console.error('加载自定义词典失败:', error);
+    }
+  }
+
+  addCustomDictsToUI() {
+    // 为每种语言添加自定义词典到词典管理界面
+    const languageGroups = ['zh', 'en', 'fr', 'es', 'ru', 'ja'];
+    
+    languageGroups.forEach(lang => {
+      const customDicts = this.customDictionaries.filter(dict => dict.language === lang);
+      if (customDicts.length > 0) {
+        this.addCustomDictsToLanguageGroup(lang, customDicts);
+      }
+    });
+  }
+
+  addCustomDictsToLanguageGroup(language, customDicts) {
+    const languageGroup = document.querySelector(`[data-language="${language}"]`);
+    if (!languageGroup) return;
+
+    const professionalDicts = languageGroup.querySelector('.professional-dicts-grid');
+    if (!professionalDicts) return;
+
+    // 移除之前添加的自定义词典（避免重复）
+    const existingCustomDicts = professionalDicts.querySelectorAll('.custom-dict-item');
+    existingCustomDicts.forEach(item => item.remove());
+
+    // 添加自定义词典
+    customDicts.forEach(dict => {
+      const dictItem = document.createElement('div');
+      dictItem.className = 'dict-item custom-dict-item';
+      dictItem.innerHTML = `
+        <label class="dict-label">
+          <input type="checkbox" id="dict-${dict.id}" ${dict.enabled ? 'checked' : ''} />
+          <span class="checkmark"></span>
+          <div class="dict-info-text">
+            <span class="dict-name">${dict.displayName}</span>
+            <span class="dict-desc">${dict.domain} (自定义)</span>
+          </div>
+        </label>
+      `;
+      
+      professionalDicts.appendChild(dictItem);
+      
+      // 绑定事件
+      const checkbox = dictItem.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', async (e) => {
+        this.dictSettings[dict.id] = e.target.checked;
+        console.log(`${dict.displayName}词典:`, e.target.checked ? '启用' : '禁用');
+        
+        // 立即保存设置
+        await this.saveDictSettings();
+      });
+      
+      // 添加到dictSettings
+      this.dictSettings[dict.id] = dict.enabled;
+    });
+  }
+
+  updateCustomDictList() {
+    const listContainer = document.getElementById('custom-dict-list');
+    if (!listContainer) return;
+
+    if (this.customDictionaries.length === 0) {
+      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暂无自定义词典</p>';
+      return;
+    }
+
+    listContainer.innerHTML = this.customDictionaries.map(dict => `
+      <div class="custom-dict-item">
+        <div class="custom-dict-info">
+          <div class="custom-dict-name">${dict.displayName}</div>
+          <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
+        </div>
+        <div class="custom-dict-actions">
+          <button class="remove-dict-btn" onclick="popupController.removeCustomDict('${dict.id}')">
+            删除
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async removeCustomDict(dictId) {
+    if (!confirm('确定要删除这个词典吗？')) {
+      return;
+    }
+
+    try {
+      // 从列表中移除
+      this.customDictionaries = this.customDictionaries.filter(dict => dict.id !== dictId);
+
+      // 更新注册表
+      const result = await chrome.storage.local.get(['customDictRegistry']);
+      if (result.customDictRegistry) {
+        const registry = result.customDictRegistry;
+        if (registry.local) {
+          registry.local = registry.local.filter(dict => dict.id !== dictId);
+        }
+        
+        // 保存更新后的注册表
+        await chrome.storage.local.set({ customDictRegistry: registry });
+        
+        // 删除词典数据
+        await chrome.storage.local.remove([`customDict_${dictId}`]);
+      }
+
+      // 更新UI
+      this.updateCustomDictList();
+      
+      alert('词典删除成功！');
+    } catch (error) {
+      console.error('删除词典失败:', error);
+      alert('删除词典失败');
+    }
   }
 
   bindDictTooltipEvents() {
@@ -553,7 +874,22 @@ class PopupController {
     try {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
-        this.dictSettings = { ...this.dictSettings, ...result.dictSettings };
+        // 清理无效的imported_前缀词典ID
+        const cleanedSettings = {};
+        Object.keys(result.dictSettings).forEach(dictId => {
+          // 跳过imported_前缀的无效ID
+          if (!dictId.startsWith('imported_')) {
+            cleanedSettings[dictId] = result.dictSettings[dictId];
+          }
+        });
+        
+        this.dictSettings = { ...this.dictSettings, ...cleanedSettings };
+        
+        // 如果清理了设置，保存更新后的设置
+        if (Object.keys(cleanedSettings).length !== Object.keys(result.dictSettings).length) {
+          console.log('清理了无效的词典设置ID');
+          await chrome.storage.local.set({ dictSettings: this.dictSettings });
+        }
       }
       
       // 更新UI
