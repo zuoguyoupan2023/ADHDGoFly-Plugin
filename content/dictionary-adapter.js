@@ -18,6 +18,58 @@ class DictionaryAdapter {
         };
         // 新增：词典ID级别的启用状态
         this.enabledDictionaries = {};
+        // 新增：导入词典数据缓存
+        this.importedDictionaries = {};
+        this.importedDictStorage = null;
+    }
+
+    /**
+     * 加载导入词典
+     * @private
+     */
+    async _loadImportedDictionaries() {
+        try {
+            if (!this.importedDictStorage) return;
+            
+            const importedDicts = await this.importedDictStorage.getAllDictionaries();
+            console.log(`Found ${importedDicts.length} imported dictionaries`);
+            
+            for (const dict of importedDicts) {
+                if (dict.enabled && dict.words) {
+                    // 转换为旧格式并缓存
+                    const converted = this._convertImportedDictionaryFormat(dict.words);
+                    this.importedDictionaries[dict.id] = {
+                        data: converted,
+                        language: dict.meta?.language || 'unknown',
+                        enabled: dict.enabled
+                    };
+                    
+                    console.log(`Loaded imported dictionary: ${dict.id} (${Object.keys(converted).length} words)`);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading imported dictionaries:', error);
+        }
+    }
+
+    /**
+     * 转换导入词典格式
+     * @param {Object} words 导入词典的words对象
+     * @returns {Object} 转换后的词典数据
+     * @private
+     */
+    _convertImportedDictionaryFormat(words) {
+        const converted = {};
+        for (const [word, info] of Object.entries(words)) {
+            if (typeof info === 'string') {
+                // 如果info是字符串，直接作为词性
+                converted[word] = info;
+            } else if (info && info.pos && info.pos.length > 0) {
+                // 如果info是对象且有pos数组，取第一个词性
+                converted[word] = info.pos[0];
+            }
+        }
+        return converted;
     }
 
     /**
@@ -39,6 +91,12 @@ class DictionaryAdapter {
      */
     async _doInitialize() {
         try {
+            // 初始化导入词典存储
+            if (typeof window !== 'undefined' && window.importedDictStorage) {
+                this.importedDictStorage = window.importedDictStorage;
+                await this._loadImportedDictionaries();
+            }
+            
             // 初始化新的词典管理器
             if (typeof DictionaryManager !== 'undefined') {
                 this.newManager = new DictionaryManager();
@@ -175,39 +233,49 @@ class DictionaryAdapter {
     getDictionary(language) {
         console.log(`Getting dictionary for language: ${language}`);
         
+        // 合并词典数据的容器
+        let mergedDict = {};
+        
+        // 1. 首先添加导入词典数据
+        for (const [dictId, dictInfo] of Object.entries(this.importedDictionaries)) {
+            if (dictInfo.enabled && dictInfo.language === language) {
+                Object.assign(mergedDict, dictInfo.data);
+                console.log(`Added imported dictionary ${dictId} (${Object.keys(dictInfo.data).length} words)`);
+            }
+        }
+        
+        // 2. 然后添加预设词典数据
         // 优先使用新的词典ID系统
         if (this.newManager && Object.keys(this.enabledDictionaries).length > 0) {
             const enabledDicts = this.newManager.getDictionariesByLanguage(language, false)
                 .filter(dict => this.enabledDictionaries[dict.id]);
             
-            console.log(`Found ${enabledDicts.length} enabled dictionaries for ${language}:`, 
+            console.log(`Found ${enabledDicts.length} enabled preset dictionaries for ${language}:`, 
                        enabledDicts.map(d => d.id));
             
             if (enabledDicts.length > 0) {
                 // 按优先级排序（数字越小优先级越高）
                 enabledDicts.sort((a, b) => (a.priority || 999) - (b.priority || 999));
                 
-                // 合并多个词典
-                const mergedDict = {};
+                // 合并预设词典
                 for (const dict of enabledDicts) {
                     const dictData = this.newManager.getDictionaryData(dict.id);
                     if (dictData) {
-                        // 高优先级词典的词条会覆盖低优先级的
+                        // 预设词典的词条会覆盖导入词典的同名词条
                         Object.assign(mergedDict, dictData);
                     }
                 }
-                
-                console.log(`Merged dictionary size: ${Object.keys(mergedDict).length}`);
-                return mergedDict;
+            }
+        } else {
+            // 向后兼容：使用语言级别的设置
+            if (this.enabledLanguages[language]) {
+                const legacyData = this.legacyData[language] || {};
+                Object.assign(mergedDict, legacyData);
             }
         }
         
-        // 向后兼容：使用语言级别的设置
-        if (this.enabledLanguages[language]) {
-            return this.legacyData[language] || {};
-        }
-        
-        return {};
+        console.log(`Final merged dictionary size for ${language}: ${Object.keys(mergedDict).length}`);
+        return mergedDict;
     }
 
     /**
@@ -421,6 +489,18 @@ class DictionaryAdapter {
                 this.newManager.clearCache();
             }
             return await this.initialize();
+        }
+    }
+
+    // 更新导入词典的启用状态
+    updateImportedDictionary(dictId, enabled) {
+        console.log(`Updating imported dictionary ${dictId} to ${enabled ? 'enabled' : 'disabled'}`);
+        
+        if (this.importedDictionaries[dictId]) {
+            this.importedDictionaries[dictId].enabled = enabled;
+            console.log(`Successfully updated imported dictionary ${dictId} status`);
+        } else {
+            console.warn(`Imported dictionary ${dictId} not found in cache`);
         }
     }
 }

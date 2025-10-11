@@ -567,7 +567,8 @@ class PopupController {
       fileName: fileName,
       meta: dictData.meta,
       words: dictData.words,
-      importedAt: new Date().toISOString()
+      importedAt: new Date().toISOString(),
+      enabled: true  // 新导入的词典默认启用
     };
 
     // 使用IndexedDB存储
@@ -597,21 +598,24 @@ class PopupController {
     importedList.innerHTML = importedDicts.map(dict => `
       <div class="imported-dict-item" data-dict-id="${dict.id}">
         <div class="imported-dict-header">
-          <div class="imported-dict-name">${dict.meta.name}</div>
+          <div class="imported-dict-left">
+            <input type="checkbox" class="dict-checkbox" data-dict-id="${dict.id}" ${dict.enabled ? 'checked' : ''}>
+            <div class="imported-dict-name">${dict.meta.name}</div>
+          </div>
           <button class="delete-dict-btn" data-dict-id="${dict.id}" title="删除词典">
             <span class="delete-icon">×</span>
           </button>
         </div>
         <div class="imported-dict-meta">
           <span>🌐 ${this.getLanguageDisplayName(dict.meta.language)}</span>
-          <span>📚 ${dict.words.length} 词条</span>
           <span>📅 ${new Date(dict.importedAt).toLocaleDateString()}</span>
         </div>
       </div>
     `).join('');
 
-    // 绑定删除按钮事件
+    // 绑定删除按钮事件和复选框事件
     this.bindDeleteEvents();
+    this.bindCheckboxEvents();
   }
 
   getLanguageDisplayName(langCode) {
@@ -635,6 +639,58 @@ class PopupController {
         await this.handleDeleteDictionary(dictId);
       });
     });
+  }
+
+  bindCheckboxEvents() {
+    const checkboxes = document.querySelectorAll('.dict-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', async (e) => {
+        const dictId = checkbox.getAttribute('data-dict-id');
+        const enabled = checkbox.checked;
+        await this.handleDictToggle(dictId, enabled);
+      });
+    });
+  }
+
+  async handleDictToggle(dictId, enabled) {
+    try {
+      // 获取当前词典数据
+      const dict = await window.importedDictStorage.getDictionary(dictId);
+      if (!dict) {
+        console.error('词典不存在:', dictId);
+        return;
+      }
+
+      // 更新enabled状态
+      dict.enabled = enabled;
+      
+      // 保存到IndexedDB
+      await window.importedDictStorage.saveDictionary(dict);
+      
+      console.log(`词典 ${dictId} ${enabled ? '启用' : '禁用'}成功`);
+      
+      // 通知content script更新导入词典状态
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0]) {
+          await chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'updateImportedDictionaries',
+            dictId: dictId,
+            enabled: enabled
+          });
+        }
+      } catch (error) {
+        console.warn('通知content script失败:', error);
+      }
+      
+    } catch (error) {
+      console.error('切换词典状态失败:', error);
+      // 恢复复选框状态
+      const checkbox = document.querySelector(`.dict-checkbox[data-dict-id="${dictId}"]`);
+      if (checkbox) {
+        checkbox.checked = !enabled;
+      }
+    }
   }
 
   async handleDeleteDictionary(dictId) {
