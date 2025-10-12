@@ -24,7 +24,8 @@
     "downloadLabel": "📥 下载：",
     "officialDownloadPage": "官方下载页面",
     "slowTip": "💡 商店安装用户请耐心等待，会在1-7天内自动更新",
-    "contactInfo": "📞 WeChat: zuoguyoupan2023"
+    "contactInfo": "📞 WeChat: zuoguyoupan2023",
+    "testMode": "🧪 3分钟 (测试一下是否有效)"
   },
   "buttons": {
     "toggle": "切换高亮",
@@ -271,11 +272,15 @@
        "cachedPages": "缓存页面",
        "usedSpace": "已用空间",
        "lastCleanup": "上次清理",
+       "cachedPagesShort": "缓存页面",
+       "usedSpaceShort": "已用空间",
+       "lastCleanupShort": "上次清理",
        "cleanup": "缓存清理",
        "cleanupExpired": "清理过期缓存",
        "cleanupAll": "清除所有缓存",
        "cleanupDesc": "手动清理缓存数据，释放存储空间",
-       "save": "保存存储设置"
+       "save": "保存存储设置",
+       "neverCleaned": "从未清理"
      },
      "other": {
        "title": "其他设置",

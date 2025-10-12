@@ -27,7 +27,8 @@
     "contactInfo": "📞 WeChat: zuoguyoupan2023",
     "officialWebsite": "Official Website",
     "visitOfficialSite": "Visit our official website for more information and support",
-    "autoUpdateNote": "💡 Extensions installed from browser store will auto-update to the latest version"
+    "autoUpdateNote": "💡 Extensions installed from browser store will auto-update to the latest version",
+    "testMode": "🧪 3 minutes (test if effective)"
   },
   "buttons": {
     "toggle": "Toggle Highlighting",
@@ -238,11 +239,15 @@
         "cachedPages": "Cached Pages",
         "usedSpace": "Used Space",
         "lastCleanup": "Last Cleanup",
+        "cachedPagesShort": "Pages",
+        "usedSpaceShort": "Space",
+        "lastCleanupShort": "Cleanup",
         "cleanup": "Cache Cleanup",
         "cleanupExpired": "Clean Expired Cache",
         "cleanupAll": "Clear All Cache",
         "cleanupDesc": "Manually clean cache data to free up storage space",
-        "save": "Save Storage Settings"
+        "save": "Save Storage Settings",
+        "neverCleaned": "Never"
       },
       "other": {
         "title": "Other Settings",

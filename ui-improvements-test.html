@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>UI改进测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-container {
+            width: 320px;
+            height: 400px;
+            border: 2px solid #007aff;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .improvement-list {
+            background: #e7f3ff;
+            border-left: 4px solid #007aff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .improvement-list h3 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+        .improvement-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .improvement-list li {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h1>UI改进验证测试</h1>
+    
+    <div class="improvement-list">
+        <h3>🔧 本次修复的问题</h3>
+        <ul>
+            <li><strong>版本信息换行</strong>：英文版本信息过长时自动换行显示</li>
+            <li><strong>测试模式i18n</strong>：为"🧪 3分钟 (测试一下是否有效)"添加国际化支持</li>
+            <li><strong>存储统计布局</strong>：Storage Usage信息栏内容支持换行，避免文本被截断</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>1. 版本信息换行测试</h2>
+        <p>测试版本信息在英文环境下的换行效果：</p>
+        <div class="test-container">
+            <iframe src="popup.html"></iframe>
+        </div>
+        <p><strong>预期效果</strong>：当英文版本信息过长时，应该自动换行而不是被截断</p>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 测试模式i18n支持</h2>
+        <p>验证"🧪 3分钟 (测试一下是否有效)"的国际化支持：</p>
+        <ul>
+            <li><strong>中文</strong>：🧪 3分钟 (测试一下是否有效)</li>
+            <li><strong>英文</strong>：🧪 3 minutes (test if effective)</li>
+        </ul>
+        <p><strong>测试方法</strong>：切换语言后检查相关文本是否正确翻译</p>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 存储统计布局改进</h2>
+        <p>Storage Usage信息栏的改进效果：</p>
+        
+        <h4>改进前的问题：</h4>
+        <ul>
+            <li>Cached Pages、Used Space、Last Cleanup 文本可能被截断</li>
+            <li>长时间戳显示不完整</li>
+            <li>在窄容器中布局混乱</li>
+        </ul>
+        
+        <h4>改进后的效果：</h4>
+        <ul>
+            <li>✅ 支持文本自动换行</li>
+            <li>✅ 长文本使用省略号处理</li>
+            <li>✅ 时间戳使用更紧凑的格式</li>
+            <li>✅ 添加紧凑模式支持</li>
+        </ul>
+        
+        <p><strong>测试方法</strong>：打开设置页面，查看Storage Usage部分的显示效果</p>
+    </div>
+
+    <div class="test-section">
+        <h2>4. CSS改进详情</h2>
+        <h4>版本信息样式：</h4>
+        <pre><code>.version-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}</code></pre>
+        
+        <h4>存储统计样式：</h4>
+        <pre><code>.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+}</code></pre>
+        
+        <h4>紧凑模式：</h4>
+        <pre><code>.storage-stats.compact .stat-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}</code></pre>
+    </div>
+
+    <script>
+        // 简单的测试脚本
+        console.log('UI改进测试页面已加载');
+        
+        // 检查iframe是否正确加载
+        const iframe = document.querySelector('iframe');
+        if (iframe) {
+            iframe.onload = function() {
+                console.log('弹窗页面已加载到iframe中');
+            };
+            
+            iframe.onerror = function() {
+                console.error('弹窗页面加载失败');
+            };
+        }
+        
+        // 模拟不同的存储统计数据
+        const mockStorageStats = [
+            { label: 'Cached Pages', value: '0' },
+            { label: 'Used Space', value: '0 B' },
+            { label: 'Last Cleanup', value: '2025/10/13 04:15:16' }
+        ];
+        
+        console.log('模拟存储统计数据:', mockStorageStats);
+    </script>
+</body>
+</html>
