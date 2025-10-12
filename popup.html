@@ -616,7 +616,7 @@
       }
 
       .dict-tooltip::before {
-        content: '';
+        content: "";
         position: absolute;
         top: -6px;
         left: 20px;
@@ -2302,23 +2302,27 @@
                 + 添加词典文件
               </button>
             </div>
-            
+
             <div class="custom-dict-list" id="custom-dict-list">
               <!-- 动态生成的自定义词典列表 -->
             </div>
-            
+
             <!-- 添加词典表单 -->
-            <div class="add-dict-form" id="add-dict-form" style="display: none;">
+            <div class="add-dict-form" id="add-dict-form" style="display: none">
               <div class="form-group">
                 <label for="dict-file-input">选择词典文件 (.json)</label>
                 <input type="file" id="dict-file-input" accept=".json" />
               </div>
-              
+
               <div class="form-group">
                 <label for="dict-name-input">词典名称</label>
-                <input type="text" id="dict-name-input" placeholder="输入词典名称" />
+                <input
+                  type="text"
+                  id="dict-name-input"
+                  placeholder="输入词典名称"
+                />
               </div>
-              
+
               <div class="form-group">
                 <label for="dict-language-select">语言</label>
                 <select id="dict-language-select">
@@ -2330,12 +2334,16 @@
                   <option value="ja">日语</option>
                 </select>
               </div>
-              
+
               <div class="form-group">
                 <label for="dict-domain-input">领域 (可选)</label>
-                <input type="text" id="dict-domain-input" placeholder="如：医学、法律、技术等" />
+                <input
+                  type="text"
+                  id="dict-domain-input"
+                  placeholder="如：医学、法律、技术等"
+                />
               </div>
-              
+
               <div class="form-actions">
                 <button class="cancel-btn" id="cancel-add-dict">取消</button>
                 <button class="confirm-btn" id="confirm-add-dict">添加</button>
@@ -3079,7 +3087,10 @@
                   >
                 </label>
                 <div class="radio-group">
-                  <label class="radio-option" style="background-color: #fff3cd; border: 1px solid #ffeaa7;">
+                  <label
+                    class="radio-option"
+                    style="background-color: #fff3cd; border: 1px solid #ffeaa7"
+                  >
                     <input
                       type="radio"
                       name="storage-retention"
@@ -3226,49 +3237,6 @@
                 >
                   保存存储设置
                 </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 调试工具 -->
-          <div class="settings-section">
-            <div class="section-header">
-              <h4>🔧 调试工具</h4>
-            </div>
-            <div class="section-content">
-              <div class="setting-item">
-                <label class="setting-label-text">
-                  <span>存储数据检查</span>
-                </label>
-                <div class="debug-actions">
-                  <button class="debug-btn" id="check-storage-btn">
-                    检查存储数据
-                  </button>
-                  <button class="debug-btn" id="check-custom-dicts-btn">
-                    检查自定义词典
-                  </button>
-                  <button class="debug-btn" id="test-external-dict-btn">
-                    测试外部词典加载
-                  </button>
-                </div>
-                <div class="debug-output" id="debug-output" style="display: none;">
-                  <h5>调试输出：</h5>
-                  <pre id="debug-content"></pre>
-                </div>
-              </div>
-              
-              <div class="setting-item">
-                <label class="setting-label-text">
-                  <span>词典测试</span>
-                </label>
-                <div class="dict-test">
-                  <input type="text" id="test-word-input" placeholder="输入测试词汇（如：测试、走、开发）" />
-                  <button class="debug-btn" id="test-word-btn">测试高亮</button>
-                </div>
-                <div class="test-result" id="test-result" style="display: none;">
-                  <h5>测试结果：</h5>
-                  <div id="test-content"></div>
-                </div>
               </div>
             </div>
           </div>
