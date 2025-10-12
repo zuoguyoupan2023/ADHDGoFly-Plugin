@@ -14,28 +14,20 @@
 
       body {
         width: 320px;
-        min-width: 320px;
-        max-width: 320px;
         height: 400px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           sans-serif;
         display: flex;
         background: #f8f9fa;
-        overflow: hidden;
       }
 
       /* 主内容区域 */
       .main-content {
         flex: 1;
-        min-width: 0;
-        width: 260px;
-        max-width: 260px;
         padding: 20px;
         background: white;
         display: flex;
         flex-direction: column;
-        overflow-x: hidden;
-        overflow-y: auto;
       }
 
       /* 应用标题和状态区域 */
@@ -143,8 +135,6 @@
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
-        max-width: 100%;
-        overflow-x: hidden;
       }
 
       .download-link {
@@ -205,48 +195,6 @@
         color: #666;
         text-align: center;
         margin-top: 4px;
-      }
-
-      /* 通用宽度约束 - 确保所有内容不超出容器 */
-      * {
-        box-sizing: border-box;
-      }
-
-      .main-content * {
-        max-width: 100%;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-
-      /* 防止长文本撑开容器 */
-      .dict-name,
-      .dict-desc,
-      .version-text,
-      .update-description,
-      .legend-item span,
-      .stat-label,
-      .rec-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 100%;
-      }
-
-      /* 确保弹性布局不会超出容器 */
-      .toggle-group,
-      .dict-tags,
-      .alternative-links,
-      .download-options {
-        max-width: 100%;
-        overflow-x: hidden;
-      }
-
-      /* 表格和列表项宽度约束 */
-      .stat-item,
-      .legend-item,
-      .recommendation-item {
-        max-width: 100%;
-        overflow: hidden;
       }
 
       .separator {
@@ -392,8 +340,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        max-width: 100%;
-        overflow-x: hidden;
       }
 
       .dict-tag {
@@ -406,16 +352,11 @@
         font-weight: 500;
         color: #555;
         white-space: nowrap;
-        max-width: 100px;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       /* 右侧侧边栏 */
       .sidebar {
         width: 60px;
-        min-width: 60px;
-        max-width: 60px;
         background: #f0f0f0;
         border-left: 1px solid #e0e0e0;
         display: flex;
@@ -424,7 +365,6 @@
         padding: 10px 0;
         gap: 8px;
         overflow-y: auto;
-        flex-shrink: 0;
       }
 
       .sidebar-btn {
@@ -479,10 +419,6 @@
         display: none;
         flex-direction: column;
         height: 100%;
-        width: 100%;
-        min-width: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
       }
 
       .page.active {
@@ -494,9 +430,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 0;
-        overflow-x: hidden;
       }
 
       .dict-info {
@@ -596,8 +529,6 @@
         flex-wrap: wrap;
         gap: 6px;
         align-items: flex-start;
-        max-width: 100%;
-        overflow-x: hidden;
       }
 
       .professional-dicts .dict-item {
@@ -609,8 +540,6 @@
         flex: 0 0 auto;
         width: auto;
         min-width: fit-content;
-        max-width: calc(50% - 3px);
-        overflow: hidden;
       }
 
       .professional-dicts .dict-item:hover {
@@ -627,9 +556,7 @@
         align-items: center;
         gap: 6px;
         white-space: nowrap;
-        width: 100%;
-        min-width: 0;
-        overflow: hidden;
+        width: auto;
       }
 
       .professional-dicts .checkmark {
@@ -650,9 +577,6 @@
         color: #333;
         display: block;
         line-height: 1.2;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
 
       .professional-dicts .dict-desc {
@@ -852,8 +776,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        max-width: 100%;
-        overflow-x: hidden;
       }
 
       /* 按钮颜色方案 - 使用CSS变量实现动态切换 */
@@ -975,9 +897,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 0;
-        overflow-x: hidden;
       }
 
       .colors-info {
@@ -1039,8 +958,6 @@
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
-        max-width: 100%;
-        overflow-x: hidden;
       }
 
       .preview-word {
@@ -1131,9 +1048,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 0;
-        overflow-x: hidden;
       }
 
       .text-info {
@@ -1282,9 +1196,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 0;
-        overflow-x: hidden;
       }
 
       .ai-info {
