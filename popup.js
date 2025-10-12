@@ -24,8 +24,51 @@ class PopupController {
       'zh-legal-preset': false,
       'zh-history-preset': false,
       'zh-medical-preset': false,
-      'zh-literature-preset': false
-    };
+        'zh-literature-preset': false
+      };
+      
+      /**
+       * 更新主页词性颜色图例
+       * 实时更新主页显示的词性颜色，让用户看到当前真正使用的颜色方案
+       * @param {Object} colors - 颜色配置对象，包含noun、verb、adj属性
+       */
+      this.updateHomeLegendColors = function(colors) {
+        // 更新名词颜色
+        const nounLegend = document.querySelector('.legend-noun');
+        if (nounLegend) {
+          nounLegend.style.backgroundColor = this.hexToRgba(colors.noun, 0.3);
+        }
+        
+        // 更新动词颜色
+        const verbLegend = document.querySelector('.legend-verb');
+        if (verbLegend) {
+          verbLegend.style.backgroundColor = this.hexToRgba(colors.verb, 0.3);
+        }
+        
+        // 更新形容词颜色
+        const adjLegend = document.querySelector('.legend-adj');
+        if (adjLegend) {
+          adjLegend.style.backgroundColor = this.hexToRgba(colors.adj, 0.3);
+        }
+      };
+
+      /**
+       * 将十六进制颜色转换为RGBA格式
+       * @param {string} hex - 十六进制颜色值
+       * @param {number} alpha - 透明度值 (0-1)
+       * @returns {string} RGBA颜色字符串
+       */
+      this.hexToRgba = function(hex, alpha) {
+        // 移除#号
+        hex = hex.replace('#', '');
+        
+        // 解析RGB值
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      };
     this.colorSchemes = {
       default: {
         noun: '#0066cc',    // 蓝色
@@ -1370,6 +1413,9 @@ class PopupController {
     root.style.setProperty('--adj-color', colors.adj);
     // 比较级/最高级颜色保持不变
     root.style.setProperty('--comparative-color', '#9966cc');
+    
+    // 更新主页词性颜色图例
+    this.updateHomeLegendColors(colors);
   }
 
   async loadColorSettings() {
@@ -1388,6 +1434,38 @@ class PopupController {
 
   updateColorUI() {
     this.selectColorScheme(this.currentColorScheme);
+    
+    // 确保主页图例也反映当前颜色方案
+    const colorSchemes = {
+      default: {
+        noun: '#0066cc',
+        verb: '#cc0000', 
+        adj: '#009933'
+      },
+      warm: {
+        noun: '#8b4513',
+        verb: '#dc143c',
+        adj: '#ff8c00'
+      },
+      cool: {
+        noun: '#191970',
+        verb: '#008b8b',
+        adj: '#4169E1'
+      },
+      pastel: {
+        noun: '#da70d6',
+        verb: '#20b2aa',
+        adj: '#f0e68c'
+      },
+      'high-contrast': {
+        noun: '#000080',
+        verb: '#8b0000',
+        adj: '#228b22'
+      }
+    };
+    
+    const colors = colorSchemes[this.currentColorScheme] || colorSchemes.default;
+    this.updateHomeLegendColors(colors);
   }
   
   async loadHighlightingToggles() {
