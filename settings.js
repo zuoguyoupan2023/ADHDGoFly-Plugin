@@ -339,19 +339,33 @@ class SettingsManager {
     }
 
     showMessage(message, type = 'success') {
+        // 移除之前的消息（如果存在）
+        const existingMessages = document.querySelectorAll('.message');
+        existingMessages.forEach(msg => {
+            if (msg.parentNode) {
+                msg.parentNode.removeChild(msg);
+            }
+        });
+        
+        // 创建新消息
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         messageDiv.textContent = message;
         
-        // 添加到页面顶部
-        document.body.insertBefore(messageDiv, document.body.firstChild);
+        // 添加到body（使用fixed定位，不占据文档流空间）
+        document.body.appendChild(messageDiv);
         
-        // 3秒后自动移除
+        // 2.5秒后开始淡出动画
         setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.parentNode.removeChild(messageDiv);
-            }
-        }, 3000);
+            messageDiv.classList.add('fade-out');
+            
+            // 动画完成后移除元素
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 300);
+        }, 2500);
     }
 
     async checkVersion() {
