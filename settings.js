@@ -485,60 +485,74 @@ class SettingsManager {
 
     async cleanupExpiredCache() {
         try {
-            const settings = await chrome.storage.sync.get({
-                cacheRetentionDays: 7,
-                cacheEnabled: true
-            });
-
-            if (!settings.cacheEnabled) {
-                this.showMessage('缓存已禁用，无需清理', 'info');
+            // 显示清理中的提示
+            this.showMessage('正在清理过期缓存...', 'info');
+            
+            // 通过消息传递调用 content script 中的 EventCacheManager
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                this.showMessage('无法获取当前标签页，请在网页中打开设置', 'error');
                 return;
             }
 
-            const cutoffTime = Date.now() - (settings.cacheRetentionDays * 24 * 60 * 60 * 1000);
-            const allData = await chrome.storage.local.get(null);
-            const keysToRemove = [];
+            const response = await chrome.tabs.sendMessage(tab.id, {
+                action: 'cleanupExpiredCache'
+            });
 
-            // 查找过期的缓存项
-            for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('cache_') && value.timestamp && value.timestamp < cutoffTime) {
-                    keysToRemove.push(key);
-                }
-            }
-
-            if (keysToRemove.length > 0) {
-                await chrome.storage.local.remove(keysToRemove);
-                await chrome.storage.local.set({ lastCleanupTime: Date.now() });
-                
-                this.showMessage(`已清理 ${keysToRemove.length} 个过期缓存项`);
+            if (response && response.success) {
+                this.showMessage('过期缓存清理完成');
+                // 更新显示的统计数据
                 await this.updateStorageUsage();
             } else {
-                this.showMessage('没有找到过期的缓存项', 'info');
+                const errorMsg = response?.error || '未知错误';
+                console.error('清理过期缓存失败:', errorMsg);
+                this.showMessage(`清理失败: ${errorMsg}`, 'error');
             }
         } catch (error) {
             console.error('清理过期缓存失败:', error);
-            this.showMessage('清理失败，请重试', 'error');
+            if (error.message && error.message.includes('Could not establish connection')) {
+                this.showMessage('当前页面不支持缓存功能，请在普通网页中打开设置', 'error');
+            } else {
+                this.showMessage('清理失败，请重试', 'error');
+            }
         }
     }
 
     async cleanupAllCache() {
         if (confirm('确定要清除所有缓存吗？这将删除所有已保存的高亮数据。')) {
             try {
-                const allData = await chrome.storage.local.get(null);
-                const cacheKeys = Object.keys(allData).filter(key => key.startsWith('cache_'));
+                // 显示清理中的提示
+                this.showMessage('正在清除所有缓存...', 'info');
                 
-                if (cacheKeys.length > 0) {
-                    await chrome.storage.local.remove(cacheKeys);
-                    await chrome.storage.local.set({ lastCleanupTime: Date.now() });
-                    
-                    this.showMessage(`已清理 ${cacheKeys.length} 个缓存项`);
+                // 通过消息传递调用 content script 中的 EventCacheManager
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                
+                if (!tab) {
+                    this.showMessage('无法获取当前标签页，请在网页中打开设置', 'error');
+                    return;
+                }
+
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    action: 'clearAllCache'
+                });
+
+                if (response && response.success) {
+                    this.showMessage('所有缓存已清除');
+                    // 更新显示的统计数据
                     await this.updateStorageUsage();
                 } else {
-                    this.showMessage('没有找到缓存数据', 'info');
+                    const errorMsg = response?.error || '未知错误';
+                    console.error('清除所有缓存失败:', errorMsg);
+                    this.showMessage(`清除失败: ${errorMsg}`, 'error');
                 }
             } catch (error) {
-                console.error('清理所有缓存失败:', error);
-                this.showMessage('清理失败，请重试', 'error');
+                console.error('清除所有缓存失败:', error);
+                if (error.message && error.message.includes('Could not establish connection')) {
+                    this.showMessage('当前页面不支持缓存功能，请在普通网页中打开设置', 'error');
+                } else {
+                    this.showMessage('清除失败，请重试', 'error');
+                }
             }
         }
     }
