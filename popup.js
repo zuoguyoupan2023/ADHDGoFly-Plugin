@@ -425,7 +425,7 @@ class PopupController {
       targetPage.classList.add('active');
       this.currentPage = pageId;
       
-      // 如果是词典页面，初始化语言分组监听器和tooltip事件
+      // 如果是词典页面，初始化语言分组监听器
       if (pageId === 'dict') {
         console.log('Switching to dict page, initializing language group listeners...');
         setTimeout(() => {
@@ -528,12 +528,12 @@ class PopupController {
     const domainInput = document.getElementById('dict-domain-input');
 
     if (!fileInput.files[0]) {
-      alert('请选择词典文件');
+      this.showError('请选择词典文件');
       return;
     }
 
     if (!nameInput.value.trim()) {
-      alert('请输入词典名称');
+      this.showError('请输入词典名称');
       return;
     }
 
@@ -546,7 +546,7 @@ class PopupController {
       try {
         dictData = JSON.parse(fileContent);
       } catch (error) {
-        alert('词典文件格式错误，请确保是有效的JSON文件');
+        this.showError('词典文件格式错误，请确保是有效的JSON文件');
         return;
       }
 
@@ -580,11 +580,11 @@ class PopupController {
       this.updateCustomDictList();
       this.hideAddDictForm();
 
-      alert('词典添加成功！');
+      this.showSuccess('词典添加成功！');
 
     } catch (error) {
       console.error('添加词典失败:', error);
-      alert('添加词典失败，请检查文件格式');
+      this.showError('添加词典失败，请检查文件格式');
     }
   }
 
@@ -656,12 +656,13 @@ class PopupController {
       // 保存到storage（因为无法直接修改扩展文件）
       await chrome.storage.local.set({
         customDictRegistry: registry,
-        [`dictionary_${dictEntry.id}`]: dictEntry.data  // 修改存储键名以匹配加载逻辑
+        [`dictionary_${dictEntry.id}`]: dictEntry.data  // 使用统一的存储键名格式：dictionary_${id}
       });
 
       console.log('词典注册表已更新，当前包含', registry.local.length, '个自定义词典');
     } catch (error) {
       console.error('更新注册表失败:', error);
+      this.showError(`更新词典注册表失败: ${error.message}`);
       throw error;
     }
   }
@@ -725,6 +726,7 @@ class PopupController {
       }
     } catch (error) {
       console.error('加载自定义词典失败:', error);
+      this.showError(`加载自定义词典失败: ${error.message}`);
       this.customDictionaries = [];
     }
   }
@@ -741,6 +743,11 @@ class PopupController {
     });
   }
 
+  /**
+   * 将自定义词典添加到指定语言组
+   * @param {string} language - 语言代码
+   * @param {Array} customDicts - 该语言的自定义词典列表
+   */
   addCustomDictsToLanguageGroup(language, customDicts) {
     const languageGroup = document.querySelector(`[data-language="${language}"]`);
     if (!languageGroup) return;
@@ -852,20 +859,24 @@ class PopupController {
         // 保存更新后的注册表
         await chrome.storage.local.set({ customDictRegistry: registry });
         
-        // 删除词典数据
+        // 删除词典数据（使用统一的存储键名格式：dictionary_${id}）
         await chrome.storage.local.remove([`dictionary_${dictId}`]);
       }
 
       // 更新UI
       this.updateCustomDictList();
       
-      alert('词典删除成功！');
+      this.showSuccess('词典删除成功！');
     } catch (error) {
       console.error('删除词典失败:', error);
-      alert('删除词典失败');
+      this.showError('删除词典失败');
     }
   }
 
+  /**
+   * 绑定词典提示框事件
+   * 处理鼠标悬停显示词典详细信息的功能
+   */
   bindDictTooltipEvents() {
     // 为所有词典项添加鼠标悬停事件
     const dictItems = document.querySelectorAll('.dict-item');
@@ -892,6 +903,13 @@ class PopupController {
     });
   }
 
+  /**
+   * 显示词典提示框
+   * 在指定元素旁边显示词典的详细信息
+   * @param {HTMLElement} element - 触发提示框的元素
+   * @param {string} dictId - 词典ID
+   * @param {Object} meta - 词典元数据
+   */
   showDictTooltip(element, dictId, meta) {
     const tooltip = document.getElementById('dict-tooltip');
     const titleEl = document.getElementById('tooltip-title');
@@ -928,6 +946,10 @@ class PopupController {
     tooltip.classList.add('show');
   }
 
+  /**
+   * 隐藏词典提示框
+   * 移除当前显示的提示框
+   */
   hideDictTooltip() {
     const tooltip = document.getElementById('dict-tooltip');
     if (tooltip) {
@@ -935,6 +957,12 @@ class PopupController {
     }
   }
 
+  /**
+   * 获取词典显示名称
+   * 根据词典ID获取对应的显示名称
+   * @param {string} dictId - 词典ID
+   * @returns {string} 词典的显示名称
+   */
   getDictDisplayName(dictId) {
     // 词典显示名称映射
     const dictNames = {
@@ -960,6 +988,10 @@ class PopupController {
     return dictNames[dictId] || dictId;
   }
 
+  /**
+   * 加载词典设置
+   * 从Chrome存储中加载词典设置并更新UI
+   */
   async loadDictSettings() {
     try {
       const result = await chrome.storage.local.get(['dictSettings']);
@@ -989,6 +1021,10 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新词典UI
+   * 根据词典设置更新复选框状态和首页标签显示
+   */
   updateDictUI() {
     Object.keys(this.dictSettings).forEach(dictId => {
       const checkbox = document.getElementById(`dict-${dictId}`);
@@ -1001,6 +1037,10 @@ class PopupController {
     this.updateDictTags();
   }
   
+  /**
+   * 更新词典标签
+   * 在首页显示当前启用的词典标签
+   */
   updateDictTags() {
     const dictTagsContainer = document.getElementById('dictTags');
     if (!dictTagsContainer) return;
@@ -1032,10 +1072,13 @@ class PopupController {
     // 根据词典界面的实际复选框状态添加标签
     Object.keys(this.dictSettings).forEach(dictId => {
       if (this.dictSettings[dictId]) {
-        let displayName = dictNames[dictId];
+        let displayName = null;
         
-        // 如果是自定义词典，从customDictionaries中获取名称
-        if (!displayName && this.customDictionaries) {
+        // 首先检查是否是预设词典
+        if (dictNames[dictId]) {
+          displayName = dictNames[dictId];
+        } else if (this.customDictionaries) {
+          // 如果不是预设词典，从customDictionaries中获取名称
           const customDict = this.customDictionaries.find(dict => dict.id === dictId);
           if (customDict) {
             // 优先使用displayName，然后是name字段
@@ -1063,6 +1106,10 @@ class PopupController {
     });
   }
 
+  /**
+   * 保存词典设置
+   * 将当前词典设置保存到Chrome存储并通知content script
+   */
   async saveDictSettings() {
     try {
       await chrome.storage.local.set({ dictSettings: this.dictSettings });
@@ -1093,14 +1140,16 @@ class PopupController {
       
       console.log('词典设置已保存:', this.dictSettings);
       
-      // 更新首页词典标签显示
-      this.updateDictTags();
-      
     } catch (error) {
       console.error('保存词典设置失败:', error);
+      this.showError(`保存词典设置失败: ${error.message}`);
     }
   }
 
+  /**
+   * 检查插件状态
+   * 获取当前标签页的插件状态并更新UI
+   */
   async checkStatus() {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -1123,6 +1172,10 @@ class PopupController {
     }
   }
 
+  /**
+   * 处理开关切换
+   * 切换插件的启用/禁用状态
+   */
   async handleToggle() {
     const toggleBtn = document.getElementById('toggle');
     const statusDiv = document.getElementById('status');
@@ -1155,6 +1208,11 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新UI状态
+   * 根据插件状态更新界面显示
+   * @param {Object} status - 插件状态对象
+   */
   updateUI(status) {
     const toggleBtn = document.getElementById('toggle');
     const statusDiv = document.getElementById('status');
@@ -1183,6 +1241,11 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新统计信息
+   * 显示插件的统计数据
+   * @param {Object} stats - 统计数据对象
+   */
   updateStats(stats) {
     // 这里可以添加统计信息的显示逻辑
     console.log('统计信息:', stats);
@@ -1720,6 +1783,10 @@ class PopupController {
 
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
+  /**
+   * 显示AI错误状态
+   * 在AI分析页面显示错误信息
+   */
   showAIError() {
     const errorText = window.i18n.t('pages.ai.error');
     
@@ -1736,12 +1803,19 @@ class PopupController {
     // document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
   }
 
+  /**
+   * 刷新AI分析
+   * 重新加载AI分析数据
+   */
   async refreshAIAnalysis() {
     console.log('刷新AI分析...');
     await this.loadAIAnalysis();
   }
 
-  // 版本检查方法
+  /**
+   * 检查版本更新
+   * 获取当前版本并检查是否有新版本可用
+   */
   async checkVersion() {
     try {
       // 获取当前版本
@@ -1803,6 +1877,10 @@ class PopupController {
   }
 
   // 更新版本UI显示
+  /**
+   * 更新版本UI
+   * 根据版本检查结果更新版本信息显示
+   */
   updateVersionUI() {
     if (!this.versionInfo) return;
     
@@ -1847,6 +1925,29 @@ class PopupController {
         updateNotice.style.display = 'none';
       }
     }
+  }
+
+  // 统一的消息处理方法
+  /**
+   * 显示成功消息
+   * 使用alert显示成功提示（后续可改为更优雅的UI提示）
+   * @param {string} message - 要显示的成功消息
+   */
+  showSuccess(message) {
+    // 可以在这里实现统一的成功消息显示逻辑
+    // 暂时使用alert，后续可以改为更优雅的UI提示
+    alert(message);
+  }
+
+  /**
+   * 显示错误消息
+   * 使用alert显示错误提示（后续可改为更优雅的UI提示）
+   * @param {string} message - 要显示的错误消息
+   */
+  showError(message) {
+    // 可以在这里实现统一的错误消息显示逻辑
+    // 暂时使用alert，后续可以改为更优雅的UI提示
+    alert(message);
   }
 }
 
