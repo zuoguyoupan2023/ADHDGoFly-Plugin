@@ -41,9 +41,6 @@ class ADHDHighlighter {
       this.textSegmenter
     );
     
-    // 缓存集成管理器
-    this.cacheIntegrationManager = new CacheIntegrationManager();
-    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -99,9 +96,6 @@ class ADHDHighlighter {
       // 加载文本设置
       await this.loadTextSettings();
       
-      // 初始化缓存集成管理器并包装处理器
-      await this.initializeCacheIntegration();
-      
       // 标记为已初始化
       this.isInitialized = true;
       
@@ -113,31 +107,6 @@ class ADHDHighlighter {
     } catch (error) {
       console.error('初始化失败:', error);
       this.isInitialized = false;
-    }
-  }
-
-  /**
-   * 初始化缓存集成
-   * @private
-   */
-  async initializeCacheIntegration() {
-    try {
-      console.log('🔄 初始化缓存集成管理器...');
-      
-      // 等待缓存系统初始化完成
-      await this.cacheIntegrationManager.initializeCacheSystem();
-      
-      // 包装流式处理器
-      this.streamingPageProcessor = this.cacheIntegrationManager.integrateWithMainProcessor(this.streamingPageProcessor);
-      
-      // 包装传统处理器
-      this.pageProcessor = this.cacheIntegrationManager.integrateWithMainProcessor(this.pageProcessor);
-      
-      console.log('✅ 缓存集成管理器初始化完成');
-      
-    } catch (error) {
-      console.warn('⚠️ 缓存集成初始化失败，使用降级模式:', error);
-      // 缓存初始化失败不影响核心功能
     }
   }
 
@@ -581,22 +550,12 @@ class ADHDHighlighter {
       if (this.processingMode === 'streaming') {
         console.log('使用流式处理模式');
         if (isEdge) console.log('[Edge调试] 开始流式处理...');
-        
-        // 获取当前启用的语言
-        const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
-        console.log('🎯 当前启用的语言:', enabledLanguages);
-        
-        await this.streamingPageProcessor.processPage(enabledLanguages);
+        await this.streamingPageProcessor.processPage();
         if (isEdge) console.log('[Edge调试] 流式处理完成');
       } else {
         console.log('使用传统处理模式');
         if (isEdge) console.log('[Edge调试] 开始传统处理...');
-        
-        // 获取当前启用的语言
-        const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
-        console.log('🎯 当前启用的语言:', enabledLanguages);
-        
-        await this.pageProcessor.processPage(enabledLanguages);
+        await this.pageProcessor.processPage();
         if (isEdge) console.log('[Edge调试] 传统处理完成');
       }
       
@@ -838,22 +797,14 @@ class ADHDHighlighter {
       // 先移除现有高亮
       this.streamingPageProcessor.removeAllHighlights();
       
-      // 获取当前启用的语言
-      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
-      console.log('🎯 当前启用的语言:', enabledLanguages);
-      
       // 重新处理
-      await this.streamingPageProcessor.processPage(enabledLanguages);
+      await this.streamingPageProcessor.processPage();
     } else {
       // 先移除现有高亮
       this.pageProcessor.removeAllHighlights();
       
-      // 获取当前启用的语言
-      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
-      console.log('🎯 当前启用的语言:', enabledLanguages);
-      
       // 重新处理
-      await this.pageProcessor.processPage(enabledLanguages);
+      await this.pageProcessor.processPage();
     }
     
     // 重新应用样式设置

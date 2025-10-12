@@ -276,54 +276,25 @@ class MultiLanguageProcessor {
     const languageNodes = this.filterNodesByLanguage(textNodes, language);
     if (languageNodes.length === 0) return [];
     
-    // 获取对应语言的词典
-    const dictionary = pageProcessor.dictionaryManager?.getDictionary(language);
-    if (!dictionary || Object.keys(dictionary).length === 0) {
-      console.warn(`语言 ${language} 的词典不可用`);
-      return [];
-    }
+    // 使用现有的文本分割器处理
+    const segments = await textSegmenter.segmentTextNodes(languageNodes, language);
     
-    // 处理每个文本节点
+    // 应用高亮
     const highlightedElements = [];
-    for (const textNode of languageNodes) {
+    for (const segment of segments) {
       try {
-        const text = textNode.textContent;
-        if (!text.trim()) continue;
-        
-        // 使用TextSegmenter的segmentText方法处理文本
-        const segmentedHtml = textSegmenter.segmentText(text, language, dictionary, pageProcessor.dictionaryManager);
-        
-        // 如果有高亮变化，创建高亮元素
-        if (segmentedHtml !== text) {
-          // 创建临时容器来解析HTML
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = segmentedHtml;
-          
-          // 收集所有高亮元素（只保留可序列化的数据）
-          const highlightSpans = tempDiv.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
-          for (const span of highlightSpans) {
-            highlightedElements.push({
-              // 移除DOM元素，只保留可序列化的数据
-              language,
-              content: span.textContent,
-              className: span.className,
-              position: this.getElementPosition(textNode.parentElement),
-              styles: {
-                backgroundColor: span.style.backgroundColor || '',
-                color: span.style.color || '',
-                fontWeight: span.style.fontWeight || ''
-              },
-              metadata: {
-                originalText: text,
-                pos: span.className.replace('adhd-', ''),
-                word: span.textContent,
-                tagName: 'span'
-              }
-            });
-          }
+        const element = await pageProcessor.createHighlightElement(segment, language);
+        if (element) {
+          highlightedElements.push({
+            element,
+            language,
+            content: segment.text,
+            position: this.getElementPosition(element),
+            metadata: segment.metadata
+          });
         }
       } catch (error) {
-        console.warn('处理文本节点失败:', error);
+        console.warn('创建高亮元素失败:', error);
       }
     }
     
@@ -411,11 +382,11 @@ class MultiLanguageProcessor {
    */
   async recreateHighlightElement(highlightData) {
     // 根据缓存数据重建DOM元素
-    const element = document.createElement(highlightData.metadata?.tagName || 'span');
-    element.className = highlightData.className || 'adhd-highlight';
+    const element = document.createElement('span');
+    element.className = 'adhd-highlight';
     element.textContent = highlightData.content;
     element.dataset.language = highlightData.language;
-    element.dataset.pos = highlightData.metadata?.pos || 'unknown';
+    element.dataset.pos = highlightData.partOfSpeech || 'unknown';
     
     // 应用样式
     if (highlightData.styles) {
