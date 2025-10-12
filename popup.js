@@ -449,6 +449,9 @@ class PopupController {
         const dictId = e.target.id.replace('dict-', '');
         this.dictSettings[dictId] = e.target.checked;
         console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
+        
+        // 立即更新主页词典标签显示
+        this.updateDictTags();
       });
     });
     
