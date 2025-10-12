@@ -24,10 +24,11 @@
       /* 主内容区域 */
       .main-content {
         flex: 1;
-        padding: 20px;
+        padding: 0;
         background: white;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
       }
 
       /* 应用标题和状态区域 */
@@ -418,11 +419,36 @@
       .page {
         display: none;
         flex-direction: column;
+        width: 100%;
         height: 100%;
+        padding: 20px;
+        overflow-y: auto;
+        box-sizing: border-box;
       }
 
       .page.active {
         display: flex;
+        width: 100%;
+      }
+
+      /* 确保所有页面内的直接子元素都有正确的宽度 */
+      .page > * {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* 页面标题样式 */
+      .page .header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      .page .header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
       }
 
       /* 词典管理页面样式 */
@@ -430,6 +456,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       .dict-info {
@@ -897,6 +926,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       .colors-info {
@@ -1048,6 +1080,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       .text-info {
@@ -1196,6 +1231,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       .ai-info {
@@ -1389,6 +1427,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       /* AI配置区域样式 */
