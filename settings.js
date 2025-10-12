@@ -27,13 +27,15 @@ class SettingsManager {
         }
         */
 
-        // 重置按钮
+        // 重置按钮 - 暂时注释掉，后续需要时启用
+        /*
         const resetBtn = document.getElementById('reset-all-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
                 this.resetAllSettings();
             });
         }
+        */
     }
 
     bindStorageEvents() {

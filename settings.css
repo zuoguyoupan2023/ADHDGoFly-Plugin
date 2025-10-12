@@ -409,7 +409,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-block;
-  width: auto;
+  width: auto !important;
+  max-width: fit-content;
 }
 
 .save-btn:hover {
@@ -612,11 +613,7 @@
   margin-left: 26px;
 }
 
-.setting-actions {
-  margin-top: 15px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
+
 
 .reset-btn {
   padding: 8px 16px;
