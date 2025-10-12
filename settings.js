@@ -402,13 +402,27 @@ class SettingsManager {
         try {
             // 从 IndexedDB 获取真实的缓存统计数据
             // 通过消息传递与 content script 通信
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            // 先尝试获取当前活动标签页
+            let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             
-            if (!tab) {
-                console.warn('无法获取当前标签页');
+            // 如果没有找到活动标签页，或者活动标签页是扩展页面，尝试找其他标签页
+            if (!tabs.length || tabs[0].url.startsWith('chrome-extension://')) {
+                tabs = await chrome.tabs.query({ currentWindow: true });
+                // 过滤掉扩展页面和特殊页面
+                tabs = tabs.filter(tab => 
+                    !tab.url.startsWith('chrome-extension://') && 
+                    !tab.url.startsWith('chrome://') &&
+                    !tab.url.startsWith('edge://') &&
+                    !tab.url.startsWith('about:')
+                );
+            }
+            
+            if (!tabs.length) {
+                console.warn('没有找到可用的网页标签');
                 return { totalRecords: 0, totalSize: 0, lastCleanup: null };
             }
 
+            const tab = tabs[0];
             const response = await chrome.tabs.sendMessage(tab.id, {
                 action: 'getCacheStats'
             });
@@ -489,16 +503,37 @@ class SettingsManager {
             this.showMessage('正在清理过期缓存...', 'info');
             
             // 通过消息传递调用 content script 中的 EventCacheManager
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            // 先尝试获取当前活动标签页
+            let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            console.log('🔍 活动标签页:', tabs);
             
-            if (!tab) {
-                this.showMessage('无法获取当前标签页，请在网页中打开设置', 'error');
+            // 如果没有找到活动标签页，或者活动标签页是扩展页面，尝试找其他标签页
+            if (!tabs.length || tabs[0].url.startsWith('chrome-extension://')) {
+                tabs = await chrome.tabs.query({ currentWindow: true });
+                console.log('🔍 当前窗口所有标签页:', tabs);
+                // 过滤掉扩展页面和特殊页面
+                tabs = tabs.filter(tab => 
+                    !tab.url.startsWith('chrome-extension://') && 
+                    !tab.url.startsWith('chrome://') &&
+                    !tab.url.startsWith('edge://') &&
+                    !tab.url.startsWith('about:')
+                );
+                console.log('🔍 过滤后的标签页:', tabs);
+            }
+            
+            if (!tabs.length) {
+                this.showMessage('没有找到可用的网页标签，请先打开一个普通网页', 'error');
                 return;
             }
 
+            const tab = tabs[0];
+            console.log('📤 发送消息到标签页:', tab.id, tab.url, { action: 'cleanupExpiredCache' });
+            
             const response = await chrome.tabs.sendMessage(tab.id, {
                 action: 'cleanupExpiredCache'
             });
+
+            console.log('📥 收到响应:', response);
 
             if (response && response.success) {
                 this.showMessage('过期缓存清理完成');
@@ -511,10 +546,11 @@ class SettingsManager {
             }
         } catch (error) {
             console.error('清理过期缓存失败:', error);
+            console.error('错误详情:', error);
             if (error.message && error.message.includes('Could not establish connection')) {
                 this.showMessage('当前页面不支持缓存功能，请在普通网页中打开设置', 'error');
             } else {
-                this.showMessage('清理失败，请重试', 'error');
+                this.showMessage(`清理失败: ${error.message}`, 'error');
             }
         }
     }
@@ -526,13 +562,32 @@ class SettingsManager {
                 this.showMessage('正在清除所有缓存...', 'info');
                 
                 // 通过消息传递调用 content script 中的 EventCacheManager
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                // 先尝试获取当前活动标签页
+                let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                console.log('🔍 活动标签页:', tabs);
                 
-                if (!tab) {
-                    this.showMessage('无法获取当前标签页，请在网页中打开设置', 'error');
+                // 如果没有找到活动标签页，或者活动标签页是扩展页面，尝试找其他标签页
+                if (!tabs.length || tabs[0].url.startsWith('chrome-extension://')) {
+                    tabs = await chrome.tabs.query({ currentWindow: true });
+                    console.log('🔍 当前窗口所有标签页:', tabs);
+                    // 过滤掉扩展页面和特殊页面
+                    tabs = tabs.filter(tab => 
+                        !tab.url.startsWith('chrome-extension://') && 
+                        !tab.url.startsWith('chrome://') &&
+                        !tab.url.startsWith('edge://') &&
+                        !tab.url.startsWith('about:')
+                    );
+                    console.log('🔍 过滤后的标签页:', tabs);
+                }
+                
+                if (!tabs.length) {
+                    this.showMessage('没有找到可用的网页标签，请先打开一个普通网页', 'error');
                     return;
                 }
 
+                const tab = tabs[0];
+                console.log('📤 发送消息到标签页:', tab.id, tab.url, { action: 'clearAllCache' });
+                
                 const response = await chrome.tabs.sendMessage(tab.id, {
                     action: 'clearAllCache'
                 });

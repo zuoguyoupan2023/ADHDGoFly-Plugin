@@ -185,6 +185,7 @@ class ADHDHighlighter {
    */
   async handleMessage(message, sender, sendResponse) {
     try {
+      console.log('📨 收到消息:', message.action, message);
       switch (message.action) {
         case 'toggle':
           const newState = await this.toggle();
