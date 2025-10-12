@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ADHDGoFly, 点亮你的视野",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Text highlighting for better reading",
   "permissions": ["activeTab", "storage", "management"],
   "host_permissions": ["https://api.github.com/*"],
@@ -11,6 +11,7 @@
   "content_scripts": [{
     "matches": ["<all_urls>"],
     "js": [
+        "content/file-list-generator.js",
         "content/dictionary-manager-new.js",
         "content/dictionary-adapter.js",
         "content/language-detector.js",
@@ -18,6 +19,7 @@
         "content/text-segmenter.js",
         "content/page-processor.js",
         "content/streaming-page-processor.js",
+        "content/storage/event-cache-manager.js",
         "content/main.js"
       ],
     "css": ["styles.css"],

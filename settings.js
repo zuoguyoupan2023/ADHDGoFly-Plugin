@@ -17,52 +17,48 @@ class SettingsManager {
         // 存储管理相关事件
         this.bindStorageEvents();
         
-        // 自动更新开关
-        const autoUpdateToggle = document.getElementById('auto-update-toggle');
-        if (autoUpdateToggle) {
-            autoUpdateToggle.addEventListener('change', (e) => {
-                this.saveData({ autoUpdate: e.target.checked });
-            });
-        }
-
-        // 匿名统计开关
+        // 匿名统计开关 - 暂时注释掉，后续实现埋点后启用
+        /*
         const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
         if (anonymousStatsToggle) {
             anonymousStatsToggle.addEventListener('change', (e) => {
                 this.saveData({ anonymousStats: e.target.checked });
             });
         }
+        */
 
-        // 重置按钮
+        // 重置按钮 - 暂时注释掉，后续需要时启用
+        /*
         const resetBtn = document.getElementById('reset-all-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
                 this.resetAllSettings();
             });
         }
+        */
     }
 
     bindStorageEvents() {
         // 缓存保留时间选择
-        const retentionRadios = document.querySelectorAll('input[name="cache-retention"]');
+        const retentionRadios = document.querySelectorAll('input[name="storage-retention"]');
         retentionRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 if (e.target.checked) {
-                    this.saveStorageSettings({ cacheRetentionDays: parseInt(e.target.value) });
+                    const retentionDays = parseFloat(e.target.value);
+                    this.saveStorageSettings({ cacheRetentionDays: retentionDays });
+                    
+                    // 特殊提示：3分钟测试模式
+                    if (retentionDays === 0.002) {
+                        this.showMessage('🧪 已启用3分钟测试模式，缓存将在3分钟后过期', 'info');
+                    }
                 }
             });
         });
 
-        // 清理过期缓存按钮
-        const cleanupExpiredBtn = document.getElementById('cleanup-expired-btn');
-        if (cleanupExpiredBtn) {
-            cleanupExpiredBtn.addEventListener('click', () => {
-                this.cleanupExpiredCache();
-            });
-        }
+
 
         // 清理所有缓存按钮
-        const cleanupAllBtn = document.getElementById('cleanup-all-btn');
+        const cleanupAllBtn = document.getElementById('cleanup-all');
         if (cleanupAllBtn) {
             cleanupAllBtn.addEventListener('click', () => {
                 this.cleanupAllCache();
@@ -78,6 +74,8 @@ class SettingsManager {
         }
     }
 
+
+
     async loadData() {
         try {
             const result = await chrome.storage.sync.get({
@@ -87,16 +85,13 @@ class SettingsManager {
                 cacheEnabled: true
             });
 
-            // 更新开关状态
-            const autoUpdateToggle = document.getElementById('auto-update-toggle');
-            if (autoUpdateToggle) {
-                autoUpdateToggle.checked = result.autoUpdate;
-            }
-
+            // 匿名统计开关状态 - 暂时注释掉，后续实现埋点后启用
+            /*
             const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
             if (anonymousStatsToggle) {
                 anonymousStatsToggle.checked = result.anonymousStats;
             }
+            */
 
             // 加载存储设置
             await this.loadStorageSettings(result);
@@ -114,8 +109,8 @@ class SettingsManager {
 
     async loadStorageSettings(settings) {
         // 设置缓存保留时间单选按钮
-        const retentionValue = settings.cacheEnabled ? settings.cacheRetentionDays : -1;
-        const retentionRadio = document.querySelector(`input[name="cache-retention"][value="${retentionValue}"]`);
+        const retentionValue = settings.cacheEnabled ? settings.cacheRetentionDays : 0;
+        const retentionRadio = document.querySelector(`input[name="storage-retention"][value="${retentionValue}"]`);
         if (retentionRadio) {
             retentionRadio.checked = true;
         }
@@ -135,7 +130,7 @@ class SettingsManager {
                 cachedPagesElement.textContent = cacheStats.pageCount || 0;
             }
 
-            const usedSpaceElement = document.getElementById('used-space-size');
+            const usedSpaceElement = document.getElementById('used-storage-space');
             if (usedSpaceElement) {
                 usedSpaceElement.textContent = this.formatBytes(cacheStats.totalSize || 0);
             }
@@ -153,29 +148,56 @@ class SettingsManager {
 
     async getCacheStatistics() {
         try {
-            // 获取所有缓存数据
-            const allData = await chrome.storage.local.get(null);
-            let pageCount = 0;
-            let totalSize = 0;
-            let lastCleanup = null;
-
-            // 统计缓存页面和大小
-            for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('cache_')) {
-                    pageCount++;
-                    totalSize += JSON.stringify(value).length;
-                } else if (key === 'lastCleanupTime') {
-                    lastCleanup = value;
-                }
+            // 从 IndexedDB 获取真实的缓存统计数据
+            // 通过消息传递与 content script 通信
+            // 先尝试获取当前活动标签页
+            let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            // 如果没有找到活动标签页，或者活动标签页是扩展页面，尝试找其他标签页
+            if (!tabs.length || tabs[0].url.startsWith('chrome-extension://')) {
+                tabs = await chrome.tabs.query({ currentWindow: true });
+                // 过滤掉扩展页面和特殊页面
+                tabs = tabs.filter(tab => 
+                    !tab.url.startsWith('chrome-extension://') && 
+                    !tab.url.startsWith('chrome://') &&
+                    !tab.url.startsWith('edge://') &&
+                    !tab.url.startsWith('about:')
+                );
+            }
+            
+            if (!tabs.length) {
+                console.warn('没有找到可用的网页标签');
+                return { totalRecords: 0, totalSize: 0, lastCleanup: null };
             }
 
-            return {
-                pageCount,
-                totalSize,
-                lastCleanup
-            };
+            const tab = tabs[0];
+            const response = await chrome.tabs.sendMessage(tab.id, {
+                action: 'getCacheStats'
+            });
+
+            if (response && response.success) {
+                const stats = response.stats;
+                return {
+                    pageCount: stats.totalRecords || 0,
+                    totalSize: stats.totalSize || 0,
+                    lastCleanup: stats.lastCleanup || null,
+                    // 保持向后兼容，同时提供新的字段名
+                    totalRecords: stats.totalRecords || 0,
+                    oldestRecord: stats.oldestRecord || null,
+                    newestRecord: stats.newestRecord || null,
+                    retentionDays: stats.retentionDays || 7,
+                    enabled: stats.enabled !== false
+                };
+            } else {
+                console.warn('获取缓存统计失败:', response?.error || '未知错误');
+                return { pageCount: 0, totalSize: 0, lastCleanup: null };
+            }
         } catch (error) {
             console.error('获取缓存统计失败:', error);
+            // 如果是因为没有 content script 或页面不支持，返回默认值
+            if (error.message && error.message.includes('Could not establish connection')) {
+                console.info('当前页面不支持缓存功能（可能是扩展页面或特殊页面）');
+            }
             return { pageCount: 0, totalSize: 0, lastCleanup: null };
         }
     }
@@ -210,11 +232,11 @@ class SettingsManager {
     }
 
     async saveCurrentStorageSettings() {
-        const selectedRetention = document.querySelector('input[name="cache-retention"]:checked');
+        const selectedRetention = document.querySelector('input[name="storage-retention"]:checked');
         if (selectedRetention) {
-            const retentionValue = parseInt(selectedRetention.value);
+            const retentionValue = parseFloat(selectedRetention.value);
             const settings = {
-                cacheEnabled: retentionValue !== -1,
+                cacheEnabled: retentionValue !== 0,
                 cacheRetentionDays: retentionValue > 0 ? retentionValue : 7
             };
             
@@ -223,62 +245,63 @@ class SettingsManager {
         }
     }
 
-    async cleanupExpiredCache() {
-        try {
-            const settings = await chrome.storage.sync.get({
-                cacheRetentionDays: 7,
-                cacheEnabled: true
-            });
-
-            if (!settings.cacheEnabled) {
-                this.showMessage('缓存已禁用，无需清理', 'info');
-                return;
-            }
-
-            const cutoffTime = Date.now() - (settings.cacheRetentionDays * 24 * 60 * 60 * 1000);
-            const allData = await chrome.storage.local.get(null);
-            const keysToRemove = [];
-
-            // 查找过期的缓存项
-            for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('cache_') && value.timestamp && value.timestamp < cutoffTime) {
-                    keysToRemove.push(key);
-                }
-            }
-
-            if (keysToRemove.length > 0) {
-                await chrome.storage.local.remove(keysToRemove);
-                await chrome.storage.local.set({ lastCleanupTime: Date.now() });
-                
-                this.showMessage(`已清理 ${keysToRemove.length} 个过期缓存项`);
-                await this.updateStorageUsage();
-            } else {
-                this.showMessage('没有找到过期的缓存项', 'info');
-            }
-        } catch (error) {
-            console.error('清理过期缓存失败:', error);
-            this.showMessage('清理失败，请重试', 'error');
-        }
-    }
+    // cleanupExpiredCache 方法已删除
+    // 原因：系统在读取缓存时会自动检查并删除过期数据，无需手动清理
+    // 用户可以使用"清除所有缓存"按钮来彻底清理所有缓存数据
 
     async cleanupAllCache() {
         if (confirm('确定要清除所有缓存吗？这将删除所有已保存的高亮数据。')) {
             try {
-                const allData = await chrome.storage.local.get(null);
-                const cacheKeys = Object.keys(allData).filter(key => key.startsWith('cache_'));
+                // 显示清理中的提示
+                this.showMessage('正在清除所有缓存...', 'info');
                 
-                if (cacheKeys.length > 0) {
-                    await chrome.storage.local.remove(cacheKeys);
-                    await chrome.storage.local.set({ lastCleanupTime: Date.now() });
-                    
-                    this.showMessage(`已清理 ${cacheKeys.length} 个缓存项`);
+                // 通过消息传递调用 content script 中的 EventCacheManager
+                // 先尝试获取当前活动标签页
+                let tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                console.log('🔍 活动标签页:', tabs);
+                
+                // 如果没有找到活动标签页，或者活动标签页是扩展页面，尝试找其他标签页
+                if (!tabs.length || tabs[0].url.startsWith('chrome-extension://')) {
+                    tabs = await chrome.tabs.query({ currentWindow: true });
+                    console.log('🔍 当前窗口所有标签页:', tabs);
+                    // 过滤掉扩展页面和特殊页面
+                    tabs = tabs.filter(tab => 
+                        !tab.url.startsWith('chrome-extension://') && 
+                        !tab.url.startsWith('chrome://') &&
+                        !tab.url.startsWith('edge://') &&
+                        !tab.url.startsWith('about:')
+                    );
+                    console.log('🔍 过滤后的标签页:', tabs);
+                }
+                
+                if (!tabs.length) {
+                    this.showMessage('没有找到可用的网页标签，请先打开一个普通网页', 'error');
+                    return;
+                }
+
+                const tab = tabs[0];
+                console.log('📤 发送消息到标签页:', tab.id, tab.url, { action: 'clearAllCache' });
+                
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    action: 'clearAllCache'
+                });
+
+                if (response && response.success) {
+                    this.showMessage('所有缓存已清除');
+                    // 更新显示的统计数据
                     await this.updateStorageUsage();
                 } else {
-                    this.showMessage('没有找到缓存数据', 'info');
+                    const errorMsg = response?.error || '未知错误';
+                    console.error('清除所有缓存失败:', errorMsg);
+                    this.showMessage(`清除失败: ${errorMsg}`, 'error');
                 }
             } catch (error) {
-                console.error('清理所有缓存失败:', error);
-                this.showMessage('清理失败，请重试', 'error');
+                console.error('清除所有缓存失败:', error);
+                if (error.message && error.message.includes('Could not establish connection')) {
+                    this.showMessage('当前页面不支持缓存功能，请在普通网页中打开设置', 'error');
+                } else {
+                    this.showMessage('清除失败，请重试', 'error');
+                }
             }
         }
     }
@@ -316,19 +339,33 @@ class SettingsManager {
     }
 
     showMessage(message, type = 'success') {
+        // 移除之前的消息（如果存在）
+        const existingMessages = document.querySelectorAll('.message');
+        existingMessages.forEach(msg => {
+            if (msg.parentNode) {
+                msg.parentNode.removeChild(msg);
+            }
+        });
+        
+        // 创建新消息
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         messageDiv.textContent = message;
         
-        // 添加到页面顶部
-        document.body.insertBefore(messageDiv, document.body.firstChild);
+        // 添加到body（使用fixed定位，不占据文档流空间）
+        document.body.appendChild(messageDiv);
         
-        // 3秒后自动移除
+        // 2.5秒后开始淡出动画
         setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.parentNode.removeChild(messageDiv);
-            }
-        }, 3000);
+            messageDiv.classList.add('fade-out');
+            
+            // 动画完成后移除元素
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 300);
+        }, 2500);
     }
 
     async checkVersion() {

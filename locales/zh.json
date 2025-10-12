@@ -51,18 +51,6 @@
     "home": {
       "title": "首页",
       "description": "欢迎使用ADHDGoFly插件",
-      "toggles": {
-        "title": "高亮控制",
-        "noun": "名词高亮",
-        "verb": "动词高亮",
-        "adj": "形容词高亮",
-        "comparative": "比较级/最高级高亮",
-        "nounSimple": "名词",
-        "verbSimple": "动词",
-        "adjSimple": "形容词",
-        "comparativeSimple": "比较级/最高级",
-        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
-      },
       "preview": {
         "noun": "名词",
         "verb": "动词",
@@ -126,6 +114,15 @@
         "history": "历史人物词典",
         "medical": "医学词典",
         "literature": "诗词词典"
+      },
+      "custom": {
+        "title": "自制词典",
+        "addButton": "添加",
+        "tipText": "没有合适的词典？",
+        "tipLink": "在线制作专属词典",
+        "emptyMessage": "暂无自制词典",
+        "removeButton": "删除",
+        "confirmRemove": "确定要删除这个词典吗？"
       }
     },
     "colors": {
@@ -148,7 +145,7 @@
         "verbSimple": "动词",
         "adjSimple": "形容词",
         "comparativeSimple": "比较级/最高级",
-        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示"
+        "description": "点击按钮可开启或关闭对应类型词汇的高亮显示;开启缓存的情况下点击上述按钮，网页显示或出错。只需要刷新页面就行了"
       },
       "preview": {
         "noun": "名词",

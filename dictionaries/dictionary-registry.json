@@ -237,7 +237,19 @@
       }
     ],
     "downloaded": [],
-    "local": []
+    "local": [
+      {
+        "id": "custom-1760202653658",
+        "name": "111",
+        "displayName": "111",
+        "language": "zh",
+        "type": "local",
+        "domain": "游戏",
+        "filePath": "dictionaries/ZH/111.json",
+        "enabled": true,
+        "priority": 1
+      }
+    ]
   },
   "settings": {
     "autoCleanup": true,

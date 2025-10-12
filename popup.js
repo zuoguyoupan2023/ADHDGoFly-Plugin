@@ -4,6 +4,7 @@ class PopupController {
     this.currentStatus = null;
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
+    this.customDictionaries = []; // 自定义词典列表
     this.dictSettings = {
       // 基础词典
       'zh-preset': true,
@@ -23,8 +24,51 @@ class PopupController {
       'zh-legal-preset': false,
       'zh-history-preset': false,
       'zh-medical-preset': false,
-      'zh-literature-preset': false
-    };
+        'zh-literature-preset': false
+      };
+      
+      /**
+       * 更新主页词性颜色图例
+       * 实时更新主页显示的词性颜色，让用户看到当前真正使用的颜色方案
+       * @param {Object} colors - 颜色配置对象，包含noun、verb、adj属性
+       */
+      this.updateHomeLegendColors = function(colors) {
+        // 更新名词颜色
+        const nounLegend = document.querySelector('.legend-noun');
+        if (nounLegend) {
+          nounLegend.style.backgroundColor = this.hexToRgba(colors.noun, 0.3);
+        }
+        
+        // 更新动词颜色
+        const verbLegend = document.querySelector('.legend-verb');
+        if (verbLegend) {
+          verbLegend.style.backgroundColor = this.hexToRgba(colors.verb, 0.3);
+        }
+        
+        // 更新形容词颜色
+        const adjLegend = document.querySelector('.legend-adj');
+        if (adjLegend) {
+          adjLegend.style.backgroundColor = this.hexToRgba(colors.adj, 0.3);
+        }
+      };
+
+      /**
+       * 将十六进制颜色转换为RGBA格式
+       * @param {string} hex - 十六进制颜色值
+       * @param {number} alpha - 透明度值 (0-1)
+       * @returns {string} RGBA颜色字符串
+       */
+      this.hexToRgba = function(hex, alpha) {
+        // 移除#号
+        hex = hex.replace('#', '');
+        
+        // 解析RGB值
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      };
     this.colorSchemes = {
       default: {
         noun: '#0066cc',    // 蓝色
@@ -226,6 +270,15 @@ class PopupController {
     
     // 检查版本信息
     await this.checkVersion();
+    
+    // 加载自定义词典
+    await this.loadCustomDictionaries();
+    
+    // 恢复自制词典折叠状态
+    await this.restoreCustomDictState();
+    
+    // 加载词典设置
+    await this.loadDictSettings();
   }
 
   bindEvents() {
@@ -418,7 +471,7 @@ class PopupController {
       targetPage.classList.add('active');
       this.currentPage = pageId;
       
-      // 如果是词典页面，初始化语言分组监听器和tooltip事件
+      // 如果是词典页面，初始化语言分组监听器
       if (pageId === 'dict') {
         console.log('Switching to dict page, initializing language group listeners...');
         setTimeout(() => {
@@ -442,6 +495,9 @@ class PopupController {
         const dictId = e.target.id.replace('dict-', '');
         this.dictSettings[dictId] = e.target.checked;
         console.log(`${dictId}词典:`, e.target.checked ? '启用' : '禁用');
+        
+        // 立即更新主页词典标签显示
+        this.updateDictTags();
       });
     });
     
@@ -453,8 +509,480 @@ class PopupController {
 
     // 词典tooltip事件
     this.bindDictTooltipEvents();
+    
+    // 自定义词典管理事件
+    this.bindCustomDictEvents();
   }
 
+  bindCustomDictEvents() {
+    // 折叠/展开功能
+    const customDictHeader = document.getElementById('custom-dict-header');
+    if (customDictHeader) {
+      customDictHeader.addEventListener('click', (e) => {
+        // 如果点击的是按钮，不触发折叠
+        if (e.target.closest('.add-dict-btn')) {
+          return;
+        }
+        this.toggleCustomDictSection();
+      });
+    }
+
+    // 添加词典按钮事件
+    const addDictBtn = document.getElementById('add-custom-dict-btn');
+    if (addDictBtn) {
+      addDictBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        this.showAddDictForm();
+      });
+    }
+
+    // 取消添加按钮事件
+    const cancelBtn = document.getElementById('cancel-add-dict');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.hideAddDictForm());
+    }
+
+    // 确认添加按钮事件
+    const confirmBtn = document.getElementById('confirm-add-dict');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => this.addCustomDict());
+    }
+
+    // 文件选择事件
+    const fileInput = document.getElementById('dict-file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+    }
+  }
+
+  toggleCustomDictSection() {
+    const section = document.getElementById('custom-dict-section');
+    if (section) {
+      section.classList.toggle('expanded');
+      
+      // 保存折叠状态
+      const isExpanded = section.classList.contains('expanded');
+      chrome.storage.local.set({ customDictExpanded: isExpanded });
+    }
+  }
+
+  async restoreCustomDictState() {
+    try {
+      const result = await chrome.storage.local.get(['customDictExpanded']);
+      const section = document.getElementById('custom-dict-section');
+      
+      if (section) {
+        // 默认折叠，除非明确设置为展开
+        const shouldExpand = result.customDictExpanded === true;
+        if (shouldExpand) {
+          section.classList.add('expanded');
+        }
+      }
+    } catch (error) {
+      console.error('恢复自制词典状态失败:', error);
+    }
+  }
+
+  showAddDictForm() {
+    const form = document.getElementById('add-dict-form');
+    if (form) {
+      form.style.display = 'block';
+    }
+  }
+
+  hideAddDictForm() {
+    const form = document.getElementById('add-dict-form');
+    if (form) {
+      form.style.display = 'none';
+      // 清空表单
+      document.getElementById('dict-file-input').value = '';
+      document.getElementById('dict-name-input').value = '';
+      document.getElementById('dict-language-select').value = 'zh';
+      document.getElementById('dict-domain-input').value = '';
+    }
+  }
+
+  handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      // 自动填充词典名称（去掉.json后缀）
+      const nameInput = document.getElementById('dict-name-input');
+      if (nameInput && !nameInput.value) {
+        nameInput.value = file.name.replace('.json', '');
+      }
+    }
+  }
+
+  async addCustomDict() {
+    const fileInput = document.getElementById('dict-file-input');
+    const nameInput = document.getElementById('dict-name-input');
+    const languageSelect = document.getElementById('dict-language-select');
+    const domainInput = document.getElementById('dict-domain-input');
+
+    if (!fileInput.files[0]) {
+      this.showError('请选择词典文件');
+      return;
+    }
+
+    if (!nameInput.value.trim()) {
+      this.showError('请输入词典名称');
+      return;
+    }
+
+    try {
+      const file = fileInput.files[0];
+      const fileContent = await this.readFileAsText(file);
+      
+      // 验证JSON格式
+      let dictData;
+      try {
+        dictData = JSON.parse(fileContent);
+      } catch (error) {
+        this.showError('词典文件格式错误，请确保是有效的JSON文件');
+        return;
+      }
+
+      // 生成唯一ID
+      const dictId = `custom-${Date.now()}`;
+      const language = languageSelect.value;
+      const domain = domainInput.value.trim() || 'general';
+
+      // 创建词典条目
+      const dictEntry = {
+        id: dictId,
+        name: nameInput.value.trim(),
+        displayName: nameInput.value.trim(),
+        language: language,
+        type: 'local',
+        source: 'external',  // 标记为外部词典
+        domain: domain,
+        filePath: `dictionaries/${language.toUpperCase()}/${dictId}.json`,
+        enabled: true,
+        priority: 1,
+        data: dictData
+      };
+
+      // 添加到自定义词典列表
+      this.customDictionaries.push(dictEntry);
+
+      // 更新注册表
+      await this.updateDictionaryRegistry(dictEntry);
+
+      // 更新UI
+      this.updateCustomDictList();
+      this.hideAddDictForm();
+
+      this.showSuccess('词典添加成功！');
+
+    } catch (error) {
+      console.error('添加词典失败:', error);
+      this.showError('添加词典失败，请检查文件格式');
+    }
+  }
+
+  readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  }
+
+  async updateDictionaryRegistry(dictEntry) {
+    try {
+      // 首先尝试从Chrome存储获取现有的自定义注册表
+      const storageResult = await chrome.storage.local.get(['customDictRegistry']);
+      let registry;
+      
+      if (storageResult.customDictRegistry) {
+        // 如果存在自定义注册表，使用它
+        registry = storageResult.customDictRegistry;
+        console.log('使用现有的自定义注册表，包含', registry.local ? registry.local.length : 0, '个词典');
+      } else {
+        // 如果不存在，从原始文件加载
+        const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+        registry = await response.json();
+        console.log('从原始文件加载注册表');
+      }
+
+      // 添加到local数组
+      if (!registry.local) {
+        registry.local = [];
+      }
+      
+      // 检查是否已存在相同ID的词典，避免重复添加
+      const existingIndex = registry.local.findIndex(dict => dict.id === dictEntry.id);
+      if (existingIndex >= 0) {
+        // 更新现有词典
+        registry.local[existingIndex] = {
+          id: dictEntry.id,
+          name: dictEntry.name,
+          displayName: dictEntry.displayName,
+          language: dictEntry.language,
+          type: dictEntry.type,
+          source: dictEntry.source,  // 保存source标记
+          domain: dictEntry.domain,
+          filePath: dictEntry.filePath,
+          enabled: dictEntry.enabled,
+          priority: dictEntry.priority
+        };
+        console.log('更新现有词典:', dictEntry.displayName);
+      } else {
+        // 添加新词典
+        registry.local.push({
+          id: dictEntry.id,
+          name: dictEntry.name,
+          displayName: dictEntry.displayName,
+          language: dictEntry.language,
+          type: dictEntry.type,
+          source: dictEntry.source,  // 保存source标记
+          domain: dictEntry.domain,
+          filePath: dictEntry.filePath,
+          enabled: dictEntry.enabled,
+          priority: dictEntry.priority
+        });
+        console.log('添加新词典:', dictEntry.displayName);
+      }
+
+      // 保存到storage（因为无法直接修改扩展文件）
+      await chrome.storage.local.set({
+        customDictRegistry: registry,
+        [`dictionary_${dictEntry.id}`]: dictEntry.data  // 使用统一的存储键名格式：dictionary_${id}
+      });
+
+      console.log('词典注册表已更新，当前包含', registry.local.length, '个自定义词典');
+    } catch (error) {
+      console.error('更新注册表失败:', error);
+      this.showError(`更新词典注册表失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async loadCustomDictionaries() {
+    try {
+      // 首先尝试从Chrome存储获取自定义注册表
+      const storageResult = await chrome.storage.local.get(['customDictRegistry']);
+      let customDictionaries = [];
+      
+      if (storageResult.customDictRegistry && storageResult.customDictRegistry.local) {
+        customDictionaries = storageResult.customDictRegistry.local;
+        console.log('从Chrome存储加载自定义词典，找到', customDictionaries.length, '个词典');
+      } else {
+        // 如果Chrome存储中没有，尝试从原始注册表文件加载
+        const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+        const registry = await response.json();
+        if (registry.local && registry.local.length > 0) {
+          customDictionaries = registry.local;
+          console.log('从原始注册表文件加载自定义词典，找到', customDictionaries.length, '个词典');
+        }
+      }
+      
+      if (customDictionaries.length > 0) {
+        this.customDictionaries = customDictionaries;
+        this.updateCustomDictList();
+        this.addCustomDictsToUI(); // 添加到词典管理界面
+        
+        // 确保设置中包含这些词典，并清理旧的ID
+        let settingsChanged = false;
+        
+        // 清理所有旧的custom-开头的设置
+        const oldCustomIds = Object.keys(this.dictSettings).filter(key => key.startsWith('custom-'));
+        for (const oldId of oldCustomIds) {
+          // 检查这个ID是否还在当前的词典列表中
+          const stillExists = this.customDictionaries.find(dict => dict.id === oldId);
+          if (!stillExists) {
+            delete this.dictSettings[oldId];
+            settingsChanged = true;
+            console.log(`🧹 清理旧的词典设置ID: ${oldId}`);
+          }
+        }
+        
+        // 添加当前词典的正确设置
+        for (const dict of this.customDictionaries) {
+          if (this.dictSettings[dict.id] === undefined) {
+            this.dictSettings[dict.id] = dict.enabled || true;
+            settingsChanged = true;
+            console.log(`✅ 添加词典设置: ${dict.id} = ${dict.enabled || true}`);
+          }
+        }
+        
+        // 如果设置有变化，保存更新的设置
+        if (settingsChanged) {
+          console.log('🔄 词典设置已更新，正在保存...');
+          await this.saveDictSettings();
+        }
+      } else {
+        console.log('没有找到自定义词典');
+        this.customDictionaries = [];
+      }
+    } catch (error) {
+      console.error('加载自定义词典失败:', error);
+      this.showError(`加载自定义词典失败: ${error.message}`);
+      this.customDictionaries = [];
+    }
+  }
+
+  addCustomDictsToUI() {
+    // 为每种语言添加自定义词典到词典管理界面
+    const languageGroups = ['zh', 'en', 'fr', 'es', 'ru', 'ja'];
+    
+    languageGroups.forEach(lang => {
+      const customDicts = this.customDictionaries.filter(dict => dict.language === lang);
+      if (customDicts.length > 0) {
+        this.addCustomDictsToLanguageGroup(lang, customDicts);
+      }
+    });
+  }
+
+  /**
+   * 将自定义词典添加到指定语言组
+   * @param {string} language - 语言代码
+   * @param {Array} customDicts - 该语言的自定义词典列表
+   */
+  addCustomDictsToLanguageGroup(language, customDicts) {
+    const languageGroup = document.querySelector(`[data-language="${language}"]`);
+    if (!languageGroup) return;
+
+    const professionalDicts = languageGroup.querySelector('.professional-dicts-grid');
+    if (!professionalDicts) return;
+
+    // 移除之前添加的自定义词典（避免重复）
+    const existingCustomDicts = professionalDicts.querySelectorAll('.custom-dict-item');
+    existingCustomDicts.forEach(item => item.remove());
+
+    let settingsChanged = false;
+
+    // 添加自定义词典
+    customDicts.forEach(dict => {
+      const dictItem = document.createElement('div');
+      dictItem.className = 'dict-item custom-dict-item';
+      dictItem.innerHTML = `
+        <label class="dict-label">
+          <input type="checkbox" id="dict-${dict.id}" ${dict.enabled ? 'checked' : ''} />
+          <span class="checkmark"></span>
+          <div class="dict-info-text">
+            <span class="dict-name">${dict.displayName}</span>
+            <span class="dict-desc">${dict.domain} (自定义)</span>
+          </div>
+        </label>
+      `;
+      
+      professionalDicts.appendChild(dictItem);
+      
+      // 绑定事件
+      const checkbox = dictItem.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', async (e) => {
+        this.dictSettings[dict.id] = e.target.checked;
+        console.log(`${dict.displayName}词典:`, e.target.checked ? '启用' : '禁用');
+        
+        // 立即保存设置
+        await this.saveDictSettings();
+      });
+      
+      // 添加到dictSettings，如果设置发生变化则标记需要保存
+      if (this.dictSettings[dict.id] === undefined) {
+        this.dictSettings[dict.id] = dict.enabled;
+        settingsChanged = true;
+        console.log(`🔧 Added custom dictionary to settings: ${dict.id} = ${dict.enabled}`);
+      }
+    });
+
+    // 如果有新的自定义词典设置，立即保存
+    if (settingsChanged) {
+      console.log('🔧 Saving updated dictionary settings with custom dictionaries...');
+      this.saveDictSettings();
+    }
+  }
+
+  updateCustomDictList() {
+    const listContainer = document.getElementById('custom-dict-list');
+    const countElement = document.getElementById('custom-dict-count');
+    
+    if (!listContainer) return;
+
+    // 更新计数显示
+    if (countElement) {
+      countElement.textContent = `(${this.customDictionaries.length})`;
+    }
+
+    if (this.customDictionaries.length === 0) {
+      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;" data-i18n="pages.dict.custom.emptyMessage">暂无自制词典</p>';
+      return;
+    }
+
+    // 清空容器
+    listContainer.innerHTML = '';
+
+    // 为每个词典创建元素并绑定事件
+    this.customDictionaries.forEach(dict => {
+      const dictItem = document.createElement('div');
+      dictItem.className = 'custom-dict-item';
+      dictItem.innerHTML = `
+        <div class="custom-dict-info">
+          <div class="custom-dict-name">${dict.displayName}</div>
+          <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
+        </div>
+        <div class="custom-dict-actions">
+          <button class="remove-dict-btn" data-i18n="pages.dict.custom.removeButton">
+            删除
+          </button>
+        </div>
+      `;
+      
+      // 绑定删除按钮事件
+      const removeBtn = dictItem.querySelector('.remove-dict-btn');
+      removeBtn.addEventListener('click', () => this.removeCustomDict(dict.id));
+      
+      listContainer.appendChild(dictItem);
+    });
+
+    // 重新应用i18n翻译
+    if (this.i18n) {
+      this.i18n.updatePageText();
+    }
+  }
+
+  async removeCustomDict(dictId) {
+    // 获取当前语言的确认文本
+    const confirmText = this.i18n.t('pages.dict.custom.confirmRemove') || '确定要删除这个词典吗？';
+    if (!confirm(confirmText)) {
+      return;
+    }
+
+    try {
+      // 从列表中移除
+      this.customDictionaries = this.customDictionaries.filter(dict => dict.id !== dictId);
+
+      // 更新注册表
+      const result = await chrome.storage.local.get(['customDictRegistry']);
+      if (result.customDictRegistry) {
+        const registry = result.customDictRegistry;
+        if (registry.local) {
+          registry.local = registry.local.filter(dict => dict.id !== dictId);
+        }
+        
+        // 保存更新后的注册表
+        await chrome.storage.local.set({ customDictRegistry: registry });
+        
+        // 删除词典数据（使用统一的存储键名格式：dictionary_${id}）
+        await chrome.storage.local.remove([`dictionary_${dictId}`]);
+      }
+
+      // 更新UI
+      this.updateCustomDictList();
+      
+      this.showSuccess('词典删除成功！');
+    } catch (error) {
+      console.error('删除词典失败:', error);
+      this.showError('删除词典失败');
+    }
+  }
+
+  /**
+   * 绑定词典提示框事件
+   * 处理鼠标悬停显示词典详细信息的功能
+   */
   bindDictTooltipEvents() {
     // 为所有词典项添加鼠标悬停事件
     const dictItems = document.querySelectorAll('.dict-item');
@@ -481,6 +1009,13 @@ class PopupController {
     });
   }
 
+  /**
+   * 显示词典提示框
+   * 在指定元素旁边显示词典的详细信息
+   * @param {HTMLElement} element - 触发提示框的元素
+   * @param {string} dictId - 词典ID
+   * @param {Object} meta - 词典元数据
+   */
   showDictTooltip(element, dictId, meta) {
     const tooltip = document.getElementById('dict-tooltip');
     const titleEl = document.getElementById('tooltip-title');
@@ -517,6 +1052,10 @@ class PopupController {
     tooltip.classList.add('show');
   }
 
+  /**
+   * 隐藏词典提示框
+   * 移除当前显示的提示框
+   */
   hideDictTooltip() {
     const tooltip = document.getElementById('dict-tooltip');
     if (tooltip) {
@@ -524,6 +1063,12 @@ class PopupController {
     }
   }
 
+  /**
+   * 获取词典显示名称
+   * 根据词典ID获取对应的显示名称
+   * @param {string} dictId - 词典ID
+   * @returns {string} 词典的显示名称
+   */
   getDictDisplayName(dictId) {
     // 词典显示名称映射
     const dictNames = {
@@ -549,11 +1094,30 @@ class PopupController {
     return dictNames[dictId] || dictId;
   }
 
+  /**
+   * 加载词典设置
+   * 从Chrome存储中加载词典设置并更新UI
+   */
   async loadDictSettings() {
     try {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
-        this.dictSettings = { ...this.dictSettings, ...result.dictSettings };
+        // 清理无效的imported_前缀词典ID
+        const cleanedSettings = {};
+        Object.keys(result.dictSettings).forEach(dictId => {
+          // 跳过imported_前缀的无效ID
+          if (!dictId.startsWith('imported_')) {
+            cleanedSettings[dictId] = result.dictSettings[dictId];
+          }
+        });
+        
+        this.dictSettings = { ...this.dictSettings, ...cleanedSettings };
+        
+        // 如果清理了设置，保存更新后的设置
+        if (Object.keys(cleanedSettings).length !== Object.keys(result.dictSettings).length) {
+          console.log('清理了无效的词典设置ID');
+          await chrome.storage.local.set({ dictSettings: this.dictSettings });
+        }
       }
       
       // 更新UI
@@ -563,6 +1127,10 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新词典UI
+   * 根据词典设置更新复选框状态和首页标签显示
+   */
   updateDictUI() {
     Object.keys(this.dictSettings).forEach(dictId => {
       const checkbox = document.getElementById(`dict-${dictId}`);
@@ -575,6 +1143,10 @@ class PopupController {
     this.updateDictTags();
   }
   
+  /**
+   * 更新词典标签
+   * 在首页显示当前启用的词典标签
+   */
   updateDictTags() {
     const dictTagsContainer = document.getElementById('dictTags');
     if (!dictTagsContainer) return;
@@ -605,15 +1177,45 @@ class PopupController {
     
     // 根据词典界面的实际复选框状态添加标签
     Object.keys(this.dictSettings).forEach(dictId => {
-      if (this.dictSettings[dictId] && dictNames[dictId]) {
-        const tag = document.createElement('div');
-        tag.className = 'dict-tag';
-        tag.textContent = dictNames[dictId];
-        dictTagsContainer.appendChild(tag);
+      if (this.dictSettings[dictId]) {
+        let displayName = null;
+        
+        // 首先检查是否是预设词典
+        if (dictNames[dictId]) {
+          displayName = dictNames[dictId];
+        } else if (this.customDictionaries) {
+          // 如果不是预设词典，从customDictionaries中获取名称
+          const customDict = this.customDictionaries.find(dict => dict.id === dictId);
+          if (customDict) {
+            // 优先使用displayName，然后是name字段
+            if (customDict.displayName) {
+              // 如果displayName是对象，优先使用中文名称
+              if (typeof customDict.displayName === 'object') {
+                displayName = customDict.displayName.zh || customDict.displayName.en || customDict.name;
+              } else {
+                displayName = customDict.displayName;
+              }
+            } else {
+              displayName = customDict.name;
+            }
+          }
+        }
+        
+        // 如果找到了显示名称，创建标签
+        if (displayName) {
+          const tag = document.createElement('div');
+          tag.className = 'dict-tag';
+          tag.textContent = displayName;
+          dictTagsContainer.appendChild(tag);
+        }
       }
     });
   }
 
+  /**
+   * 保存词典设置
+   * 将当前词典设置保存到Chrome存储并通知content script
+   */
   async saveDictSettings() {
     try {
       await chrome.storage.local.set({ dictSettings: this.dictSettings });
@@ -644,14 +1246,16 @@ class PopupController {
       
       console.log('词典设置已保存:', this.dictSettings);
       
-      // 更新首页词典标签显示
-      this.updateDictTags();
-      
     } catch (error) {
       console.error('保存词典设置失败:', error);
+      this.showError(`保存词典设置失败: ${error.message}`);
     }
   }
 
+  /**
+   * 检查插件状态
+   * 获取当前标签页的插件状态并更新UI
+   */
   async checkStatus() {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -674,6 +1278,10 @@ class PopupController {
     }
   }
 
+  /**
+   * 处理开关切换
+   * 切换插件的启用/禁用状态
+   */
   async handleToggle() {
     const toggleBtn = document.getElementById('toggle');
     const statusDiv = document.getElementById('status');
@@ -706,6 +1314,11 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新UI状态
+   * 根据插件状态更新界面显示
+   * @param {Object} status - 插件状态对象
+   */
   updateUI(status) {
     const toggleBtn = document.getElementById('toggle');
     const statusDiv = document.getElementById('status');
@@ -734,6 +1347,11 @@ class PopupController {
     }
   }
 
+  /**
+   * 更新统计信息
+   * 显示插件的统计数据
+   * @param {Object} stats - 统计数据对象
+   */
   updateStats(stats) {
     // 这里可以添加统计信息的显示逻辑
     console.log('统计信息:', stats);
@@ -855,6 +1473,9 @@ class PopupController {
     root.style.setProperty('--adj-color', colors.adj);
     // 比较级/最高级颜色保持不变
     root.style.setProperty('--comparative-color', '#9966cc');
+    
+    // 更新主页词性颜色图例
+    this.updateHomeLegendColors(colors);
   }
 
   async loadColorSettings() {
@@ -873,6 +1494,38 @@ class PopupController {
 
   updateColorUI() {
     this.selectColorScheme(this.currentColorScheme);
+    
+    // 确保主页图例也反映当前颜色方案
+    const colorSchemes = {
+      default: {
+        noun: '#0066cc',
+        verb: '#cc0000', 
+        adj: '#009933'
+      },
+      warm: {
+        noun: '#8b4513',
+        verb: '#dc143c',
+        adj: '#ff8c00'
+      },
+      cool: {
+        noun: '#191970',
+        verb: '#008b8b',
+        adj: '#4169E1'
+      },
+      pastel: {
+        noun: '#da70d6',
+        verb: '#20b2aa',
+        adj: '#f0e68c'
+      },
+      'high-contrast': {
+        noun: '#000080',
+        verb: '#8b0000',
+        adj: '#228b22'
+      }
+    };
+    
+    const colors = colorSchemes[this.currentColorScheme] || colorSchemes.default;
+    this.updateHomeLegendColors(colors);
   }
   
   async loadHighlightingToggles() {
@@ -1271,6 +1924,10 @@ class PopupController {
 
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
+  /**
+   * 显示AI错误状态
+   * 在AI分析页面显示错误信息
+   */
   showAIError() {
     const errorText = window.i18n.t('pages.ai.error');
     
@@ -1287,12 +1944,19 @@ class PopupController {
     // document.getElementById('textRecommendation').innerHTML = `<div class="error">${errorText}</div>`; // 推荐功能已禁用
   }
 
+  /**
+   * 刷新AI分析
+   * 重新加载AI分析数据
+   */
   async refreshAIAnalysis() {
     console.log('刷新AI分析...');
     await this.loadAIAnalysis();
   }
 
-  // 版本检查方法
+  /**
+   * 检查版本更新
+   * 获取当前版本并检查是否有新版本可用
+   */
   async checkVersion() {
     try {
       // 获取当前版本
@@ -1354,6 +2018,10 @@ class PopupController {
   }
 
   // 更新版本UI显示
+  /**
+   * 更新版本UI
+   * 根据版本检查结果更新版本信息显示
+   */
   updateVersionUI() {
     if (!this.versionInfo) return;
     
@@ -1398,6 +2066,29 @@ class PopupController {
         updateNotice.style.display = 'none';
       }
     }
+  }
+
+  // 统一的消息处理方法
+  /**
+   * 显示成功消息
+   * 使用alert显示成功提示（后续可改为更优雅的UI提示）
+   * @param {string} message - 要显示的成功消息
+   */
+  showSuccess(message) {
+    // 可以在这里实现统一的成功消息显示逻辑
+    // 暂时使用alert，后续可以改为更优雅的UI提示
+    alert(message);
+  }
+
+  /**
+   * 显示错误消息
+   * 使用alert显示错误提示（后续可改为更优雅的UI提示）
+   * @param {string} message - 要显示的错误消息
+   */
+  showError(message) {
+    // 可以在这里实现统一的错误消息显示逻辑
+    // 暂时使用alert，后续可以改为更优雅的UI提示
+    alert(message);
   }
 }
 

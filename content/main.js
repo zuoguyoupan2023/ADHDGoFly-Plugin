@@ -12,7 +12,6 @@ class ADHDHighlighter {
       pastel: { noun: '#da70d6', verb: '#20b2aa', adj: '#f0e68c' },
       'high-contrast': { noun: '#000080', verb: '#8b0000', adj: '#228b22' }
     };
-    this.currentColorScheme = 'default';
     
     // 文本样式设置
     this.textSettings = {
@@ -41,11 +40,169 @@ class ADHDHighlighter {
       this.textSegmenter
     );
     
+    // 初始化事件监听式缓存系统
+    this.eventCacheManager = null;
+    this.initEventCacheSystem();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
+    // 启动时扫描dictionaries文件夹
+    this.scanDictionariesOnStartup();
+    
     // 初始化
     this.init();
+  }
+
+  /**
+   * 初始化事件监听式缓存系统
+   */
+  async initEventCacheSystem() {
+    try {
+      // 创建事件缓存管理器
+      this.eventCacheManager = new EventCacheManager();
+      
+      // 监听高亮完成事件
+      this.setupHighlightEventListeners();
+      
+      console.log('✅ 事件缓存系统初始化完成');
+    } catch (error) {
+      console.warn('⚠️ 事件缓存系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 设置高亮完成事件监听器
+   */
+  setupHighlightEventListeners() {
+    // 监听流式处理器的高亮完成事件
+    if (this.streamingPageProcessor) {
+      this.streamingPageProcessor.addEventListener('highlightComplete', (event) => {
+        this.handleHighlightComplete(event.detail);
+      });
+    }
+    
+    // 监听传统处理器的高亮完成事件
+    if (this.pageProcessor) {
+      this.pageProcessor.addEventListener('highlightComplete', (event) => {
+        this.handleHighlightComplete(event.detail);
+      });
+    }
+  }
+
+  /**
+   * 检查并应用缓存
+   * @returns {Promise<boolean>} 是否成功应用了缓存
+   */
+  async checkAndApplyCache() {
+    if (!this.eventCacheManager) {
+      console.log('📝 缓存管理器未初始化，跳过缓存检查');
+      return false;
+    }
+
+    try {
+      const currentUrl = window.location.href;
+      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
+      
+      if (!enabledLanguages.length) {
+        console.log('📝 没有启用的语言，跳过缓存检查');
+        return false;
+      }
+
+      // 检测页面主要语言
+      const pageText = document.body.textContent.substring(0, 1000); // 取前1000字符检测语言
+      const detectedLanguage = this.languageDetector.detectLanguage(pageText);
+      const targetLanguage = enabledLanguages.includes(detectedLanguage) ? detectedLanguage : enabledLanguages[0];
+
+      console.log('🔍 检查缓存:', {
+        url: currentUrl,
+        language: targetLanguage,
+        enabledLanguages: enabledLanguages
+      });
+
+      // 查询所有匹配的缓存记录
+      const cachedRecords = await this.eventCacheManager.getAllCachedHighlights(currentUrl, targetLanguage);
+      
+      if (!cachedRecords || cachedRecords.length === 0) {
+        console.log('📝 未找到匹配的缓存数据');
+        return false;
+      }
+
+      console.log(`🎯 找到 ${cachedRecords.length} 条缓存记录，尝试应用...`);
+      
+      // 应用所有缓存的高亮结果
+      let totalApplied = 0;
+      for (const cachedData of cachedRecords) {
+        const applied = await this.eventCacheManager.applyCachedHighlights(cachedData);
+        if (applied) totalApplied++;
+      }
+      
+      const applied = totalApplied > 0;
+      
+      if (applied) {
+        console.log('✅ 缓存应用成功');
+        
+        // 记录缓存命中统计（可选）
+        this.recordCacheHit(currentUrl, targetLanguage);
+        
+        return true;
+      } else {
+        console.log('❌ 缓存应用失败，将执行正常高亮');
+        return false;
+      }
+
+    } catch (error) {
+      console.error('❌ 缓存检查和应用失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 记录缓存命中统计
+   */
+  recordCacheHit(url, language) {
+    // 这里可以记录缓存命中的统计信息
+    // 为后续的缓存分析功能做准备
+    console.log('📊 缓存命中记录:', { url, language, timestamp: Date.now() });
+  }
+
+  /**
+   * 处理高亮完成事件
+   */
+  async handleHighlightComplete(eventData) {
+    try {
+      console.log('🎯 收到高亮完成事件:', eventData);
+      
+      // 异步存储高亮数据
+      await this.eventCacheManager.storeHighlightData(eventData);
+      
+      console.log('💾 高亮数据已缓存');
+    } catch (error) {
+      console.warn('⚠️ 缓存高亮数据失败:', error);
+    }
+  }
+
+  /**
+   * 启动时扫描dictionaries文件夹中的所有json文件
+   */
+  async scanDictionariesOnStartup() {
+    try {
+      console.log('🚀 插件启动，开始扫描dictionaries文件夹...');
+      
+      // 使用新的文件清单扫描器
+      if (typeof fileListScanner !== 'undefined') {
+        const jsonFiles = await fileListScanner.getAllJsonFiles();
+        console.log('📋 Dictionaries文件夹中的所有json文件:');
+        jsonFiles.forEach(file => {
+          console.log(`  📄 ${file}`);
+        });
+        fileListScanner.generateReport();
+      } else {
+        console.warn('⚠️ 文件清单扫描器未加载');
+      }
+    } catch (error) {
+      console.error('❌ 启动扫描失败:', error);
+    }
   }
 
   /**
@@ -104,6 +261,7 @@ class ADHDHighlighter {
    */
   async handleMessage(message, sender, sendResponse) {
     try {
+      console.log('📨 收到消息:', message.action, message);
       switch (message.action) {
         case 'toggle':
           const newState = await this.toggle();
@@ -172,6 +330,82 @@ class ADHDHighlighter {
           sendResponse({ success: true, text: selectedText });
           break;
           
+        case 'testDictionaryLoading':
+          const testResult = await this.testDictionaryLoading();
+          sendResponse(testResult);
+          break;
+          
+        case 'testWordHighlight':
+          const highlightResult = await this.testWordHighlight(message.word);
+          sendResponse(highlightResult);
+          break;
+          
+        case 'getCacheStats':
+          try {
+            if (this.eventCacheManager) {
+              const cacheStats = await this.eventCacheManager.getCacheStats();
+              sendResponse({ success: true, stats: cacheStats });
+            } else {
+              sendResponse({ 
+                success: false, 
+                error: '缓存管理器未初始化',
+                stats: { enabled: false, totalRecords: 0, totalSize: 0 }
+              });
+            }
+          } catch (error) {
+            console.error('获取缓存统计失败:', error);
+            sendResponse({ 
+              success: false, 
+              error: error.message,
+              stats: { enabled: false, totalRecords: 0, totalSize: 0 }
+            });
+          }
+          break;
+          
+        // cleanupExpiredCache case 已删除
+        // 原因：系统在读取缓存时会自动检查并删除过期数据
+          
+        case 'clearAllCache':
+          try {
+            if (this.eventCacheManager) {
+              await this.eventCacheManager.clearAllCache();
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ 
+                success: false, 
+                error: '缓存管理器未初始化'
+              });
+            }
+          } catch (error) {
+            console.error('清除所有缓存失败:', error);
+            sendResponse({ 
+              success: false, 
+              error: error.message
+            });
+          }
+          break;
+          
+        case 'storageSettingsChanged':
+          try {
+            if (this.eventCacheManager) {
+              await this.eventCacheManager.updateCacheSettings(message.data);
+              console.log('✅ 缓存设置已更新:', message.data);
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ 
+                success: false, 
+                error: '缓存管理器未初始化'
+              });
+            }
+          } catch (error) {
+            console.error('更新缓存设置失败:', error);
+            sendResponse({ 
+              success: false, 
+              error: error.message
+            });
+          }
+          break;
+          
         default:
           sendResponse({ 
             success: false, 
@@ -211,6 +445,24 @@ class ADHDHighlighter {
       const result = await chrome.storage.local.get(['dictSettings']);
       if (result.dictSettings) {
         console.log('加载词典设置:', result.dictSettings);
+        
+        // 特别检查111词典的设置
+        const dict111Id = 'custom-1760195631107';
+        const newDict111Id = 'custom-1760202653658';
+        
+        if (result.dictSettings[dict111Id] !== undefined) {
+          console.log(`🔍 Found 111 dictionary in settings: ${dict111Id} = ${result.dictSettings[dict111Id]}`);
+        } else if (result.dictSettings[newDict111Id] !== undefined) {
+          console.log(`🔍 Found 111 dictionary with new ID in settings: ${newDict111Id} = ${result.dictSettings[newDict111Id]}`);
+        } else {
+          console.log(`❌ 111 dictionary not found in settings. Available keys:`, Object.keys(result.dictSettings));
+          
+          // 检查是否有任何custom-开头的词典ID
+          const customDictIds = Object.keys(result.dictSettings).filter(key => key.startsWith('custom-'));
+          if (customDictIds.length > 0) {
+            console.log(`🔍 Found custom dictionary IDs in settings:`, customDictIds);
+          }
+        }
         
         // 检查是否为新格式（包含词典ID）
         const hasNewFormat = Object.keys(result.dictSettings).some(key => key.includes('-'));
@@ -487,20 +739,32 @@ class ADHDHighlighter {
       console.log('[Edge调试] 当前页面URL:', window.location.href);
       console.log('[Edge调试] 处理模式:', this.processingMode);
       console.log('[Edge调试] 启用的语言:', this.dictionaryManager.getEnabledLanguages());
+      console.log('[Edge调试] 语言状态详情:', this.dictionaryManager.enabledLanguages);
+      console.log('[Edge调试] zh语言是否启用:', this.dictionaryManager.isLanguageEnabled('zh'));
     }
     
     try {
-      // 根据处理模式选择处理器
-      if (this.processingMode === 'streaming') {
-        console.log('使用流式处理模式');
-        if (isEdge) console.log('[Edge调试] 开始流式处理...');
-        await this.streamingPageProcessor.processPage();
-        if (isEdge) console.log('[Edge调试] 流式处理完成');
+      // 第一步：检查缓存
+      const cacheApplied = await this.checkAndApplyCache();
+      
+      if (cacheApplied) {
+        console.log('✅ 缓存应用成功，跳过正常高亮流程');
+        if (isEdge) console.log('[Edge调试] 使用缓存，跳过处理');
       } else {
-        console.log('使用传统处理模式');
-        if (isEdge) console.log('[Edge调试] 开始传统处理...');
-        await this.pageProcessor.processPage();
-        if (isEdge) console.log('[Edge调试] 传统处理完成');
+        console.log('📝 缓存未命中，执行正常高亮流程');
+        
+        // 根据处理模式选择处理器
+        if (this.processingMode === 'streaming') {
+          console.log('使用流式处理模式');
+          if (isEdge) console.log('[Edge调试] 开始流式处理...');
+          await this.streamingPageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 流式处理完成');
+        } else {
+          console.log('使用传统处理模式');
+          if (isEdge) console.log('[Edge调试] 开始传统处理...');
+          await this.pageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 传统处理完成');
+        }
       }
       
       // 应用颜色方案和文本设置
@@ -823,7 +1087,137 @@ class ADHDHighlighter {
   }
 
   /**
-   * 获取当前选中的文本
+   * 测试词典加载功能
+   * @returns {Object} 测试结果
+   */
+  async testDictionaryLoading() {
+    try {
+      console.log('🔧 开始测试词典加载...');
+      
+      // 获取所有可用词典
+      const availableDictionaries = await this.dictionaryManager.getAvailableDictionaries();
+      const totalDictionaries = availableDictionaries.length;
+      
+      let loadedDictionaries = 0;
+      let failedDictionaries = 0;
+      const details = [];
+      
+      // 测试每个词典的加载状态
+      for (const dict of availableDictionaries) {
+        try {
+          // 检查词典是否已加载
+          const isLoaded = this.dictionaryManager.isDictionaryLoaded(dict.id);
+          const dictData = this.dictionaryManager.getDictionaryData(dict.id);
+          
+          if (isLoaded && dictData && dictData.length > 0) {
+            loadedDictionaries++;
+            details.push({
+              name: dict.name,
+              id: dict.id,
+              status: 'success',
+              message: `已加载 ${dictData.length} 个词条`
+            });
+          } else {
+            failedDictionaries++;
+            details.push({
+              name: dict.name,
+              id: dict.id,
+              status: 'failed',
+              message: isLoaded ? '词典数据为空' : '词典未加载'
+            });
+          }
+        } catch (error) {
+          failedDictionaries++;
+          details.push({
+            name: dict.name,
+            id: dict.id,
+            status: 'failed',
+            message: `加载错误: ${error.message}`
+          });
+        }
+      }
+      
+      console.log(`🔧 词典加载测试完成: ${loadedDictionaries}/${totalDictionaries} 成功`);
+      
+      return {
+        success: true,
+        totalDictionaries,
+        loadedDictionaries,
+        failedDictionaries,
+        details
+      };
+    } catch (error) {
+      console.error('🔧 测试词典加载失败:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 测试词汇高亮功能
+   * @param {string} word 要测试的词汇
+   * @returns {Object} 测试结果
+   */
+  async testWordHighlight(word) {
+    try {
+      console.log(`🔧 开始测试词汇高亮: ${word}`);
+      
+      if (!word || typeof word !== 'string') {
+        return {
+          success: false,
+          error: '无效的测试词汇'
+        };
+      }
+      
+      const matches = [];
+      
+      // 获取所有已启用的词典
+      const enabledDictionaries = this.dictionaryManager.getEnabledDictionaries();
+      
+      for (const dictId of Object.keys(enabledDictionaries)) {
+        if (!enabledDictionaries[dictId]) continue;
+        
+        try {
+          const dictData = this.dictionaryManager.getDictionaryData(dictId);
+          const dictInfo = await this.dictionaryManager.getDictionaryInfo(dictId);
+          
+          if (dictData && dictData.includes(word)) {
+            // 获取词汇的分类和颜色
+            const category = this.dictionaryManager.getWordCategory(word, dictId);
+            const color = this.dictionaryManager.getWordColor(word, dictId, category);
+            
+            matches.push({
+              dictionary: dictInfo?.name || dictId,
+              category: category || '未知',
+              color: color || '#ffeb3b',
+              dictId: dictId
+            });
+          }
+        } catch (error) {
+          console.warn(`🔧 检查词典 ${dictId} 时出错:`, error);
+        }
+      }
+      
+      console.log(`🔧 词汇高亮测试完成: 找到 ${matches.length} 个匹配`);
+      
+      return {
+        success: true,
+        word: word,
+        matches: matches
+      };
+    } catch (error) {
+      console.error('🔧 测试词汇高亮失败:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 获取选中的文本
    * @returns {string} 选中的文本
    */
   getSelectedText() {

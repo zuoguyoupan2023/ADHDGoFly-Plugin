@@ -89,6 +89,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse(result);
     });
     return true; // 保持消息通道开放以支持异步响应
+  } else if (request.action === 'getStorage') {
+    // 获取存储数据用于调试
+    chrome.storage.local.get(null, (result) => {
+      sendResponse({
+        success: true,
+        data: result,
+        keys: Object.keys(result),
+        customDictRegistry: result.customDictRegistry || null,
+        dictionaryKeys: Object.keys(result).filter(key => key.startsWith('dictionary_'))
+      });
+    });
+    return true; // 保持消息通道开放以支持异步响应
   }
 });
 
