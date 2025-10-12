@@ -55,7 +55,7 @@ class SettingsManager {
         });
 
         // 清理过期缓存按钮
-        const cleanupExpiredBtn = document.getElementById('cleanup-expired-btn');
+        const cleanupExpiredBtn = document.getElementById('cleanup-expired');
         if (cleanupExpiredBtn) {
             cleanupExpiredBtn.addEventListener('click', () => {
                 this.cleanupExpiredCache();
@@ -63,7 +63,7 @@ class SettingsManager {
         }
 
         // 清理所有缓存按钮
-        const cleanupAllBtn = document.getElementById('cleanup-all-btn');
+        const cleanupAllBtn = document.getElementById('cleanup-all');
         if (cleanupAllBtn) {
             cleanupAllBtn.addEventListener('click', () => {
                 this.cleanupAllCache();
@@ -382,7 +382,7 @@ class SettingsManager {
                 cachedPagesElement.textContent = cacheStats.pageCount || 0;
             }
 
-            const usedSpaceElement = document.getElementById('used-space-size');
+            const usedSpaceElement = document.getElementById('used-storage-space');
             if (usedSpaceElement) {
                 usedSpaceElement.textContent = this.formatBytes(cacheStats.totalSize || 0);
             }
