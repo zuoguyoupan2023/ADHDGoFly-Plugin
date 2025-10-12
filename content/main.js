@@ -402,6 +402,27 @@ class ADHDHighlighter {
           }
           break;
           
+        case 'storageSettingsChanged':
+          try {
+            if (this.eventCacheManager) {
+              await this.eventCacheManager.updateCacheSettings(message.data);
+              console.log('✅ 缓存设置已更新:', message.data);
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ 
+                success: false, 
+                error: '缓存管理器未初始化'
+              });
+            }
+          } catch (error) {
+            console.error('更新缓存设置失败:', error);
+            sendResponse({ 
+              success: false, 
+              error: error.message
+            });
+          }
+          break;
+          
         default:
           sendResponse({ 
             success: false, 

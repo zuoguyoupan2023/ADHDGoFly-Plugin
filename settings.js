@@ -45,7 +45,7 @@ class SettingsManager {
 
     bindStorageEvents() {
         // 缓存保留时间选择
-        const retentionRadios = document.querySelectorAll('input[name="cache-retention"]');
+        const retentionRadios = document.querySelectorAll('input[name="storage-retention"]');
         retentionRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 if (e.target.checked) {
@@ -361,8 +361,8 @@ class SettingsManager {
 
     async loadStorageSettings(settings) {
         // 设置缓存保留时间单选按钮
-        const retentionValue = settings.cacheEnabled ? settings.cacheRetentionDays : -1;
-        const retentionRadio = document.querySelector(`input[name="cache-retention"][value="${retentionValue}"]`);
+        const retentionValue = settings.cacheEnabled ? settings.cacheRetentionDays : 0;
+        const retentionRadio = document.querySelector(`input[name="storage-retention"][value="${retentionValue}"]`);
         if (retentionRadio) {
             retentionRadio.checked = true;
         }
@@ -484,11 +484,11 @@ class SettingsManager {
     }
 
     async saveCurrentStorageSettings() {
-        const selectedRetention = document.querySelector('input[name="cache-retention"]:checked');
+        const selectedRetention = document.querySelector('input[name="storage-retention"]:checked');
         if (selectedRetention) {
             const retentionValue = parseInt(selectedRetention.value);
             const settings = {
-                cacheEnabled: retentionValue !== -1,
+                cacheEnabled: retentionValue !== 0,
                 cacheRetentionDays: retentionValue > 0 ? retentionValue : 7
             };
             

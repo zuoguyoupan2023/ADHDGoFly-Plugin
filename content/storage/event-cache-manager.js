@@ -16,6 +16,9 @@ class EventCacheManager {
       console.warn('⚠️ 事件缓存数据库初始化失败:', error);
       this.cacheEnabled = false;
     });
+    
+    // 加载缓存设置
+    this.loadCacheSettings();
   }
 
   /**
@@ -409,6 +412,77 @@ class EventCacheManager {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+  }
+}
+
+  /**
+   * 加载缓存设置
+   */
+  async loadCacheSettings() {
+    try {
+      const result = await chrome.storage.sync.get({
+        cacheEnabled: true,
+        cacheRetentionDays: 7
+      });
+      
+      this.cacheEnabled = result.cacheEnabled;
+      this.cacheRetentionDays = result.cacheRetentionDays;
+      
+      console.log('📋 缓存设置已加载:', {
+        enabled: this.cacheEnabled,
+        retentionDays: this.cacheRetentionDays
+      });
+    } catch (error) {
+      console.warn('⚠️ 加载缓存设置失败，使用默认设置:', error);
+      this.cacheEnabled = true;
+      this.cacheRetentionDays = 7;
+    }
+  }
+
+  /**
+   * 更新缓存设置
+   */
+  async updateCacheSettings(settings) {
+    try {
+      if (settings.hasOwnProperty('cacheEnabled')) {
+        this.cacheEnabled = settings.cacheEnabled;
+      }
+      
+      if (settings.hasOwnProperty('cacheRetentionDays')) {
+        this.cacheRetentionDays = settings.cacheRetentionDays;
+      }
+      
+      console.log('🔧 缓存设置已更新:', {
+        enabled: this.cacheEnabled,
+        retentionDays: this.cacheRetentionDays
+      });
+      
+      // 如果缓存被禁用，清理所有现有缓存
+      if (!this.cacheEnabled) {
+        console.log('🗑️ 缓存已禁用，清理所有现有缓存...');
+        await this.clearAllCache();
+      }
+      
+      // 如果保留时间缩短，清理过期缓存
+      if (this.cacheEnabled && settings.hasOwnProperty('cacheRetentionDays')) {
+        console.log('🧹 保留时间已更改，清理过期缓存...');
+        await this.cleanupExpiredCache();
+      }
+      
+    } catch (error) {
+      console.error('❌ 更新缓存设置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取当前缓存设置
+   */
+  getCacheSettings() {
+    return {
+      enabled: this.cacheEnabled,
+      retentionDays: this.cacheRetentionDays
+    };
   }
 }
 
