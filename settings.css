@@ -307,21 +307,23 @@
 /* 清理按钮样式 */
 .cleanup-actions {
   display: flex;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 8px;
 }
 
 .cleanup-btn {
-  flex: 1;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border: 1px solid #007AFF;
   background: white;
   color: #007AFF;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: auto;
+  display: inline-block;
 }
 
 .cleanup-btn:hover {
@@ -395,7 +397,7 @@
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #dee2e6;
-  text-align: left;
+  text-align: center;
 }
 
 .save-btn {

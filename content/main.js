@@ -362,25 +362,8 @@ class ADHDHighlighter {
           }
           break;
           
-        case 'cleanupExpiredCache':
-          try {
-            if (this.eventCacheManager) {
-              await this.eventCacheManager.cleanupExpiredCache();
-              sendResponse({ success: true });
-            } else {
-              sendResponse({ 
-                success: false, 
-                error: '缓存管理器未初始化'
-              });
-            }
-          } catch (error) {
-            console.error('清理过期缓存失败:', error);
-            sendResponse({ 
-              success: false, 
-              error: error.message
-            });
-          }
-          break;
+        // cleanupExpiredCache case 已删除
+        // 原因：系统在读取缓存时会自动检查并删除过期数据
           
         case 'clearAllCache':
           try {
