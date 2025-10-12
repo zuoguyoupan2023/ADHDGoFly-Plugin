@@ -1,0 +1,264 @@
+// content/storage/event-cache-manager.js
+/**
+ * 事件监听式缓存管理器
+ * 采用事件驱动模式，不拦截正常高亮流程，只在高亮完成后异步缓存数据
+ */
+class EventCacheManager {
+  constructor() {
+    this.dbName = 'ADHDEventCache';
+    this.version = 1;
+    this.db = null;
+    this.cacheEnabled = true;
+    this.cacheRetentionDays = 7;
+    
+    // 初始化数据库
+    this.initDatabase().catch(error => {
+      console.warn('⚠️ 事件缓存数据库初始化失败:', error);
+      this.cacheEnabled = false;
+    });
+  }
+
+  /**
+   * 初始化数据库
+   */
+  async initDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.version);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        this.db = request.result;
+        console.log('✅ 事件缓存数据库初始化成功');
+        resolve(this.db);
+      };
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        
+        // 高亮缓存表
+        if (!db.objectStoreNames.contains('highlights')) {
+          const store = db.createObjectStore('highlights', { keyPath: 'id' });
+          store.createIndex('url', 'url', { unique: false });
+          store.createIndex('language', 'language', { unique: false });
+          store.createIndex('urlLanguage', ['url', 'language'], { unique: false });
+          store.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+      };
+    });
+  }
+
+  /**
+   * 存储高亮数据
+   */
+  async storeHighlightData(highlightData) {
+    if (!this.cacheEnabled || !this.db) {
+      console.log('📝 缓存未启用，跳过存储');
+      return;
+    }
+
+    try {
+      const url = window.location.href;
+      const language = highlightData.language || 'unknown';
+      
+      const transaction = this.db.transaction(['highlights'], 'readwrite');
+      const store = transaction.objectStore('highlights');
+      
+      // 创建缓存记录
+      const cacheRecord = {
+        id: `${url}_${language}_${Date.now()}`,
+        url: url,
+        language: language,
+        data: this.serializeHighlightData(highlightData),
+        createdAt: Date.now(),
+        size: JSON.stringify(this.serializeHighlightData(highlightData)).length
+      };
+      
+      await this.putToStore(store, cacheRecord);
+      
+      console.log('💾 高亮数据已缓存:', {
+        url: url,
+        language: language,
+        size: cacheRecord.size,
+        elementCount: highlightData.elements?.length || 0
+      });
+      
+    } catch (error) {
+      console.error('❌ 存储高亮数据失败:', error);
+    }
+  }
+
+  /**
+   * 序列化高亮数据，移除不可序列化的DOM元素
+   */
+  serializeHighlightData(highlightData) {
+    if (!highlightData.elements) return highlightData;
+    
+    const serializedElements = highlightData.elements.map(element => ({
+      content: element.content,
+      language: element.language,
+      className: element.className,
+      position: element.position,
+      styles: element.styles,
+      metadata: element.metadata
+    }));
+    
+    return {
+      ...highlightData,
+      elements: serializedElements
+    };
+  }
+
+  /**
+   * 获取缓存的高亮数据
+   */
+  async getCachedHighlights(url, language) {
+    if (!this.cacheEnabled || !this.db) return null;
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readonly');
+      const store = transaction.objectStore('highlights');
+      const index = store.index('urlLanguage');
+      
+      const records = await this.getAllFromIndex(index, [url, language]);
+      
+      if (records.length === 0) return null;
+      
+      // 返回最新的记录
+      const latestRecord = records.sort((a, b) => b.createdAt - a.createdAt)[0];
+      
+      // 检查是否过期
+      const isExpired = (Date.now() - latestRecord.createdAt) > (this.cacheRetentionDays * 24 * 60 * 60 * 1000);
+      if (isExpired) {
+        console.log('⏰ 缓存已过期，删除记录');
+        await this.deleteCacheRecord(latestRecord.id);
+        return null;
+      }
+      
+      console.log('🎯 找到缓存数据:', {
+        url: url,
+        language: language,
+        age: Math.round((Date.now() - latestRecord.createdAt) / (60 * 1000)) + '分钟'
+      });
+      
+      return latestRecord.data;
+      
+    } catch (error) {
+      console.warn('⚠️ 获取缓存数据失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 删除缓存记录
+   */
+  async deleteCacheRecord(id) {
+    if (!this.db) return;
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readwrite');
+      const store = transaction.objectStore('highlights');
+      await store.delete(id);
+    } catch (error) {
+      console.warn('⚠️ 删除缓存记录失败:', error);
+    }
+  }
+
+  /**
+   * 清理过期缓存
+   */
+  async cleanupExpiredCache() {
+    if (!this.db) return;
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readwrite');
+      const store = transaction.objectStore('highlights');
+      const index = store.index('createdAt');
+      
+      const cutoffTime = Date.now() - (this.cacheRetentionDays * 24 * 60 * 60 * 1000);
+      const expiredRecords = await this.getAllFromIndex(index, IDBKeyRange.upperBound(cutoffTime));
+      
+      for (const record of expiredRecords) {
+        await store.delete(record.id);
+      }
+      
+      console.log(`🧹 清理了 ${expiredRecords.length} 条过期缓存记录`);
+      
+    } catch (error) {
+      console.warn('⚠️ 清理过期缓存失败:', error);
+    }
+  }
+
+  /**
+   * 手动清除所有缓存
+   */
+  async clearAllCache() {
+    if (!this.db) return;
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readwrite');
+      const store = transaction.objectStore('highlights');
+      await store.clear();
+      
+      console.log('🗑️ 所有缓存已清除');
+      
+    } catch (error) {
+      console.warn('⚠️ 清除缓存失败:', error);
+    }
+  }
+
+  /**
+   * 获取缓存统计信息
+   */
+  async getCacheStats() {
+    if (!this.db) return { enabled: false };
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readonly');
+      const store = transaction.objectStore('highlights');
+      
+      const allRecords = await this.getAllFromStore(store);
+      const totalSize = allRecords.reduce((sum, record) => sum + (record.size || 0), 0);
+      
+      return {
+        enabled: this.cacheEnabled,
+        totalRecords: allRecords.length,
+        totalSize: totalSize,
+        retentionDays: this.cacheRetentionDays,
+        oldestRecord: allRecords.length > 0 ? Math.min(...allRecords.map(r => r.createdAt)) : null,
+        newestRecord: allRecords.length > 0 ? Math.max(...allRecords.map(r => r.createdAt)) : null
+      };
+      
+    } catch (error) {
+      console.warn('⚠️ 获取缓存统计失败:', error);
+      return { enabled: false, error: error.message };
+    }
+  }
+
+  // 数据库操作辅助方法
+  async putToStore(store, data) {
+    return new Promise((resolve, reject) => {
+      const request = store.put(data);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllFromIndex(index, key) {
+    return new Promise((resolve, reject) => {
+      const request = key ? index.getAll(key) : index.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllFromStore(store) {
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+}
+
+// 导出事件缓存管理器
+window.EventCacheManager = EventCacheManager;

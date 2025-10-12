@@ -1,6 +1,7 @@
 // 页面处理器模块
-class PageProcessor {
+class PageProcessor extends EventTarget {
   constructor(dictionaryManager, languageDetector, textSegmenter) {
+    super(); // 调用EventTarget构造函数
     this.dictionaryManager = dictionaryManager;
     this.languageDetector = languageDetector;
     this.textSegmenter = textSegmenter;
@@ -243,6 +244,9 @@ class PageProcessor {
         // 统计高亮词汇数量
         const stats = this.textSegmenter.getSegmentationStats(segmentedHtml);
         this.stats.highlightedWords += stats.totalWords;
+        
+        // 触发高亮完成事件
+        this.dispatchHighlightEvent(textNode, segmentedHtml, stats);
       }
       
       this.stats.processedNodes++;
@@ -416,6 +420,71 @@ class PageProcessor {
       detectedLanguages: Array.from(languages),
       stats: this.getStats()
     };
+  }
+
+  /**
+   * 触发高亮完成事件
+   */
+  dispatchHighlightEvent(textNode, segmentedHtml, stats) {
+    try {
+      // 检测处理的语言
+      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
+      const detectedLanguage = this.languageDetector.detectLanguage(textNode.textContent);
+      const language = enabledLanguages.includes(detectedLanguage) ? detectedLanguage : enabledLanguages[0];
+      
+      // 收集高亮元素信息
+      const highlightElements = this.extractHighlightElements(segmentedHtml, language);
+      
+      // 创建事件数据
+      const eventData = {
+        language: language,
+        originalText: textNode.textContent,
+        segmentedHtml: segmentedHtml,
+        elements: highlightElements,
+        stats: stats,
+        timestamp: Date.now()
+      };
+      
+      // 触发事件
+      this.dispatchEvent(new CustomEvent('highlightComplete', {
+        detail: eventData
+      }));
+      
+    } catch (error) {
+      console.warn('触发高亮事件失败:', error);
+    }
+  }
+
+  /**
+   * 从分段HTML中提取高亮元素信息
+   */
+  extractHighlightElements(segmentedHtml, language) {
+    const elements = [];
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = segmentedHtml;
+    
+    const highlightSpans = tempDiv.querySelectorAll('span[class*="adhd-"]');
+    
+    highlightSpans.forEach(span => {
+      elements.push({
+        content: span.textContent,
+        language: language,
+        className: span.className,
+        position: null, // 位置信息在实际DOM中才能获取
+        styles: {
+          backgroundColor: span.style.backgroundColor,
+          color: span.style.color,
+          fontWeight: span.style.fontWeight
+        },
+        metadata: {
+          originalText: span.textContent,
+          pos: span.dataset.pos,
+          tagName: span.tagName.toLowerCase()
+        }
+      });
+    });
+    
+    return elements;
   }
 }
 

@@ -12,7 +12,6 @@ class ADHDHighlighter {
       pastel: { noun: '#da70d6', verb: '#20b2aa', adj: '#f0e68c' },
       'high-contrast': { noun: '#000080', verb: '#8b0000', adj: '#228b22' }
     };
-    this.currentColorScheme = 'default';
     
     // 文本样式设置
     this.textSettings = {
@@ -41,6 +40,10 @@ class ADHDHighlighter {
       this.textSegmenter
     );
     
+    // 初始化事件监听式缓存系统
+    this.eventCacheManager = null;
+    this.initEventCacheSystem();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -49,6 +52,58 @@ class ADHDHighlighter {
     
     // 初始化
     this.init();
+  }
+
+  /**
+   * 初始化事件监听式缓存系统
+   */
+  async initEventCacheSystem() {
+    try {
+      // 创建事件缓存管理器
+      this.eventCacheManager = new EventCacheManager();
+      
+      // 监听高亮完成事件
+      this.setupHighlightEventListeners();
+      
+      console.log('✅ 事件缓存系统初始化完成');
+    } catch (error) {
+      console.warn('⚠️ 事件缓存系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 设置高亮完成事件监听器
+   */
+  setupHighlightEventListeners() {
+    // 监听流式处理器的高亮完成事件
+    if (this.streamingPageProcessor) {
+      this.streamingPageProcessor.addEventListener('highlightComplete', (event) => {
+        this.handleHighlightComplete(event.detail);
+      });
+    }
+    
+    // 监听传统处理器的高亮完成事件
+    if (this.pageProcessor) {
+      this.pageProcessor.addEventListener('highlightComplete', (event) => {
+        this.handleHighlightComplete(event.detail);
+      });
+    }
+  }
+
+  /**
+   * 处理高亮完成事件
+   */
+  async handleHighlightComplete(eventData) {
+    try {
+      console.log('🎯 收到高亮完成事件:', eventData);
+      
+      // 异步存储高亮数据
+      await this.eventCacheManager.storeHighlightData(eventData);
+      
+      console.log('💾 高亮数据已缓存');
+    } catch (error) {
+      console.warn('⚠️ 缓存高亮数据失败:', error);
+    }
   }
 
   /**
