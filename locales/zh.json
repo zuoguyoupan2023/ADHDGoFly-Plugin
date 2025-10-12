@@ -126,6 +126,15 @@
         "history": "历史人物词典",
         "medical": "医学词典",
         "literature": "诗词词典"
+      },
+      "custom": {
+        "title": "自制词典",
+        "addButton": "添加",
+        "tipText": "没有合适的词典？",
+        "tipLink": "在线制作专属词典",
+        "emptyMessage": "暂无自制词典",
+        "removeButton": "删除",
+        "confirmRemove": "确定要删除这个词典吗？"
       }
     },
     "colors": {

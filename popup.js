@@ -572,8 +572,8 @@ class PopupController {
       const section = document.getElementById('custom-dict-section');
       
       if (section) {
-        // 默认展开，除非明确设置为折叠
-        const shouldExpand = result.customDictExpanded !== false;
+        // 默认折叠，除非明确设置为展开
+        const shouldExpand = result.customDictExpanded === true;
         if (shouldExpand) {
           section.classList.add('expanded');
         }
@@ -907,7 +907,7 @@ class PopupController {
     }
 
     if (this.customDictionaries.length === 0) {
-      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暂无自制词典</p>';
+      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;" data-i18n="pages.dict.custom.emptyMessage">暂无自制词典</p>';
       return;
     }
 
@@ -924,7 +924,7 @@ class PopupController {
           <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
         </div>
         <div class="custom-dict-actions">
-          <button class="remove-dict-btn">
+          <button class="remove-dict-btn" data-i18n="pages.dict.custom.removeButton">
             删除
           </button>
         </div>
@@ -936,10 +936,17 @@ class PopupController {
       
       listContainer.appendChild(dictItem);
     });
+
+    // 重新应用i18n翻译
+    if (this.i18n) {
+      this.i18n.updatePageText();
+    }
   }
 
   async removeCustomDict(dictId) {
-    if (!confirm('确定要删除这个词典吗？')) {
+    // 获取当前语言的确认文本
+    const confirmText = this.i18n.t('pages.dict.custom.confirmRemove') || '确定要删除这个词典吗？';
+    if (!confirm(confirmText)) {
       return;
     }
 
