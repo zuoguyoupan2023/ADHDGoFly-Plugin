@@ -19,6 +19,9 @@
         "content/text-segmenter.js",
         "content/page-processor.js",
         "content/streaming-page-processor.js",
+        "content/storage/enhanced-cache-manager.js",
+        "content/storage/multilang-processor.js",
+        "content/storage/cache-integration-manager.js",
         "content/main.js"
       ],
     "css": ["styles.css"],
