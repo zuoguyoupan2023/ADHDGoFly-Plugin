@@ -599,26 +599,59 @@ class PopupController {
 
   async updateDictionaryRegistry(dictEntry) {
     try {
-      // 获取当前注册表
-      const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
-      const registry = await response.json();
+      // 首先尝试从Chrome存储获取现有的自定义注册表
+      const storageResult = await chrome.storage.local.get(['customDictRegistry']);
+      let registry;
+      
+      if (storageResult.customDictRegistry) {
+        // 如果存在自定义注册表，使用它
+        registry = storageResult.customDictRegistry;
+        console.log('使用现有的自定义注册表，包含', registry.local ? registry.local.length : 0, '个词典');
+      } else {
+        // 如果不存在，从原始文件加载
+        const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+        registry = await response.json();
+        console.log('从原始文件加载注册表');
+      }
 
       // 添加到local数组
       if (!registry.local) {
         registry.local = [];
       }
-      registry.local.push({
-        id: dictEntry.id,
-        name: dictEntry.name,
-        displayName: dictEntry.displayName,
-        language: dictEntry.language,
-        type: dictEntry.type,
-        source: dictEntry.source,  // 保存source标记
-        domain: dictEntry.domain,
-        filePath: dictEntry.filePath,
-        enabled: dictEntry.enabled,
-        priority: dictEntry.priority
-      });
+      
+      // 检查是否已存在相同ID的词典，避免重复添加
+      const existingIndex = registry.local.findIndex(dict => dict.id === dictEntry.id);
+      if (existingIndex >= 0) {
+        // 更新现有词典
+        registry.local[existingIndex] = {
+          id: dictEntry.id,
+          name: dictEntry.name,
+          displayName: dictEntry.displayName,
+          language: dictEntry.language,
+          type: dictEntry.type,
+          source: dictEntry.source,  // 保存source标记
+          domain: dictEntry.domain,
+          filePath: dictEntry.filePath,
+          enabled: dictEntry.enabled,
+          priority: dictEntry.priority
+        };
+        console.log('更新现有词典:', dictEntry.displayName);
+      } else {
+        // 添加新词典
+        registry.local.push({
+          id: dictEntry.id,
+          name: dictEntry.name,
+          displayName: dictEntry.displayName,
+          language: dictEntry.language,
+          type: dictEntry.type,
+          source: dictEntry.source,  // 保存source标记
+          domain: dictEntry.domain,
+          filePath: dictEntry.filePath,
+          enabled: dictEntry.enabled,
+          priority: dictEntry.priority
+        });
+        console.log('添加新词典:', dictEntry.displayName);
+      }
 
       // 保存到storage（因为无法直接修改扩展文件）
       await chrome.storage.local.set({
@@ -626,7 +659,7 @@ class PopupController {
         [`dictionary_${dictEntry.id}`]: dictEntry.data  // 修改存储键名以匹配加载逻辑
       });
 
-      console.log('词典注册表已更新');
+      console.log('词典注册表已更新，当前包含', registry.local.length, '个自定义词典');
     } catch (error) {
       console.error('更新注册表失败:', error);
       throw error;
@@ -635,12 +668,25 @@ class PopupController {
 
   async loadCustomDictionaries() {
     try {
-      // 从注册表加载自定义词典
-      const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
-      const registry = await response.json();
+      // 首先尝试从Chrome存储获取自定义注册表
+      const storageResult = await chrome.storage.local.get(['customDictRegistry']);
+      let customDictionaries = [];
       
-      if (registry.local && registry.local.length > 0) {
-        this.customDictionaries = registry.local;
+      if (storageResult.customDictRegistry && storageResult.customDictRegistry.local) {
+        customDictionaries = storageResult.customDictRegistry.local;
+        console.log('从Chrome存储加载自定义词典，找到', customDictionaries.length, '个词典');
+      } else {
+        // 如果Chrome存储中没有，尝试从原始注册表文件加载
+        const response = await fetch(chrome.runtime.getURL('dictionaries/dictionary-registry.json'));
+        const registry = await response.json();
+        if (registry.local && registry.local.length > 0) {
+          customDictionaries = registry.local;
+          console.log('从原始注册表文件加载自定义词典，找到', customDictionaries.length, '个词典');
+        }
+      }
+      
+      if (customDictionaries.length > 0) {
+        this.customDictionaries = customDictionaries;
         this.updateCustomDictList();
         this.addCustomDictsToUI(); // 添加到词典管理界面
         
@@ -673,25 +719,13 @@ class PopupController {
           console.log('🔄 词典设置已更新，正在保存...');
           await this.saveDictSettings();
         }
-      }
-      
-      // 同时从storage加载（如果有的话）
-      const result = await chrome.storage.local.get(['customDictRegistry']);
-      if (result.customDictRegistry && result.customDictRegistry.local) {
-        const storageDicts = result.customDictRegistry.local;
-        // 合并注册表中的词典和storage中的词典
-        const allDicts = [...this.customDictionaries];
-        storageDicts.forEach(dict => {
-          if (!allDicts.find(d => d.id === dict.id)) {
-            allDicts.push(dict);
-          }
-        });
-        this.customDictionaries = allDicts;
-        this.updateCustomDictList();
-        this.addCustomDictsToUI();
+      } else {
+        console.log('没有找到自定义词典');
+        this.customDictionaries = [];
       }
     } catch (error) {
       console.error('加载自定义词典失败:', error);
+      this.customDictionaries = [];
     }
   }
 
