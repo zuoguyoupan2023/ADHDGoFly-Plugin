@@ -413,7 +413,6 @@ class EventCacheManager {
       request.onerror = () => reject(request.error);
     });
   }
-}
 
   /**
    * 加载缓存设置
