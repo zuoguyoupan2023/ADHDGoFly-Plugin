@@ -400,29 +400,42 @@ class SettingsManager {
 
     async getCacheStatistics() {
         try {
-            // 获取所有缓存数据
-            const allData = await chrome.storage.local.get(null);
-            let pageCount = 0;
-            let totalSize = 0;
-            let lastCleanup = null;
-
-            // 统计缓存页面和大小
-            for (const [key, value] of Object.entries(allData)) {
-                if (key.startsWith('cache_')) {
-                    pageCount++;
-                    totalSize += JSON.stringify(value).length;
-                } else if (key === 'lastCleanupTime') {
-                    lastCleanup = value;
-                }
+            // 从 IndexedDB 获取真实的缓存统计数据
+            // 通过消息传递与 content script 通信
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                console.warn('无法获取当前标签页');
+                return { totalRecords: 0, totalSize: 0, lastCleanup: null };
             }
 
-            return {
-                pageCount,
-                totalSize,
-                lastCleanup
-            };
+            const response = await chrome.tabs.sendMessage(tab.id, {
+                action: 'getCacheStats'
+            });
+
+            if (response && response.success) {
+                const stats = response.stats;
+                return {
+                    pageCount: stats.totalRecords || 0,
+                    totalSize: stats.totalSize || 0,
+                    lastCleanup: stats.lastCleanup || null,
+                    // 保持向后兼容，同时提供新的字段名
+                    totalRecords: stats.totalRecords || 0,
+                    oldestRecord: stats.oldestRecord || null,
+                    newestRecord: stats.newestRecord || null,
+                    retentionDays: stats.retentionDays || 7,
+                    enabled: stats.enabled !== false
+                };
+            } else {
+                console.warn('获取缓存统计失败:', response?.error || '未知错误');
+                return { pageCount: 0, totalSize: 0, lastCleanup: null };
+            }
         } catch (error) {
             console.error('获取缓存统计失败:', error);
+            // 如果是因为没有 content script 或页面不支持，返回默认值
+            if (error.message && error.message.includes('Could not establish connection')) {
+                console.info('当前页面不支持缓存功能（可能是扩展页面或特殊页面）');
+            }
             return { pageCount: 0, totalSize: 0, lastCleanup: null };
         }
     }

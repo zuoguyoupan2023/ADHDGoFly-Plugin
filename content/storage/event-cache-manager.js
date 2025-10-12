@@ -183,6 +183,13 @@ class EventCacheManager {
       
       console.log(`🧹 清理了 ${expiredRecords.length} 条过期缓存记录`);
       
+      // 更新上次清理时间
+      try {
+        await chrome.storage.local.set({ lastCleanupTime: Date.now() });
+      } catch (error) {
+        console.warn('更新清理时间失败:', error);
+      }
+      
     } catch (error) {
       console.warn('⚠️ 清理过期缓存失败:', error);
     }
@@ -200,6 +207,13 @@ class EventCacheManager {
       await store.clear();
       
       console.log('🗑️ 所有缓存已清除');
+      
+      // 更新上次清理时间
+      try {
+        await chrome.storage.local.set({ lastCleanupTime: Date.now() });
+      } catch (error) {
+        console.warn('更新清理时间失败:', error);
+      }
       
     } catch (error) {
       console.warn('⚠️ 清除缓存失败:', error);
@@ -219,13 +233,23 @@ class EventCacheManager {
       const allRecords = await this.getAllFromStore(store);
       const totalSize = allRecords.reduce((sum, record) => sum + (record.size || 0), 0);
       
+      // 从 chrome.storage.local 获取上次清理时间
+      let lastCleanup = null;
+      try {
+        const result = await chrome.storage.local.get(['lastCleanupTime']);
+        lastCleanup = result.lastCleanupTime || null;
+      } catch (error) {
+        console.warn('获取上次清理时间失败:', error);
+      }
+      
       return {
         enabled: this.cacheEnabled,
         totalRecords: allRecords.length,
         totalSize: totalSize,
         retentionDays: this.cacheRetentionDays,
         oldestRecord: allRecords.length > 0 ? Math.min(...allRecords.map(r => r.createdAt)) : null,
-        newestRecord: allRecords.length > 0 ? Math.max(...allRecords.map(r => r.createdAt)) : null
+        newestRecord: allRecords.length > 0 ? Math.max(...allRecords.map(r => r.createdAt)) : null,
+        lastCleanup: lastCleanup
       };
       
     } catch (error) {

@@ -263,6 +263,28 @@ class ADHDHighlighter {
           sendResponse(highlightResult);
           break;
           
+        case 'getCacheStats':
+          try {
+            if (this.eventCacheManager) {
+              const cacheStats = await this.eventCacheManager.getCacheStats();
+              sendResponse({ success: true, stats: cacheStats });
+            } else {
+              sendResponse({ 
+                success: false, 
+                error: '缓存管理器未初始化',
+                stats: { enabled: false, totalRecords: 0, totalSize: 0 }
+              });
+            }
+          } catch (error) {
+            console.error('获取缓存统计失败:', error);
+            sendResponse({ 
+              success: false, 
+              error: error.message,
+              stats: { enabled: false, totalRecords: 0, totalSize: 0 }
+            });
+          }
+          break;
+          
         default:
           sendResponse({ 
             success: false, 
