@@ -2024,42 +2024,71 @@ class TextSegmenter {
       // 清理词汇（移除标点，转为小写）
       const cleanWord = this.cleanWord(token);
       
-      // 只处理英文字母组成的词汇，跳过中文、数字等非英文内容
-      if (!cleanWord || !/^[a-zA-Z]+$/.test(cleanWord)) {
-        html += token;
-        return;
-      }
-      
       // 首先尝试精确匹配
-      if (dictionary[cleanWord]) {
+      if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
         
-        // 根据词性和高亮开关决定是否高亮
-        const shouldHighlight = (
-          (normalizedPos === 'n' && this.highlightingToggles.noun) ||
-          (normalizedPos === 'v' && this.highlightingToggles.verb) ||
-          (normalizedPos === 'a' && this.highlightingToggles.adj)
-        );
-        
-        if (shouldHighlight) {
-          html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
-        } else {
-          html += token;
+        // 如果是名词或动词，优先使用词典标记
+        if (normalizedPos === 'n' || normalizedPos === 'v') {
+          const shouldHighlight = (
+            (normalizedPos === 'n' && this.highlightingToggles.noun) ||
+            (normalizedPos === 'v' && this.highlightingToggles.verb)
+          );
+          
+          if (shouldHighlight) {
+            html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+          } else {
+            html += token;
+          }
+        }
+        // 如果是形容词或副词，检查是否为比较级
+        else {
+          let isComparative = false;
+          if (cleanWord) {
+            // 不规则比较级/最高级
+            const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+            if (irregularComparatives.includes(cleanWord)) {
+              isComparative = true;
+            }
+            // 规则比较级/最高级
+            else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                     (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+              isComparative = true;
+            }
+          }
+          
+          if (isComparative) {
+             if (this.highlightingToggles.comparative) {
+               // 紫色比较级高亮开启，显示为紫色
+               html += `<span class="adhd-comp" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else if (this.highlightingToggles.adj) {
+               // 紫色比较级高亮关闭但形容词高亮开启，显示为绿色形容词
+               html += `<span class="adhd-a" data-word="${cleanWord}" data-pos="comparative">${token}</span>`;
+             } else {
+               html += token;
+             }
+           } else if (normalizedPos === 'a' && this.highlightingToggles.adj) {
+             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
+           } else {
+             html += token;
+           }
         }
       }
       // 如果精确匹配失败，检查比较级
       else {
         let isComparative = false;
-        // 不规则比较级/最高级
-        const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
-        if (irregularComparatives.includes(cleanWord)) {
-          isComparative = true;
-        }
-        // 规则比较级/最高级
-        else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
-                 (cleanWord.endsWith('est') && cleanWord.length > 4)) {
-          isComparative = true;
+        if (cleanWord) {
+          // 不规则比较级/最高级
+          const irregularComparatives = ['better', 'best', 'worse', 'worst', 'more', 'most', 'less', 'least'];
+          if (irregularComparatives.includes(cleanWord)) {
+            isComparative = true;
+          }
+          // 规则比较级/最高级
+          else if ((cleanWord.endsWith('er') && cleanWord.length > 3) || 
+                   (cleanWord.endsWith('est') && cleanWord.length > 4)) {
+            isComparative = true;
+          }
         }
         
         if (isComparative) {
@@ -2077,7 +2106,7 @@ class TextSegmenter {
         else {
           // 如果精确匹配失败，尝试英语词汇变形匹配
           let matched = false;
-          if (this.enMorphology) {
+          if (cleanWord && this.enMorphology) {
             const possibleStems = this.enMorphology.getPossibleStems(cleanWord);
             for (const stem of possibleStems) {
               if (dictionary[stem]) {
@@ -2090,7 +2119,7 @@ class TextSegmenter {
                   (normalizedPos === 'a' && this.highlightingToggles.adj)
                 );
                 
-                if (shouldHighlight) {
+                if (shouldHighlight && (normalizedPos === 'n' || normalizedPos === 'v' || normalizedPos === 'a')) {
                   html += `<span class="adhd-${normalizedPos}" data-word="${stem}" data-pos="${pos}">${token}</span>`;
                   matched = true;
                   break;
