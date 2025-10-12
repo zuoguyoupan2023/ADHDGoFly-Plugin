@@ -427,9 +427,16 @@ class EventCacheManager {
       this.cacheEnabled = result.cacheEnabled;
       this.cacheRetentionDays = result.cacheRetentionDays;
       
+      // 特殊处理：3分钟测试模式
+      if (this.cacheRetentionDays === 0.002) {
+        console.log('🧪 启用3分钟测试模式');
+        this.startTestModeCleanup();
+      }
+      
       console.log('📋 缓存设置已加载:', {
         enabled: this.cacheEnabled,
-        retentionDays: this.cacheRetentionDays
+        retentionDays: this.cacheRetentionDays,
+        retentionMinutes: this.cacheRetentionDays * 24 * 60
       });
     } catch (error) {
       console.warn('⚠️ 加载缓存设置失败，使用默认设置:', error);
@@ -466,6 +473,15 @@ class EventCacheManager {
       if (this.cacheEnabled && settings.hasOwnProperty('cacheRetentionDays')) {
         console.log('🧹 保留时间已更改，清理过期缓存...');
         await this.cleanupExpiredCache();
+        
+        // 处理测试模式
+        if (this.cacheRetentionDays === 0.002) {
+          console.log('🧪 切换到3分钟测试模式');
+          this.startTestModeCleanup();
+        } else {
+          // 停止测试模式
+          this.stopTestModeCleanup();
+        }
       }
       
     } catch (error) {
@@ -482,6 +498,45 @@ class EventCacheManager {
       enabled: this.cacheEnabled,
       retentionDays: this.cacheRetentionDays
     };
+  }
+
+  /**
+   * 启动测试模式的自动清理（仅用于验证）
+   */
+  startTestModeCleanup() {
+    // 清除之前的定时器
+    if (this.testCleanupTimer) {
+      clearInterval(this.testCleanupTimer);
+    }
+    
+    // 每30秒检查一次过期缓存（测试模式下更频繁）
+    this.testCleanupTimer = setInterval(async () => {
+      try {
+        console.log('🧪 测试模式：检查过期缓存...');
+        const statsBefore = await this.getCacheStats();
+        await this.cleanupExpiredCache();
+        const statsAfter = await this.getCacheStats();
+        
+        if (statsBefore.totalRecords !== statsAfter.totalRecords) {
+          console.log(`🧪 测试模式：清理了 ${statsBefore.totalRecords - statsAfter.totalRecords} 条过期缓存`);
+        }
+      } catch (error) {
+        console.error('🧪 测试模式清理失败:', error);
+      }
+    }, 30000); // 30秒检查一次
+    
+    console.log('🧪 测试模式自动清理已启动，每30秒检查一次');
+  }
+
+  /**
+   * 停止测试模式的自动清理
+   */
+  stopTestModeCleanup() {
+    if (this.testCleanupTimer) {
+      clearInterval(this.testCleanupTimer);
+      this.testCleanupTimer = null;
+      console.log('🧪 测试模式自动清理已停止');
+    }
   }
 }
 

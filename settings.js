@@ -49,7 +49,13 @@ class SettingsManager {
         retentionRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 if (e.target.checked) {
-                    this.saveStorageSettings({ cacheRetentionDays: parseInt(e.target.value) });
+                    const retentionDays = parseFloat(e.target.value);
+                    this.saveStorageSettings({ cacheRetentionDays: retentionDays });
+                    
+                    // 特殊提示：3分钟测试模式
+                    if (retentionDays === 0.002) {
+                        this.showMessage('🧪 已启用3分钟测试模式，缓存将在3分钟后过期', 'info');
+                    }
                 }
             });
         });
@@ -486,7 +492,7 @@ class SettingsManager {
     async saveCurrentStorageSettings() {
         const selectedRetention = document.querySelector('input[name="storage-retention"]:checked');
         if (selectedRetention) {
-            const retentionValue = parseInt(selectedRetention.value);
+            const retentionValue = parseFloat(selectedRetention.value);
             const settings = {
                 cacheEnabled: retentionValue !== 0,
                 cacheRetentionDays: retentionValue > 0 ? retentionValue : 7
