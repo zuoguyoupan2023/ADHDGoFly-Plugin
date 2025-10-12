@@ -109,7 +109,51 @@ class EventCacheManager {
   }
 
   /**
-   * 获取缓存的高亮数据
+   * 获取所有匹配的缓存高亮数据
+   */
+  async getAllCachedHighlights(url, language) {
+    if (!this.cacheEnabled || !this.db) return [];
+    
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readonly');
+      const store = transaction.objectStore('highlights');
+      const index = store.index('urlLanguage');
+      
+      const records = await this.getAllFromIndex(index, [url, language]);
+      
+      if (records.length === 0) return [];
+      
+      // 过滤掉过期的记录
+      const validRecords = [];
+      const cutoffTime = Date.now() - (this.cacheRetentionDays * 24 * 60 * 60 * 1000);
+      
+      for (const record of records) {
+        if (record.createdAt > cutoffTime) {
+          validRecords.push(record.data);
+        } else {
+          // 删除过期记录
+          await this.deleteCacheRecord(record.id);
+        }
+      }
+      
+      if (validRecords.length > 0) {
+        console.log(`🎯 找到 ${validRecords.length} 条有效缓存记录:`, {
+          url: url,
+          language: language,
+          records: validRecords.length
+        });
+      }
+      
+      return validRecords;
+      
+    } catch (error) {
+      console.warn('⚠️ 获取缓存数据失败:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取缓存的高亮数据（单条记录，保持向后兼容）
    */
   async getCachedHighlights(url, language) {
     if (!this.cacheEnabled || !this.db) return null;
@@ -145,6 +189,90 @@ class EventCacheManager {
     } catch (error) {
       console.warn('⚠️ 获取缓存数据失败:', error);
       return null;
+    }
+  }
+
+  /**
+   * 应用缓存的高亮结果到页面
+   */
+  async applyCachedHighlights(cachedData) {
+    if (!cachedData) {
+      console.warn('⚠️ 缓存数据无效，无法应用');
+      return false;
+    }
+
+    try {
+      console.log('🔄 开始应用缓存的高亮结果...');
+      console.log('📊 缓存数据结构:', cachedData);
+      
+      // 缓存数据应该包含 originalText 和 segmentedHtml
+      if (!cachedData.originalText || !cachedData.segmentedHtml) {
+        console.warn('⚠️ 缓存数据缺少必要字段 (originalText, segmentedHtml)');
+        return false;
+      }
+
+      // 获取页面中的所有文本节点
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (node) => {
+            // 跳过已处理的节点和脚本、样式节点
+            if (node.parentElement.closest('.adhd-processed') ||
+                node.parentElement.tagName === 'SCRIPT' ||
+                node.parentElement.tagName === 'STYLE' ||
+                node.parentElement.tagName === 'NOSCRIPT') {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+
+      console.log(`📝 找到 ${textNodes.length} 个文本节点`);
+
+      // 应用缓存的高亮结果
+      let appliedCount = 0;
+      for (const textNode of textNodes) {
+        // 检查文本节点是否匹配缓存的原始文本
+        if (textNode.textContent.trim() === cachedData.originalText.trim()) {
+          console.log('🎯 找到匹配的文本节点:', textNode.textContent.substring(0, 50) + '...');
+          
+          // 创建临时容器来解析HTML
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = cachedData.segmentedHtml;
+          
+          // 创建文档片段
+          const fragment = document.createDocumentFragment();
+          while (tempDiv.firstChild) {
+            fragment.appendChild(tempDiv.firstChild);
+          }
+          
+          // 标记父元素为已处理
+          if (textNode.parentElement) {
+            textNode.parentElement.classList.add('adhd-processed');
+          }
+          
+          // 替换文本节点
+          textNode.parentNode.replaceChild(fragment, textNode);
+          appliedCount++;
+          
+          console.log('✅ 成功应用缓存到文本节点');
+        }
+      }
+
+      console.log(`✅ 成功应用 ${appliedCount} 个缓存的高亮结果`);
+      return appliedCount > 0;
+
+    } catch (error) {
+      console.error('❌ 应用缓存高亮失败:', error);
+      return false;
     }
   }
 

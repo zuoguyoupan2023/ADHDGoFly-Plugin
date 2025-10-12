@@ -91,6 +91,82 @@ class ADHDHighlighter {
   }
 
   /**
+   * 检查并应用缓存
+   * @returns {Promise<boolean>} 是否成功应用了缓存
+   */
+  async checkAndApplyCache() {
+    if (!this.eventCacheManager) {
+      console.log('📝 缓存管理器未初始化，跳过缓存检查');
+      return false;
+    }
+
+    try {
+      const currentUrl = window.location.href;
+      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
+      
+      if (!enabledLanguages.length) {
+        console.log('📝 没有启用的语言，跳过缓存检查');
+        return false;
+      }
+
+      // 检测页面主要语言
+      const pageText = document.body.textContent.substring(0, 1000); // 取前1000字符检测语言
+      const detectedLanguage = this.languageDetector.detectLanguage(pageText);
+      const targetLanguage = enabledLanguages.includes(detectedLanguage) ? detectedLanguage : enabledLanguages[0];
+
+      console.log('🔍 检查缓存:', {
+        url: currentUrl,
+        language: targetLanguage,
+        enabledLanguages: enabledLanguages
+      });
+
+      // 查询所有匹配的缓存记录
+      const cachedRecords = await this.eventCacheManager.getAllCachedHighlights(currentUrl, targetLanguage);
+      
+      if (!cachedRecords || cachedRecords.length === 0) {
+        console.log('📝 未找到匹配的缓存数据');
+        return false;
+      }
+
+      console.log(`🎯 找到 ${cachedRecords.length} 条缓存记录，尝试应用...`);
+      
+      // 应用所有缓存的高亮结果
+      let totalApplied = 0;
+      for (const cachedData of cachedRecords) {
+        const applied = await this.eventCacheManager.applyCachedHighlights(cachedData);
+        if (applied) totalApplied++;
+      }
+      
+      const applied = totalApplied > 0;
+      
+      if (applied) {
+        console.log('✅ 缓存应用成功');
+        
+        // 记录缓存命中统计（可选）
+        this.recordCacheHit(currentUrl, targetLanguage);
+        
+        return true;
+      } else {
+        console.log('❌ 缓存应用失败，将执行正常高亮');
+        return false;
+      }
+
+    } catch (error) {
+      console.error('❌ 缓存检查和应用失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 记录缓存命中统计
+   */
+  recordCacheHit(url, language) {
+    // 这里可以记录缓存命中的统计信息
+    // 为后续的缓存分析功能做准备
+    console.log('📊 缓存命中记录:', { url, language, timestamp: Date.now() });
+  }
+
+  /**
    * 处理高亮完成事件
    */
   async handleHighlightComplete(eventData) {
@@ -664,17 +740,27 @@ class ADHDHighlighter {
     }
     
     try {
-      // 根据处理模式选择处理器
-      if (this.processingMode === 'streaming') {
-        console.log('使用流式处理模式');
-        if (isEdge) console.log('[Edge调试] 开始流式处理...');
-        await this.streamingPageProcessor.processPage();
-        if (isEdge) console.log('[Edge调试] 流式处理完成');
+      // 第一步：检查缓存
+      const cacheApplied = await this.checkAndApplyCache();
+      
+      if (cacheApplied) {
+        console.log('✅ 缓存应用成功，跳过正常高亮流程');
+        if (isEdge) console.log('[Edge调试] 使用缓存，跳过处理');
       } else {
-        console.log('使用传统处理模式');
-        if (isEdge) console.log('[Edge调试] 开始传统处理...');
-        await this.pageProcessor.processPage();
-        if (isEdge) console.log('[Edge调试] 传统处理完成');
+        console.log('📝 缓存未命中，执行正常高亮流程');
+        
+        // 根据处理模式选择处理器
+        if (this.processingMode === 'streaming') {
+          console.log('使用流式处理模式');
+          if (isEdge) console.log('[Edge调试] 开始流式处理...');
+          await this.streamingPageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 流式处理完成');
+        } else {
+          console.log('使用传统处理模式');
+          if (isEdge) console.log('[Edge调试] 开始传统处理...');
+          await this.pageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 传统处理完成');
+        }
       }
       
       // 应用颜色方案和文本设置
