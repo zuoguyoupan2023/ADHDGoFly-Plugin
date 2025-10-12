@@ -138,23 +138,8 @@ class SettingsManager {
             const lastCleanupElement = document.getElementById('last-cleanup-time');
             if (lastCleanupElement) {
                 const lastCleanup = cacheStats.lastCleanup;
-                if (lastCleanup) {
-                    const date = new Date(lastCleanup);
-                    // 使用更紧凑的日期格式
-                    const options = { 
-                        year: 'numeric', 
-                        month: '2-digit', 
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    };
-                    lastCleanupElement.textContent = date.toLocaleString(undefined, options);
-                } else {
-                    // 使用i18n支持的文本
-                    lastCleanupElement.textContent = window.i18n ? 
-                        window.i18n.t('pages.settings.storage.neverCleaned') || 'Never' : 
-                        'Never';
-                }
+                lastCleanupElement.textContent = lastCleanup ? 
+                    new Date(lastCleanup).toLocaleString() : '从未清理';
             }
         } catch (error) {
             console.error('更新存储使用情况失败:', error);
