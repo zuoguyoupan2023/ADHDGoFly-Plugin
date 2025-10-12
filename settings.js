@@ -17,21 +17,15 @@ class SettingsManager {
         // 存储管理相关事件
         this.bindStorageEvents();
         
-        // 自动更新开关
-        const autoUpdateToggle = document.getElementById('auto-update-toggle');
-        if (autoUpdateToggle) {
-            autoUpdateToggle.addEventListener('change', (e) => {
-                this.saveData({ autoUpdate: e.target.checked });
-            });
-        }
-
-        // 匿名统计开关
+        // 匿名统计开关 - 暂时注释掉，后续实现埋点后启用
+        /*
         const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
         if (anonymousStatsToggle) {
             anonymousStatsToggle.addEventListener('change', (e) => {
                 this.saveData({ anonymousStats: e.target.checked });
             });
         }
+        */
 
         // 重置按钮
         const resetBtn = document.getElementById('reset-all-btn');
@@ -95,16 +89,13 @@ class SettingsManager {
                 cacheEnabled: true
             });
 
-            // 更新开关状态
-            const autoUpdateToggle = document.getElementById('auto-update-toggle');
-            if (autoUpdateToggle) {
-                autoUpdateToggle.checked = result.autoUpdate;
-            }
-
+            // 匿名统计开关状态 - 暂时注释掉，后续实现埋点后启用
+            /*
             const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
             if (anonymousStatsToggle) {
                 anonymousStatsToggle.checked = result.anonymousStats;
             }
+            */
 
             // 加载存储设置
             await this.loadStorageSettings(result);
