@@ -805,19 +805,31 @@ class PopupController {
       return;
     }
 
-    listContainer.innerHTML = this.customDictionaries.map(dict => `
-      <div class="custom-dict-item">
+    // 清空容器
+    listContainer.innerHTML = '';
+
+    // 为每个词典创建元素并绑定事件
+    this.customDictionaries.forEach(dict => {
+      const dictItem = document.createElement('div');
+      dictItem.className = 'custom-dict-item';
+      dictItem.innerHTML = `
         <div class="custom-dict-info">
           <div class="custom-dict-name">${dict.displayName}</div>
           <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
         </div>
         <div class="custom-dict-actions">
-          <button class="remove-dict-btn" onclick="popupController.removeCustomDict('${dict.id}')">
+          <button class="remove-dict-btn">
             删除
           </button>
         </div>
-      </div>
-    `).join('');
+      `;
+      
+      // 绑定删除按钮事件
+      const removeBtn = dictItem.querySelector('.remove-dict-btn');
+      removeBtn.addEventListener('click', () => this.removeCustomDict(dict.id));
+      
+      listContainer.appendChild(dictItem);
+    });
   }
 
   async removeCustomDict(dictId) {
@@ -841,7 +853,7 @@ class PopupController {
         await chrome.storage.local.set({ customDictRegistry: registry });
         
         // 删除词典数据
-        await chrome.storage.local.remove([`customDict_${dictId}`]);
+        await chrome.storage.local.remove([`dictionary_${dictId}`]);
       }
 
       // 更新UI
