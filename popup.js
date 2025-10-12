@@ -1031,11 +1031,34 @@ class PopupController {
     
     // 根据词典界面的实际复选框状态添加标签
     Object.keys(this.dictSettings).forEach(dictId => {
-      if (this.dictSettings[dictId] && dictNames[dictId]) {
-        const tag = document.createElement('div');
-        tag.className = 'dict-tag';
-        tag.textContent = dictNames[dictId];
-        dictTagsContainer.appendChild(tag);
+      if (this.dictSettings[dictId]) {
+        let displayName = dictNames[dictId];
+        
+        // 如果是自定义词典，从customDictionaries中获取名称
+        if (!displayName && this.customDictionaries) {
+          const customDict = this.customDictionaries.find(dict => dict.id === dictId);
+          if (customDict) {
+            // 优先使用displayName，然后是name字段
+            if (customDict.displayName) {
+              // 如果displayName是对象，优先使用中文名称
+              if (typeof customDict.displayName === 'object') {
+                displayName = customDict.displayName.zh || customDict.displayName.en || customDict.name;
+              } else {
+                displayName = customDict.displayName;
+              }
+            } else {
+              displayName = customDict.name;
+            }
+          }
+        }
+        
+        // 如果找到了显示名称，创建标签
+        if (displayName) {
+          const tag = document.createElement('div');
+          tag.className = 'dict-tag';
+          tag.textContent = displayName;
+          dictTagsContainer.appendChild(tag);
+        }
       }
     });
   }
