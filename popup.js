@@ -274,6 +274,9 @@ class PopupController {
     // 加载自定义词典
     await this.loadCustomDictionaries();
     
+    // 恢复自制词典折叠状态
+    await this.restoreCustomDictState();
+    
     // 加载词典设置
     await this.loadDictSettings();
   }
@@ -512,10 +515,25 @@ class PopupController {
   }
 
   bindCustomDictEvents() {
+    // 折叠/展开功能
+    const customDictHeader = document.getElementById('custom-dict-header');
+    if (customDictHeader) {
+      customDictHeader.addEventListener('click', (e) => {
+        // 如果点击的是按钮，不触发折叠
+        if (e.target.closest('.add-dict-btn')) {
+          return;
+        }
+        this.toggleCustomDictSection();
+      });
+    }
+
     // 添加词典按钮事件
     const addDictBtn = document.getElementById('add-custom-dict-btn');
     if (addDictBtn) {
-      addDictBtn.addEventListener('click', () => this.showAddDictForm());
+      addDictBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        this.showAddDictForm();
+      });
     }
 
     // 取消添加按钮事件
@@ -534,6 +552,34 @@ class PopupController {
     const fileInput = document.getElementById('dict-file-input');
     if (fileInput) {
       fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+    }
+  }
+
+  toggleCustomDictSection() {
+    const section = document.getElementById('custom-dict-section');
+    if (section) {
+      section.classList.toggle('expanded');
+      
+      // 保存折叠状态
+      const isExpanded = section.classList.contains('expanded');
+      chrome.storage.local.set({ customDictExpanded: isExpanded });
+    }
+  }
+
+  async restoreCustomDictState() {
+    try {
+      const result = await chrome.storage.local.get(['customDictExpanded']);
+      const section = document.getElementById('custom-dict-section');
+      
+      if (section) {
+        // 默认展开，除非明确设置为折叠
+        const shouldExpand = result.customDictExpanded !== false;
+        if (shouldExpand) {
+          section.classList.add('expanded');
+        }
+      }
+    } catch (error) {
+      console.error('恢复自制词典状态失败:', error);
     }
   }
 
@@ -851,10 +897,17 @@ class PopupController {
 
   updateCustomDictList() {
     const listContainer = document.getElementById('custom-dict-list');
+    const countElement = document.getElementById('custom-dict-count');
+    
     if (!listContainer) return;
 
+    // 更新计数显示
+    if (countElement) {
+      countElement.textContent = `(${this.customDictionaries.length})`;
+    }
+
     if (this.customDictionaries.length === 0) {
-      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暂无自定义词典</p>';
+      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暂无自制词典</p>';
       return;
     }
 
