@@ -1,18 +1,21 @@
 /* 简单通知样式 */
 #simple-notification {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: #4CAF50;
   color: white;
-  padding: 12px 16px;
-  border-radius: 4px;
+  padding: 16px 20px;
+  border-radius: 6px;
   font-size: 14px;
   z-index: 9999;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 #simple-notification div {
-  margin: 2px 0;
+  margin: 4px 0;
 }
 
 /* 自制词典管理样式 */

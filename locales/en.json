@@ -76,6 +76,10 @@
           "deleteSuccess": "Dictionary deleted successfully!",
           "deleteError": "Failed to delete dictionary"
         },
+        "notification": {
+          "line1": "Please refresh the page",
+          "line2": "New dictionary is in corresponding language, expand to see"
+        },
         "delete": "Delete"
       },
       "groups": {

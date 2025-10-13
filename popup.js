@@ -2072,6 +2072,14 @@ class PopupController {
    */
   showSimpleNotification() {
     const notification = document.getElementById('simple-notification');
+    
+    // 更新国际化文本
+    const line1 = notification.querySelector('[data-i18n="pages.dict.custom.notification.line1"]');
+    const line2 = notification.querySelector('[data-i18n="pages.dict.custom.notification.line2"]');
+    
+    if (line1) line1.textContent = window.i18n.t('pages.dict.custom.notification.line1');
+    if (line2) line2.textContent = window.i18n.t('pages.dict.custom.notification.line2');
+    
     notification.style.display = 'block';
     
     // 5秒后自动隐藏
