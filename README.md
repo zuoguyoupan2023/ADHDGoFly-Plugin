@@ -1,5 +1,7 @@
 # ADHD Text Highlighter - 阶段一快速验证版
 
+**中文** | [English](README-en.md)
+
 这是 ADHDGoFly 浏览器插件的第一个阶段实现，专注于快速验证核心功能。
 
 ## 功能特性
