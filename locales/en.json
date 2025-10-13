@@ -107,15 +107,6 @@
         "history": "Historical Figures Dictionary",
         "medical": "Medical Dictionary",
         "literature": "Poetry Dictionary"
-      },
-      "custom": {
-        "title": "Custom Dictionaries",
-        "addButton": "Add",
-        "tipText": "No suitable dictionary?",
-        "tipLink": "Create custom dictionary online",
-        "emptyMessage": "No custom dictionaries",
-        "removeButton": "Remove",
-        "confirmRemove": "Are you sure you want to remove this dictionary?"
       }
     },
     "colors": {
