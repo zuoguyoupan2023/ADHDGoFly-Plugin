@@ -672,7 +672,8 @@ class PopupController {
       this.updateCustomDictList();
       this.hideAddDictForm();
 
-      this.showSuccess(window.i18n.t('pages.dict.custom.messages.addSuccess'));
+      // 显示简单通知
+      this.showSimpleNotification();
 
     } catch (error) {
       console.error('添加词典失败:', error);
@@ -2064,6 +2065,19 @@ class PopupController {
         updateNotice.style.display = 'none';
       }
     }
+  }
+
+  /**
+   * 显示简单通知
+   */
+  showSimpleNotification() {
+    const notification = document.getElementById('simple-notification');
+    notification.style.display = 'block';
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 5000);
   }
 
   // 统一的消息处理方法

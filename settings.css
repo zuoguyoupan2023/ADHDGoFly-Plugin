@@ -1,3 +1,20 @@
+/* 简单通知样式 */
+#simple-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
+#simple-notification div {
+  margin: 2px 0;
+}
+
 /* 自制词典管理样式 */
 .custom-dict-section {
   margin-bottom: 16px;
