@@ -243,9 +243,9 @@
 .settings-content {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
   padding: 0;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   box-sizing: border-box;
 }
@@ -535,12 +535,12 @@
 /* 关于页面样式 */
 .about-content {
   flex: 1;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   padding: 0;
   box-sizing: border-box;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .about-section {
