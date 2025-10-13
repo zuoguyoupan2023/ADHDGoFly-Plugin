@@ -161,12 +161,13 @@ async function main() {
         // 生成下载链接HTML
         // 中文版本的下载链接
         const downloadLinksHtml = buildResults.map(result => {
+            const browserNameZh = result.browser === 'chrome' ? 'Chrome' : 'Edge';
             return `
                         <div class="download-item">
-                            <h3>${result.browser.toUpperCase()} 版本</h3>
+                            <h3>${browserNameZh} 版本</h3>
                             <p>适用于 ${result.browser === 'chrome' ? 'Chrome 浏览器' : 'Microsoft Edge 浏览器'}</p>
                             <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
-                                📥 下载 ${result.browser.toUpperCase()} 版本 (${result.size}MB)
+                                📥 下载 ${browserNameZh} 版本 (${result.size}MB)
                             </a>
                             <div class="version-info">
                                 <small>版本: v${version} | 大小: ${result.size}MB</small>
@@ -176,12 +177,13 @@ async function main() {
 
         // 英文版本的下载链接
         const downloadLinksHtmlEn = buildResults.map(result => {
+            const browserNameEn = result.browser === 'chrome' ? 'Chrome' : 'Edge';
             return `
                         <div class="download-item">
-                            <h3>${result.browser.toUpperCase()} Version</h3>
+                            <h3>${browserNameEn} Version</h3>
                             <p>For ${result.browser === 'chrome' ? 'Chrome Browser' : 'Microsoft Edge Browser'}</p>
                             <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
-                                📥 Download ${result.browser.toUpperCase()} Version (${result.size}MB)
+                                📥 Download ${browserNameEn} Version (${result.size}MB)
                             </a>
                             <div class="version-info">
                                 <small>Version: v${version} | Size: ${result.size}MB</small>
@@ -508,7 +510,7 @@ async function main() {
                 <p>建议更新以获取最新功能和修复</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtmlEn}
+                    ${downloadLinksHtml}
                 </div>
             </section>
         </main>
