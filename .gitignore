@@ -6,6 +6,7 @@ test*.html
 *.md
 .vscode/
 /node_modules/
+/workers/download-tracker/wrangler.toml
 
 # 插件压缩包（保留用于直接下载）
 # ADHDGoFly-Plugin-v*.zip
