@@ -672,8 +672,7 @@ class PopupController {
       this.updateCustomDictList();
       this.hideAddDictForm();
 
-      // 显示添加成功通知
-      this.showAddDictNotification();
+      this.showSuccess(window.i18n.t('pages.dict.custom.messages.addSuccess'));
 
     } catch (error) {
       console.error('添加词典失败:', error);
@@ -2065,43 +2064,6 @@ class PopupController {
         updateNotice.style.display = 'none';
       }
     }
-  }
-
-  /**
-   * 显示添加词典成功的通知
-   */
-  showAddDictNotification() {
-    const overlay = document.getElementById('notification-overlay');
-    const title = document.getElementById('notification-title');
-    const line1 = document.getElementById('notification-line-1');
-    const line2 = document.getElementById('notification-line-2');
-    const closeBtn = document.getElementById('notification-close');
-
-    // 设置国际化文本
-    title.textContent = window.i18n.t('pages.dict.custom.notification.title');
-    line1.textContent = window.i18n.t('pages.dict.custom.notification.line1');
-    line2.textContent = window.i18n.t('pages.dict.custom.notification.line2');
-
-    // 显示通知
-    overlay.style.display = 'flex';
-
-    // 绑定关闭事件
-    const closeNotification = () => {
-      overlay.style.display = 'none';
-    };
-
-    // 点击关闭按钮
-    closeBtn.onclick = closeNotification;
-
-    // 点击遮罩层关闭
-    overlay.onclick = (e) => {
-      if (e.target === overlay) {
-        closeNotification();
-      }
-    };
-
-    // 5秒后自动关闭
-    setTimeout(closeNotification, 5000);
   }
 
   // 统一的消息处理方法
