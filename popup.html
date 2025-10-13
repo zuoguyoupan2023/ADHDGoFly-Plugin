@@ -1940,11 +1940,6 @@
                   <h4 data-i18n="pages.dict.custom.title">自制词典</h4>
                   <span class="dict-count" id="custom-dict-count">(0)</span>
                 </div>
-                <div class="header-actions">
-                  <button class="add-dict-btn" id="add-custom-dict-btn" data-i18n="pages.dict.custom.addButton">
-                  +添加
-                  </button>
-                </div>
               </div>
 
               <div class="collapsible-content" id="custom-dict-content">
@@ -1958,13 +1953,13 @@
                   </div>
                 </div>
 
-                <div class="custom-dict-list" id="custom-dict-list">
-                  <!-- 动态生成的自定义词典列表 -->
-                </div>
-              </div>
-
-              <!-- 添加词典表单 -->
-              <div class="add-dict-form" id="add-dict-form" style="display: none">
+                <div class="add-dict-section">
+                  <button class="add-dict-btn" id="add-custom-dict-btn" data-i18n="pages.dict.custom.addButton">
+                    +添加
+                  </button>
+                  
+                  <!-- 添加词典表单 -->
+                  <div class="add-dict-form" id="add-dict-form" style="display: none">
                 <div class="form-group">
                   <label for="dict-file-input" data-i18n="pages.dict.custom.form.selectFile">选择词典文件 (.json)</label>
                   <input type="file" id="dict-file-input" accept=".json" />
@@ -2004,6 +1999,12 @@
                 <div class="form-actions">
                   <button class="cancel-btn" id="cancel-add-dict" data-i18n="pages.dict.custom.form.cancel">取消</button>
                   <button class="confirm-btn" id="confirm-add-dict" data-i18n="pages.dict.custom.form.add">添加</button>
+                </div>
+                  </div>
+                </div>
+
+                <div class="custom-dict-list" id="custom-dict-list">
+                  <!-- 动态生成的自定义词典列表 -->
                 </div>
               </div>
             </div>
