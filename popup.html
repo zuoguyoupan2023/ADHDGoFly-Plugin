@@ -14,7 +14,7 @@
 
       body {
         width: 320px;
-        height: 600px;
+        height: 800px;
         
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           sans-serif;
@@ -34,14 +34,14 @@
 
       /* 应用标题和状态区域 */
       .app-header {
-        margin-bottom: 16px;
+        margin-bottom: 8px;
       }
 
       .app-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: 6px;
       }
 
       .app-title h3 {
@@ -72,8 +72,8 @@
         background-color: #f8f9fa;
         border: 1px solid #e9ecef;
         border-radius: 6px;
-        padding: 8px 12px;
-        margin: 12px 0;
+        padding: 6px 10px;
+        margin: 8px 0;
         font-size: 11px;
       }
 
@@ -214,7 +214,7 @@
 
       /* 主要操作区域 */
       .main-actions {
-        margin: 16px 0;
+        margin: 10px 0;
         text-align: center;
       }
 
@@ -284,13 +284,13 @@
 
       /* 紧凑图例样式 */
       .legend-compact {
-        margin-top: 16px;
+        margin-top: 10px;
         font-size: 11px;
         color: #666;
       }
 
       .legend-compact h4 {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: #333;
         font-size: 12px;
         font-weight: 600;
@@ -327,12 +327,12 @@
       }
 
       .dict-summary {
-        margin-top: 12px;
-        padding: 8px 0;
+        margin-top: 8px;
+        padding: 6px 0;
       }
 
       .dict-summary h4 {
-        margin: 0 0 8px 0;
+        margin: 0 0 6px 0;
         font-size: 12px;
         font-weight: 600;
         color: #333;
@@ -431,6 +431,8 @@
         display: flex;
         width: 100%;
       }
+
+
 
       /* 确保所有页面内的直接子元素都有正确的宽度 */
       .page > * {
@@ -3256,7 +3258,6 @@
                       name="storage-retention"
                       value="7"
                       id="retention-7"
-                      checked
                     />
                     <span class="radio-mark"></span>
                     <span data-i18n="pages.settings.storage.days7">7天</span>
@@ -3287,6 +3288,7 @@
                       name="storage-retention"
                       value="0"
                       id="retention-disabled"
+                      checked
                     />
                     <span class="radio-mark"></span>
                     <span data-i18n="pages.settings.storage.disabled"
@@ -3299,6 +3301,13 @@
                   data-i18n="pages.settings.storage.retentionDesc"
                 >
                   设置高亮缓存的保留时间，过期后自动清理
+                </p>
+                <p
+                  class="setting-desc"
+                  data-i18n="pages.settings.storage.cacheWarning"
+                  style="color: #ff6b35; font-weight: 500; margin-top: 8px;"
+                >
+                  开启缓存的时候修改其他设置，容易导致页面文本结构变化；建议优先刷新页面；无效的话就禁用缓存。
                 </p>
               </div>
 
