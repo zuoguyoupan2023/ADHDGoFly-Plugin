@@ -212,6 +212,13 @@
       },
       "changelog": {
         "title": "Update Log",
+        "v014": {
+          "title": "Dictionary Features & Performance Enhancement",
+          "feature1": "Added custom dictionary functionality",
+          "feature2": "Implemented caching logic",
+          "feature3": "Optimized homepage UI and sidebar UI",
+          "feature4": "Fixed minor bugs"
+        },
         "v013": {
           "title": "Interface Optimization & Feature Enhancement",
           "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
