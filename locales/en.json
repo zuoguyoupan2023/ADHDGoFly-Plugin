@@ -54,6 +54,30 @@
     "dict": {
       "title": "Dictionary Management",
       "description": "Check to enable dictionaries; basic dictionaries shown by default",
+      "custom": {
+        "title": "Custom Dictionaries",
+        "addButton": "+Add",
+        "tip": {
+          "text": "No suitable dictionary?",
+          "link": "Create custom dictionary online →"
+        },
+        "form": {
+          "selectFile": "Select dictionary file (.json)",
+          "dictName": "Dictionary name",
+          "dictNamePlaceholder": "Enter dictionary name",
+          "language": "Language",
+          "cancel": "Cancel",
+          "add": "Add Dictionary"
+        },
+        "messages": {
+          "addSuccess": "Dictionary added successfully!",
+          "addError": "Failed to add dictionary, please check file format",
+          "deleteConfirm": "Are you sure you want to delete this dictionary?",
+          "deleteSuccess": "Dictionary deleted successfully!",
+          "deleteError": "Failed to delete dictionary"
+        },
+        "delete": "Delete"
+      },
       "groups": {
         "basic": "Basic Dictionaries",
         "chinese": "Chinese Professional Dictionaries"

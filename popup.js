@@ -672,11 +672,11 @@ class PopupController {
       this.updateCustomDictList();
       this.hideAddDictForm();
 
-      this.showSuccess('词典添加成功！');
+      this.showSuccess(window.i18n.t('pages.dict.custom.messages.addSuccess'));
 
     } catch (error) {
       console.error('添加词典失败:', error);
-      this.showError('添加词典失败，请检查文件格式');
+      this.showError(window.i18n.t('pages.dict.custom.messages.addError'));
     }
   }
 
@@ -924,7 +924,7 @@ class PopupController {
           <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
         </div>
         <div class="custom-dict-actions">
-          <button class="remove-dict-btn">
+          <button class="remove-dict-btn" data-i18n="pages.dict.custom.delete">
             删除
           </button>
         </div>
@@ -936,10 +936,15 @@ class PopupController {
       
       listContainer.appendChild(dictItem);
     });
+
+    // 应用国际化到新创建的元素
+    if (window.i18n) {
+      window.i18n.applyTranslations();
+    }
   }
 
   async removeCustomDict(dictId) {
-    if (!confirm('确定要删除这个词典吗？')) {
+    if (!confirm(window.i18n.t('pages.dict.custom.messages.deleteConfirm'))) {
       return;
     }
 
@@ -965,10 +970,10 @@ class PopupController {
       // 更新UI
       this.updateCustomDictList();
       
-      this.showSuccess('词典删除成功！');
+      this.showSuccess(window.i18n.t('pages.dict.custom.messages.deleteSuccess'));
     } catch (error) {
       console.error('删除词典失败:', error);
-      this.showError('删除词典失败');
+      this.showError(window.i18n.t('pages.dict.custom.messages.deleteError'));
     }
   }
 

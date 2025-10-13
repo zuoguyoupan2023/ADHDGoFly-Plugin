@@ -73,6 +73,30 @@
     "dict": {
       "title": "词典管理",
       "description": "勾选启用词典；默认显示基础词典",
+      "custom": {
+        "title": "自制词典",
+        "addButton": "+添加",
+        "tip": {
+          "text": "没有合适的词典？",
+          "link": "在线制作专属词典 →"
+        },
+        "form": {
+          "selectFile": "选择词典文件 (.json)",
+          "dictName": "词典名称",
+          "dictNamePlaceholder": "输入词典名称",
+          "language": "语言",
+          "cancel": "取消",
+          "add": "添加词典"
+        },
+        "messages": {
+          "addSuccess": "词典添加成功！",
+          "addError": "添加词典失败，请检查文件格式",
+          "deleteConfirm": "确定要删除这个词典吗？",
+          "deleteSuccess": "词典删除成功！",
+          "deleteError": "删除词典失败"
+        },
+        "delete": "删除"
+      },
       "groups": {
         "basic": "基础词典",
         "chinese": "中文专业词典"
