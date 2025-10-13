@@ -83,6 +83,11 @@
           "deleteSuccess": "词典删除成功！",
           "deleteError": "删除词典失败"
         },
+        "notification": {
+          "title": "词典添加成功！",
+          "line1": "请刷新网页",
+          "line2": "新加词典在对应语言，展开可见"
+        },
         "delete": "删除"
       },
       "groups": {
