@@ -551,19 +551,26 @@ async function main() {
                 timestamp: Date.now()
             };
             
-            // 使用 sendBeacon 确保数据发送（即使用户立即关闭页面）
-            if (navigator.sendBeacon) {
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                navigator.sendBeacon(ANALYTICS_API, blob);
-            } else {
-                // 降级方案：使用 fetch
-                fetch(ANALYTICS_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                    keepalive: true
-                }).catch(err => console.error('Analytics error:', err));
-            }
+            // 使用 fetch 发送统计数据
+            fetch(ANALYTICS_API, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Download tracked successfully');
+                } else {
+                    console.warn('Download tracking failed:', response.status);
+                }
+            })
+            .catch(err => {
+                console.error('Download tracking error:', err);
+            });
         }
     })();
     </script>
@@ -931,19 +938,26 @@ async function main() {
                 timestamp: Date.now()
             };
             
-            // Use sendBeacon to ensure data is sent (even if user closes page immediately)
-            if (navigator.sendBeacon) {
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                navigator.sendBeacon(ANALYTICS_API, blob);
-            } else {
-                // Fallback: use fetch
-                fetch(ANALYTICS_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                    keepalive: true
-                }).catch(err => console.error('Analytics error:', err));
-            }
+            // Use fetch to send tracking data
+            fetch(ANALYTICS_API, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Download tracked successfully');
+                } else {
+                    console.warn('Download tracking failed:', response.status);
+                }
+            })
+            .catch(err => {
+                console.error('Download tracking error:', err);
+            });
         }
     })();
     </script>

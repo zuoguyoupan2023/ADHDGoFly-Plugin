@@ -376,19 +376,26 @@
                 timestamp: Date.now()
             };
             
-            // Use sendBeacon to ensure data is sent (even if user closes page immediately)
-            if (navigator.sendBeacon) {
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                navigator.sendBeacon(ANALYTICS_API, blob);
-            } else {
-                // Fallback: use fetch
-                fetch(ANALYTICS_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                    keepalive: true
-                }).catch(err => console.error('Analytics error:', err));
-            }
+            // Use fetch to send tracking data
+            fetch(ANALYTICS_API, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Download tracked successfully');
+                } else {
+                    console.warn('Download tracking failed:', response.status);
+                }
+            })
+            .catch(err => {
+                console.error('Download tracking error:', err);
+            });
         }
     })();
     </script>
