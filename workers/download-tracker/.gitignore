@@ -1,0 +1,31 @@
+# Wrangler
+.wrangler/
+wrangler.toml.local
+wrangler.toml  # 不推送，包含敏感信息
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 备份文件
+backup*.sql
+
+# 敏感文档
+ADMIN_TOKEN.md  # 不推送，包含实际 Token
+
+# 环境变量
+.env
+.env.local
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+Thumbs.db
