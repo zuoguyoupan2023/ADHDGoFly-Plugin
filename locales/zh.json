@@ -87,6 +87,16 @@
           "line1": "请刷新网页",
           "line2": "新加词典在对应语言，展开可见"
         },
+        "form": {
+          "selectFile": "选择词典文件 (.json)",
+          "dictName": "词典名称",
+          "dictNamePlaceholder": "输入词典名称",
+          "language": "语言",
+          "domain": "领域 (可选)",
+          "domainPlaceholder": "如：医学、法律、技术等",
+          "cancel": "取消",
+          "add": "添加"
+        },
         "delete": "删除"
       },
       "groups": {

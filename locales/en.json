@@ -66,6 +66,8 @@
           "dictName": "Dictionary name",
           "dictNamePlaceholder": "Enter dictionary name",
           "language": "Language",
+          "domain": "Domain (Optional)",
+          "domainPlaceholder": "e.g.: Medical, Legal, Technical, etc.",
           "cancel": "Cancel",
           "add": "Add Dictionary"
         },
