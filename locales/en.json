@@ -262,6 +262,7 @@
         "days28": "28 Days",
         "disabled": "Disable Cache",
         "retentionDesc": "Set the retention time for highlight cache, automatically cleaned after expiration",
+        "cacheWarning": "When cache is enabled, modifying other settings may cause page text structure changes; it's recommended to refresh the page first; if ineffective, disable cache.",
         "usage": "Storage Usage",
         "cachedPages": "Cached Pages",
         "usedSpace": "Used Space",
