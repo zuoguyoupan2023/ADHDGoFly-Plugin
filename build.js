@@ -510,7 +510,7 @@ async function main() {
                 <p>建议更新以获取最新功能和修复</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtmlEn}
+                    ${downloadLinksHtml}
                 </div>
             </section>
         </main>
