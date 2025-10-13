@@ -1,3 +1,23 @@
+/* 简单通知样式 */
+#simple-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 9999;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#simple-notification div {
+  margin: 4px 0;
+}
+
 /* 自制词典管理样式 */
 .custom-dict-section {
   margin-bottom: 16px;
@@ -104,15 +124,23 @@
   text-decoration: underline;
 }
 
+/* 添加词典区域样式 */
+.add-dict-section {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
 .add-dict-btn {
   background: #007AFF;
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
+  width: 100%;
+  margin-bottom: 12px;
 }
 
 .add-dict-btn:hover {
@@ -172,8 +200,10 @@
 /* 添加词典表单样式 */
 .add-dict-form {
   padding: 16px;
-  background: white;
-  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-top: 12px;
 }
 
 .form-group {

@@ -1932,7 +1932,7 @@
           </div>
 
           <div class="dict-list">
-            <!-- 自制词典管理 - 置顶显示，默认折叠 -->
+            <!-- 自制词典管理 - 置顶显示 -->
             <div class="custom-dict-section" id="custom-dict-section">
               <div class="section-header collapsible" id="custom-dict-header">
                 <div class="header-left">
@@ -1940,69 +1940,72 @@
                   <h4 data-i18n="pages.dict.custom.title">自制词典</h4>
                   <span class="dict-count" id="custom-dict-count">(0)</span>
                 </div>
-                <div class="header-actions">
-                  <button class="add-dict-btn" id="add-custom-dict-btn">
-                  +<span data-i18n="pages.dict.custom.addButton">添加</span>
-                  </button>
-                </div>
               </div>
 
               <div class="collapsible-content" id="custom-dict-content">
                 <div class="dict-maker-tip">
                   <div class="tip-content">
                     <span class="tip-icon">💡</span>
-                    <span class="tip-text" data-i18n="pages.dict.custom.tipText">没有合适的词典？</span>
-                    <a href="https://dictionary.adhdgofly.online/" target="_blank" class="dict-maker-link">
-                      <span data-i18n="pages.dict.custom.tipLink">在线制作专属词典</span> →
+                    <span class="tip-text" data-i18n="pages.dict.custom.tip.text">没有合适的词典？</span>
+                    <a href="https://dictionary.adhdgofly.online/" target="_blank" class="dict-maker-link" data-i18n="pages.dict.custom.tip.link">
+                      在线制作专属词典 →
                     </a>
                   </div>
                 </div>
 
-                <div class="custom-dict-list" id="custom-dict-list">
-                  <!-- 动态生成的自定义词典列表 -->
-                </div>
-              </div>
-
-              <!-- 添加词典表单 -->
-              <div class="add-dict-form" id="add-dict-form" style="display: none">
+                <div class="add-dict-section">
+                  <button class="add-dict-btn" id="add-custom-dict-btn" data-i18n="pages.dict.custom.addButton">
+                    +添加
+                  </button>
+                  
+                  <!-- 添加词典表单 -->
+                  <div class="add-dict-form" id="add-dict-form" style="display: none">
                 <div class="form-group">
-                  <label for="dict-file-input">选择词典文件 (.json)</label>
+                  <label for="dict-file-input" data-i18n="pages.dict.custom.form.selectFile">选择词典文件 (.json)</label>
                   <input type="file" id="dict-file-input" accept=".json" />
                 </div>
 
                 <div class="form-group">
-                  <label for="dict-name-input">词典名称</label>
+                  <label for="dict-name-input" data-i18n="pages.dict.custom.form.dictName">词典名称</label>
                   <input
                     type="text"
                     id="dict-name-input"
+                    data-i18n-placeholder="pages.dict.custom.form.dictNamePlaceholder"
                     placeholder="输入词典名称"
                   />
                 </div>
 
                 <div class="form-group">
-                  <label for="dict-language-select">语言</label>
+                  <label for="dict-language-select" data-i18n="pages.dict.custom.form.language">语言</label>
                   <select id="dict-language-select">
                     <option value="zh">中文</option>
-                    <option value="en">英文</option>
-                    <option value="fr">法语</option>
-                    <option value="es">西班牙语</option>
-                    <option value="ru">俄语</option>
-                    <option value="ja">日语</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                    <option value="ru">Русский</option>
+                    <option value="ja">日本語</option>
                   </select>
                 </div>
 
                 <div class="form-group">
-                  <label for="dict-domain-input">领域 (可选)</label>
+                  <label for="dict-domain-input" data-i18n="pages.dict.custom.form.domain">领域 (可选)</label>
                   <input
                     type="text"
                     id="dict-domain-input"
+                    data-i18n-placeholder="pages.dict.custom.form.domainPlaceholder"
                     placeholder="如：医学、法律、技术等"
                   />
                 </div>
 
                 <div class="form-actions">
-                  <button class="cancel-btn" id="cancel-add-dict">取消</button>
-                  <button class="confirm-btn" id="confirm-add-dict">添加</button>
+                  <button class="cancel-btn" id="cancel-add-dict" data-i18n="pages.dict.custom.form.cancel">取消</button>
+                  <button class="confirm-btn" id="confirm-add-dict" data-i18n="pages.dict.custom.form.add">添加</button>
+                </div>
+                  </div>
+                </div>
+
+                <div class="custom-dict-list" id="custom-dict-list">
+                  <!-- 动态生成的自定义词典列表 -->
                 </div>
               </div>
             </div>
@@ -2416,43 +2419,45 @@
             <!-- 添加词典表单 -->
             <div class="add-dict-form" id="add-dict-form" style="display: none">
               <div class="form-group">
-                <label for="dict-file-input">选择词典文件 (.json)</label>
+                <label for="dict-file-input" data-i18n="pages.dict.custom.form.selectFile">选择词典文件 (.json)</label>
                 <input type="file" id="dict-file-input" accept=".json" />
               </div>
 
               <div class="form-group">
-                <label for="dict-name-input">词典名称</label>
+                <label for="dict-name-input" data-i18n="pages.dict.custom.form.dictName">词典名称</label>
                 <input
                   type="text"
                   id="dict-name-input"
+                  data-i18n-placeholder="pages.dict.custom.form.dictNamePlaceholder"
                   placeholder="输入词典名称"
                 />
               </div>
 
               <div class="form-group">
-                <label for="dict-language-select">语言</label>
+                <label for="dict-language-select" data-i18n="pages.dict.custom.form.language">语言</label>
                 <select id="dict-language-select">
                   <option value="zh">中文</option>
-                  <option value="en">英文</option>
-                  <option value="fr">法语</option>
-                  <option value="es">西班牙语</option>
-                  <option value="ru">俄语</option>
-                  <option value="ja">日语</option>
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="es">Español</option>
+                  <option value="ru">Русский</option>
+                  <option value="ja">日本語</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="dict-domain-input">领域 (可选)</label>
+                <label for="dict-domain-input" data-i18n="pages.dict.custom.form.domain">领域 (可选)</label>
                 <input
                   type="text"
                   id="dict-domain-input"
+                  data-i18n-placeholder="pages.dict.custom.form.domainPlaceholder"
                   placeholder="如：医学、法律、技术等"
                 />
               </div>
 
               <div class="form-actions">
-                <button class="cancel-btn" id="cancel-add-dict">取消</button>
-                <button class="confirm-btn" id="confirm-add-dict">添加</button>
+                <button class="cancel-btn" id="cancel-add-dict" data-i18n="pages.dict.custom.form.cancel">取消</button>
+                <button class="confirm-btn" id="confirm-add-dict" data-i18n="pages.dict.custom.form.add">添加</button>
               </div>
             </div>
           </div>
@@ -2949,6 +2954,35 @@
             </div>
             <div class="section-content">
               <div class="changelog">
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v014">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.4</span>
+                      <span class="version-date">2025-10-13</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v014">
+                    <h5 data-i18n="pages.about.changelog.v014.title">
+                      词典功能与性能提升
+                    </h5>
+                    <ul>
+                      <li data-i18n="pages.about.changelog.v014.feature1">
+                        增加自建词典功能
+                      </li>
+                      <li data-i18n="pages.about.changelog.v014.feature2">
+                        实现缓存逻辑
+                      </li>
+                      <li data-i18n="pages.about.changelog.v014.feature3">
+                        优化主页UI，侧边栏UI
+                      </li>
+                      <li data-i18n="pages.about.changelog.v014.feature4">
+                        修复小bug
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
                 <div class="changelog-item">
                   <div class="changelog-header" data-toggle="v013">
                     <div class="changelog-version">
@@ -3455,6 +3489,12 @@
           <span class="language-icon">🌐</span>
         </button>
       </div>
+    </div>
+
+    <!-- 简单通知 -->
+    <div id="simple-notification" style="display: none;">
+      <div data-i18n="pages.dict.custom.notification.line1">请刷新网页</div>
+      <div data-i18n="pages.dict.custom.notification.line2">新加词典在对应语言，展开可见</div>
     </div>
 
     <script src="settings.js"></script>

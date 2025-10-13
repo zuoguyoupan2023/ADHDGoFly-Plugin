@@ -54,6 +54,36 @@
     "dict": {
       "title": "Dictionary Management",
       "description": "Check to enable dictionaries; basic dictionaries shown by default",
+      "custom": {
+        "title": "Custom Dictionaries",
+        "addButton": "+Add",
+        "tip": {
+          "text": "No suitable dictionary?",
+          "link": "Create custom dictionary online →"
+        },
+        "form": {
+          "selectFile": "Select dictionary file (.json)",
+          "dictName": "Dictionary name",
+          "dictNamePlaceholder": "Enter dictionary name",
+          "language": "Language",
+          "domain": "Domain (Optional)",
+          "domainPlaceholder": "e.g.: Medical, Legal, Technical, etc.",
+          "cancel": "Cancel",
+          "add": "Add Dictionary"
+        },
+        "messages": {
+          "addSuccess": "Dictionary added successfully!",
+          "addError": "Failed to add dictionary, please check file format",
+          "deleteConfirm": "Are you sure you want to delete this dictionary?",
+          "deleteSuccess": "Dictionary deleted successfully!",
+          "deleteError": "Failed to delete dictionary"
+        },
+        "notification": {
+          "line1": "Please refresh the page",
+          "line2": "New dictionary is in corresponding language, expand to see"
+        },
+        "delete": "Delete"
+      },
       "groups": {
         "basic": "Basic Dictionaries",
         "chinese": "Chinese Professional Dictionaries"
@@ -107,15 +137,6 @@
         "history": "Historical Figures Dictionary",
         "medical": "Medical Dictionary",
         "literature": "Poetry Dictionary"
-      },
-      "custom": {
-        "title": "Custom Dictionaries",
-        "addButton": "Add",
-        "tipText": "No suitable dictionary?",
-        "tipLink": "Create custom dictionary online",
-        "emptyMessage": "No custom dictionaries",
-        "removeButton": "Remove",
-        "confirmRemove": "Are you sure you want to remove this dictionary?"
       }
     },
     "colors": {
@@ -191,6 +212,13 @@
       },
       "changelog": {
         "title": "Update Log",
+        "v014": {
+          "title": "Dictionary Features & Performance Enhancement",
+          "feature1": "Added custom dictionary functionality",
+          "feature2": "Implemented caching logic",
+          "feature3": "Optimized homepage UI and sidebar UI",
+          "feature4": "Fixed minor bugs"
+        },
         "v013": {
           "title": "Interface Optimization & Feature Enhancement",
           "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",

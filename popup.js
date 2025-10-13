@@ -572,8 +572,8 @@ class PopupController {
       const section = document.getElementById('custom-dict-section');
       
       if (section) {
-        // 默认折叠，除非明确设置为展开
-        const shouldExpand = result.customDictExpanded === true;
+        // 默认展开，除非明确设置为折叠
+        const shouldExpand = result.customDictExpanded !== false;
         if (shouldExpand) {
           section.classList.add('expanded');
         }
@@ -672,11 +672,12 @@ class PopupController {
       this.updateCustomDictList();
       this.hideAddDictForm();
 
-      this.showSuccess('词典添加成功！');
+      // 显示简单通知
+      this.showSimpleNotification();
 
     } catch (error) {
       console.error('添加词典失败:', error);
-      this.showError('添加词典失败，请检查文件格式');
+      this.showError(window.i18n.t('pages.dict.custom.messages.addError'));
     }
   }
 
@@ -907,7 +908,7 @@ class PopupController {
     }
 
     if (this.customDictionaries.length === 0) {
-      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;" data-i18n="pages.dict.custom.emptyMessage">暂无自制词典</p>';
+      listContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暂无自制词典</p>';
       return;
     }
 
@@ -924,7 +925,7 @@ class PopupController {
           <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
         </div>
         <div class="custom-dict-actions">
-          <button class="remove-dict-btn" data-i18n="pages.dict.custom.removeButton">
+          <button class="remove-dict-btn" data-i18n="pages.dict.custom.delete">
             删除
           </button>
         </div>
@@ -937,16 +938,14 @@ class PopupController {
       listContainer.appendChild(dictItem);
     });
 
-    // 重新应用i18n翻译
-    if (this.i18n) {
-      this.i18n.updatePageText();
+    // 应用国际化到新创建的元素
+    if (window.i18n) {
+      window.i18n.applyTranslations();
     }
   }
 
   async removeCustomDict(dictId) {
-    // 获取当前语言的确认文本
-    const confirmText = this.i18n.t('pages.dict.custom.confirmRemove') || '确定要删除这个词典吗？';
-    if (!confirm(confirmText)) {
+    if (!confirm(window.i18n.t('pages.dict.custom.messages.deleteConfirm'))) {
       return;
     }
 
@@ -972,10 +971,10 @@ class PopupController {
       // 更新UI
       this.updateCustomDictList();
       
-      this.showSuccess('词典删除成功！');
+      this.showSuccess(window.i18n.t('pages.dict.custom.messages.deleteSuccess'));
     } catch (error) {
       console.error('删除词典失败:', error);
-      this.showError('删除词典失败');
+      this.showError(window.i18n.t('pages.dict.custom.messages.deleteError'));
     }
   }
 
@@ -2066,6 +2065,27 @@ class PopupController {
         updateNotice.style.display = 'none';
       }
     }
+  }
+
+  /**
+   * 显示简单通知
+   */
+  showSimpleNotification() {
+    const notification = document.getElementById('simple-notification');
+    
+    // 更新国际化文本
+    const line1 = notification.querySelector('[data-i18n="pages.dict.custom.notification.line1"]');
+    const line2 = notification.querySelector('[data-i18n="pages.dict.custom.notification.line2"]');
+    
+    if (line1) line1.textContent = window.i18n.t('pages.dict.custom.notification.line1');
+    if (line2) line2.textContent = window.i18n.t('pages.dict.custom.notification.line2');
+    
+    notification.style.display = 'block';
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 5000);
   }
 
   // 统一的消息处理方法
