@@ -520,6 +520,53 @@ async function main() {
             <p>当前版本: v${version} | 适用于 Chrome、Edge 等现代浏览器</p>
         </footer>
     </div>
+    
+    <!-- 下载统计代码 -->
+    <script>
+    (function() {
+        // 统计配置 - 部署后需要替换为实际的 Workers URL
+        const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+        const VERSION = '${version}';
+        const LANGUAGE = 'zh';
+        
+        // 监听所有下载按钮
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // 提取浏览器类型（从按钮的 href）
+                const href = this.getAttribute('href');
+                const browser = href.includes('chrome') ? 'chrome' : 'edge';
+                
+                // 发送统计数据
+                trackDownload(browser);
+            });
+        });
+        
+        function trackDownload(browser) {
+            const data = {
+                version: VERSION,
+                browser: browser,
+                language: LANGUAGE,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer,
+                timestamp: Date.now()
+            };
+            
+            // 使用 sendBeacon 确保数据发送（即使用户立即关闭页面）
+            if (navigator.sendBeacon) {
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                navigator.sendBeacon(ANALYTICS_API, blob);
+            } else {
+                // 降级方案：使用 fetch
+                fetch(ANALYTICS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    keepalive: true
+                }).catch(err => console.error('Analytics error:', err));
+            }
+        }
+    })();
+    </script>
 </body>
 </html>`;
         }
@@ -853,6 +900,53 @@ async function main() {
             <p>Current Version: v${version} | Compatible with Chrome, Edge and other modern browsers</p>
         </footer>
     </div>
+    
+    <!-- Download Tracking Code -->
+    <script>
+    (function() {
+        // Analytics configuration - Replace with actual Workers URL after deployment
+        const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+        const VERSION = '${version}';
+        const LANGUAGE = 'en';
+        
+        // Listen to all download buttons
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Extract browser type from button href
+                const href = this.getAttribute('href');
+                const browser = href.includes('chrome') ? 'chrome' : 'edge';
+                
+                // Send tracking data
+                trackDownload(browser);
+            });
+        });
+        
+        function trackDownload(browser) {
+            const data = {
+                version: VERSION,
+                browser: browser,
+                language: LANGUAGE,
+                userAgent: navigator.userAgent,
+                referrer: document.referrer,
+                timestamp: Date.now()
+            };
+            
+            // Use sendBeacon to ensure data is sent (even if user closes page immediately)
+            if (navigator.sendBeacon) {
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                navigator.sendBeacon(ANALYTICS_API, blob);
+            } else {
+                // Fallback: use fetch
+                fetch(ANALYTICS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    keepalive: true
+                }).catch(err => console.error('Analytics error:', err));
+            }
+        }
+    })();
+    </script>
 </body>
 </html>`;
         }
