@@ -617,6 +617,9 @@ async function main() {
                     </div>
                     <div class="stats-update-info">
                         <small id="update-time">更新时间: ${lastUpdated || '获取中...'}</small>
+                        <div id="api-status" style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
+                            🔄 正在连接 API...
+                        </div>
                     </div>
                 </div>
             </section>
@@ -692,8 +695,15 @@ async function main() {
         function updateStatsDisplay() {
             // 添加加载状态
             const statsDisplay = document.querySelector('.stats-display');
+            const statusElement = document.getElementById('api-status');
+            
             if (statsDisplay) {
                 statsDisplay.classList.add('stats-loading');
+            }
+            
+            if (statusElement) {
+                statusElement.textContent = '🔄 正在获取最新数据...';
+                statusElement.style.color = '#007cba';
             }
             
             // 获取最新统计数据
@@ -736,6 +746,12 @@ async function main() {
                     }, 500);
                 }
                 
+                // 更新状态指示器
+                if (statusElement) {
+                    statusElement.textContent = '✅ 数据已更新 (' + new Date().toLocaleTimeString() + ')';
+                    statusElement.style.color = '#28a745';
+                }
+                
                 // 在页面上显示调试信息（仅开发模式）
                 if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
                     const debugInfo = document.createElement('div');
@@ -756,6 +772,12 @@ async function main() {
                 // 移除加载状态
                 if (statsDisplay) {
                     statsDisplay.classList.remove('stats-loading');
+                }
+                
+                // 更新状态指示器显示错误
+                if (statusElement) {
+                    statusElement.textContent = '❌ 连接失败: ' + err.message;
+                    statusElement.style.color = '#dc3545';
                 }
             });
         }
@@ -1203,6 +1225,9 @@ async function main() {
                     </div>
                     <div class="stats-update-info">
                         <small id="update-time">Updated: ${lastUpdated || 'Loading...'}</small>
+                        <div id="api-status" style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
+                            🔄 Connecting to API...
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1278,8 +1303,15 @@ async function main() {
         function updateStatsDisplay() {
             // Add loading state
             const statsDisplay = document.querySelector('.stats-display');
+            const statusElement = document.getElementById('api-status');
+            
             if (statsDisplay) {
                 statsDisplay.classList.add('stats-loading');
+            }
+            
+            if (statusElement) {
+                statusElement.textContent = '🔄 Fetching latest data...';
+                statusElement.style.color = '#007cba';
             }
             
             // Fetch latest statistics
@@ -1322,6 +1354,12 @@ async function main() {
                     }, 500);
                 }
                 
+                // Update status indicator
+                if (statusElement) {
+                    statusElement.textContent = '✅ Data updated (' + new Date().toLocaleTimeString() + ')';
+                    statusElement.style.color = '#28a745';
+                }
+                
                 // Show debug info on page (development mode only)
                 if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
                     const debugInfo = document.createElement('div');
@@ -1342,6 +1380,12 @@ async function main() {
                 // Remove loading state
                 if (statsDisplay) {
                     statsDisplay.classList.remove('stats-loading');
+                }
+                
+                // Update status indicator to show error
+                if (statusElement) {
+                    statusElement.textContent = '❌ Connection failed: ' + err.message;
+                    statusElement.style.color = '#dc3545';
                 }
             });
         }
