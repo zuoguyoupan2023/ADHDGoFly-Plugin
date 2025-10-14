@@ -155,6 +155,29 @@ async function main() {
     console.log(`📊 总大小: ${totalSize}MB`);
     console.log('✅ 多浏览器构建成功！');
        
+    // 读取统计数据
+    console.log('📊 读取下载统计数据...');
+    let stats = null;
+    const statsPath = 'public/stats.json';
+    
+    try {
+        if (fs.existsSync(statsPath)) {
+            stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+            console.log(`✅ 统计数据读取成功: ${stats.data.totalDownloads} 次下载`);
+        } else {
+            console.log('ℹ️ 统计数据文件不存在，使用默认值');
+        }
+    } catch (error) {
+        console.log('⚠️ 统计数据读取失败，使用默认值:', error.message);
+    }
+    
+    // 提取统计数据
+    const downloadCount = stats?.data?.totalDownloads || 0;
+    const uniqueUsers = stats?.data?.uniqueUsers || 0;
+    const todayDownloads = stats?.data?.todayDownloads || 0;
+    const lastUpdated = stats?.lastUpdated || '';
+    const browserStats = stats?.data?.browserStats || {};
+    
     // 生成双语言页面
     console.log('🔄 生成双语言 landing page...');
     try {
@@ -389,6 +412,66 @@ async function main() {
             text-align: center;
         }
         
+        .stats-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            color: white;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .stats-update-info {
+            opacity: 0.8;
+            font-size: 0.85rem;
+        }
+        
+        .stats-loading {
+            opacity: 0.6;
+        }
+        
+        .stats-updated {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .download-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -509,6 +592,27 @@ async function main() {
                 <h2>🎉 发现新版本！</h2>
                 <p>建议更新以获取最新功能和修复</p>
                 
+                <!-- 下载统计显示 -->
+                <div class="stats-display">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-downloads">${downloadCount}</div>
+                            <div class="stat-label">总下载量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="unique-users">${uniqueUsers}</div>
+                            <div class="stat-label">用户数量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="today-downloads">${todayDownloads}</div>
+                            <div class="stat-label">今日下载</div>
+                        </div>
+                    </div>
+                    <div class="stats-update-info">
+                        <small id="update-time">更新时间: ${lastUpdated || '获取中...'}</small>
+                    </div>
+                </div>
+                
                 <div class="download-grid">
                     ${downloadLinksHtml}
                 </div>
@@ -524,10 +628,16 @@ async function main() {
     <!-- 下载统计代码 -->
     <script>
     (function() {
-        // 统计配置 - 部署后需要替换为实际的 Workers URL
+        // 统计配置
         const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+        const STATS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats';
         const VERSION = '${version}';
         const LANGUAGE = 'zh';
+        
+        // 页面加载完成后获取最新统计数据
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatsDisplay();
+        });
         
         // 监听所有下载按钮
         document.querySelectorAll('.download-btn').forEach(btn => {
@@ -538,6 +648,9 @@ async function main() {
                 
                 // 发送统计数据
                 trackDownload(browser);
+                
+                // 延迟更新统计显示（给服务器时间处理）
+                setTimeout(updateStatsDisplay, 2000);
             });
         });
         
@@ -571,6 +684,93 @@ async function main() {
             .catch(err => {
                 console.error('Download tracking error:', err);
             });
+        }
+        
+        function updateStatsDisplay() {
+            // 添加加载状态
+            const statsDisplay = document.querySelector('.stats-display');
+            if (statsDisplay) {
+                statsDisplay.classList.add('stats-loading');
+            }
+            
+            // 获取最新统计数据
+            fetch(STATS_API, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to fetch stats');
+            })
+            .then(data => {
+                // 更新显示的数据
+                updateElement('total-downloads', data.totalDownloads || 0);
+                updateElement('unique-users', data.uniqueUsers || 0);
+                updateElement('today-downloads', data.todayDownloads || 0);
+                
+                // 更新时间
+                const updateTimeElement = document.getElementById('update-time');
+                if (updateTimeElement && data.lastUpdated) {
+                    const timeText = LANGUAGE === 'zh' ? '更新时间: ' : 'Updated: ';
+                    updateTimeElement.textContent = timeText + data.lastUpdated;
+                }
+                
+                // 移除加载状态，添加更新动画
+                if (statsDisplay) {
+                    statsDisplay.classList.remove('stats-loading');
+                    statsDisplay.classList.add('stats-updated');
+                    setTimeout(() => {
+                        statsDisplay.classList.remove('stats-updated');
+                    }, 500);
+                }
+                
+                console.log('Stats updated successfully');
+            })
+            .catch(err => {
+                console.warn('Failed to update stats:', err);
+                // 移除加载状态
+                if (statsDisplay) {
+                    statsDisplay.classList.remove('stats-loading');
+                }
+            });
+        }
+        
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                // 数字动画效果
+                const currentValue = parseInt(element.textContent) || 0;
+                const targetValue = parseInt(value) || 0;
+                
+                if (currentValue !== targetValue) {
+                    animateNumber(element, currentValue, targetValue, 1000);
+                }
+            }
+        }
+        
+        function animateNumber(element, start, end, duration) {
+            const startTime = performance.now();
+            const difference = end - start;
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 使用缓动函数
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const currentValue = Math.round(start + difference * easeProgress);
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
         }
     })();
     </script>
@@ -776,6 +976,66 @@ async function main() {
             text-align: center;
         }
         
+        .stats-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            color: white;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .stats-update-info {
+            opacity: 0.8;
+            font-size: 0.85rem;
+        }
+        
+        .stats-loading {
+            opacity: 0.6;
+        }
+        
+        .stats-updated {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .download-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -896,6 +1156,27 @@ async function main() {
                 <h2>🎉 New Version Found!</h2>
                 <p>Update recommended to get the latest features and fixes</p>
                 
+                <!-- Download Statistics Display -->
+                <div class="stats-display">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-downloads">${downloadCount}</div>
+                            <div class="stat-label">Total Downloads</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="unique-users">${uniqueUsers}</div>
+                            <div class="stat-label">Users</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="today-downloads">${todayDownloads}</div>
+                            <div class="stat-label">Today</div>
+                        </div>
+                    </div>
+                    <div class="stats-update-info">
+                        <small id="update-time">Updated: ${lastUpdated || 'Loading...'}</small>
+                    </div>
+                </div>
+                
                 <div class="download-grid">
                     ${downloadLinksHtmlEn}
                 </div>
@@ -911,10 +1192,16 @@ async function main() {
     <!-- Download Tracking Code -->
     <script>
     (function() {
-        // Analytics configuration - Replace with actual Workers URL after deployment
+        // Analytics configuration
         const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+        const STATS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats';
         const VERSION = '${version}';
         const LANGUAGE = 'en';
+        
+        // Update stats display when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatsDisplay();
+        });
         
         // Listen to all download buttons
         document.querySelectorAll('.download-btn').forEach(btn => {
@@ -925,6 +1212,9 @@ async function main() {
                 
                 // Send tracking data
                 trackDownload(browser);
+                
+                // Delay stats update (give server time to process)
+                setTimeout(updateStatsDisplay, 2000);
             });
         });
         
@@ -958,6 +1248,93 @@ async function main() {
             .catch(err => {
                 console.error('Download tracking error:', err);
             });
+        }
+        
+        function updateStatsDisplay() {
+            // Add loading state
+            const statsDisplay = document.querySelector('.stats-display');
+            if (statsDisplay) {
+                statsDisplay.classList.add('stats-loading');
+            }
+            
+            // Fetch latest statistics
+            fetch(STATS_API, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Failed to fetch stats');
+            })
+            .then(data => {
+                // Update displayed data
+                updateElement('total-downloads', data.totalDownloads || 0);
+                updateElement('unique-users', data.uniqueUsers || 0);
+                updateElement('today-downloads', data.todayDownloads || 0);
+                
+                // Update time
+                const updateTimeElement = document.getElementById('update-time');
+                if (updateTimeElement && data.lastUpdated) {
+                    const timeText = LANGUAGE === 'zh' ? '更新时间: ' : 'Updated: ';
+                    updateTimeElement.textContent = timeText + data.lastUpdated;
+                }
+                
+                // Remove loading state, add update animation
+                if (statsDisplay) {
+                    statsDisplay.classList.remove('stats-loading');
+                    statsDisplay.classList.add('stats-updated');
+                    setTimeout(() => {
+                        statsDisplay.classList.remove('stats-updated');
+                    }, 500);
+                }
+                
+                console.log('Stats updated successfully');
+            })
+            .catch(err => {
+                console.warn('Failed to update stats:', err);
+                // Remove loading state
+                if (statsDisplay) {
+                    statsDisplay.classList.remove('stats-loading');
+                }
+            });
+        }
+        
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                // Number animation effect
+                const currentValue = parseInt(element.textContent) || 0;
+                const targetValue = parseInt(value) || 0;
+                
+                if (currentValue !== targetValue) {
+                    animateNumber(element, currentValue, targetValue, 1000);
+                }
+            }
+        }
+        
+        function animateNumber(element, start, end, duration) {
+            const startTime = performance.now();
+            const difference = end - start;
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Use easing function
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const currentValue = Math.round(start + difference * easeProgress);
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
         }
     })();
     </script>
