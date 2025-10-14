@@ -221,6 +221,9 @@ async function main() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>ADHDGoFly - 关键词高亮阅读助手插件</title>
     <style>
         * {
@@ -694,10 +697,11 @@ async function main() {
             }
             
             // 获取最新统计数据
-            fetch(STATS_API, {
+            fetch(STATS_API + '?t=' + Date.now(), {
                 method: 'GET',
                 mode: 'cors',
-                credentials: 'omit'
+                credentials: 'omit',
+                cache: 'no-cache'
             })
             .then(response => {
                 if (response.ok) {
@@ -706,6 +710,11 @@ async function main() {
                 throw new Error('Failed to fetch stats');
             })
             .then(data => {
+                // 调试信息
+                console.log('📊 API 返回数据:', data);
+                console.log('📱 设备信息:', navigator.userAgent);
+                console.log('🌐 当前 URL:', window.location.href);
+                
                 // 更新显示的数据
                 updateElement('total-downloads', data.totalDownloads || 0);
                 updateElement('unique-users', data.uniqueUsers || 0);
@@ -725,6 +734,19 @@ async function main() {
                     setTimeout(() => {
                         statsDisplay.classList.remove('stats-updated');
                     }, 500);
+                }
+                
+                // 在页面上显示调试信息（仅开发模式）
+                if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
+                    const debugInfo = document.createElement('div');
+                    debugInfo.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-size:12px;z-index:9999;border-radius:5px;';
+                    debugInfo.innerHTML = '<div>📊 API 数据更新成功</div>' +
+                        '<div>总下载: ' + data.totalDownloads + '</div>' +
+                        '<div>独立用户: ' + data.uniqueUsers + '</div>' +
+                        '<div>今日下载: ' + data.todayDownloads + '</div>' +
+                        '<div>更新时间: ' + data.lastUpdated + '</div>';
+                    document.body.appendChild(debugInfo);
+                    setTimeout(() => debugInfo.remove(), 5000);
                 }
                 
                 console.log('Stats updated successfully');
@@ -785,6 +807,9 @@ async function main() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>ADHDGoFly - Smart Reading Assistant Plugin</title>
     <style>
         * {
@@ -1258,10 +1283,11 @@ async function main() {
             }
             
             // Fetch latest statistics
-            fetch(STATS_API, {
+            fetch(STATS_API + '?t=' + Date.now(), {
                 method: 'GET',
                 mode: 'cors',
-                credentials: 'omit'
+                credentials: 'omit',
+                cache: 'no-cache'
             })
             .then(response => {
                 if (response.ok) {
@@ -1270,6 +1296,11 @@ async function main() {
                 throw new Error('Failed to fetch stats');
             })
             .then(data => {
+                // Debug information
+                console.log('📊 API Response Data:', data);
+                console.log('📱 Device Info:', navigator.userAgent);
+                console.log('🌐 Current URL:', window.location.href);
+                
                 // Update displayed data
                 updateElement('total-downloads', data.totalDownloads || 0);
                 updateElement('unique-users', data.uniqueUsers || 0);
@@ -1289,6 +1320,19 @@ async function main() {
                     setTimeout(() => {
                         statsDisplay.classList.remove('stats-updated');
                     }, 500);
+                }
+                
+                // Show debug info on page (development mode only)
+                if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
+                    const debugInfo = document.createElement('div');
+                    debugInfo.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-size:12px;z-index:9999;border-radius:5px;';
+                    debugInfo.innerHTML = '<div>📊 API Data Updated</div>' +
+                        '<div>Total: ' + data.totalDownloads + '</div>' +
+                        '<div>Users: ' + data.uniqueUsers + '</div>' +
+                        '<div>Today: ' + data.todayDownloads + '</div>' +
+                        '<div>Updated: ' + data.lastUpdated + '</div>';
+                    document.body.appendChild(debugInfo);
+                    setTimeout(() => debugInfo.remove(), 5000);
                 }
                 
                 console.log('Stats updated successfully');
