@@ -1,0 +1,37 @@
+# Cloudflare Workers 配置文件模板
+# ADHDGoFly 下载统计服务
+# 
+# 使用说明：
+# 1. 复制此文件为 wrangler.toml
+# 2. 替换下面的占位符为实际值
+# 3. 不要将包含真实值的 wrangler.toml 提交到 Git
+
+name = "adhdgofly-download-tracker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库绑定
+# 注意：需要先创建 D1 数据库，然后将 database_id 填入下方
+# 创建命令：wrangler d1 create adhdgofly_downloads
+[[d1_databases]]
+binding = "DB"
+database_name = "adhdgofly_downloads"
+database_id = "YOUR_DATABASE_ID_HERE"  # 替换为实际的数据库 ID
+
+# 环境变量
+[vars]
+# 管理员 Token（用于访问详细统计）
+# 生成方法：openssl rand -hex 32
+# ⚠️ 重要：请妥善保管此 Token，不要泄露给他人
+ADMIN_TOKEN = "YOUR_ADMIN_TOKEN_HERE"  # 替换为实际的管理员 Token
+
+# 允许的来源（可选，用于更严格的 CORS 控制）
+# ALLOWED_ORIGINS = "https://adhdgofly.pages.dev,https://adhdgofly.online"
+
+# 开发环境配置（可选）
+[env.dev]
+name = "adhdgofly-download-tracker-dev"
+
+# 生产环境配置（可选）
+[env.production]
+name = "adhdgofly-download-tracker"
