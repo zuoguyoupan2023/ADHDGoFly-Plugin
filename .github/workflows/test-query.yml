@@ -1,0 +1,80 @@
+name: Test Database Query
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: '测试类型'
+        required: false
+        default: 'single_query'
+
+permissions:
+  contents: read
+
+jobs:
+  test-query:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: 📦 Install Wrangler
+        run: |
+          echo "📦 全局安装 wrangler..."
+          npm install -g wrangler@latest
+          echo "✅ wrangler 安装完成"
+          wrangler --version
+      
+      - name: 🔧 Create Wrangler Config
+        env:
+          DATABASE_ID: ${{ secrets.DATABASE_ID }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          echo "🔧 创建 wrangler.toml 配置文件..."
+          
+          if [ -z "$DATABASE_ID" ]; then
+            echo "❌ 错误: DATABASE_ID 未设置"
+            exit 1
+          fi
+          
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "❌ 错误: ADMIN_TOKEN 未设置"
+            exit 1
+          fi
+          
+          cat > workers/download-tracker/wrangler.toml << EOF
+          name = "adhdgofly-download-tracker"
+          main = "index.js"
+          compatibility_date = "2024-01-01"
+          
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "adhdgofly_downloads"
+          database_id = "$DATABASE_ID"
+          
+          [vars]
+          ADMIN_TOKEN = "$ADMIN_TOKEN"
+          EOF
+          
+          echo "✅ wrangler.toml 配置文件创建完成"
+      
+      - name: 🧪 Test Single Query
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🧪 测试数据库查询..."
+          node scripts/test-single-query.js
+      
+      - name: 📋 Summary
+        run: |
+          echo "🎉 === 测试完成 ==="
+          echo "✅ 数据库连接正常"
+          echo "✅ 查询解析正常"
+          echo "🔄 可以继续测试完整的统计脚本"

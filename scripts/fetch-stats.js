@@ -46,12 +46,18 @@ function executeWranglerQuery(sql) {
         // 解析 JSON 结果
         const jsonResult = JSON.parse(result);
         
-        if (jsonResult && jsonResult.results && Array.isArray(jsonResult.results)) {
-            return jsonResult.results;
-        } else {
-            console.log(`⚠️ 意外的结果格式:`, jsonResult);
-            throw new Error('Invalid query result format');
+        // wrangler 返回的格式是数组，包含一个对象
+        if (Array.isArray(jsonResult) && jsonResult.length > 0) {
+            const firstResult = jsonResult[0];
+            if (firstResult && firstResult.results && Array.isArray(firstResult.results)) {
+                console.log(`✅ 查询成功，返回 ${firstResult.results.length} 行数据`);
+                return firstResult.results;
+            }
         }
+        
+        // 如果格式不符合预期，显示详细信息
+        console.log(`⚠️ 意外的结果格式:`, JSON.stringify(jsonResult, null, 2));
+        throw new Error('Invalid query result format');
     } catch (error) {
         console.error(`❌ 查询失败: ${error.message}`);
         if (error.stdout) {

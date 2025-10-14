@@ -29,32 +29,36 @@ function getBeijingTime() {
 function getMockStats() {
     console.log('🎭 使用模拟数据进行测试...');
     
+    // 基于真实数据生成模拟数据（当前真实数据是 4 次下载）
+    const baseDownloads = 4;
+    const mockMultiplier = 50; // 模拟更多数据
+    
     return {
-        totalDownloads: 1256,
-        uniqueUsers: 902,
+        totalDownloads: baseDownloads * mockMultiplier,
+        uniqueUsers: Math.floor(baseDownloads * mockMultiplier * 0.7), // 假设 70% 是独立用户
         browserStats: {
-            chrome: 815,
-            edge: 441
+            chrome: Math.floor(baseDownloads * mockMultiplier * 0.65),
+            edge: Math.floor(baseDownloads * mockMultiplier * 0.35)
         },
         versionStats: {
-            '0.1.4': 1200,
-            '0.1.3': 56
+            '0.1.4': Math.floor(baseDownloads * mockMultiplier * 0.95),
+            '0.1.3': Math.floor(baseDownloads * mockMultiplier * 0.05)
         },
         languageStats: {
-            zh: 800,
-            en: 456
+            zh: Math.floor(baseDownloads * mockMultiplier * 0.6),
+            en: Math.floor(baseDownloads * mockMultiplier * 0.4)
         },
-        todayDownloads: 23,
+        todayDownloads: Math.floor(baseDownloads * 0.5),
         weeklyTrend: {
-            '2025-10-14': 23,
-            '2025-10-13': 45,
-            '2025-10-12': 32,
-            '2025-10-11': 28,
-            '2025-10-10': 19,
-            '2025-10-09': 15,
-            '2025-10-08': 12
+            '2025-10-14': Math.floor(baseDownloads * 0.5),
+            '2025-10-13': Math.floor(baseDownloads * 0.8),
+            '2025-10-12': Math.floor(baseDownloads * 0.3),
+            '2025-10-11': Math.floor(baseDownloads * 0.2),
+            '2025-10-10': Math.floor(baseDownloads * 0.1),
+            '2025-10-09': 0,
+            '2025-10-08': 0
         },
-        latestDownload: '2025-10-14 07:45'
+        latestDownload: '2025-10-14 17:27'
     };
 }
 
