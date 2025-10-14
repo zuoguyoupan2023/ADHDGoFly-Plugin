@@ -39,7 +39,7 @@ jobs:
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'  # Wrangler 需要 Node.js v20+
           # 暂时移除缓存，因为没有 package-lock.json
       
       # 3. 安装 wrangler（全局安装）
