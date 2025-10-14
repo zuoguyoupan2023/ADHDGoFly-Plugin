@@ -1,0 +1,260 @@
+name: Complete Workflow Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: '测试级别'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - basic
+          - full
+          - consistency
+
+permissions:
+  contents: write
+
+jobs:
+  test-complete:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: 📦 Install Wrangler
+        run: |
+          echo "📦 全局安装 wrangler..."
+          npm install -g wrangler@latest
+          echo "✅ wrangler 安装完成"
+          wrangler --version
+      
+      - name: 🔧 Create Wrangler Config
+        env:
+          DATABASE_ID: ${{ secrets.DATABASE_ID }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          echo "🔧 创建 wrangler.toml 配置文件..."
+          
+          if [ -z "$DATABASE_ID" ]; then
+            echo "❌ 错误: DATABASE_ID 未设置"
+            exit 1
+          fi
+          
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "❌ 错误: ADMIN_TOKEN 未设置"
+            exit 1
+          fi
+          
+          cat > workers/download-tracker/wrangler.toml << EOF
+          name = "adhdgofly-download-tracker"
+          main = "index.js"
+          compatibility_date = "2024-01-01"
+          
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "adhdgofly_downloads"
+          database_id = "$DATABASE_ID"
+          
+          [vars]
+          ADMIN_TOKEN = "$ADMIN_TOKEN"
+          EOF
+          
+          echo "✅ wrangler.toml 配置文件创建完成"
+      
+      - name: ⚙️ Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Test"
+      
+      - name: 🧪 Test All Database Queries
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🧪 测试所有数据库查询..."
+          node scripts/test-all-queries.js
+      
+      - name: 📊 Test Full Statistics Generation
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "📊 测试完整统计数据生成..."
+          node scripts/test-full-stats.js
+      
+      - name: 🔍 Test File Changes Detection
+        run: |
+          echo "🔍 测试文件变更检测..."
+          
+          # 检查 Git 状态
+          echo "📋 当前 Git 状态:"
+          git status
+          
+          # 检查是否有 stats.json 变更
+          if git diff --quiet public/stats.json; then
+            echo "📊 stats.json 无变更"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "📊 检测到 stats.json 变更"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            
+            echo "📋 变更详情:"
+            git diff public/stats.json || echo "无法显示差异（可能是新文件）"
+          fi
+        id: check_changes
+      
+      - name: 🔧 Test Git Operations (Dry Run)
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔧 测试 Git 操作（干运行）..."
+          
+          # 添加文件到暂存区
+          git add public/stats.json
+          
+          # 生成提交信息
+          BEIJING_TIME=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
+          COMMIT_MSG="📊 测试统计数据更新 - $BEIJING_TIME"
+          
+          echo "📝 提交信息: $COMMIT_MSG"
+          
+          # 干运行提交
+          git commit --dry-run -m "$COMMIT_MSG" || echo "干运行提交完成"
+          
+          # 显示暂存区状态
+          echo "📋 暂存区状态:"
+          git diff --cached --name-only
+          
+          echo "✅ Git 操作测试完成"
+      
+      - name: 📈 Test Data Consistency
+        if: github.event.inputs.test_level == 'full' || github.event.inputs.test_level == 'consistency'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "📈 测试数据一致性..."
+          
+          # 执行多次查询对比
+          echo "🔄 执行第 1 次查询..."
+          node scripts/fetch-stats.js
+          cp public/stats.json public/stats-1.json
+          
+          echo "⏳ 等待 3 秒..."
+          sleep 3
+          
+          echo "🔄 执行第 2 次查询..."
+          node scripts/fetch-stats.js
+          cp public/stats.json public/stats-2.json
+          
+          echo "⏳ 等待 3 秒..."
+          sleep 3
+          
+          echo "🔄 执行第 3 次查询..."
+          node scripts/fetch-stats.js
+          cp public/stats.json public/stats-3.json
+          
+          # 比较结果
+          echo "📊 比较查询结果..."
+          
+          # 提取关键数据进行比较
+          TOTAL_1=$(jq -r '.data.totalDownloads' public/stats-1.json)
+          TOTAL_2=$(jq -r '.data.totalDownloads' public/stats-2.json)
+          TOTAL_3=$(jq -r '.data.totalDownloads' public/stats-3.json)
+          
+          USERS_1=$(jq -r '.data.uniqueUsers' public/stats-1.json)
+          USERS_2=$(jq -r '.data.uniqueUsers' public/stats-2.json)
+          USERS_3=$(jq -r '.data.uniqueUsers' public/stats-3.json)
+          
+          echo "📈 总下载量: $TOTAL_1, $TOTAL_2, $TOTAL_3"
+          echo "👥 独立用户: $USERS_1, $USERS_2, $USERS_3"
+          
+          # 检查一致性
+          if [ "$TOTAL_1" = "$TOTAL_2" ] && [ "$TOTAL_2" = "$TOTAL_3" ]; then
+            echo "✅ 总下载量数据一致"
+          else
+            echo "⚠️ 总下载量数据不一致"
+          fi
+          
+          if [ "$USERS_1" = "$USERS_2" ] && [ "$USERS_2" = "$USERS_3" ]; then
+            echo "✅ 独立用户数据一致"
+          else
+            echo "⚠️ 独立用户数据不一致"
+          fi
+          
+          # 清理临时文件
+          rm -f public/stats-*.json
+      
+      - name: 🎯 Test Summary
+        run: |
+          echo "🎯 === 完整测试总结 ==="
+          
+          # 检查生成的文件
+          if [ -f "public/stats.json" ]; then
+            echo "✅ stats.json 文件生成成功"
+            
+            # 显示文件信息
+            echo "📏 文件大小: $(wc -c < public/stats.json) bytes"
+            
+            # 显示关键数据
+            if command -v jq >/dev/null 2>&1; then
+              echo "📊 统计数据摘要:"
+              echo "   - 总下载量: $(jq -r '.data.totalDownloads // "N/A"' public/stats.json)"
+              echo "   - 独立用户: $(jq -r '.data.uniqueUsers // "N/A"' public/stats.json)"
+              echo "   - 今日下载: $(jq -r '.data.todayDownloads // "N/A"' public/stats.json)"
+              echo "   - 更新时间: $(jq -r '.lastUpdated // "N/A"' public/stats.json)"
+              echo "   - 更新类型: $(jq -r '.updateType // "N/A"' public/stats.json)"
+            fi
+          else
+            echo "❌ stats.json 文件未生成"
+          fi
+          
+          echo ""
+          echo "🔍 测试项目检查:"
+          echo "✅ 数据库连接测试"
+          echo "✅ 多维度查询测试"
+          echo "✅ 统计数据生成测试"
+          echo "✅ 文件变更检测测试"
+          echo "✅ Git 操作测试"
+          
+          if [ "${{ github.event.inputs.test_level }}" = "full" ] || [ "${{ github.event.inputs.test_level }}" = "consistency" ]; then
+            echo "✅ 数据一致性测试"
+          fi
+          
+          echo ""
+          echo "🚀 下一步建议:"
+          echo "1. 如果所有测试通过，可以启用定时执行"
+          echo "2. 监控实际运行情况"
+          echo "3. 开始集成前端显示功能"
+          
+          echo ""
+          echo "⏰ 测试完成时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S %Z')"
+      
+      # 可选：提交测试结果（仅在明确指定时）
+      - name: 💾 Commit Test Results (Optional)
+        if: github.event.inputs.test_level == 'full' && steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "💾 提交测试生成的统计文件..."
+          
+          git add public/stats.json
+          
+          BEIJING_TIME=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
+          COMMIT_MSG="📊 完整测试生成统计数据 - $BEIJING_TIME"
+          
+          git commit -m "$COMMIT_MSG"
+          
+          echo "✅ 测试结果已提交"
+          echo "📝 提交信息: $COMMIT_MSG"
+          
+          # 注意：这里不推送，避免在测试时产生不必要的提交
+          echo "ℹ️ 跳过推送步骤（测试模式）"

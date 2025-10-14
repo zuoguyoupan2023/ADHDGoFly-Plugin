@@ -1,6 +1,7 @@
 {
   "lastUpdated": "2025-10-14 18:41:39",
   "timezone": "Asia/Shanghai",
+  "updateType": "scheduled",
   "data": {
     "totalDownloads": 4,
     "uniqueUsers": 1,
