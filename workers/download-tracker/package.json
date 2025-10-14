@@ -19,5 +19,8 @@
     "download-tracking"
   ],
   "author": "ADHDGoFly Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
 }

@@ -40,14 +40,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'workers/download-tracker/package-lock.json'
+          # 暂时移除缓存，因为没有 package-lock.json
       
-      # 3. 安装依赖
-      - name: 📦 Install Dependencies
+      # 3. 安装 wrangler（全局安装）
+      - name: 📦 Install Wrangler
         run: |
-          cd workers/download-tracker
-          npm ci
+          echo "📦 全局安装 wrangler..."
+          npm install -g wrangler@latest
+          echo "✅ wrangler 安装完成"
+          wrangler --version
       
       # 4. 配置 Git 用户信息
       - name: ⚙️ Configure Git
@@ -64,13 +65,21 @@ jobs:
           echo "🚀 开始获取下载统计数据..."
           echo "⏰ 执行时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S %Z')"
           
-          # 设置 wrangler 认证
-          cd workers/download-tracker
-          echo "🔐 配置 Cloudflare 认证..."
+          # 验证环境变量
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "❌ 错误: CLOUDFLARE_API_TOKEN 未设置"
+            exit 1
+          fi
+          
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "❌ 错误: CLOUDFLARE_ACCOUNT_ID 未设置"
+            exit 1
+          fi
+          
+          echo "🔐 Cloudflare 认证信息已配置"
           
           # 运行统计脚本
           echo "📈 执行统计查询..."
-          cd ../..
           node scripts/fetch-stats.js
           
           echo "✅ 统计数据获取完成"

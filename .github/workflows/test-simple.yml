@@ -1,0 +1,86 @@
+name: Test Simple Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '测试模式'
+        required: false
+        default: 'basic'
+
+permissions:
+  contents: write
+
+jobs:
+  test-basic:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: 🧪 Test Environment
+        run: |
+          echo "🚀 测试 GitHub Actions 环境..."
+          echo "📅 当前时间: $(date)"
+          echo "📅 东八区时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "📁 当前目录: $(pwd)"
+          echo "📋 文件列表:"
+          ls -la
+          
+          echo ""
+          echo "🔍 检查关键文件:"
+          [ -f "scripts/fetch-stats-mock.js" ] && echo "✅ scripts/fetch-stats-mock.js 存在" || echo "❌ scripts/fetch-stats-mock.js 不存在"
+          [ -d "workers/download-tracker" ] && echo "✅ workers/download-tracker 目录存在" || echo "❌ workers/download-tracker 目录不存在"
+      
+      - name: 🎭 Run Mock Script
+        run: |
+          echo "🎭 运行模拟统计脚本..."
+          node scripts/fetch-stats-mock.js
+          
+          echo ""
+          echo "📊 检查生成的文件:"
+          if [ -f "public/stats.json" ]; then
+            echo "✅ stats.json 生成成功"
+            echo "📏 文件大小: $(wc -c < public/stats.json) bytes"
+            echo "📄 文件内容预览:"
+            head -20 public/stats.json
+          else
+            echo "❌ stats.json 生成失败"
+          fi
+      
+      - name: 🔍 Test Git Operations
+        run: |
+          echo "🔧 配置 Git..."
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Test"
+          
+          echo "📊 检查文件变更..."
+          git status
+          
+          if git diff --quiet public/stats.json; then
+            echo "📊 无文件变更"
+          else
+            echo "📊 检测到文件变更"
+            git add public/stats.json
+            git commit -m "🧪 测试提交 - $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+            echo "✅ 测试提交成功"
+            
+            # 注意：这里不推送，只是测试提交功能
+            echo "ℹ️ 跳过推送步骤（测试模式）"
+          fi
+      
+      - name: 📋 Summary
+        run: |
+          echo "🎉 === 测试完成 ==="
+          echo "✅ Node.js 环境正常"
+          echo "✅ 文件系统访问正常"
+          echo "✅ 模拟脚本运行正常"
+          echo "✅ Git 操作正常"
+          echo ""
+          echo "🔄 下一步可以测试真实的统计脚本"
