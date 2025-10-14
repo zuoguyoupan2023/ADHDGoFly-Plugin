@@ -1,0 +1,83 @@
+name: 实时数据同步
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 每5分钟执行一次
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sync-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: 获取 Cloudflare Workers 数据
+        id: fetch-stats
+        run: |
+          # 尝试从 Workers 获取最新数据
+          if curl -f -m 10 -X GET "${{ secrets.WORKER_API_URL || 'https://download-tracker.burenweiye.workers.dev/api/stats' }}" > temp-stats.json 2>/dev/null; then
+            echo "source=cloudflare" >> $GITHUB_OUTPUT
+            echo "✅ 成功从 Cloudflare Workers 获取数据"
+          else
+            echo "❌ Cloudflare Workers 访问失败，使用本地数据"
+            # 使用现有的统计数据作为基础
+            if [ -f "docs/api/stats.json" ]; then
+              cp docs/api/stats.json temp-stats.json
+            else
+              # 创建默认数据结构
+              cat > temp-stats.json << 'EOF'
+          {
+            "totalDownloads": 4,
+            "todayDownloads": 0,
+            "lastUpdated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "source": "github-fallback",
+            "status": "ok"
+          }
+          EOF
+            fi
+            echo "source=github-fallback" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: 创建 API 目录
+        run: |
+          mkdir -p docs/api
+          
+      - name: 处理和验证数据
+        run: |
+          # 添加时间戳和数据源信息
+          jq --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+             --arg source "${{ steps.fetch-stats.outputs.source }}" \
+             '. + {lastUpdated: $timestamp, source: $source}' \
+             temp-stats.json > docs/api/stats.json
+             
+          # 创建 JSONP 版本（支持跨域）
+          echo "window.statsCallback && window.statsCallback(" > docs/api/stats.jsonp
+          cat docs/api/stats.json >> docs/api/stats.jsonp
+          echo ");" >> docs/api/stats.jsonp
+          
+          # 创建简化版本（只包含核心数据）
+          jq '{totalDownloads, todayDownloads, lastUpdated}' \
+             docs/api/stats.json > docs/api/stats-simple.json
+             
+          echo "📊 数据处理完成："
+          cat docs/api/stats.json
+          
+      - name: 提交更新
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if git diff --quiet docs/api/; then
+            echo "📊 数据无变化，跳过提交"
+          else
+            git add docs/api/
+            git commit -m "📊 自动更新统计数据 - $(date -u +"%Y-%m-%d %H:%M UTC")"
+            git push
+            echo "✅ 数据已更新并推送"
+          fi
+          
+      - name: 通知状态
+        if: failure()
+        run: |
+          echo "❌ 数据同步失败，请检查配置"
+          echo "Worker URL: ${{ secrets.WORKER_API_URL || '未配置' }}"

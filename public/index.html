@@ -455,7 +455,7 @@
             });
         });
         
-        function trackDownload(browser) {
+        async function trackDownload(browser) {
             const data = {
                 version: VERSION,
                 browser: browser,
@@ -465,26 +465,94 @@
                 timestamp: Date.now()
             };
             
-            // 使用 fetch 发送统计数据
-            fetch(ANALYTICS_API, {
+            // 通道1：尝试 Cloudflare Workers（海外用户优先）
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+                
+                const response = await fetch(ANALYTICS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    console.log('✅ Cloudflare Workers 统计成功');
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            } catch (error) {
+                console.log('⚠️ Cloudflare Workers 访问失败，切换备用通道:', error.message);
+            }
+            
+            // 通道2：GitHub Issues API（中国大陆用户备用）
+            try {
+                await trackViaGitHub(data);
+                console.log('✅ GitHub 备用通道统计成功');
+            } catch (error) {
+                console.error('❌ GitHub 备用通道失败:', error.message);
+                // 通道3：本地存储（最后降级）
+                trackViaLocalStorage(data);
+            }
+        }
+        
+        // GitHub Issues API 统计
+        async function trackViaGitHub(data) {
+            const issueBody = `## 📊 下载统计数据 (备用通道)
+
+**基本信息**:
+- 版本: ${data.version}
+- 浏览器: ${data.browser}
+- 语言: ${data.language}
+- 时间戳: ${data.timestamp}
+- 时间: ${new Date(data.timestamp).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}
+
+**技术信息**:
+- User Agent: ${data.userAgent.substring(0, 100)}${data.userAgent.length > 100 ? '...' : ''}
+- 来源页面: ${data.referrer || 'direct'}
+
+> 🔄 此数据通过 GitHub 备用通道收集，将自动同步到主数据库`;
+
+            const response = await fetch('https://api.github.com/repos/burenweiye/ADHDGoFly/issues', {
                 method: 'POST',
-                headers: { 
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data),
-                mode: 'cors',
-                credentials: 'omit'
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('Download tracked successfully');
-                } else {
-                    console.warn('Download tracking failed:', response.status);
-                }
-            })
-            .catch(err => {
-                console.error('Download tracking error:', err);
+                body: JSON.stringify({
+                    title: `📊 下载统计 - ${data.browser} - ${new Date(data.timestamp).toISOString().split('T')[0]}`,
+                    body: issueBody,
+                    labels: ['download-stats', 'backup-channel', data.browser, data.language]
+                })
             });
+            
+            if (!response.ok) {
+                throw new Error(`GitHub API 失败: ${response.status}`);
+            }
+        }
+        
+        // 本地存储降级（离线统计）
+        function trackViaLocalStorage(data) {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                pending.push(data);
+                
+                // 限制本地存储数量，避免占用过多空间
+                if (pending.length > 50) {
+                    pending.splice(0, pending.length - 50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                console.log('📱 数据已保存到本地存储，等待网络恢复后同步');
+            } catch (error) {
+                console.error('❌ 本地存储失败:', error);
+            }
         }
         
         // 静态数据模式：注释掉动态更新函数

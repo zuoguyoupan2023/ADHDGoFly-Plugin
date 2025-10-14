@@ -1,0 +1,267 @@
+name: 处理备用统计数据
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # 每15分钟执行一次
+  workflow_dispatch:
+    inputs:
+      force_process:
+        description: '强制处理所有未处理的统计数据'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  process-backup-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: 📊 获取备用统计数据
+        id: fetch-issues
+        run: |
+          echo "🔍 获取带有 download-stats 标签的 Issues..."
+          
+          # 获取开放状态的统计 Issues
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/${{ github.repository }}/issues?labels=download-stats&state=open&per_page=100" \
+               > backup-issues.json
+               
+          # 检查是否有数据需要处理
+          ISSUE_COUNT=$(jq length backup-issues.json)
+          echo "📋 找到 $ISSUE_COUNT 个待处理的统计 Issues"
+          echo "issue_count=$ISSUE_COUNT" >> $GITHUB_OUTPUT
+          
+          if [ "$ISSUE_COUNT" -gt 0 ]; then
+            echo "has_data=true" >> $GITHUB_OUTPUT
+            echo "✅ 有数据需要处理"
+          else
+            echo "has_data=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ 没有待处理的数据"
+          fi
+          
+      - name: 🔄 解析统计数据
+        if: steps.fetch-issues.outputs.has_data == 'true'
+        run: |
+          echo "📝 解析 Issues 中的统计数据..."
+          
+          # 创建解析脚本
+          cat > parse-backup-stats.js << 'EOF'
+          const fs = require('fs');
+          
+          // 读取 Issues 数据
+          const issues = JSON.parse(fs.readFileSync('backup-issues.json', 'utf8'));
+          const parsedStats = [];
+          const processedIssues = [];
+          
+          console.log(`处理 ${issues.length} 个 Issues...`);
+          
+          issues.forEach(issue => {
+            try {
+              // 解析 Issue 标题获取基本信息
+              const titleMatch = issue.title.match(/📊 下载统计 - (\w+) - (\d{4}-\d{2}-\d{2})/);
+              if (!titleMatch) {
+                console.log(`跳过格式不匹配的 Issue: ${issue.title}`);
+                return;
+              }
+              
+              const [, browser, date] = titleMatch;
+              
+              // 解析 Issue 内容获取详细信息
+              const body = issue.body;
+              const versionMatch = body.match(/版本: ([\d.]+)/);
+              const languageMatch = body.match(/语言: (\w+)/);
+              const timestampMatch = body.match(/时间戳: (\d+)/);
+              const userAgentMatch = body.match(/User Agent: ([^\n]+)/);
+              const referrerMatch = body.match(/来源页面: ([^\n]+)/);
+              
+              if (!versionMatch || !languageMatch || !timestampMatch) {
+                console.log(`Issue 数据不完整: ${issue.title}`);
+                return;
+              }
+              
+              const stat = {
+                version: versionMatch[1],
+                browser: browser,
+                language: languageMatch[1],
+                timestamp: parseInt(timestampMatch[1]),
+                date: date,
+                userAgent: userAgentMatch ? userAgentMatch[1].replace('...', '') : '',
+                referrer: referrerMatch ? referrerMatch[1] : '',
+                country: 'CN', // 备用通道主要是中国大陆用户
+                source: 'github-backup',
+                issue_number: issue.number
+              };
+              
+              parsedStats.push(stat);
+              processedIssues.push(issue.number);
+              
+              console.log(`✅ 解析成功: ${browser} ${stat.version} (${new Date(stat.timestamp).toISOString()})`);
+              
+            } catch (error) {
+              console.error(`解析 Issue ${issue.number} 失败:`, error.message);
+            }
+          });
+          
+          // 保存解析结果
+          fs.writeFileSync('parsed-stats.json', JSON.stringify(parsedStats, null, 2));
+          fs.writeFileSync('processed-issues.json', JSON.stringify(processedIssues));
+          
+          console.log(`📊 解析完成: ${parsedStats.length} 条统计数据`);
+          console.log(`🔢 待关闭 Issues: ${processedIssues.length} 个`);
+          EOF
+          
+          # 执行解析脚本
+          node parse-backup-stats.js
+          
+      - name: 📦 安装 Wrangler
+        if: steps.fetch-issues.outputs.has_data == 'true'
+        run: |
+          echo "📦 安装 wrangler..."
+          npm install -g wrangler@latest
+          wrangler --version
+          
+      - name: 🔧 创建 Wrangler 配置
+        if: steps.fetch-issues.outputs.has_data == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DATABASE_ID: ${{ secrets.DATABASE_ID }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          echo "🔧 创建 wrangler.toml 配置..."
+          
+          mkdir -p workers/download-tracker
+          cat > workers/download-tracker/wrangler.toml << EOF
+          name = "adhdgofly-download-tracker"
+          main = "index.js"
+          compatibility_date = "2024-01-01"
+          
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "adhdgofly_downloads"
+          database_id = "$DATABASE_ID"
+          
+          [vars]
+          ADMIN_TOKEN = "$ADMIN_TOKEN"
+          EOF
+          
+      - name: 💾 同步数据到 D1 数据库
+        if: steps.fetch-issues.outputs.has_data == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "💾 同步备用统计数据到 D1 数据库..."
+          
+          # 创建同步脚本
+          cat > sync-to-d1.js << 'EOF'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+          
+          // 读取解析的统计数据
+          if (!fs.existsSync('parsed-stats.json')) {
+            console.log('没有找到解析的统计数据');
+            process.exit(0);
+          }
+          
+          const stats = JSON.parse(fs.readFileSync('parsed-stats.json', 'utf8'));
+          
+          if (stats.length === 0) {
+            console.log('没有需要同步的数据');
+            process.exit(0);
+          }
+          
+          console.log(`开始同步 ${stats.length} 条数据到 D1 数据库...`);
+          
+          let successCount = 0;
+          let errorCount = 0;
+          
+          for (const stat of stats) {
+            try {
+              // 构建 SQL 插入语句
+              const sql = `INSERT INTO downloads (version, browser, language, country, user_agent, referrer, ip_hash, created_at, date) VALUES ('${stat.version}', '${stat.browser}', '${stat.language}', '${stat.country}', '${stat.userAgent.replace(/'/g, "''")}', '${stat.referrer.replace(/'/g, "''")}', 'github-backup-${stat.issue_number}', ${stat.timestamp}, '${stat.date}')`;
+              
+              // 执行 SQL
+              const command = `npx wrangler d1 execute adhdgofly_downloads --remote --command "${sql}"`;
+              execSync(command, { 
+                cwd: 'workers/download-tracker',
+                stdio: 'pipe'
+              });
+              
+              successCount++;
+              console.log(`✅ 同步成功: ${stat.browser} ${stat.version} (Issue #${stat.issue_number})`);
+              
+            } catch (error) {
+              errorCount++;
+              console.error(`❌ 同步失败: Issue #${stat.issue_number} - ${error.message}`);
+            }
+          }
+          
+          console.log(`📊 同步完成: 成功 ${successCount} 条，失败 ${errorCount} 条`);
+          
+          // 保存同步结果
+          const result = {
+            total: stats.length,
+            success: successCount,
+            error: errorCount,
+            timestamp: new Date().toISOString()
+          };
+          
+          fs.writeFileSync('sync-result.json', JSON.stringify(result, null, 2));
+          EOF
+          
+          # 执行同步脚本
+          node sync-to-d1.js
+          
+      - name: 🔒 关闭已处理的 Issues
+        if: steps.fetch-issues.outputs.has_data == 'true'
+        run: |
+          echo "🔒 关闭已处理的统计 Issues..."
+          
+          if [ ! -f "processed-issues.json" ]; then
+            echo "没有找到需要关闭的 Issues"
+            exit 0
+          fi
+          
+          # 读取需要关闭的 Issue 编号
+          ISSUES=$(cat processed-issues.json | jq -r '.[]')
+          
+          for issue_number in $ISSUES; do
+            echo "关闭 Issue #$issue_number..."
+            
+            curl -X PATCH \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/issues/$issue_number" \
+              -d '{"state":"closed","labels":["download-stats","backup-channel","processed"]}' \
+              > /dev/null
+              
+            echo "✅ Issue #$issue_number 已关闭"
+          done
+          
+      - name: 📋 输出处理摘要
+        if: always()
+        run: |
+          echo "📊 === 备用统计数据处理摘要 ==="
+          echo "⏰ 处理时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "📋 发现 Issues: ${{ steps.fetch-issues.outputs.issue_count }} 个"
+          
+          if [ -f "sync-result.json" ]; then
+            echo "💾 同步结果:"
+            cat sync-result.json | jq -r '"   - 总计: \(.total) 条\n   - 成功: \(.success) 条\n   - 失败: \(.error) 条"'
+          else
+            echo "💾 没有数据需要同步"
+          fi
+          
+          echo "✅ 备用统计数据处理完成"

@@ -455,7 +455,7 @@
             });
         });
         
-        function trackDownload(browser) {
+        async function trackDownload(browser) {
             const data = {
                 version: VERSION,
                 browser: browser,
@@ -465,26 +465,94 @@
                 timestamp: Date.now()
             };
             
-            // Use fetch to send tracking data
-            fetch(ANALYTICS_API, {
+            // Channel 1: Try Cloudflare Workers (preferred for overseas users)
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+                
+                const response = await fetch(ANALYTICS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    console.log('✅ Cloudflare Workers tracking successful');
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            } catch (error) {
+                console.log('⚠️ Cloudflare Workers failed, switching to backup channel:', error.message);
+            }
+            
+            // Channel 2: GitHub Issues API (backup for mainland China users)
+            try {
+                await trackViaGitHub(data);
+                console.log('✅ GitHub backup channel tracking successful');
+            } catch (error) {
+                console.error('❌ GitHub backup channel failed:', error.message);
+                // Channel 3: Local storage (final fallback)
+                trackViaLocalStorage(data);
+            }
+        }
+        
+        // GitHub Issues API tracking
+        async function trackViaGitHub(data) {
+            const issueBody = `## 📊 Download Statistics (Backup Channel)
+
+**Basic Info**:
+- Version: ${data.version}
+- Browser: ${data.browser}
+- Language: ${data.language}
+- Timestamp: ${data.timestamp}
+- Time: ${new Date(data.timestamp).toLocaleString('en-US', {timeZone: 'Asia/Shanghai'})}
+
+**Technical Info**:
+- User Agent: ${data.userAgent.substring(0, 100)}${data.userAgent.length > 100 ? '...' : ''}
+- Referrer: ${data.referrer || 'direct'}
+
+> 🔄 This data is collected via GitHub backup channel and will be automatically synced to the main database`;
+
+            const response = await fetch('https://api.github.com/repos/burenweiye/ADHDGoFly/issues', {
                 method: 'POST',
-                headers: { 
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data),
-                mode: 'cors',
-                credentials: 'omit'
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('Download tracked successfully');
-                } else {
-                    console.warn('Download tracking failed:', response.status);
-                }
-            })
-            .catch(err => {
-                console.error('Download tracking error:', err);
+                body: JSON.stringify({
+                    title: `📊 Download Stats - ${data.browser} - ${new Date(data.timestamp).toISOString().split('T')[0]}`,
+                    body: issueBody,
+                    labels: ['download-stats', 'backup-channel', data.browser, data.language]
+                })
             });
+            
+            if (!response.ok) {
+                throw new Error(`GitHub API failed: ${response.status}`);
+            }
+        }
+        
+        // Local storage fallback (offline tracking)
+        function trackViaLocalStorage(data) {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                pending.push(data);
+                
+                // Limit local storage size to avoid excessive space usage
+                if (pending.length > 50) {
+                    pending.splice(0, pending.length - 50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                console.log('📱 Data saved to local storage, waiting for network recovery to sync');
+            } catch (error) {
+                console.error('❌ Local storage failed:', error);
+            }
         }
         
         // Static data mode: Dynamic update functions disabled
