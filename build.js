@@ -426,7 +426,7 @@ async function main() {
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -603,23 +603,16 @@ async function main() {
                 <div class="stats-display">
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-number" id="total-downloads">${downloadCount}</div>
+                            <div class="stat-number">${downloadCount}</div>
                             <div class="stat-label">总下载量</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="unique-users">${uniqueUsers}</div>
-                            <div class="stat-label">用户数量</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="today-downloads">${todayDownloads}</div>
+                            <div class="stat-number">${todayDownloads}</div>
                             <div class="stat-label">今日下载</div>
                         </div>
                     </div>
                     <div class="stats-update-info">
-                        <small id="update-time">更新时间: ${lastUpdated || '获取中...'}</small>
-                        <div id="api-status" style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                            🔄 正在连接 API...
-                        </div>
+                        <small>数据更新时间: ${lastUpdated || '获取中...'}</small>
                     </div>
                 </div>
             </section>
@@ -640,12 +633,12 @@ async function main() {
         const VERSION = '${version}';
         const LANGUAGE = 'zh';
         
-        // 页面加载完成后获取最新统计数据
-        document.addEventListener('DOMContentLoaded', function() {
-            updateStatsDisplay();
-        });
+        // 静态数据模式：不再动态获取数据
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     updateStatsDisplay();
+        // });
         
-        // 监听所有下载按钮
+        // 监听所有下载按钮（仅用于统计，不更新显示）
         document.querySelectorAll('.download-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 // 提取浏览器类型（从按钮的 href）
@@ -655,8 +648,8 @@ async function main() {
                 // 发送统计数据
                 trackDownload(browser);
                 
-                // 延迟更新统计显示（给服务器时间处理）
-                setTimeout(updateStatsDisplay, 2000);
+                // 静态模式：不再动态更新显示
+                // setTimeout(updateStatsDisplay, 2000);
             });
         });
         
@@ -692,130 +685,24 @@ async function main() {
             });
         }
         
+        // 静态数据模式：注释掉动态更新函数
+        /*
         function updateStatsDisplay() {
-            // 添加加载状态
-            const statsDisplay = document.querySelector('.stats-display');
-            const statusElement = document.getElementById('api-status');
-            
-            if (statsDisplay) {
-                statsDisplay.classList.add('stats-loading');
-            }
-            
-            if (statusElement) {
-                statusElement.textContent = '🔄 正在获取最新数据...';
-                statusElement.style.color = '#007cba';
-            }
-            
-            // 获取最新统计数据
-            fetch(STATS_API + '?t=' + Date.now(), {
-                method: 'GET',
-                mode: 'cors',
-                credentials: 'omit',
-                cache: 'no-cache'
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Failed to fetch stats');
-            })
-            .then(data => {
-                // 调试信息
-                console.log('📊 API 返回数据:', data);
-                console.log('📱 设备信息:', navigator.userAgent);
-                console.log('🌐 当前 URL:', window.location.href);
-                
-                // 更新显示的数据
-                updateElement('total-downloads', data.totalDownloads || 0);
-                updateElement('unique-users', data.uniqueUsers || 0);
-                updateElement('today-downloads', data.todayDownloads || 0);
-                
-                // 更新时间
-                const updateTimeElement = document.getElementById('update-time');
-                if (updateTimeElement && data.lastUpdated) {
-                    const timeText = LANGUAGE === 'zh' ? '更新时间: ' : 'Updated: ';
-                    updateTimeElement.textContent = timeText + data.lastUpdated;
-                }
-                
-                // 移除加载状态，添加更新动画
-                if (statsDisplay) {
-                    statsDisplay.classList.remove('stats-loading');
-                    statsDisplay.classList.add('stats-updated');
-                    setTimeout(() => {
-                        statsDisplay.classList.remove('stats-updated');
-                    }, 500);
-                }
-                
-                // 更新状态指示器
-                if (statusElement) {
-                    statusElement.textContent = '✅ 数据已更新 (' + new Date().toLocaleTimeString() + ')';
-                    statusElement.style.color = '#28a745';
-                }
-                
-                // 在页面上显示调试信息（仅开发模式）
-                if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
-                    const debugInfo = document.createElement('div');
-                    debugInfo.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-size:12px;z-index:9999;border-radius:5px;';
-                    debugInfo.innerHTML = '<div>📊 API 数据更新成功</div>' +
-                        '<div>总下载: ' + data.totalDownloads + '</div>' +
-                        '<div>独立用户: ' + data.uniqueUsers + '</div>' +
-                        '<div>今日下载: ' + data.todayDownloads + '</div>' +
-                        '<div>更新时间: ' + data.lastUpdated + '</div>';
-                    document.body.appendChild(debugInfo);
-                    setTimeout(() => debugInfo.remove(), 5000);
-                }
-                
-                console.log('Stats updated successfully');
-            })
-            .catch(err => {
-                console.warn('Failed to update stats:', err);
-                // 移除加载状态
-                if (statsDisplay) {
-                    statsDisplay.classList.remove('stats-loading');
-                }
-                
-                // 更新状态指示器显示错误
-                if (statusElement) {
-                    statusElement.textContent = '❌ 连接失败: ' + err.message;
-                    statusElement.style.color = '#dc3545';
-                }
-            });
+            // 动态更新功能已禁用，改为使用静态数据
+            // 如需重新启用，请取消注释此函数并恢复相关调用
         }
+        */
         
+        // 静态数据模式：注释掉动画相关函数
+        /*
         function updateElement(id, value) {
-            const element = document.getElementById(id);
-            if (element) {
-                // 数字动画效果
-                const currentValue = parseInt(element.textContent) || 0;
-                const targetValue = parseInt(value) || 0;
-                
-                if (currentValue !== targetValue) {
-                    animateNumber(element, currentValue, targetValue, 1000);
-                }
-            }
+            // 动画更新功能已禁用
         }
         
         function animateNumber(element, start, end, duration) {
-            const startTime = performance.now();
-            const difference = end - start;
-            
-            function updateNumber(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // 使用缓动函数
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-                const currentValue = Math.round(start + difference * easeProgress);
-                
-                element.textContent = currentValue;
-                
-                if (progress < 1) {
-                    requestAnimationFrame(updateNumber);
-                }
-            }
-            
-            requestAnimationFrame(updateNumber);
+            // 数字动画功能已禁用
         }
+        */
     })();
     </script>
 </body>
@@ -1034,7 +921,7 @@ async function main() {
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -1211,23 +1098,16 @@ async function main() {
                 <div class="stats-display">
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-number" id="total-downloads">${downloadCount}</div>
+                            <div class="stat-number">${downloadCount}</div>
                             <div class="stat-label">Total Downloads</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="unique-users">${uniqueUsers}</div>
-                            <div class="stat-label">Users</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="today-downloads">${todayDownloads}</div>
+                            <div class="stat-number">${todayDownloads}</div>
                             <div class="stat-label">Today</div>
                         </div>
                     </div>
                     <div class="stats-update-info">
-                        <small id="update-time">Updated: ${lastUpdated || 'Loading...'}</small>
-                        <div id="api-status" style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                            🔄 Connecting to API...
-                        </div>
+                        <small>Last Updated: ${lastUpdated || 'Loading...'}</small>
                     </div>
                 </div>
             </section>
@@ -1248,12 +1128,12 @@ async function main() {
         const VERSION = '${version}';
         const LANGUAGE = 'en';
         
-        // Update stats display when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            updateStatsDisplay();
-        });
+        // Static data mode: Dynamic updates disabled
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     updateStatsDisplay();
+        // });
         
-        // Listen to all download buttons
+        // Listen to all download buttons (tracking only, no display update)
         document.querySelectorAll('.download-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 // Extract browser type from button href
@@ -1263,8 +1143,8 @@ async function main() {
                 // Send tracking data
                 trackDownload(browser);
                 
-                // Delay stats update (give server time to process)
-                setTimeout(updateStatsDisplay, 2000);
+                // Static mode: No dynamic display updates
+                // setTimeout(updateStatsDisplay, 2000);
             });
         });
         
@@ -1300,130 +1180,20 @@ async function main() {
             });
         }
         
+        // Static data mode: Dynamic update functions disabled
+        /*
         function updateStatsDisplay() {
-            // Add loading state
-            const statsDisplay = document.querySelector('.stats-display');
-            const statusElement = document.getElementById('api-status');
-            
-            if (statsDisplay) {
-                statsDisplay.classList.add('stats-loading');
-            }
-            
-            if (statusElement) {
-                statusElement.textContent = '🔄 Fetching latest data...';
-                statusElement.style.color = '#007cba';
-            }
-            
-            // Fetch latest statistics
-            fetch(STATS_API + '?t=' + Date.now(), {
-                method: 'GET',
-                mode: 'cors',
-                credentials: 'omit',
-                cache: 'no-cache'
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Failed to fetch stats');
-            })
-            .then(data => {
-                // Debug information
-                console.log('📊 API Response Data:', data);
-                console.log('📱 Device Info:', navigator.userAgent);
-                console.log('🌐 Current URL:', window.location.href);
-                
-                // Update displayed data
-                updateElement('total-downloads', data.totalDownloads || 0);
-                updateElement('unique-users', data.uniqueUsers || 0);
-                updateElement('today-downloads', data.todayDownloads || 0);
-                
-                // Update time
-                const updateTimeElement = document.getElementById('update-time');
-                if (updateTimeElement && data.lastUpdated) {
-                    const timeText = LANGUAGE === 'zh' ? '更新时间: ' : 'Updated: ';
-                    updateTimeElement.textContent = timeText + data.lastUpdated;
-                }
-                
-                // Remove loading state, add update animation
-                if (statsDisplay) {
-                    statsDisplay.classList.remove('stats-loading');
-                    statsDisplay.classList.add('stats-updated');
-                    setTimeout(() => {
-                        statsDisplay.classList.remove('stats-updated');
-                    }, 500);
-                }
-                
-                // Update status indicator
-                if (statusElement) {
-                    statusElement.textContent = '✅ Data updated (' + new Date().toLocaleTimeString() + ')';
-                    statusElement.style.color = '#28a745';
-                }
-                
-                // Show debug info on page (development mode only)
-                if (window.location.hostname.includes('localhost') || window.location.hostname.includes('pages.dev')) {
-                    const debugInfo = document.createElement('div');
-                    debugInfo.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;font-size:12px;z-index:9999;border-radius:5px;';
-                    debugInfo.innerHTML = '<div>📊 API Data Updated</div>' +
-                        '<div>Total: ' + data.totalDownloads + '</div>' +
-                        '<div>Users: ' + data.uniqueUsers + '</div>' +
-                        '<div>Today: ' + data.todayDownloads + '</div>' +
-                        '<div>Updated: ' + data.lastUpdated + '</div>';
-                    document.body.appendChild(debugInfo);
-                    setTimeout(() => debugInfo.remove(), 5000);
-                }
-                
-                console.log('Stats updated successfully');
-            })
-            .catch(err => {
-                console.warn('Failed to update stats:', err);
-                // Remove loading state
-                if (statsDisplay) {
-                    statsDisplay.classList.remove('stats-loading');
-                }
-                
-                // Update status indicator to show error
-                if (statusElement) {
-                    statusElement.textContent = '❌ Connection failed: ' + err.message;
-                    statusElement.style.color = '#dc3545';
-                }
-            });
+            // Dynamic update functionality disabled for static mode
         }
         
         function updateElement(id, value) {
-            const element = document.getElementById(id);
-            if (element) {
-                // Number animation effect
-                const currentValue = parseInt(element.textContent) || 0;
-                const targetValue = parseInt(value) || 0;
-                
-                if (currentValue !== targetValue) {
-                    animateNumber(element, currentValue, targetValue, 1000);
-                }
-            }
+            // Animation update functionality disabled
         }
         
         function animateNumber(element, start, end, duration) {
-            const startTime = performance.now();
-            const difference = end - start;
-            
-            function updateNumber(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Use easing function
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-                const currentValue = Math.round(start + difference * easeProgress);
-                
-                element.textContent = currentValue;
-                
-                if (progress < 1) {
-                    requestAnimationFrame(updateNumber);
-                }
-            }
-            
-            requestAnimationFrame(updateNumber);
+            // Number animation functionality disabled
         }
+        */
     })();
     </script>
 </body>
