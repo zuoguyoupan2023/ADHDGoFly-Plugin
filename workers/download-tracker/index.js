@@ -28,7 +28,13 @@ export default {
     }
     
     if (url.pathname === '/api/stats' && request.method === 'GET') {
-      return handleAdminStats(request, env);
+      // 检查是否有认证头，有则返回管理员数据，无则返回公开数据
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader) {
+        return handleAdminStats(request, env);
+      } else {
+        return handlePublicStats(request, env);
+      }
     }
     
     if (url.pathname === '/health' && request.method === 'GET') {
@@ -136,11 +142,21 @@ async function handleTrackDownload(request, env) {
  */
 async function handlePublicStats(request, env) {
   try {
-    // 只返回基础统计数据
+    // 返回前端需要的统计数据格式
     const stats = {
-      total: await getTotalDownloads(env),
-      byBrowser: await getDownloadsByBrowser(env),
-      byLanguage: await getDownloadsByLanguage(env)
+      totalDownloads: await getTotalDownloads(env),
+      uniqueUsers: await getUniqueUsers(env),
+      todayDownloads: await getTodayDownloads(env),
+      browserStats: await getDownloadsByBrowser(env),
+      languageStats: await getDownloadsByLanguage(env),
+      lastUpdated: new Date().toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     };
     
     return jsonResponse(stats);
@@ -218,6 +234,26 @@ async function getDownloadsByLanguage(env) {
   `).all();
   
   return results.results || [];
+}
+
+// 独立用户数
+async function getUniqueUsers(env) {
+  const result = await env.DB.prepare(`
+    SELECT COUNT(DISTINCT ip_hash) as unique_users FROM downloads
+  `).first();
+  
+  return result?.unique_users || 0;
+}
+
+// 今日下载量
+async function getTodayDownloads(env) {
+  const result = await env.DB.prepare(`
+    SELECT COUNT(*) as today_count 
+    FROM downloads 
+    WHERE date = date('now')
+  `).first();
+  
+  return result?.today_count || 0;
 }
 
 // 按日期统计

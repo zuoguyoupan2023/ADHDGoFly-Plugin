@@ -592,6 +592,10 @@ async function main() {
                 <h2>🎉 发现新版本！</h2>
                 <p>建议更新以获取最新功能和修复</p>
                 
+                <div class="download-grid">
+                    ${downloadLinksHtml}
+                </div>
+                
                 <!-- 下载统计显示 -->
                 <div class="stats-display">
                     <div class="stats-grid">
@@ -611,10 +615,6 @@ async function main() {
                     <div class="stats-update-info">
                         <small id="update-time">更新时间: ${lastUpdated || '获取中...'}</small>
                     </div>
-                </div>
-                
-                <div class="download-grid">
-                    ${downloadLinksHtml}
                 </div>
             </section>
         </main>
@@ -1156,6 +1156,10 @@ async function main() {
                 <h2>🎉 New Version Found!</h2>
                 <p>Update recommended to get the latest features and fixes</p>
                 
+                <div class="download-grid">
+                    ${downloadLinksHtmlEn}
+                </div>
+                
                 <!-- Download Statistics Display -->
                 <div class="stats-display">
                     <div class="stats-grid">
@@ -1175,10 +1179,6 @@ async function main() {
                     <div class="stats-update-info">
                         <small id="update-time">Updated: ${lastUpdated || 'Loading...'}</small>
                     </div>
-                </div>
-                
-                <div class="download-grid">
-                    ${downloadLinksHtmlEn}
                 </div>
             </section>
         </main>
