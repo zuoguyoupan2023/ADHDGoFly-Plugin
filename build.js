@@ -546,10 +546,10 @@ async function main() {
     </style>
 </head>
 <body>
-    <!-- 语言切换器 -->
+    <!-- Language Switcher -->
     <div class="language-switcher">
-        <a href="index.html" class="active">中文</a>
-        <a href="index-en.html">English</a>
+        <a href="index.html">中文</a>
+        <a href="index-en.html" class="active">English</a>
     </div>
 
     <div class="container">
@@ -655,54 +655,321 @@ async function main() {
         
         function trackDownload(browser) {
             const data = {
+                action: 'download',
                 version: VERSION,
                 browser: browser,
                 language: LANGUAGE,
                 userAgent: navigator.userAgent,
                 referrer: document.referrer,
-                timestamp: Date.now()
+                timestamp: new Date().toISOString(),
+                url: window.location.href
             };
             
-            // 使用 fetch 发送统计数据
-            fetch(ANALYTICS_API, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data),
-                mode: 'cors',
-                credentials: 'omit'
-            })
-            .then(response => {
+            // 使用 Vercel + 自定义域名方案
+            // 替换为您的自定义域名，避免被墙问题
+            const vercelEndpoint = 'https://your-custom-domain.com/api/collect';
+            
+            // 发送数据到 Vercel
+            trackDownloadToVercel(data, vercelEndpoint);
+        }
+        
+        // Vercel 数据收集函数
+        async function trackDownloadToVercel(data, endpoint) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
                 if (response.ok) {
-                    console.log('Download tracked successfully');
+                    const result = await response.json();
+                    console.log('✅ 数据收集成功:', result.requestId);
                 } else {
-                    console.warn('Download tracking failed:', response.status);
+                    console.warn('⚠️ 数据收集失败:', response.status);
                 }
-            })
-            .catch(err => {
-                console.error('Download tracking error:', err);
-            });
+            } catch (error) {
+                console.warn('⚠️ 数据收集错误:', error.message);
+                // 静默失败，不影响用户体验
+            }
         }
         
-        // 静态数据模式：注释掉动态更新函数
-        /*
-        function updateStatsDisplay() {
-            // 动态更新功能已禁用，改为使用静态数据
-            // 如需重新启用，请取消注释此函数并恢复相关调用
+        // 用户环境检测
+        function detectUserEnvironment() {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const language = navigator.language || navigator.userLanguage;
+            const userAgent = navigator.userAgent;
+            
+            // 检测是否为中国大陆用户
+            const isChina = 
+                timezone.includes('Shanghai') || 
+                timezone.includes('Beijing') || 
+                timezone.includes('Chongqing') ||
+                language.startsWith('zh-CN') ||
+                (language.startsWith('zh') && !language.includes('TW') && !language.includes('HK'));
+            
+            // 检测网络环境
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const networkType = connection ? connection.effectiveType : 'unknown';
+            
+            return {
+                isChina: isChina,
+                timezone: timezone,
+                language: language,
+                networkType: networkType,
+                userAgent: userAgent,
+                timestamp: Date.now()
+            };
         }
-        */
         
-        // 静态数据模式：注释掉动画相关函数
-        /*
-        function updateElement(id, value) {
-            // 动画更新功能已禁用
+        // 智能路由下载统计
+        async function trackDownloadWithSmartRouting(data, environment, endpoints) {
+            // 增强数据 - 添加环境信息
+            const enhancedData = {
+                ...data,
+                environment: environment,
+                routingStrategy: endpoints[0], // 记录选择的主要策略
+                clientTimestamp: Date.now()
+            };
+            
+            console.log(\`🎯 智能路由: 检测到\${environment.isChina ? '中国大陆' : '海外'}用户，使用策略: \${endpoints.join(' → ')}\`);
+            
+            // 按优先级尝试各个端点
+            for (let i = 0; i < endpoints.length; i++) {
+                const endpoint = endpoints[i];
+                const isLastAttempt = i === endpoints.length - 1;
+                
+                try {
+                    const success = await attemptTrackDownload(enhancedData, endpoint, isLastAttempt);
+                    if (success) {
+                        console.log(\`✅ 数据收集成功: \${endpoint} (第\${i + 1}次尝试)\`);
+                        return;
+                    }
+                } catch (error) {
+                    console.log(\`⚠️ \${endpoint} 端点失败: \${error.message}\${isLastAttempt ? '' : '，尝试下一个端点'}\`);
+                    
+                    if (isLastAttempt) {
+                        // 最后降级：本地存储
+                        trackViaLocalStorage(enhancedData);
+                        console.log('📱 所有端点失败，数据已保存到本地存储');
+                    }
+                }
+            }
         }
         
-        function animateNumber(element, start, end, duration) {
-            // 数字动画功能已禁用
+        // 尝试特定端点的数据收集
+        async function attemptTrackDownload(data, endpoint, isLastAttempt) {
+            const timeout = isLastAttempt ? 10000 : 5000; // 最后一次尝试给更长时间
+            
+            switch (endpoint) {
+                case 'qiniu':
+                    return await trackViaQiniu(data, timeout);
+                case 'cloudflare':
+                    return await trackViaCloudflare(data, timeout);
+                case 'github':
+                    return await trackViaGitHub(data, timeout);
+                default:
+                    throw new Error(\`未知端点: \${endpoint}\`);
+            }
         }
-        */
+        
+        // 七牛云端点统计
+        async function trackViaQiniu(data, timeout = 5000) {
+            const QINIU_API = 'https://stats.adhdgofly.com/api/track-download'; // 七牛云端点
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(QINIU_API, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Source': 'adhdgofly-plugin'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        source: 'qiniu-endpoint',
+                        collector: 'smart-routing-v1'
+                    }),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`HTTP \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // Cloudflare Workers端点统计
+        async function trackViaCloudflare(data, timeout = 5000) {
+            const CLOUDFLARE_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(CLOUDFLARE_API, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        source: 'cloudflare-workers',
+                        collector: 'smart-routing-v1'
+                    }),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`HTTP \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // GitHub Issues API 统计
+        async function trackViaGitHub(data, timeout = 8000) {
+            const issueBody = \`## 📊 下载统计数据 (智能路由备用通道)
+
+**基本信息**:
+- 版本: \${data.version}
+- 浏览器: \${data.browser}
+- 语言: \${data.language}
+- 时间戳: \${data.timestamp}
+- 时间: \${new Date(data.timestamp).toLocaleString('en-US', {timeZone: 'UTC'})}
+
+**用户环境**:
+- 地区: \${data.environment.isChina ? '中国大陆' : '海外'}
+- 时区: \${data.environment.timezone}
+- 网络类型: \${data.environment.networkType}
+- 路由策略: \${data.routingStrategy}
+
+**技术信息**:
+- User Agent: \${data.userAgent.substring(0, 100)}\${data.userAgent.length > 100 ? '...' : ''}
+- 来源页面: \${data.referrer || 'direct'}
+
+> 🔄 此数据通过智能路由系统的GitHub备用通道收集，将自动同步到主数据库\`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch('https://api.github.com/repos/burenweiye/ADHDGoFly/issues', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: \`📊 智能路由统计 - \${data.browser} - \${new Date(data.timestamp).toISOString().split('T')[0]}\`,
+                        body: issueBody,
+                        labels: ['download-stats', 'smart-routing', data.browser, data.language, data.environment.isChina ? 'china' : 'overseas']
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`GitHub API 失败: \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // 本地存储降级（离线统计）
+        function trackViaLocalStorage(data) {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // 添加智能路由标记
+                const enhancedData = {
+                    ...data,
+                    localStorageTimestamp: Date.now(),
+                    failureReason: 'all-endpoints-failed',
+                    needsSync: true
+                };
+                
+                pending.push(enhancedData);
+                
+                // 限制本地存储数量，避免占用过多空间
+                if (pending.length > 50) {
+                    pending.splice(0, pending.length - 50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                console.log('📱 数据已保存到本地存储，等待网络恢复后同步');
+                
+                // 尝试在后台同步之前失败的数据
+                setTimeout(() => syncPendingData(), 30000); // 30秒后尝试同步
+            } catch (error) {
+                console.error('❌ 本地存储失败:', error);
+            }
+        }
+        
+        // 同步待处理的本地数据
+        async function syncPendingData() {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                if (pending.length === 0) return;
+                
+                console.log(\`🔄 尝试同步 \${pending.length} 条待处理数据\`);
+                
+                const synced = [];
+                for (const data of pending) {
+                    try {
+                        // 尝试使用智能路由重新发送
+                        const environment = data.environment || detectUserEnvironment();
+                        const endpoints = environment.isChina ? ['qiniu', 'cloudflare'] : ['cloudflare', 'qiniu'];
+                        
+                        for (const endpoint of endpoints) {
+                            const success = await attemptTrackDownload(data, endpoint, false);
+                            if (success) {
+                                synced.push(data);
+                                console.log(\`✅ 同步成功: \${endpoint}\`);
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.log(\`⚠️ 同步失败: \${error.message}\`);
+                    }
+                }
+                
+                // 移除已同步的数据
+                if (synced.length > 0) {
+                    const remaining = pending.filter(item => !synced.includes(item));
+                    localStorage.setItem(key, JSON.stringify(remaining));
+                    console.log(\`🎉 成功同步 \${synced.length} 条数据，剩余 \${remaining.length} 条\`);
+                }
+            } catch (error) {
+                console.error('❌ 同步待处理数据失败:', error);
+            }
+        }
     })();
     </script>
 </body>
@@ -1043,157 +1310,428 @@ async function main() {
 <body>
     <!-- Language Switcher -->
     <div class="language-switcher">
-        <a href="index.html">中文</a>
-        <a href="index-en.html" class="active">English</a>
+        <a href="index.html" class="active">中文</a>
+        <a href="index-en.html">English</a>
     </div>
 
     <div class="container">
         <header class="header">
             <div class="header-content">
                 <h1>ADHDGoFly</h1>
-                <p>Smart Reading Assistant - Make web reading easier and learning more efficient</p>
+                <p>关键词高亮阅读助手 - 让网页阅读更轻松，学习更高效</p>
             </div>
         </header>
 
         <main class="main-content">
             <section class="features">
-                <h2>Core Features</h2>
+                <h2>核心功能</h2>
                 <div class="feature-grid">
                     <div class="feature-card">
-                        <h3>🎯 Smart POS Tagging</h3>
-                        <p>Automatically identify parts of speech in web text, highlighting nouns, verbs, adjectives, etc. with different colors to help understand sentence structure</p>
+                        <h3>🎯 智能词性标注</h3>
+                        <p>自动识别网页文本中的词性，用不同颜色高亮名词、动词、形容词等，帮助理解句子结构</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🌍 Multi-language Support</h3>
-                        <p>Support intelligent recognition and processing of multiple languages including Chinese, English, Japanese, French, Spanish, Russian, etc.</p>
+                        <h3>🌍 多语言支持</h3>
+                        <p>支持中文、英文、日文、法文、西班牙文、俄文等多种语言的智能识别和处理</p>
                     </div>
                     <div class="feature-card">
-                        <h3>⚡ Real-time Processing</h3>
-                        <p>Automatically process text when pages load, no manual operation required, providing a smooth reading experience</p>
+                        <h3>⚡ 实时处理</h3>
+                        <p>页面加载时自动处理文本，无需手动操作，提供流畅的阅读体验</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🎨 Personalized Settings</h3>
-                        <p>Customize color schemes and toggle specific features according to personal preferences to adjust reading assistance effects</p>
+                        <h3>🎨 个性化设置</h3>
+                        <p>可根据个人喜好自定义颜色方案，开关特定功能，调节阅读辅助效果</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🔄 Auto Update</h3>
-                        <p>Built-in version detection function, automatically remind users to update to the latest version to ensure complete functionality</p>
+                        <h3>🔄 自动更新</h3>
+                        <p>内置版本检测功能，自动提醒用户更新到最新版本，确保功能完整</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🚀 Lightweight & Efficient</h3>
-                        <p>Optimized algorithm design, low resource consumption, does not affect normal web browsing speed</p>
+                        <h3>🚀 轻量高效</h3>
+                        <p>优化的算法设计，占用资源少，不影响网页正常浏览速度</p>
                     </div>
                 </div>
             </section>
             
             <section class="download-section">
-                <h2>🎉 New Version Found!</h2>
-                <p>Update recommended to get the latest features and fixes</p>
+                <h2>🎉 发现新版本！</h2>
+                <p>建议更新以获取最新功能和修复</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtmlEn}
+                    ${downloadLinksHtml}
                 </div>
                 
-                <!-- Download Statistics Display -->
+                <!-- 下载统计显示 -->
                 <div class="stats-display">
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-number">${downloadCount}</div>
-                            <div class="stat-label">Total Downloads</div>
+                            <div class="stat-label">总下载量</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number">${todayDownloads}</div>
-                            <div class="stat-label">Today</div>
+                            <div class="stat-label">今日下载</div>
                         </div>
                     </div>
                     <div class="stats-update-info">
-                        <small>Last Updated: ${lastUpdated || 'Loading...'}</small>
+                        <small>数据更新时间: ${lastUpdated || '获取中...'}</small>
                     </div>
                 </div>
             </section>
         </main>
 
         <footer class="footer">
-            <p>© 2024 ADHDGoFly Plugin. Designed to enhance reading experience.</p>
-            <p>Current Version: v${version} | Compatible with Chrome, Edge and other modern browsers</p>
+            <p>© 2024 ADHDGoFly Plugin. 专为提升阅读体验而设计。</p>
+            <p>当前版本: v${version} | 适用于 Chrome、Edge 等现代浏览器</p>
         </footer>
     </div>
     
-    <!-- Download Tracking Code -->
+    <!-- 下载统计代码 -->
     <script>
     (function() {
-        // Analytics configuration
+        // 统计配置
         const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
         const STATS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats';
         const VERSION = '${version}';
         const LANGUAGE = 'en';
         
-        // Static data mode: Dynamic updates disabled
+        // 静态数据模式：不再动态获取数据
         // document.addEventListener('DOMContentLoaded', function() {
         //     updateStatsDisplay();
         // });
         
-        // Listen to all download buttons (tracking only, no display update)
+        // 监听所有下载按钮（仅用于统计，不更新显示）
         document.querySelectorAll('.download-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
-                // Extract browser type from button href
+                // 提取浏览器类型（从按钮的 href）
                 const href = this.getAttribute('href');
                 const browser = href.includes('chrome') ? 'chrome' : 'edge';
                 
-                // Send tracking data
+                // 发送统计数据
                 trackDownload(browser);
                 
-                // Static mode: No dynamic display updates
+                // 静态模式：不再动态更新显示
                 // setTimeout(updateStatsDisplay, 2000);
             });
         });
         
         function trackDownload(browser) {
             const data = {
+                action: 'download',
                 version: VERSION,
                 browser: browser,
                 language: LANGUAGE,
                 userAgent: navigator.userAgent,
                 referrer: document.referrer,
-                timestamp: Date.now()
+                timestamp: new Date().toISOString(),
+                url: window.location.href
             };
             
-            // Use fetch to send tracking data
-            fetch(ANALYTICS_API, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data),
-                mode: 'cors',
-                credentials: 'omit'
-            })
-            .then(response => {
+            // 使用 Vercel + 自定义域名方案
+            // 替换为您的自定义域名，避免被墙问题
+            const vercelEndpoint = 'https://your-custom-domain.com/api/collect';
+            
+            // 发送数据到 Vercel
+            trackDownloadToVercel(data, vercelEndpoint);
+        }
+        
+        // Vercel 数据收集函数
+        async function trackDownloadToVercel(data, endpoint) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
                 if (response.ok) {
-                    console.log('Download tracked successfully');
+                    const result = await response.json();
+                    console.log('✅ 数据收集成功:', result.requestId);
                 } else {
-                    console.warn('Download tracking failed:', response.status);
+                    console.warn('⚠️ 数据收集失败:', response.status);
                 }
-            })
-            .catch(err => {
-                console.error('Download tracking error:', err);
-            });
+            } catch (error) {
+                console.warn('⚠️ 数据收集错误:', error.message);
+                // 静默失败，不影响用户体验
+            }
         }
         
-        // Static data mode: Dynamic update functions disabled
-        /*
-        function updateStatsDisplay() {
-            // Dynamic update functionality disabled for static mode
+        // 用户环境检测
+        function detectUserEnvironment() {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const language = navigator.language || navigator.userLanguage;
+            const userAgent = navigator.userAgent;
+            
+            // 检测是否为中国大陆用户
+            const isChina = 
+                timezone.includes('Shanghai') || 
+                timezone.includes('Beijing') || 
+                timezone.includes('Chongqing') ||
+                language.startsWith('zh-CN') ||
+                (language.startsWith('zh') && !language.includes('TW') && !language.includes('HK'));
+            
+            // 检测网络环境
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            const networkType = connection ? connection.effectiveType : 'unknown';
+            
+            return {
+                isChina: isChina,
+                timezone: timezone,
+                language: language,
+                networkType: networkType,
+                userAgent: userAgent,
+                timestamp: Date.now()
+            };
         }
         
-        function updateElement(id, value) {
-            // Animation update functionality disabled
+        // 智能路由下载统计
+        async function trackDownloadWithSmartRouting(data, environment, endpoints) {
+            // 增强数据 - 添加环境信息
+            const enhancedData = {
+                ...data,
+                environment: environment,
+                routingStrategy: endpoints[0], // 记录选择的主要策略
+                clientTimestamp: Date.now()
+            };
+            
+            console.log(\`🎯 智能路由: 检测到\${environment.isChina ? '中国大陆' : '海外'}用户，使用策略: \${endpoints.join(' → ')}\`);
+            
+            // 按优先级尝试各个端点
+            for (let i = 0; i < endpoints.length; i++) {
+                const endpoint = endpoints[i];
+                const isLastAttempt = i === endpoints.length - 1;
+                
+                try {
+                    const success = await attemptTrackDownload(enhancedData, endpoint, isLastAttempt);
+                    if (success) {
+                        console.log(\`✅ 数据收集成功: \${endpoint} (第\${i + 1}次尝试)\`);
+                        return;
+                    }
+                } catch (error) {
+                    console.log(\`⚠️ \${endpoint} 端点失败: \${error.message}\${isLastAttempt ? '' : '，尝试下一个端点'}\`);
+                    
+                    if (isLastAttempt) {
+                        // 最后降级：本地存储
+                        trackViaLocalStorage(enhancedData);
+                        console.log('📱 所有端点失败，数据已保存到本地存储');
+                    }
+                }
+            }
         }
         
-        function animateNumber(element, start, end, duration) {
-            // Number animation functionality disabled
+        // 尝试特定端点的数据收集
+        async function attemptTrackDownload(data, endpoint, isLastAttempt) {
+            const timeout = isLastAttempt ? 10000 : 5000; // 最后一次尝试给更长时间
+            
+            switch (endpoint) {
+                case 'qiniu':
+                    return await trackViaQiniu(data, timeout);
+                case 'cloudflare':
+                    return await trackViaCloudflare(data, timeout);
+                case 'github':
+                    return await trackViaGitHub(data, timeout);
+                default:
+                    throw new Error(\`未知端点: \${endpoint}\`);
+            }
         }
-        */
+        
+        // 七牛云端点统计
+        async function trackViaQiniu(data, timeout = 5000) {
+            const QINIU_API = 'https://stats.adhdgofly.com/api/track-download'; // 七牛云端点
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(QINIU_API, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Source': 'adhdgofly-plugin'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        source: 'qiniu-endpoint',
+                        collector: 'smart-routing-v1'
+                    }),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`HTTP \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // Cloudflare Workers端点统计
+        async function trackViaCloudflare(data, timeout = 5000) {
+            const CLOUDFLARE_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(CLOUDFLARE_API, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        source: 'cloudflare-workers',
+                        collector: 'smart-routing-v1'
+                    }),
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`HTTP \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // GitHub Issues API 统计
+        async function trackViaGitHub(data, timeout = 8000) {
+            const issueBody = \`## 📊 下载统计数据 (智能路由备用通道)
+
+**基本信息**:
+- 版本: \${data.version}
+- 浏览器: \${data.browser}
+- 语言: \${data.language}
+- 时间戳: \${data.timestamp}
+- 时间: \${new Date(data.timestamp).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}
+
+**用户环境**:
+- 地区: \${data.environment.isChina ? '中国大陆' : '海外'}
+- 时区: \${data.environment.timezone}
+- 网络类型: \${data.environment.networkType}
+- 路由策略: \${data.routingStrategy}
+
+**技术信息**:
+- User Agent: \${data.userAgent.substring(0, 100)}\${data.userAgent.length > 100 ? '...' : ''}
+- 来源页面: \${data.referrer || 'direct'}
+
+> 🔄 此数据通过智能路由系统的GitHub备用通道收集，将自动同步到主数据库\`;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch('https://api.github.com/repos/burenweiye/ADHDGoFly/issues', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: \`📊 智能路由统计 - \${data.browser} - \${new Date(data.timestamp).toISOString().split('T')[0]}\`,
+                        body: issueBody,
+                        labels: ['download-stats', 'smart-routing', data.browser, data.language, data.environment.isChina ? 'china' : 'overseas']
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    return true;
+                }
+                throw new Error(\`GitHub API 失败: \${response.status}\`);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // 本地存储降级（离线统计）
+        function trackViaLocalStorage(data) {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // 添加智能路由标记
+                const enhancedData = {
+                    ...data,
+                    localStorageTimestamp: Date.now(),
+                    failureReason: 'all-endpoints-failed',
+                    needsSync: true
+                };
+                
+                pending.push(enhancedData);
+                
+                // 限制本地存储数量，避免占用过多空间
+                if (pending.length > 50) {
+                    pending.splice(0, pending.length - 50);
+                }
+                
+                localStorage.setItem(key, JSON.stringify(pending));
+                console.log('📱 数据已保存到本地存储，等待网络恢复后同步');
+                
+                // 尝试在后台同步之前失败的数据
+                setTimeout(() => syncPendingData(), 30000); // 30秒后尝试同步
+            } catch (error) {
+                console.error('❌ 本地存储失败:', error);
+            }
+        }
+        
+        // 同步待处理的本地数据
+        async function syncPendingData() {
+            try {
+                const key = 'adhdgofly_pending_stats';
+                const pending = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                if (pending.length === 0) return;
+                
+                console.log(\`🔄 Attempting to sync \${pending.length} pending data entries\`);
+                
+                const synced = [];
+                for (const data of pending) {
+                    try {
+                        // 尝试使用智能路由重新发送
+                        const environment = data.environment || detectUserEnvironment();
+                        const endpoints = environment.isChina ? ['qiniu', 'cloudflare'] : ['cloudflare', 'qiniu'];
+                        
+                        for (const endpoint of endpoints) {
+                            const success = await attemptTrackDownload(data, endpoint, false);
+                            if (success) {
+                                synced.push(data);
+                                console.log(\`✅ Sync successful: \${endpoint}\`);
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.log(\`⚠️ Sync failed: \${error.message}\`);
+                    }
+                }
+                
+                // 移除已同步的数据
+                if (synced.length > 0) {
+                    const remaining = pending.filter(item => !synced.includes(item));
+                    localStorage.setItem(key, JSON.stringify(remaining));
+                    console.log(\`🎉 Successfully synced \${synced.length} entries, \${remaining.length} remaining\`);
+                }
+            } catch (error) {
+                console.error('❌ Failed to sync pending data:', error);
+            }
+        }
     })();
     </script>
 </body>
