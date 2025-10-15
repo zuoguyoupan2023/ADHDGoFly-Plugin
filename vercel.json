@@ -1,15 +1,7 @@
 {
   "buildCommand": "node build.js",
   "outputDirectory": "public",
-  "installCommand": "npm install archiver",
-  "functions": {
-    "api/collect.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/stats.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
+  "installCommand": "npm install archiver node-fetch",
   "headers": [
     {
       "source": "/api/(.*)",
