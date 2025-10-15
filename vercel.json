@@ -4,10 +4,10 @@
   "installCommand": "npm install archiver",
   "functions": {
     "api/collect.js": {
-      "runtime": "edge"
+      "runtime": "nodejs18.x"
     },
     "api/stats.js": {
-      "runtime": "edge"
+      "runtime": "nodejs18.x"
     }
   },
   "headers": [
