@@ -25,7 +25,7 @@ jobs:
               cp docs/api/stats.json temp-stats.json
             else
               # 创建默认数据结构
-              cat > temp-stats.json << 'EOF'
+              cat > temp-stats.json << EOF
           {
             "totalDownloads": 4,
             "todayDownloads": 0,
