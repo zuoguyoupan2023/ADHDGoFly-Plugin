@@ -20,12 +20,11 @@ export default async function handler(req, res) {
     });
   }
 
-  // 添加环境变量调试信息
-  console.log('🔧 Vercel 环境变量检查:', {
-    hasCloudflareWorkerUrl: !!process.env.CLOUDFLARE_WORKER_URL,
-    cloudflareWorkerUrl: process.env.CLOUDFLARE_WORKER_URL ? process.env.CLOUDFLARE_WORKER_URL.substring(0, 80) : '未设置',
-    hasWorkerAuthToken: !!process.env.WORKER_AUTH_TOKEN
-  });
+  // 添加明显的环境变量调试信息
+  console.log('=== ENVIRONMENT VARIABLES DEBUG ===');
+  console.log('CLOUDFLARE_WORKER_URL:', process.env.CLOUDFLARE_WORKER_URL || 'NOT SET');
+  console.log('WORKER_AUTH_TOKEN:', process.env.WORKER_AUTH_TOKEN ? 'SET' : 'NOT SET');
+  console.log('===================================');
 
   try {
     // 解析请求数据
