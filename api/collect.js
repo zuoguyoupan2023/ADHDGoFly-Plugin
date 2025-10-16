@@ -23,13 +23,26 @@ export default async function handler(req, res) {
   try {
     // 解析请求数据
     const data = req.body;
+    console.log('📥 收到数据收集请求:', { 
+        method: req.method,
+        url: req.url,
+        headers: Object.fromEntries(Object.entries(req.headers).filter(([key]) => 
+            ['content-type', 'user-agent', 'x-forwarded-for', 'x-vercel-ip-country'].includes(key.toLowerCase())
+        )),
+        bodyKeys: Object.keys(data)
+    });
     
     // 数据验证
     if (!data.action || !data.timestamp) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: action, timestamp'
-      });
+        console.warn('❌ 数据验证失败: 缺少必要字段', { 
+            hasAction: !!data.action, 
+            hasTimestamp: !!data.timestamp,
+            dataKeys: Object.keys(data)
+        });
+        return res.status(400).json({
+            success: false,
+            error: 'Missing required fields: action, timestamp'
+        });
     }
 
     // 增强数据收集
@@ -50,18 +63,33 @@ export default async function handler(req, res) {
       // 请求ID
       requestId: generateUUID()
     };
+    console.log('🔧 增强后的数据:', { 
+        requestId: enhancedData.requestId,
+        action: enhancedData.action,
+        version: enhancedData.version,
+        browser: enhancedData.browser,
+        language: enhancedData.language
+    });
 
     // 优先：转发到 Cloudflare Workers（写入 D1）
     const workerUrl = process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
     const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
+    console.log('🔍 检查 Cloudflare Worker URL 配置:', { 
+        hasWorkerUrl: !!workerUrl,
+        workerUrl: workerUrl ? workerUrl.substring(0, 60) + '...' : '未设置'
+    });
+    
     if (workerUrl) {
       console.log('🔍 尝试转发到 Cloudflare Worker:', workerUrl); // 添加调试日志
       try {
         await storeToCloudflare(enhancedData, workerUrl, workerAuth);
+        console.log('✅ 成功转发到 Cloudflare Worker');
       } catch (error) {
         console.error('Cloudflare storage failed:', error.message);
         // 不中断流程，继续后续步骤
       }
+    } else {
+        console.warn('⚠️ 未配置 Cloudflare Worker URL，跳过转发');
     }
 
     // 可选：存储到 GitHub (如果配置了 GITHUB_TOKEN)
