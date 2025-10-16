@@ -51,9 +51,22 @@ export default async function handler(req, res) {
       requestId: generateUUID()
     };
 
+    // 优先：转发到 Cloudflare Workers（写入 D1）
+    const workerUrl = process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
+    const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
+    if (workerUrl) {
+      try {
+        await storeToCloudflare(enhancedData, workerUrl, workerAuth);
+      } catch (error) {
+        console.error('Cloudflare storage failed:', error.message);
+        // 不中断流程，继续后续步骤
+      }
+    }
+
     // 可选：存储到 GitHub (如果配置了 GITHUB_TOKEN)
     const githubToken = process.env.GITHUB_TOKEN;
-    if (githubToken) {
+    const enableGitHubBackup = (process.env.ENABLE_GITHUB_BACKUP || '').toLowerCase() === 'true';
+    if (enableGitHubBackup && githubToken) {
       try {
         await storeToGitHub(enhancedData, githubToken);
       } catch (error) {
@@ -142,4 +155,37 @@ ${JSON.stringify(data, null, 2)}
   }
 
   return await response.json();
+}
+
+// 转发到 Cloudflare Worker（写入 D1）
+async function storeToCloudflare(data, workerUrl, authToken) {
+  // 规范化负载，避免泄露敏感信息
+  const payload = {
+    version: data.version,
+    browser: data.browser,
+    language: data.language,
+    userAgent: data.userAgent,
+    referrer: data.referrer,
+    timestamp: data.timestamp,
+    // 传递真实客户端IP（来自前端到 Vercel 的头），便于 Worker 去重
+    clientIp: Array.isArray(data.userIP) ? data.userIP[0] : (data.userIP || 'unknown')
+  };
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(workerUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Worker API error: ${response.status} ${text}`);
+  }
+
+  return await response.json().catch(() => ({}));
 }

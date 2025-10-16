@@ -75,7 +75,11 @@ async function handleTrackDownload(request, env) {
     
     // 4. 提取客户端信息
     const country = request.cf?.country || 'UNKNOWN';
-    const ipAddress = request.headers.get('CF-Connecting-IP') || 'unknown';
+    // 支持由中间层（如 Vercel）转发的真实客户端IP
+    const clientIpFromProxy = (typeof data.clientIp === 'string' && data.clientIp.length > 0)
+      ? data.clientIp.split(',')[0].trim() // 处理 x-forwarded-for 多IP的情况
+      : null;
+    const ipAddress = clientIpFromProxy || request.headers.get('CF-Connecting-IP') || 'unknown';
     const ipHash = await hashIP(ipAddress);
     
     // 5. 检查是否重复（同一 IP 在 1 分钟内的重复下载）
