@@ -20,6 +20,13 @@ export default async function handler(req, res) {
     });
   }
 
+  // 添加环境变量调试信息
+  console.log('🔧 Vercel 环境变量检查:', {
+    hasCloudflareWorkerUrl: !!process.env.CLOUDFLARE_WORKER_URL,
+    cloudflareWorkerUrl: process.env.CLOUDFLARE_WORKER_URL ? process.env.CLOUDFLARE_WORKER_URL.substring(0, 80) : '未设置',
+    hasWorkerAuthToken: !!process.env.WORKER_AUTH_TOKEN
+  });
+
   try {
     // 解析请求数据
     const data = req.body;
@@ -76,18 +83,22 @@ export default async function handler(req, res) {
     const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
     console.log('🔍 检查 Cloudflare Worker URL 配置:', { 
         hasWorkerUrl: !!workerUrl,
-        workerUrl: workerUrl ? workerUrl.substring(0, 60) + '...' : '未设置'
+        workerUrl: workerUrl ? workerUrl.substring(0, 80) : '未设置'
     });
     
     if (workerUrl) {
-      console.log('🔍 尝试转发到 Cloudflare Worker:', workerUrl); // 添加调试日志
-      try {
-        await storeToCloudflare(enhancedData, workerUrl, workerAuth);
-        console.log('✅ 成功转发到 Cloudflare Worker');
-      } catch (error) {
-        console.error('Cloudflare storage failed:', error.message);
-        // 不中断流程，继续后续步骤
-      }
+        console.log('🔍 尝试转发到 Cloudflare Worker:', workerUrl); // 添加调试日志
+        try {
+            await storeToCloudflare(enhancedData, workerUrl, workerAuth);
+            console.log('✅ 成功转发到 Cloudflare Worker');
+        } catch (error) {
+            console.error('Cloudflare storage failed:', error.message);
+            console.error('🔧 Cloudflare Worker URL 详细信息:', {
+                workerUrl,
+                isValidUrl: workerUrl ? isValidUrl(workerUrl) : false
+            });
+            // 不中断流程，继续后续步骤
+        }
     } else {
         console.warn('⚠️ 未配置 Cloudflare Worker URL，跳过转发');
     }
@@ -188,7 +199,21 @@ ${JSON.stringify(data, null, 2)}
 
 // 转发到 Cloudflare Worker（写入 D1）
 async function storeToCloudflare(data, workerUrl, authToken) {
-  console.log('📤 准备发送数据到 Cloudflare Worker:', { workerUrl, data }); // 添加调试日志
+  console.log('📤 准备发送数据到 Cloudflare Worker:', { 
+    workerUrl, 
+    dataKeys: Object.keys(data),
+    hasRequiredFields: !!(data.version && data.browser && data.language)
+  }); // 添加调试日志
+  
+  // 验证必要字段
+  if (!data.version || !data.browser || !data.language) {
+    console.error('❌ 数据验证失败: 缺少必要字段', { 
+      hasVersion: !!data.version,
+      hasBrowser: !!data.browser,
+      hasLanguage: !!data.language
+    });
+    throw new Error('Invalid data: missing required fields');
+  }
   
   // 规范化负载，避免泄露敏感信息
   const payload = {
@@ -207,6 +232,21 @@ async function storeToCloudflare(data, workerUrl, authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
+  console.log('🔍 测试 Cloudflare Worker 可访问性...');
+  // 先测试 Worker 是否可访问
+  try {
+    const healthCheck = await fetch(workerUrl.replace('/api/track-download', '/health'), {
+      method: 'GET',
+      timeout: 5000
+    });
+    console.log('🔧 Health check 结果:', {
+      status: healthCheck.status,
+      ok: healthCheck.ok
+    });
+  } catch (healthError) {
+    console.error('❌ Health check 失败:', healthError.message);
+  }
+
   console.log('📨 发送请求到 Cloudflare Worker...'); // 添加调试日志
   const response = await fetch(workerUrl, {
     method: 'POST',
@@ -217,9 +257,23 @@ async function storeToCloudflare(data, workerUrl, authToken) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    console.error('❌ Cloudflare Worker 响应错误:', { status: response.status, text }); // 添加调试日志
+    console.error('❌ Cloudflare Worker 响应错误:', { 
+      status: response.status, 
+      statusText: response.statusText,
+      text: text.substring(0, 200)
+    }); // 添加调试日志
     throw new Error(`Worker API error: ${response.status} ${text}`);
   }
 
   return await response.json().catch(() => ({}));
+}
+
+// 添加 URL 验证函数
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }
