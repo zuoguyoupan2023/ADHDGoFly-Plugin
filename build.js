@@ -667,7 +667,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://your-custom-domain.com/api/collect';
+            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/collect';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);
@@ -1429,7 +1429,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://your-custom-domain.com/api/collect';
+            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/collect';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);
