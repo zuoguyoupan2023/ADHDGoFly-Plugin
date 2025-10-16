@@ -35,23 +35,28 @@ jobs:
           
           echo ""
           echo "🔍 检查关键文件:"
-          [ -f "scripts/fetch-stats-mock.js" ] && echo "✅ scripts/fetch-stats-mock.js 存在" || echo "❌ scripts/fetch-stats-mock.js 不存在"
+          [ -f "scripts/fetch-stats.js" ] && echo "✅ scripts/fetch-stats.js 存在" || echo "❌ scripts/fetch-stats.js 不存在"
           [ -d "workers/download-tracker" ] && echo "✅ workers/download-tracker 目录存在" || echo "❌ workers/download-tracker 目录不存在"
       
-      - name: 🎭 Run Mock Script
+      - name: 📈 Fetch Worker Public Stats
         run: |
-          echo "🎭 运行模拟统计脚本..."
-          node scripts/fetch-stats-mock.js
+          echo "📈 通过 Cloudflare Workers 公网接口获取统计..."
+          curl -sSf https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats/public -o public/stats.json
           
           echo ""
           echo "📊 检查生成的文件:"
           if [ -f "public/stats.json" ]; then
-            echo "✅ stats.json 生成成功"
+            echo "✅ stats.json 获取成功"
             echo "📏 文件大小: $(wc -c < public/stats.json) bytes"
             echo "📄 文件内容预览:"
-            head -20 public/stats.json
+            if command -v jq >/dev/null 2>&1; then
+              jq . public/stats.json | head -40
+            else
+              head -20 public/stats.json
+            fi
           else
-            echo "❌ stats.json 生成失败"
+            echo "❌ stats.json 获取失败"
+            exit 1
           fi
       
       - name: 🔍 Test Git Operations
@@ -80,7 +85,7 @@ jobs:
           echo "🎉 === 测试完成 ==="
           echo "✅ Node.js 环境正常"
           echo "✅ 文件系统访问正常"
-          echo "✅ 模拟脚本运行正常"
+          echo "✅ Worker 公网接口访问正常"
           echo "✅ Git 操作正常"
           echo ""
-          echo "🔄 下一步可以测试真实的统计脚本"
+          echo "🔄 下一步可以测试基于 wrangler 的 D1 查询"
