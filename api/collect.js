@@ -55,6 +55,7 @@ export default async function handler(req, res) {
     const workerUrl = process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
     const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
     if (workerUrl) {
+      console.log('🔍 尝试转发到 Cloudflare Worker:', workerUrl); // 添加调试日志
       try {
         await storeToCloudflare(enhancedData, workerUrl, workerAuth);
       } catch (error) {
@@ -159,6 +160,8 @@ ${JSON.stringify(data, null, 2)}
 
 // 转发到 Cloudflare Worker（写入 D1）
 async function storeToCloudflare(data, workerUrl, authToken) {
+  console.log('📤 准备发送数据到 Cloudflare Worker:', { workerUrl, data }); // 添加调试日志
+  
   // 规范化负载，避免泄露敏感信息
   const payload = {
     version: data.version,
@@ -176,14 +179,17 @@ async function storeToCloudflare(data, workerUrl, authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
+  console.log('📨 发送请求到 Cloudflare Worker...'); // 添加调试日志
   const response = await fetch(workerUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload)
   });
+  console.log('📨 请求完成，响应状态:', response.status); // 添加调试日志
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
+    console.error('❌ Cloudflare Worker 响应错误:', { status: response.status, text }); // 添加调试日志
     throw new Error(`Worker API error: ${response.status} ${text}`);
   }
 
