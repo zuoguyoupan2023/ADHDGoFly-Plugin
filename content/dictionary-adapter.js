@@ -18,6 +18,10 @@ class DictionaryAdapter {
         };
         // 新增：词典ID级别的启用状态
         this.enabledDictionaries = {};
+        
+        // 新增：词典缓存机制
+        this.dictionaryCache = new Map(); // 缓存合并后的词典
+        this.cacheVersion = 0; // 缓存版本号，用于失效检测
     }
 
     /**
@@ -212,7 +216,15 @@ class DictionaryAdapter {
      * @returns {Object} 词典数据
      */
     getDictionary(language) {
+        // 检查缓存
+        const cacheKey = `${language}_${this.cacheVersion}`;
+        if (this.dictionaryCache.has(cacheKey)) {
+            return this.dictionaryCache.get(cacheKey);
+        }
+        
         console.log(`Getting dictionary for language: ${language}`);
+        
+        let result = {};
         
         // 优先使用新的词典ID系统
         if (this.newManager && Object.keys(this.enabledDictionaries).length > 0) {
@@ -237,16 +249,19 @@ class DictionaryAdapter {
                 }
                 
                 console.log(`Merged dictionary size: ${Object.keys(mergedDict).length}`);
-                return mergedDict;
+                result = mergedDict;
             }
         }
         
         // 向后兼容：使用语言级别的设置
-        if (this.enabledLanguages[language]) {
-            return this.legacyData[language] || {};
+        if (Object.keys(result).length === 0 && this.enabledLanguages[language]) {
+            result = this.legacyData[language] || {};
         }
         
-        return {};
+        // 缓存结果
+        this.dictionaryCache.set(cacheKey, result);
+        
+        return result;
     }
 
     /**
@@ -310,8 +325,43 @@ class DictionaryAdapter {
         console.log('Updating enabled dictionaries:', enabledDictionaries);
         this.enabledDictionaries = { ...enabledDictionaries };
         
+        // 清除缓存并更新版本号
+        this.invalidateCache();
+        
         // 同步更新语言状态
         this._updateLanguageStatusFromDictionaries();
+    }
+
+    /**
+     * 更新启用的语言列表
+     * @param {Object} enabledLanguages 启用的语言设置
+     */
+    updateEnabledLanguages(enabledLanguages) {
+        console.log('Updating enabled languages:', enabledLanguages);
+        
+        // 检查是否有变化
+        const hasChanges = Object.keys(enabledLanguages).some(
+            lang => this.enabledLanguages[lang] !== enabledLanguages[lang]
+        );
+        
+        if (hasChanges) {
+            this.enabledLanguages = { ...enabledLanguages };
+            
+            // 清除缓存并更新版本号
+            this.invalidateCache();
+            
+            // 同步到注册表
+            this._syncEnabledLanguagesToRegistry(enabledLanguages);
+        }
+    }
+
+    /**
+     * 清除词典缓存
+     */
+    invalidateCache() {
+        this.dictionaryCache.clear();
+        this.cacheVersion++;
+        console.log(`Dictionary cache invalidated, new version: ${this.cacheVersion}`);
     }
 
     /**
@@ -448,6 +498,9 @@ class DictionaryAdapter {
      * @returns {Promise<boolean>} 重新加载是否成功
      */
     async reload(language = null) {
+        // 清除缓存
+        this.invalidateCache();
+        
         if (language) {
             // 重新加载特定语言词典
             if (this.newManager) {
