@@ -20,35 +20,21 @@ export default async function handler(req, res) {
     });
   }
 
-  // 添加明显的环境变量调试信息
-  console.log('=== ENVIRONMENT VARIABLES DEBUG ===');
-  console.log('CLOUDFLARE_WORKER_URL:', process.env.CLOUDFLARE_WORKER_URL || 'NOT SET');
-  console.log('WORKER_AUTH_TOKEN:', process.env.WORKER_AUTH_TOKEN ? 'SET' : 'NOT SET');
-  console.log('===================================');
+  // 简化的环境变量调试信息
+  if (!process.env.CLOUDFLARE_WORKER_URL) {
+    console.warn('⚠️ 未配置 CLOUDFLARE_WORKER_URL 环境变量');
+  }
 
   try {
     // 解析请求数据
     const data = req.body;
-    console.log('📥 收到数据收集请求:', { 
-        method: req.method,
-        url: req.url,
-        headers: Object.fromEntries(Object.entries(req.headers).filter(([key]) => 
-            ['content-type', 'user-agent', 'x-forwarded-for', 'x-vercel-ip-country'].includes(key.toLowerCase())
-        )),
-        bodyKeys: Object.keys(data)
-    });
     
     // 数据验证
     if (!data.action || !data.timestamp) {
-        console.warn('❌ 数据验证失败: 缺少必要字段', { 
-            hasAction: !!data.action, 
-            hasTimestamp: !!data.timestamp,
-            dataKeys: Object.keys(data)
-        });
-        return res.status(400).json({
-            success: false,
-            error: 'Missing required fields: action, timestamp'
-        });
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: action, timestamp'
+      });
     }
 
     // 增强数据收集
@@ -69,37 +55,17 @@ export default async function handler(req, res) {
       // 请求ID
       requestId: generateUUID()
     };
-    console.log('🔧 增强后的数据:', { 
-        requestId: enhancedData.requestId,
-        action: enhancedData.action,
-        version: enhancedData.version,
-        browser: enhancedData.browser,
-        language: enhancedData.language
-    });
 
     // 优先：转发到 Cloudflare Workers（写入 D1）
     const workerUrl = process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
     const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
-    console.log('🔍 检查 Cloudflare Worker URL 配置:', { 
-        hasWorkerUrl: !!workerUrl,
-        workerUrl: workerUrl ? workerUrl.substring(0, 80) : '未设置'
-    });
-    
     if (workerUrl) {
-        console.log('🔍 尝试转发到 Cloudflare Worker:', workerUrl); // 添加调试日志
-        try {
-            await storeToCloudflare(enhancedData, workerUrl, workerAuth);
-            console.log('✅ 成功转发到 Cloudflare Worker');
-        } catch (error) {
-            console.error('Cloudflare storage failed:', error.message);
-            console.error('🔧 Cloudflare Worker URL 详细信息:', {
-                workerUrl,
-                isValidUrl: workerUrl ? isValidUrl(workerUrl) : false
-            });
-            // 不中断流程，继续后续步骤
-        }
-    } else {
-        console.warn('⚠️ 未配置 Cloudflare Worker URL，跳过转发');
+      try {
+        await storeToCloudflare(enhancedData, workerUrl, workerAuth);
+      } catch (error) {
+        console.error('Cloudflare storage failed:', error.message);
+        // 不中断流程，继续后续步骤
+      }
     }
 
     // 可选：存储到 GitHub (如果配置了 GITHUB_TOKEN)
@@ -198,19 +164,8 @@ ${JSON.stringify(data, null, 2)}
 
 // 转发到 Cloudflare Worker（写入 D1）
 async function storeToCloudflare(data, workerUrl, authToken) {
-  console.log('📤 准备发送数据到 Cloudflare Worker:', { 
-    workerUrl, 
-    dataKeys: Object.keys(data),
-    hasRequiredFields: !!(data.version && data.browser && data.language)
-  }); // 添加调试日志
-  
   // 验证必要字段
   if (!data.version || !data.browser || !data.language) {
-    console.error('❌ 数据验证失败: 缺少必要字段', { 
-      hasVersion: !!data.version,
-      hasBrowser: !!data.browser,
-      hasLanguage: !!data.language
-    });
     throw new Error('Invalid data: missing required fields');
   }
   
@@ -231,36 +186,14 @@ async function storeToCloudflare(data, workerUrl, authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  console.log('🔍 测试 Cloudflare Worker 可访问性...');
-  // 先测试 Worker 是否可访问
-  try {
-    const healthCheck = await fetch(workerUrl.replace('/api/track-download', '/health'), {
-      method: 'GET',
-      timeout: 5000
-    });
-    console.log('🔧 Health check 结果:', {
-      status: healthCheck.status,
-      ok: healthCheck.ok
-    });
-  } catch (healthError) {
-    console.error('❌ Health check 失败:', healthError.message);
-  }
-
-  console.log('📨 发送请求到 Cloudflare Worker...'); // 添加调试日志
   const response = await fetch(workerUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload)
   });
-  console.log('📨 请求完成，响应状态:', response.status); // 添加调试日志
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    console.error('❌ Cloudflare Worker 响应错误:', { 
-      status: response.status, 
-      statusText: response.statusText,
-      text: text.substring(0, 200)
-    }); // 添加调试日志
     throw new Error(`Worker API error: ${response.status} ${text}`);
   }
 
