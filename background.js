@@ -107,11 +107,72 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 初始化版本检查器
 const versionChecker = new SimpleVersionChecker();
 
-// 插件启动时的初始化
-chrome.runtime.onStartup.addListener(() => {
-  console.log('ADHDGoFly Plugin 启动');
+// 插件生命周期事件收集
+chrome.runtime.onInstalled.addListener(async (details) => {
+  const manifest = chrome.runtime.getManifest();
+  const currentVersion = manifest.version;
+  
+  // 获取存储的数据
+  const result = await chrome.storage.local.get([
+    'installTime', 
+    'lastVersion', 
+    'startupCount'
+  ]);
+  
+  if (details.reason === 'install') {
+    // 首次安装
+    const installData = {
+      installTime: Date.now(),
+      lastVersion: currentVersion,
+      startupCount: 0
+    };
+    
+    await chrome.storage.local.set(installData);
+    
+    console.log('📦 ADHDGoFly插件首次安装');
+    console.log('安装时间:', new Date(installData.installTime).toLocaleString());
+    console.log('插件版本:', currentVersion);
+    
+  } else if (details.reason === 'update') {
+    // 插件更新
+    const previousVersion = details.previousVersion;
+    
+    await chrome.storage.local.set({
+      lastVersion: currentVersion
+    });
+    
+    console.log('🔄 ADHDGoFly插件已更新');
+    console.log('从版本:', previousVersion);
+    console.log('到版本:', currentVersion);
+    console.log('原安装时间:', new Date(result.installTime).toLocaleString());
+  }
 });
 
-chrome.runtime.onInstalled.addListener(() => {
-  console.log('ADHDGoFly Plugin 安装完成');
+chrome.runtime.onStartup.addListener(async () => {
+  const startupTime = Date.now();
+  
+  // 获取当前的启动次数
+  const result = await chrome.storage.local.get([
+    'startupCount', 
+    'installTime'
+  ]);
+  
+  const newStartupCount = (result.startupCount || 0) + 1;
+  
+  // 更新启动数据
+  await chrome.storage.local.set({
+    lastStartupTime: startupTime,
+    startupCount: newStartupCount
+  });
+  
+  console.log('🚀 ADHDGoFly插件启动');
+  console.log('启动时间:', new Date(startupTime).toLocaleString());
+  console.log('启动次数:', newStartupCount);
+  
+  if (result.installTime) {
+    const daysSinceInstall = Math.floor(
+      (startupTime - result.installTime) / (24 * 60 * 60 * 1000)
+    );
+    console.log('安装后天数:', daysSinceInstall);
+  }
 });
