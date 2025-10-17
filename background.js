@@ -129,7 +129,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     
     await chrome.storage.local.set(installData);
     
-    console.log('📦 ADHDGoFly插件首次安装');
+    console.log('🎯 📦 ADHDGoFly插件首次安装');
     console.log('安装时间:', new Date(installData.installTime).toLocaleString());
     console.log('插件版本:', currentVersion);
     
@@ -141,7 +141,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       lastVersion: currentVersion
     });
     
-    console.log('🔄 ADHDGoFly插件已更新');
+    console.log('🎯 🔄 ADHDGoFly插件已更新');
     console.log('从版本:', previousVersion);
     console.log('到版本:', currentVersion);
     console.log('原安装时间:', new Date(result.installTime).toLocaleString());
@@ -165,7 +165,7 @@ chrome.runtime.onStartup.addListener(async () => {
     startupCount: newStartupCount
   });
   
-  console.log('🚀 ADHDGoFly插件启动');
+  console.log('🎯 🚀 ADHDGoFly插件启动');
   console.log('启动时间:', new Date(startupTime).toLocaleString());
   console.log('启动次数:', newStartupCount);
   
