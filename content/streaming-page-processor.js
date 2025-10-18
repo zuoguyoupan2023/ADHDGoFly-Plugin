@@ -40,6 +40,13 @@ class StreamingPageProcessor extends EventTarget {
     this.isProcessing = false;
     this.processingScheduled = false;
     
+    // 终止条件相关状态变量
+    this.consecutiveEmptyRuns = 0; // 连续空处理次数
+    this.maxConsecutiveEmptyRuns = 3; // 最大连续空处理次数
+    this.isIdleProcessingActive = true; // 空闲处理是否激活
+    this.lastProcessingTime = 0; // 上次处理时间
+    this.minIdleInterval = 100; // 最小空闲间隔(ms)
+    
     // IntersectionObserver 用于视感受知
     this.intersectionObserver = new IntersectionObserver(
       this.handleIntersection.bind(this),
@@ -276,6 +283,14 @@ class StreamingPageProcessor extends EventTarget {
         if (isEdge) {
           console.log('[Edge调试-IntersectionObserver] 元素进入视口:', wrapper.className, '可见节点数:', this.stats.visibleNodes);
         }
+        
+        // 如果空闲处理被暂停，重新激活它
+        if (!this.isIdleProcessingActive) {
+          this.isIdleProcessingActive = true;
+          this.consecutiveEmptyRuns = 0; // 重置连续空处理计数
+          console.log('空闲处理重新激活: 检测到新的可见节点');
+        }
+        
         this.scheduleProcessing();
       } else {
         // 元素离开视口，可以考虑降低优先级或暂停处理
@@ -315,6 +330,13 @@ class StreamingPageProcessor extends EventTarget {
    * @param {IdleDeadline} deadline 空闲时间截止点
    */
   processInIdleTime(deadline) {
+    // 检查是否应该跳过此次处理
+    const now = performance.now();
+    if (now - this.lastProcessingTime < this.minIdleInterval) {
+      // 间隔太短，跳过此次处理
+      return;
+    }
+    
     this.isProcessing = true;
     this.processingScheduled = false;
     
@@ -351,12 +373,32 @@ class StreamingPageProcessor extends EventTarget {
     }
     
     this.isProcessing = false;
+    this.lastProcessingTime = performance.now();
     
-    const processingTime = performance.now() - startTime;
-    console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
+    const processingTime = this.lastProcessingTime - startTime;
     
-    // 如果还有未处理的可见节点，继续调度
-    if (this.getVisibleUnprocessedNodes().length > 0) {
+    // 跟踪连续空处理次数
+    if (processedCount === 0) {
+      this.consecutiveEmptyRuns++;
+    } else {
+      this.consecutiveEmptyRuns = 0; // 重置计数器
+    }
+    
+    // 智能终止逻辑
+    if (this.consecutiveEmptyRuns >= this.maxConsecutiveEmptyRuns) {
+      this.isIdleProcessingActive = false;
+      console.log(`空闲处理暂停: 连续 ${this.consecutiveEmptyRuns} 次空处理，暂停调度`);
+      return;
+    }
+    
+    // 只在处理了节点或处理时间较长时输出日志
+    if (processedCount > 0 || processingTime > 10) {
+      console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
+    }
+    
+    // 如果还有未处理的可见节点且空闲处理仍然激活，继续调度
+    const remainingNodes = this.getVisibleUnprocessedNodes();
+    if (remainingNodes.length > 0 && this.isIdleProcessingActive) {
       this.scheduleProcessing();
     }
   }
@@ -563,6 +605,16 @@ class StreamingPageProcessor extends EventTarget {
       queuedNodes: 0,
       visibleNodes: 0
     };
+  }
+
+  /**
+   * 重置空闲处理状态
+   */
+  resetIdleProcessingState() {
+    this.consecutiveEmptyRuns = 0;
+    this.isIdleProcessingActive = true;
+    this.lastProcessingTime = 0;
+    console.log('空闲处理状态已重置');
   }
 
   /**
