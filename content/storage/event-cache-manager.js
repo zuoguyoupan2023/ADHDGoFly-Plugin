@@ -11,14 +11,8 @@ class EventCacheManager {
     this.cacheEnabled = true;
     this.cacheRetentionDays = 7;
     
-    // 初始化数据库
-    this.initDatabase().catch(error => {
-      console.warn('⚠️ 事件缓存数据库初始化失败:', error);
-      this.cacheEnabled = false;
-    });
-    
-    // 加载缓存设置
-    this.loadCacheSettings();
+    this.isInitialized = false;
+    this.initializeAsync();
   }
 
   /**
@@ -31,7 +25,6 @@ class EventCacheManager {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('✅ 事件缓存数据库初始化成功');
         resolve(this.db);
       };
       
@@ -54,8 +47,7 @@ class EventCacheManager {
    * 存储高亮数据
    */
   async storeHighlightData(highlightData) {
-    if (!this.cacheEnabled || !this.db) {
-      console.log('📝 缓存未启用，跳过存储');
+    if (!this.cacheEnabled) {
       return;
     }
 
@@ -140,11 +132,14 @@ class EventCacheManager {
       }
       
       if (validRecords.length > 0) {
-        console.log(`🎯 找到 ${validRecords.length} 条有效缓存记录:`, {
-          url: url,
-          language: language,
-          records: validRecords.length
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🎯 找到 ${validRecords.length} 条有效缓存记录:`, {
+            url,
+            language,
+            totalRecords: records.length,
+            validRecords: validRecords.length
+          });
+        }
       }
       
       return validRecords;
@@ -181,11 +176,14 @@ class EventCacheManager {
         return null;
       }
       
-      console.log('🎯 找到缓存数据:', {
-        url: url,
-        language: language,
-        age: Math.round((Date.now() - latestRecord.createdAt) / (60 * 1000)) + '分钟'
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎯 找到缓存数据:', {
+          url,
+          language,
+          recordsCount: cachedData.length,
+          totalHighlights: cachedData.reduce((sum, record) => sum + record.highlights.length, 0)
+        });
+      }
       
       return latestRecord.data;
       
@@ -220,14 +218,12 @@ class EventCacheManager {
         NodeFilter.SHOW_TEXT,
         {
           acceptNode: (node) => {
-            // 跳过已处理的节点和脚本、样式节点
-            if (node.parentElement.closest('.adhd-processed') ||
-                node.parentElement.tagName === 'SCRIPT' ||
-                node.parentElement.tagName === 'STYLE' ||
-                node.parentElement.tagName === 'NOSCRIPT') {
-              return NodeFilter.FILTER_REJECT;
-            }
-            return node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            const text = node.textContent.trim();
+            return text.length > 0 && 
+                   !node.parentElement.closest('script, style, noscript') &&
+                   !node.parentElement.classList.contains('adhd-processed')
+              ? NodeFilter.FILTER_ACCEPT 
+              : NodeFilter.FILTER_REJECT;
           }
         }
       );
@@ -238,15 +234,10 @@ class EventCacheManager {
         textNodes.push(node);
       }
 
-      console.log(`📝 找到 ${textNodes.length} 个文本节点`);
-
-      // 应用缓存的高亮结果
+      // 查找匹配的文本节点
       let appliedCount = 0;
       for (const textNode of textNodes) {
-        // 检查文本节点是否匹配缓存的原始文本
-        if (textNode.textContent.trim() === cachedData.originalText.trim()) {
-          console.log('🎯 找到匹配的文本节点:', textNode.textContent.substring(0, 50) + '...');
-          
+        if (textNode.textContent.includes(cachedData.originalText)) {
           // 创建临时容器来解析HTML
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = cachedData.segmentedHtml;
@@ -265,12 +256,12 @@ class EventCacheManager {
           // 替换文本节点
           textNode.parentNode.replaceChild(fragment, textNode);
           appliedCount++;
-          
-          console.log('✅ 成功应用缓存到文本节点');
         }
       }
 
-      console.log(`✅ 成功应用 ${appliedCount} 个缓存的高亮结果`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ 成功应用 ${appliedCount} 个缓存的高亮结果`);
+      }
       return appliedCount > 0;
 
     } catch (error) {
@@ -337,7 +328,9 @@ class EventCacheManager {
       const store = transaction.objectStore('highlights');
       await store.clear();
       
-      console.log('🗑️ 所有缓存已清除');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🗑️ 所有缓存已清除');
+      }
       
       // 更新上次清理时间
       try {
@@ -433,11 +426,13 @@ class EventCacheManager {
         this.startTestModeCleanup();
       }
       
-      console.log('📋 缓存设置已加载:', {
-        enabled: this.cacheEnabled,
-        retentionDays: this.cacheRetentionDays,
-        retentionMinutes: this.cacheRetentionDays * 24 * 60
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📋 缓存设置已加载:', {
+          enabled: this.cacheEnabled,
+          retentionDays: this.cacheRetentionDays,
+          maxCacheSize: this.maxCacheSize
+        });
+      }
     } catch (error) {
       console.warn('⚠️ 加载缓存设置失败，使用默认设置:', error);
       this.cacheEnabled = true;
@@ -458,14 +453,18 @@ class EventCacheManager {
         this.cacheRetentionDays = settings.cacheRetentionDays;
       }
       
-      console.log('🔧 缓存设置已更新:', {
-        enabled: this.cacheEnabled,
-        retentionDays: this.cacheRetentionDays
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 缓存设置已更新:', {
+          enabled: this.cacheEnabled,
+          retentionDays: this.cacheRetentionDays
+        });
+      }
       
       // 如果缓存被禁用，清理所有现有缓存
       if (!this.cacheEnabled) {
-        console.log('🗑️ 缓存已禁用，清理所有现有缓存...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🗑️ 缓存已禁用，清理所有现有缓存...');
+        }
         await this.clearAllCache();
       }
       

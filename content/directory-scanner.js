@@ -22,8 +22,6 @@ class DirectoryScanner {
         const allFiles = [];
         
         try {
-            console.log('🔍 开始扫描dictionaries文件夹中的所有json文件...');
-            
             // 扫描根目录
             const rootFiles = await this.scanDirectoryForJson('');
             allFiles.push(...rootFiles);
@@ -154,8 +152,10 @@ const directoryScanner = new DirectoryScanner();
 if (typeof chrome !== 'undefined' && chrome.runtime) {
     // 在Chrome扩展环境中自动执行
     directoryScanner.scanAllJsonFiles().then(files => {
-        console.log('🎯 Dictionaries文件夹中的所有json文件列表:');
-        console.log(files);
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🎯 Dictionaries文件夹中的所有json文件列表:');
+            console.log(files);
+        }
     }).catch(error => {
         console.error('❌ 自动扫描失败:', error);
     });

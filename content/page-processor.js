@@ -29,29 +29,21 @@ class PageProcessor extends EventTarget {
    * @returns {Promise<Object>} 处理结果统计
    */
   async processPage() {
-    console.log('开始处理页面...');
-    
-    // 重置统计
-    this.resetStats();
-    
     try {
+      // 重置统计
+      this.resetStats();
+      
       // 等待词典加载
       await this.dictionaryManager.waitForLoad();
       
       // 获取所有文本节点
       const textNodes = this.getTextNodes();
-      console.log(`找到 ${textNodes.length} 个文本节点`);
       
-      // 按优先级排序
-      const prioritizedNodes = this.prioritizeNodes(textNodes);
+      // 处理每个文本节点
+      for (const textNode of textNodes) {
+        await this.processTextNode(textNode);
+      }
       
-      // 处理节点（限制数量避免性能问题）
-      const nodesToProcess = prioritizedNodes.slice(0, this.options.maxNodesToProcess);
-      
-      // 批量处理节点
-      await this.processNodesInBatches(nodesToProcess);
-      
-      console.log('页面处理完成:', this.stats);
       return this.stats;
       
     } catch (error) {
