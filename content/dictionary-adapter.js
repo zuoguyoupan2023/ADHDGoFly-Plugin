@@ -22,6 +22,7 @@ class DictionaryAdapter {
         // 新增：词典缓存机制
         this.dictionaryCache = new Map(); // 缓存合并后的词典
         this.cacheVersion = 0; // 缓存版本号，用于失效检测
+        this.cacheExpiry = 10 * 60 * 1000; // 10分钟过期时间
     }
 
     /**
@@ -218,8 +219,17 @@ class DictionaryAdapter {
     getDictionary(language) {
         // 检查缓存
         const cacheKey = `${language}_${this.cacheVersion}`;
-        if (this.dictionaryCache.has(cacheKey)) {
-            return this.dictionaryCache.get(cacheKey);
+        const cachedEntry = this.dictionaryCache.get(cacheKey);
+        
+        // 检查缓存是否存在且未过期
+        if (cachedEntry) {
+            const now = Date.now();
+            if (now - cachedEntry.timestamp < this.cacheExpiry) {
+                return cachedEntry.data;
+            } else {
+                // 缓存已过期，删除该条目
+                this.dictionaryCache.delete(cacheKey);
+            }
         }
         
         console.log(`Getting dictionary for language: ${language}`);
@@ -258,8 +268,11 @@ class DictionaryAdapter {
             result = this.legacyData[language] || {};
         }
         
-        // 缓存结果
-        this.dictionaryCache.set(cacheKey, result);
+        // 缓存结果，包含时间戳
+        this.dictionaryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
         
         return result;
     }
@@ -359,9 +372,23 @@ class DictionaryAdapter {
      * 清除词典缓存
      */
     invalidateCache() {
+        // 清理所有缓存
         this.dictionaryCache.clear();
         this.cacheVersion++;
         console.log(`Dictionary cache invalidated, new version: ${this.cacheVersion}`);
+    }
+
+    /**
+     * 清理过期的缓存条目
+     * @private
+     */
+    _cleanExpiredCache() {
+        const now = Date.now();
+        for (const [key, entry] of this.dictionaryCache.entries()) {
+            if (now - entry.timestamp >= this.cacheExpiry) {
+                this.dictionaryCache.delete(key);
+            }
+        }
     }
 
     /**
