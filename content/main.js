@@ -4,12 +4,6 @@ class ADHDHighlighter {
     this.enabled = false;
     this.isInitialized = false;
     
-    // SPA导航监听相关
-    this.currentUrl = window.location.href;
-    this.urlChangeTimer = null;
-    this.contentChangeTimer = null;
-    this.contentObserver = null;
-    
     // 颜色方案
     this.colorSchemes = {
       default: { noun: '#0066cc', verb: '#cc0000', adj: '#009933' },
@@ -56,9 +50,6 @@ class ADHDHighlighter {
     // 启动时扫描dictionaries文件夹
     this.scanDictionariesOnStartup();
     
-    // 设置SPA导航监听
-    this.setupSPANavigation();
-    
     // 初始化
     this.init();
   }
@@ -74,6 +65,7 @@ class ADHDHighlighter {
       // 监听高亮完成事件
       this.setupHighlightEventListeners();
       
+      console.log('✅ 事件缓存系统初始化完成');
     } catch (error) {
       console.warn('⚠️ 事件缓存系统初始化失败:', error);
     }
@@ -104,74 +96,107 @@ class ADHDHighlighter {
    */
   async checkAndApplyCache() {
     if (!this.eventCacheManager) {
-      return false;
-    }
-
-    const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
-    if (enabledLanguages.length === 0) {
+      console.log('📝 缓存管理器未初始化，跳过缓存检查');
       return false;
     }
 
     try {
-      const url = window.location.href;
-      const pageId = this.eventCacheManager.generatePageId(url);
+      const currentUrl = window.location.href;
+      const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
       
-      // 检查是否有缓存数据
-      const cachedRecords = await this.eventCacheManager.getCachedHighlights(pageId, enabledLanguages);
-      
-      if (!cachedRecords || cachedRecords.length === 0) {
+      if (!enabledLanguages.length) {
+        console.log('📝 没有启用的语言，跳过缓存检查');
         return false;
       }
 
-      // 尝试应用缓存
-      const applied = await this.eventCacheManager.applyCachedHighlights(cachedRecords);
+      // 检测页面主要语言
+      const pageText = document.body.textContent.substring(0, 1000); // 取前1000字符检测语言
+      const detectedLanguage = this.languageDetector.detectLanguage(pageText);
+      const targetLanguage = enabledLanguages.includes(detectedLanguage) ? detectedLanguage : enabledLanguages[0];
+
+      console.log('🔍 检查缓存:', {
+        url: currentUrl,
+        language: targetLanguage,
+        enabledLanguages: enabledLanguages
+      });
+
+      // 查询所有匹配的缓存记录
+      const cachedRecords = await this.eventCacheManager.getAllCachedHighlights(currentUrl, targetLanguage);
       
-      if (applied) {
-        // 记录缓存命中
-        enabledLanguages.forEach(language => {
-          this.recordCacheHit(url, language);
-        });
-        return true;
-      } else {
+      if (!cachedRecords || cachedRecords.length === 0) {
+        console.log('📝 未找到匹配的缓存数据');
         return false;
       }
+
+      console.log(`🎯 找到 ${cachedRecords.length} 条缓存记录，尝试应用...`);
       
+      // 应用所有缓存的高亮结果
+      let totalApplied = 0;
+      for (const cachedData of cachedRecords) {
+        const applied = await this.eventCacheManager.applyCachedHighlights(cachedData);
+        if (applied) totalApplied++;
+      }
+      
+      const applied = totalApplied > 0;
+      
+      if (applied) {
+        console.log('✅ 缓存应用成功');
+        
+        // 记录缓存命中统计（可选）
+        this.recordCacheHit(currentUrl, targetLanguage);
+        
+        return true;
+      } else {
+        console.log('❌ 缓存应用失败，将执行正常高亮');
+        return false;
+      }
+
     } catch (error) {
       console.error('❌ 缓存检查和应用失败:', error);
       return false;
     }
   }
 
+  /**
+   * 记录缓存命中统计
+   */
   recordCacheHit(url, language) {
-    // 记录缓存命中用于统计
+    // 这里可以记录缓存命中的统计信息
+    // 为后续的缓存分析功能做准备
+    console.log('📊 缓存命中记录:', { url, language, timestamp: Date.now() });
   }
 
+  /**
+   * 处理高亮完成事件
+   */
   async handleHighlightComplete(eventData) {
     try {
-      if (this.eventCacheManager) {
-        await this.eventCacheManager.cacheHighlightData(eventData);
-      }
+      console.log('🎯 收到高亮完成事件:', eventData);
+      
+      // 异步存储高亮数据
+      await this.eventCacheManager.storeHighlightData(eventData);
+      
+      console.log('💾 高亮数据已缓存');
     } catch (error) {
       console.warn('⚠️ 缓存高亮数据失败:', error);
     }
   }
-
-
 
   /**
    * 启动时扫描dictionaries文件夹中的所有json文件
    */
   async scanDictionariesOnStartup() {
     try {
-      if (this.fileListGenerator) {
-        const files = await this.fileListGenerator.generateFileList();
-        // 仅在开发模式下显示详细文件列表
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📋 Dictionaries文件夹中的所有json文件:');
-          files.forEach(file => {
-            console.log(`  📄 ${file}`);
-          });
-        }
+      console.log('🚀 插件启动，开始扫描dictionaries文件夹...');
+      
+      // 使用新的文件清单扫描器
+      if (typeof fileListScanner !== 'undefined') {
+        const jsonFiles = await fileListScanner.getAllJsonFiles();
+        console.log('📋 Dictionaries文件夹中的所有json文件:');
+        jsonFiles.forEach(file => {
+          console.log(`  📄 ${file}`);
+        });
+        fileListScanner.generateReport();
       } else {
         console.warn('⚠️ 文件清单扫描器未加载');
       }
@@ -180,152 +205,12 @@ class ADHDHighlighter {
     }
   }
 
-  setupSPANavigation() {
-    try {
-      this.currentUrl = window.location.href;
-      this.urlChangeTimer = null;
-      this.contentChangeTimer = null;
-      
-      // 监听浏览器前进后退
-      window.addEventListener('popstate', () => {
-        this.handleURLChange();
-      });
-      
-      // 监听pushState和replaceState
-      const originalPushState = history.pushState;
-      const originalReplaceState = history.replaceState;
-      const self = this;
-      
-      history.pushState = function(...args) {
-        originalPushState.apply(history, args);
-        // 使用setTimeout确保URL已经更新
-        setTimeout(() => {
-          self.handleURLChange();
-        }, 0);
-      };
-      
-      history.replaceState = function(...args) {
-        originalReplaceState.apply(history, args);
-        // 使用setTimeout确保URL已经更新
-        setTimeout(() => {
-          self.handleURLChange();
-        }, 0);
-      };
-      
-      // 设置内容观察器
-      this.setupContentObserver();
-      
-    } catch (error) {
-      console.error('设置SPA导航监听失败:', error);
-    }
-  }
-
-  /**
-   * 设置内容观察器
-   * 监听页面内容的动态变化
-   */
-  setupContentObserver() {
-    if (this.contentObserver) {
-      this.contentObserver.disconnect();
-    }
-    
-    this.contentObserver = new MutationObserver((mutations) => {
-      let hasSignificantChange = false;
-      
-      for (const mutation of mutations) {
-        // 检查是否有新增的文本节点或元素
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // 检查是否包含大量文本内容（可能是新页面内容）
-              const textContent = node.textContent || '';
-              if (textContent.length > 100) {
-                hasSignificantChange = true;
-                break;
-              }
-            }
-          }
-        }
-        if (hasSignificantChange) break;
-      }
-      
-      if (hasSignificantChange) {
-        console.log('🔄 检测到页面内容变化，准备重新处理...');
-        this.handleContentChange();
-      }
-    });
-    
-    // 开始观察document.body的变化
-    if (document.body) {
-      this.contentObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: false,
-        characterData: false
-      });
-    }
-  }
-
-  /**
-   * 处理URL变化
-   */
-  handleURLChange() {
-    const newUrl = window.location.href;
-    if (newUrl !== this.currentUrl) {
-      this.currentUrl = newUrl;
-      
-      // 延迟处理，等待页面内容加载
-      if (this.urlChangeTimer) {
-        clearTimeout(this.urlChangeTimer);
-      }
-      
-      this.urlChangeTimer = setTimeout(() => {
-        this.handlePageNavigation();
-      }, 800); // 增加延迟到800ms，确保Reddit内容完全加载
-    }
-  }
-
-  /**
-   * 处理内容变化
-   */
-  handleContentChange() {
-    // 防抖处理，避免频繁触发
-    if (this.contentChangeTimer) {
-      clearTimeout(this.contentChangeTimer);
-    }
-    
-    this.contentChangeTimer = setTimeout(() => {
-      if (this.enabled && this.isInitialized) {
-        this.reprocessPage();
-      }
-    }, 300); // 300ms防抖
-  }
-
-  /**
-   * 处理页面导航
-   */
-  async handlePageNavigation() {
-    if (!this.isInitialized) {
-      return;
-    }
-    
-    if (this.enabled) {
-      // 清除旧的高亮
-      if (this.processingMode === 'streaming') {
-        this.streamingPageProcessor.removeAllHighlights();
-      } else {
-        this.pageProcessor.removeAllHighlights();
-      }
-      
-      // 重新处理页面
-      await this.reprocessPage();
-    }
-  }
-
   /**
    * 初始化高亮器
    */
   async init() {
+    console.log('初始化ADHD文本高亮器...');
+    
     try {
       // 设置消息监听器
       this.setupMessageListener();
@@ -348,6 +233,8 @@ class ADHDHighlighter {
       // 检查存储的状态（在初始化完成后）
       await this.loadStoredState();
       
+      console.log('ADHD文本高亮器初始化完成');
+      
     } catch (error) {
       console.error('初始化失败:', error);
       this.isInitialized = false;
@@ -360,6 +247,7 @@ class ADHDHighlighter {
    */
   setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('收到消息:', message);
       this.handleMessage(message, sender, sendResponse);
       return true; // 保持消息通道开放
     });
@@ -844,27 +732,45 @@ class ADHDHighlighter {
     
     console.log('启用文本高亮...');
     
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试] 检测到Edge浏览器，开始详细日志记录');
+      console.log('[Edge调试] 当前页面URL:', window.location.href);
+      console.log('[Edge调试] 处理模式:', this.processingMode);
+      console.log('[Edge调试] 启用的语言:', this.dictionaryManager.getEnabledLanguages());
+      console.log('[Edge调试] 语言状态详情:', this.dictionaryManager.enabledLanguages);
+      console.log('[Edge调试] zh语言是否启用:', this.dictionaryManager.isLanguageEnabled('zh'));
+    }
+    
     try {
       // 第一步：检查缓存
       const cacheApplied = await this.checkAndApplyCache();
       
       if (cacheApplied) {
         console.log('✅ 缓存应用成功，跳过正常高亮流程');
+        if (isEdge) console.log('[Edge调试] 使用缓存，跳过处理');
       } else {
         console.log('📝 缓存未命中，执行正常高亮流程');
         
         // 根据处理模式选择处理器
         if (this.processingMode === 'streaming') {
           console.log('使用流式处理模式');
+          if (isEdge) console.log('[Edge调试] 开始流式处理...');
           await this.streamingPageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 流式处理完成');
         } else {
           console.log('使用传统处理模式');
+          if (isEdge) console.log('[Edge调试] 开始传统处理...');
           await this.pageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 传统处理完成');
         }
       }
       
       // 应用颜色方案和文本设置
+      if (isEdge) console.log('[Edge调试] 应用颜色方案...');
       this.applyColorScheme();
+      if (isEdge) console.log('[Edge调试] 应用文本设置...');
       this.applyTextSettings();
       
       this.enabled = true;
@@ -872,10 +778,35 @@ class ADHDHighlighter {
       // 保存状态
       await chrome.storage.local.set({ enabled: true });
       
+      if (isEdge) {
+        console.log('[Edge调试] 高亮启用完成，检查DOM中的高亮元素...');
+        const highlightElements = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+        console.log('[Edge调试] 找到高亮元素数量:', highlightElements.length);
+        
+        // 延迟检查高亮元素是否仍然存在
+        setTimeout(() => {
+          const elementsAfterDelay = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+          console.log('[Edge调试] 1秒后高亮元素数量:', elementsAfterDelay.length);
+          if (elementsAfterDelay.length !== highlightElements.length) {
+            console.warn('[Edge调试] 警告：高亮元素数量发生变化！可能存在异步清理问题');
+          }
+        }, 1000);
+        
+        // 再次延迟检查
+        setTimeout(() => {
+          const elementsAfterLongerDelay = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+          console.log('[Edge调试] 3秒后高亮元素数量:', elementsAfterLongerDelay.length);
+          if (elementsAfterLongerDelay.length === 0 && highlightElements.length > 0) {
+            console.error('[Edge调试] 错误：高亮元素完全消失！这是导致问题的关键时刻');
+          }
+        }, 3000);
+      }
+      
       console.log('文本高亮已启用');
       
     } catch (error) {
       console.error('启用高亮失败:', error);
+      if (isEdge) console.error('[Edge调试] 启用过程中发生错误:', error);
       throw error;
     }
   }
@@ -891,11 +822,21 @@ class ADHDHighlighter {
     
     console.log('禁用文本高亮...');
     
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试] 开始禁用高亮...');
+      const highlightElementsBefore = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+      console.log('[Edge调试] 禁用前高亮元素数量:', highlightElementsBefore.length);
+    }
+    
     try {
       // 根据处理模式选择处理器进行清理
       if (this.processingMode === 'streaming') {
+        if (isEdge) console.log('[Edge调试] 使用流式处理器清理高亮...');
         this.streamingPageProcessor.removeAllHighlights();
       } else {
+        if (isEdge) console.log('[Edge调试] 使用传统处理器清理高亮...');
         this.pageProcessor.removeAllHighlights();
       }
       
@@ -904,10 +845,16 @@ class ADHDHighlighter {
       // 保存状态
       await chrome.storage.local.set({ enabled: false });
       
+      if (isEdge) {
+        const highlightElementsAfter = document.querySelectorAll('.adhd-n, .adhd-v, .adhd-a, .adhd-adv');
+        console.log('[Edge调试] 禁用后高亮元素数量:', highlightElementsAfter.length);
+      }
+      
       console.log('文本高亮已禁用');
       
     } catch (error) {
       console.error('禁用高亮失败:', error);
+      if (isEdge) console.error('[Edge调试] 禁用过程中发生错误:', error);
       throw error;
     }
   }
@@ -1071,6 +1018,8 @@ class ADHDHighlighter {
     // 重新应用样式设置
     this.applyColorScheme();
     this.applyTextSettings();
+    
+    console.log('页面重新处理完成');
   }
 
   /**

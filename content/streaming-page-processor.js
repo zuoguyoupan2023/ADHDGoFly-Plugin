@@ -52,6 +52,8 @@ class StreamingPageProcessor extends EventTarget {
     // 节点ID生成器
     this.nodeIdCounter = 0;
     this.nodeIdMap = new WeakMap();
+    
+    console.log('StreamingPageProcessor 初始化完成');
   }
 
   /**
@@ -59,6 +61,8 @@ class StreamingPageProcessor extends EventTarget {
    * @returns {Promise<Object>} 处理结果统计
    */
   async processPage() {
+    console.log('开始流式处理页面...');
+    
     try {
       // 重置统计
       this.resetStats();
@@ -68,9 +72,12 @@ class StreamingPageProcessor extends EventTarget {
       
       // 快速扫描收集所有文本节点
       const textNodes = this.getTextNodes();
+      console.log(`找到 ${textNodes.length} 个文本节点`);
       
       // 为每个文本节点创建占位符并注册观察
       this.registerTextNodes(textNodes);
+      
+      console.log(`已注册 ${this.processingQueue.size} 个节点到处理队列`);
       
       // 返回初始统计（处理会在后台异步进行）
       return {
@@ -345,11 +352,8 @@ class StreamingPageProcessor extends EventTarget {
     
     this.isProcessing = false;
     
-    // 只在开发模式下显示详细处理日志
-    if (process.env.NODE_ENV === 'development') {
-      const processingTime = performance.now() - startTime;
-      console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
-    }
+    const processingTime = performance.now() - startTime;
+    console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
     
     // 如果还有未处理的可见节点，继续调度
     if (this.getVisibleUnprocessedNodes().length > 0) {
@@ -503,12 +507,24 @@ class StreamingPageProcessor extends EventTarget {
    * 移除所有高亮
    */
   removeAllHighlights() {
+    // Edge浏览器调试信息
+    const isEdge = navigator.userAgent.includes('Edg');
+    if (isEdge) {
+      console.log('[Edge调试-流式处理器] 开始移除所有高亮...');
+      const highlightElementsBefore = document.querySelectorAll('.adhd-processed');
+      const wrappersBefore = document.querySelectorAll('.adhd-observer-wrapper');
+      console.log('[Edge调试-流式处理器] 移除前高亮元素数量:', highlightElementsBefore.length);
+      console.log('[Edge调试-流式处理器] 移除前观察包装器数量:', wrappersBefore.length);
+    }
+    
     // 停止观察
     this.intersectionObserver.disconnect();
+    if (isEdge) console.log('[Edge调试-流式处理器] IntersectionObserver已断开');
     
     // 清理处理队列
     this.processingQueue.clear();
     this.processedNodes = new WeakSet();
+    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列已清理');
     
     // 移除所有高亮元素
     const highlightedElements = document.querySelectorAll('.adhd-processed');
@@ -516,12 +532,23 @@ class StreamingPageProcessor extends EventTarget {
       const textNode = document.createTextNode(element.textContent);
       element.parentNode.replaceChild(textNode, element);
     });
+    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', highlightedElements.length, '个高亮元素');
     
     // 移除观察包装器
     const wrappers = document.querySelectorAll('.adhd-observer-wrapper');
     wrappers.forEach(wrapper => wrapper.remove());
+    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', wrappers.length, '个观察包装器');
     
     this.resetStats();
+    console.log('已移除所有高亮和流式处理状态');
+    
+    if (isEdge) {
+      // 验证清理结果
+      const remainingHighlights = document.querySelectorAll('.adhd-processed');
+      const remainingWrappers = document.querySelectorAll('.adhd-observer-wrapper');
+      console.log('[Edge调试-流式处理器] 清理后剩余高亮元素:', remainingHighlights.length);
+      console.log('[Edge调试-流式处理器] 清理后剩余包装器:', remainingWrappers.length);
+    }
   }
 
   /**
