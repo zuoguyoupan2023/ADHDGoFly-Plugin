@@ -132,7 +132,7 @@ class EventCacheManager {
       }
       
       if (validRecords.length > 0) {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+        if (process.env.NODE_ENV === 'development') {
           console.log(`🎯 找到 ${validRecords.length} 条有效缓存记录:`, {
             url,
             language,
@@ -176,7 +176,7 @@ class EventCacheManager {
         return null;
       }
       
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+      if (process.env.NODE_ENV === 'development') {
         console.log('🎯 找到缓存数据:', {
           url,
           language,
@@ -259,7 +259,7 @@ class EventCacheManager {
         }
       }
 
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+      if (process.env.NODE_ENV === 'development') {
         console.log(`✅ 成功应用 ${appliedCount} 个缓存的高亮结果`);
       }
       return appliedCount > 0;
@@ -328,7 +328,7 @@ class EventCacheManager {
       const store = transaction.objectStore('highlights');
       await store.clear();
       
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+      if (process.env.NODE_ENV === 'development') {
         console.log('🗑️ 所有缓存已清除');
       }
       
@@ -426,7 +426,7 @@ class EventCacheManager {
         this.startTestModeCleanup();
       }
       
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+      if (process.env.NODE_ENV === 'development') {
         console.log('📋 缓存设置已加载:', {
           enabled: this.cacheEnabled,
           retentionDays: this.cacheRetentionDays,
@@ -453,7 +453,7 @@ class EventCacheManager {
         this.cacheRetentionDays = settings.cacheRetentionDays;
       }
       
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+      if (process.env.NODE_ENV === 'development') {
         console.log('🔧 缓存设置已更新:', {
           enabled: this.cacheEnabled,
           retentionDays: this.cacheRetentionDays
@@ -462,7 +462,7 @@ class EventCacheManager {
       
       // 如果缓存被禁用，清理所有现有缓存
       if (!this.cacheEnabled) {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+        if (process.env.NODE_ENV === 'development') {
           console.log('🗑️ 缓存已禁用，清理所有现有缓存...');
         }
         await this.clearAllCache();

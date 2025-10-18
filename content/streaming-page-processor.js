@@ -346,7 +346,7 @@ class StreamingPageProcessor extends EventTarget {
     this.isProcessing = false;
     
     // 只在开发模式下显示详细处理日志
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+    if (process.env.NODE_ENV === 'development') {
       const processingTime = performance.now() - startTime;
       console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
     }

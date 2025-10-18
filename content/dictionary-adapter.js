@@ -402,22 +402,16 @@ class DictionaryAdapter {
                 
                 // 特别调试111词典 - 检查两个可能的ID
                 if (dictId === 'custom-1760195631107' || dictId === 'custom-1760202653658') {
-                    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
-                        console.log('🔍 Found 111 dictionary in enabled list!');
-                        console.log('Dictionary object:', dict);
-                        console.log('Dictionary language:', dict ? dict.language : 'undefined');
-                    }
+                    console.log('🔍 Found 111 dictionary in enabled list!');
+                    console.log('Dictionary object:', dict);
+                    console.log('Dictionary language:', dict ? dict.language : 'undefined');
                 }
                 
                 if (dict && dict.language) {
                     languageStatus[dict.language] = true;
-                    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
-                        console.log(`✅ Enabled language: ${dict.language} (from dictionary: ${dictId})`);
-                    }
+                    console.log(`✅ Enabled language: ${dict.language} (from dictionary: ${dictId})`);
                 } else {
-                    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
-                        console.log(`❌ Dictionary not found or has no language property: ${dictId}`);
-                    }
+                    console.log(`❌ Dictionary ${dictId} not found or has no language property`);
                 }
             }
         });

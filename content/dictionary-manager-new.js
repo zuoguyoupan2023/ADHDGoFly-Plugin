@@ -46,9 +46,7 @@ class DictionaryManager {
             });
             
             if (customRegistryResult.customDictRegistry) {
-                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
-                    console.log('🔍 Found custom dictionary registry in storage');
-                }
+                console.log('🔍 Found custom dictionary registry in storage');
                 const customRegistry = customRegistryResult.customDictRegistry;
                 
                 // 合并自定义词典到注册表
@@ -62,9 +60,7 @@ class DictionaryManager {
                         const exists = this.registry.local.find(dict => dict.id === customDict.id);
                         if (!exists) {
                             this.registry.local.push(customDict);
-                            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
-                                console.log(`✅ Added custom dictionary to registry: ${customDict.displayName} (${customDict.id})`);
-                            }
+                            console.log(`✅ Added custom dictionary to registry: ${customDict.displayName} (${customDict.id})`);
                         }
                     }
                 }
@@ -133,23 +129,19 @@ class DictionaryManager {
         
         // 特别调试111词典
         if (id === 'custom-1760195631107') {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('🔍 Searching for 111 dictionary in registry...');
-                console.log('All available dictionaries:', allDictionaries.map(d => ({ id: d.id, name: d.name, language: d.language })));
-                console.log('Registry structure:', this.registry ? {
-                    preset: this.registry.dictionaries.preset.length,
-                    downloaded: this.registry.dictionaries.downloaded.length,
-                    local: this.registry.dictionaries.local.length
-                } : 'Registry not loaded');
-            }
+            console.log('🔍 Searching for 111 dictionary in registry...');
+            console.log('All available dictionaries:', allDictionaries.map(d => ({ id: d.id, name: d.name, language: d.language })));
+            console.log('Registry structure:', this.registry ? {
+                preset: this.registry.dictionaries.preset.length,
+                downloaded: this.registry.dictionaries.downloaded.length,
+                local: this.registry.dictionaries.local.length
+            } : 'Registry not loaded');
         }
         
         const found = allDictionaries.find(dict => dict.id === id) || null;
         
         if (id === 'custom-1760195631107') {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('🔍 Search result for 111 dictionary:', found);
-            }
+            console.log('🔍 Search result for 111 dictionary:', found);
         }
         
         return found;
@@ -200,9 +192,7 @@ class DictionaryManager {
             
             // 检查是否是外部词典（通过 popup 添加的）
             if (dictionaryInfo.type === 'local' && dictionaryInfo.source === 'external') {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log(`🔍 Loading external dictionary from storage: ${id}`);
-                }
+                console.log(`🔍 Loading external dictionary from storage: ${id}`);
                 
                 // 从 Chrome 存储中加载外部词典数据
                 const result = await new Promise((resolve) => {
@@ -213,9 +203,7 @@ class DictionaryManager {
                 
                 if (result[`dictionary_${id}`]) {
                     dictionaryData = result[`dictionary_${id}`];
-                    if (process.env.NODE_ENV === 'development') {
-                        console.log(`✅ External dictionary loaded from storage: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
-                    }
+                    console.log(`✅ External dictionary loaded from storage: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
                 } else {
                     throw new Error(`External dictionary data not found in storage: ${id}`);
                 }
@@ -228,9 +216,7 @@ class DictionaryManager {
                 }
                 
                 dictionaryData = await response.json();
-                if (process.env.NODE_ENV === 'development') {
-                    console.log(`✅ Preset dictionary loaded from file: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
-                }
+                console.log(`✅ Preset dictionary loaded from file: ${id} (${Object.keys(dictionaryData.words || {}).length} words)`);
             }
             
             // 验证词典数据结构
