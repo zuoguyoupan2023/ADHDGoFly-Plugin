@@ -173,7 +173,9 @@ class ADHDHighlighter {
           });
         }
       } else {
-        console.warn('⚠️ 文件清单扫描器未加载');
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
+            console.log('⚠️ 文件清单扫描器未加载');
+        }
       }
     } catch (error) {
       console.error('❌ 启动扫描失败:', error);

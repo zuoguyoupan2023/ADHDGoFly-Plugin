@@ -152,7 +152,7 @@ const directoryScanner = new DirectoryScanner();
 if (typeof chrome !== 'undefined' && chrome.runtime) {
     // 在Chrome扩展环境中自动执行
     directoryScanner.scanAllJsonFiles().then(files => {
-        if (process.env.NODE_ENV === 'development') {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version_name && chrome.runtime.getManifest().version_name.includes('dev')) {
             console.log('🎯 Dictionaries文件夹中的所有json文件列表:');
             console.log(files);
         }
