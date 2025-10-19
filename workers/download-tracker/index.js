@@ -17,10 +17,223 @@ export default {
     if (request.method === 'OPTIONS') {
       return handleCORS();
     }
+
+/**
+ * 处理插件埋点事件请求
+ */
+async function handlePluginEvents(request, env) {
+  try {
+    // 1. 解析请求数据
+    const data = await request.json();
+    
+    // 2. 验证必要字段
+    if (!data.event_type || !data.data) {
+      return jsonResponse({ error: 'Missing required fields: event_type, data' }, 400);
+    }
+    
+    // 3. 验证事件类型
+    const validEventTypes = ['installation', 'startup', 'tab_startup'];
+    if (!validEventTypes.includes(data.event_type)) {
+      return jsonResponse({ 
+        error: `Invalid event_type. Must be one of: ${validEventTypes.join(', ')}` 
+      }, 400);
+    }
+    
+    // 4. 根据事件类型处理数据
+    let result;
+    switch (data.event_type) {
+      case 'installation':
+        result = await handleInstallationEvent(data, env);
+        break;
+      case 'startup':
+        result = await handleStartupEvent(data, env);
+        break;
+      case 'tab_startup':
+        result = await handleTabStartupEvent(data, env);
+        break;
+      default:
+        return jsonResponse({ error: 'Unknown event type' }, 400);
+    }
+    
+    console.log('Plugin event processed:', {
+      event_type: data.event_type,
+      request_id: data.metadata?.request_id,
+      version: data.metadata?.version || data.data?.version
+    });
+    
+    // 5. 返回成功响应
+    return jsonResponse({
+      success: true,
+      message: 'Event recorded successfully',
+      event_type: data.event_type,
+      event_id: result.event_id,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Error processing plugin event:', error);
+    return jsonResponse({ 
+      error: 'Internal server error',
+      message: error.message 
+    }, 500);
+  }
+}
+
+/**
+ * 处理插件安装/更新事件
+ */
+async function handleInstallationEvent(data, env) {
+  const eventData = data.data;
+  const metadata = data.metadata || {};
+  
+  // 验证必需字段
+  const required = ['event_type', 'version', 'installed_at', 'user_hash', 'date'];
+  for (const field of required) {
+    if (!eventData[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+  
+  // 插入数据库
+  const result = await env.DB.prepare(`
+    INSERT INTO plugin_installations 
+    (event_type, version, previous_version, installed_at, user_hash, date)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(
+    eventData.event_type,
+    eventData.version,
+    eventData.previous_version || null,
+    eventData.installed_at,
+    eventData.user_hash,
+    eventData.date
+  ).run();
+  
+  return { event_id: result.meta.last_row_id };
+}
+
+/**
+ * 处理插件启动事件
+ */
+async function handleStartupEvent(data, env) {
+  const eventData = data.data;
+  const metadata = data.metadata || {};
+  
+  // 验证必需字段
+  const required = ['started_at', 'user_hash', 'version', 'date'];
+  for (const field of required) {
+    if (!eventData[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+  
+  // 检查重复（同一用户同一天的重复启动，防抖处理）
+  const isDuplicate = await checkPluginStartupDuplicate(env, eventData.user_hash, eventData.date);
+  if (isDuplicate) {
+    console.log('Duplicate plugin startup detected, skipping');
+    return { event_id: null, duplicate: true };
+  }
+  
+  // 插入数据库
+  const result = await env.DB.prepare(`
+    INSERT INTO plugin_startups 
+    (started_at, user_hash, version, date)
+    VALUES (?, ?, ?, ?)
+  `).bind(
+    eventData.started_at,
+    eventData.user_hash,
+    eventData.version,
+    eventData.date
+  ).run();
+  
+  return { event_id: result.meta.last_row_id };
+}
+
+/**
+ * 处理标签页启动事件
+ */
+async function handleTabStartupEvent(data, env) {
+  const eventData = data.data;
+  const metadata = data.metadata || {};
+  
+  // 验证必需字段
+  const required = ['started_at', 'user_hash', 'version', 'domain_hash', 'date'];
+  for (const field of required) {
+    if (!eventData[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+  
+  // 检查重复（同一用户同一域名同一天的重复启动，防抖处理）
+  const isDuplicate = await checkTabStartupDuplicate(
+    env, 
+    eventData.user_hash, 
+    eventData.domain_hash, 
+    eventData.date
+  );
+  if (isDuplicate) {
+    console.log('Duplicate tab startup detected, skipping');
+    return { event_id: null, duplicate: true };
+  }
+  
+  // 插入数据库
+  const result = await env.DB.prepare(`
+    INSERT INTO plugin_tab_startups 
+    (started_at, user_hash, version, domain_hash, date)
+    VALUES (?, ?, ?, ?, ?)
+  `).bind(
+    eventData.started_at,
+    eventData.user_hash,
+    eventData.version,
+    eventData.domain_hash,
+    eventData.date
+  ).run();
+  
+  return { event_id: result.meta.last_row_id };
+}
+
+/**
+ * 检查插件启动重复
+ */
+async function checkPluginStartupDuplicate(env, userHash, date) {
+  try {
+    const result = await env.DB.prepare(`
+      SELECT COUNT(*) as count 
+      FROM plugin_startups 
+      WHERE user_hash = ? AND date = ?
+    `).bind(userHash, date).first();
+    
+    return result.count > 0;
+  } catch (error) {
+    console.error('Error checking plugin startup duplicate:', error);
+    return false; // 出错时不阻止插入
+  }
+}
+
+/**
+ * 检查标签页启动重复
+ */
+async function checkTabStartupDuplicate(env, userHash, domainHash, date) {
+  try {
+    const result = await env.DB.prepare(`
+      SELECT COUNT(*) as count 
+      FROM plugin_tab_startups 
+      WHERE user_hash = ? AND domain_hash = ? AND date = ?
+    `).bind(userHash, domainHash, date).first();
+    
+    return result.count > 0;
+  } catch (error) {
+    console.error('Error checking tab startup duplicate:', error);
+    return false; // 出错时不阻止插入
+  }
+}
     
     // 路由处理
     if (url.pathname === '/api/track-download' && request.method === 'POST') {
       return handleTrackDownload(request, env);
+    }
+    
+    if (url.pathname === '/api/plugin-events' && request.method === 'POST') {
+      return handlePluginEvents(request, env);
     }
     
     if (url.pathname === '/api/stats/public' && request.method === 'GET') {
