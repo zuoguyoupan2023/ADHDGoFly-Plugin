@@ -31,11 +31,7 @@ class StreamingPageProcessor extends EventTarget {
       idleTimeout: 1000, // 空闲回调超时时间
       minTextLength: 2,
       excludedTags: ['script', 'style', 'noscript', 'svg', 'canvas'],
-      excludedClasses: ['adhd-processed', 'adhd-highlight'],
-      
-      // 防抖配置
-      debounceDelay: 20, // 防抖延迟时间（毫秒）
-      maxDebounceDelay: 50 // 最大防抖延迟时间（毫秒）
+      excludedClasses: ['adhd-processed', 'adhd-highlight']
     };
     
     // 处理队列和状态管理
@@ -43,11 +39,6 @@ class StreamingPageProcessor extends EventTarget {
     this.processedNodes = new WeakSet();
     this.isProcessing = false;
     this.processingScheduled = false;
-    
-    // 防抖相关
-    this.debounceTimer = null;
-    this.lastScheduleTime = 0;
-    this.scheduleCount = 0;
     
     // IntersectionObserver 用于视感受知
     this.intersectionObserver = new IntersectionObserver(
@@ -299,54 +290,12 @@ class StreamingPageProcessor extends EventTarget {
   /**
    * 调度处理任务
    */
-  /**
-   * 调度处理任务（带防抖机制）
-   */
   scheduleProcessing() {
-    if (this.isProcessing) {
-      return;
-    }
-    
-    const now = Date.now();
-    this.scheduleCount++;
-    
-    // 清除之前的防抖定时器
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-    }
-    
-    // 计算防抖延迟
-    let debounceDelay = this.options.debounceDelay;
-    
-    // 如果调度过于频繁，增加延迟时间
-    if (now - this.lastScheduleTime < 50) {
-      debounceDelay = Math.min(
-        this.options.maxDebounceDelay,
-        debounceDelay * Math.min(this.scheduleCount / 10, 3)
-      );
-    } else {
-      // 重置计数器
-      this.scheduleCount = 1;
-    }
-    
-    this.lastScheduleTime = now;
-    
-    // 设置防抖定时器
-    this.debounceTimer = setTimeout(() => {
-      this.executeScheduledProcessing();
-    }, debounceDelay);
-  }
-
-  /**
-   * 执行实际的处理调度
-   */
-  executeScheduledProcessing() {
     if (this.processingScheduled || this.isProcessing) {
       return;
     }
     
     this.processingScheduled = true;
-    this.debounceTimer = null;
     
     // 使用 requestIdleCallback 在空闲时处理
     if (window.requestIdleCallback) {
@@ -579,19 +528,7 @@ class StreamingPageProcessor extends EventTarget {
     // 清理处理队列
     this.processingQueue.clear();
     this.processedNodes = new WeakSet();
-    
-    // 清理防抖定时器
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = null;
-    }
-    
-    // 重置处理状态
-    this.isProcessing = false;
-    this.processingScheduled = false;
-    this.scheduleCount = 0;
-    
-    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列和防抖定时器已清理');
+    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列已清理');
     
     // 移除所有高亮元素
     const highlightedElements = document.querySelectorAll('.adhd-processed');
