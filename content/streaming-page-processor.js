@@ -353,7 +353,11 @@ class StreamingPageProcessor extends EventTarget {
     this.isProcessing = false;
     
     const processingTime = performance.now() - startTime;
-    console.log(`空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
+    
+    // 只在有效处理时输出日志
+    if (processedCount > 0) {
+      console.log(`✅ 空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
+    }
     
     // 如果还有未处理的可见节点，继续调度
     if (this.getVisibleUnprocessedNodes().length > 0) {
