@@ -18,9 +18,9 @@ class StreamingPageProcessor extends EventTarget {
     
     // 配置选项
     this.options = {
-      // 视口相关配置
-      rootMargin: '300px', // 提前300px开始处理
-      threshold: 0.1, // 10%可见时触发
+      // 视口相关配置 - 优化后的参数
+      rootMargin: '150px', // 从300px减少到150px，减少预加载范围
+      threshold: [0, 0.25, 0.5, 0.75, 1.0], // 多阈值检测，提高触发精度
       
       // 处理相关配置
       maxProcessingTime: 5, // 每次空闲处理最多5ms
@@ -31,7 +31,13 @@ class StreamingPageProcessor extends EventTarget {
       idleTimeout: 1000, // 空闲回调超时时间
       minTextLength: 2,
       excludedTags: ['script', 'style', 'noscript', 'svg', 'canvas'],
-      excludedClasses: ['adhd-processed', 'adhd-highlight']
+      excludedClasses: ['adhd-processed', 'adhd-highlight'],
+      
+      // 动态调整参数
+      adaptiveMargin: true, // 启用自适应边距
+      minRootMargin: 50, // 最小边距
+      maxRootMargin: 300, // 最大边距
+      scrollSpeedThreshold: 100 // 滚动速度阈值(px/100ms)
     };
     
     // 处理队列和状态管理
@@ -45,14 +51,25 @@ class StreamingPageProcessor extends EventTarget {
     this.maxEmptyRuns = 3; // 最大连续空运行次数
     this.lastProcessTime = 0; // 上次处理时间
     
+    // 动态视口调整相关
+    this.scrollHistory = []; // 滚动历史记录
+    this.lastScrollTime = 0;
+    this.lastScrollY = window.scrollY;
+    this.currentRootMargin = parseInt(this.options.rootMargin); // 当前实际使用的边距
+    
     // IntersectionObserver 用于视感受知
     this.intersectionObserver = new IntersectionObserver(
       this.handleIntersection.bind(this),
       {
-        rootMargin: this.options.rootMargin,
+        rootMargin: `${this.currentRootMargin}px`,
         threshold: this.options.threshold
       }
     );
+    
+    // 滚动监听器用于动态调整
+    if (this.options.adaptiveMargin) {
+      this.setupScrollListener();
+    }
     
     // 节点ID生成器
     this.nodeIdCounter = 0;
@@ -266,28 +283,42 @@ class StreamingPageProcessor extends EventTarget {
   }
 
   /**
-   * 处理交叉观察事件
+   * 处理交叉观察事件 - 优化多阈值处理
    * @param {Array<IntersectionObserverEntry>} entries 交叉观察条目
    */
   handleIntersection(entries) {
-    const isEdge = navigator.userAgent.includes('Edg');
-    
     entries.forEach(entry => {
       const wrapper = entry.target;
+      const intersectionRatio = entry.intersectionRatio;
       
       if (entry.isIntersecting) {
-        // 元素进入视口，标记为可见并调度处理
+        // 元素进入视口，根据可见比例调整优先级
         this.stats.visibleNodes++;
-        if (isEdge) {
-          console.log('[Edge调试-IntersectionObserver] 元素进入视口:', wrapper.className, '可见节点数:', this.stats.visibleNodes);
+        
+        // 根据可见比例设置处理优先级
+        let priority = 'normal';
+        if (intersectionRatio >= 0.75) {
+          priority = 'high'; // 75%以上可见，高优先级
+        } else if (intersectionRatio >= 0.5) {
+          priority = 'medium'; // 50-75%可见，中优先级
+        } else if (intersectionRatio >= 0.25) {
+          priority = 'normal'; // 25-50%可见，普通优先级
+        } else {
+          priority = 'low'; // 25%以下可见，低优先级
         }
+        
+        // 将优先级信息存储到wrapper上
+        wrapper.dataset.visibilityPriority = priority;
+        wrapper.dataset.intersectionRatio = intersectionRatio.toFixed(2);
+        
         this.scheduleProcessing();
       } else {
-        // 元素离开视口，可以考虑降低优先级或暂停处理
+        // 元素离开视口
         this.stats.visibleNodes = Math.max(0, this.stats.visibleNodes - 1);
-        if (isEdge) {
-          console.log('[Edge调试-IntersectionObserver] 元素离开视口:', wrapper.className, '可见节点数:', this.stats.visibleNodes);
-        }
+        
+        // 清理优先级信息
+        delete wrapper.dataset.visibilityPriority;
+        delete wrapper.dataset.intersectionRatio;
       }
     });
   }
@@ -313,6 +344,121 @@ class StreamingPageProcessor extends EventTarget {
         this.processInIdleTime({ timeRemaining: () => 16 }); // 模拟16ms
       }, 0);
     }
+  }
+
+  /**
+   * 设置滚动监听器用于动态调整视口参数
+   */
+  setupScrollListener() {
+    let scrollTimer = null;
+    
+    const handleScroll = () => {
+      const now = performance.now();
+      const currentScrollY = window.scrollY;
+      const scrollDelta = Math.abs(currentScrollY - this.lastScrollY);
+      const timeDelta = now - this.lastScrollTime;
+      
+      // 计算滚动速度 (px/100ms)
+      const scrollSpeed = timeDelta > 0 ? (scrollDelta / timeDelta) * 100 : 0;
+      
+      // 更新滚动历史
+      this.scrollHistory.push({
+        time: now,
+        speed: scrollSpeed,
+        position: currentScrollY
+      });
+      
+      // 保持最近10次滚动记录
+      if (this.scrollHistory.length > 10) {
+        this.scrollHistory.shift();
+      }
+      
+      // 更新状态
+      this.lastScrollTime = now;
+      this.lastScrollY = currentScrollY;
+      
+      // 清除之前的定时器
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+      
+      // 延迟调整参数，避免频繁更新
+      scrollTimer = setTimeout(() => {
+        this.adjustViewportParameters();
+      }, 150);
+    };
+    
+    // 添加滚动监听器
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // 存储监听器引用以便清理
+    this.scrollListener = handleScroll;
+  }
+
+  /**
+   * 根据滚动行为动态调整视口参数
+   */
+  adjustViewportParameters() {
+    if (!this.options.adaptiveMargin || this.scrollHistory.length < 3) {
+      return;
+    }
+    
+    // 计算平均滚动速度
+    const recentSpeeds = this.scrollHistory.slice(-5).map(record => record.speed);
+    const avgSpeed = recentSpeeds.reduce((sum, speed) => sum + speed, 0) / recentSpeeds.length;
+    
+    // 根据滚动速度调整rootMargin
+    let newMargin = this.currentRootMargin;
+    
+    if (avgSpeed > this.options.scrollSpeedThreshold) {
+      // 快速滚动时增加预加载范围
+      newMargin = Math.min(
+        this.options.maxRootMargin,
+        this.currentRootMargin + Math.floor(avgSpeed / 2)
+      );
+    } else if (avgSpeed < this.options.scrollSpeedThreshold / 3) {
+      // 慢速滚动时减少预加载范围
+      newMargin = Math.max(
+        this.options.minRootMargin,
+        this.currentRootMargin - 10
+      );
+    }
+    
+    // 如果边距发生变化，重新创建观察器
+    if (newMargin !== this.currentRootMargin) {
+      this.currentRootMargin = newMargin;
+      this.recreateIntersectionObserver();
+      
+      console.log(`📊 动态调整视口参数: rootMargin=${newMargin}px (滚动速度: ${avgSpeed.toFixed(1)}px/100ms)`);
+    }
+  }
+
+  /**
+   * 重新创建IntersectionObserver
+   */
+  recreateIntersectionObserver() {
+    // 获取当前观察的所有元素
+    const observedElements = [];
+    document.querySelectorAll('.adhd-observer-wrapper').forEach(wrapper => {
+      observedElements.push(wrapper);
+    });
+    
+    // 断开旧观察器
+    this.intersectionObserver.disconnect();
+    
+    // 创建新观察器
+    this.intersectionObserver = new IntersectionObserver(
+      this.handleIntersection.bind(this),
+      {
+        rootMargin: `${this.currentRootMargin}px`,
+        threshold: this.options.threshold
+      }
+    );
+    
+    // 重新观察所有元素
+    observedElements.forEach(wrapper => {
+      this.intersectionObserver.observe(wrapper);
+    });
   }
 
   /**
@@ -532,6 +678,12 @@ class StreamingPageProcessor extends EventTarget {
     
     // 停止观察器
     this.intersectionObserver.disconnect();
+    
+    // 清理滚动监听器
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener);
+      this.scrollListener = null;
+    }
     
     // 清理处理队列
     this.processingQueue.clear();
