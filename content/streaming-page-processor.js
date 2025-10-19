@@ -40,6 +40,11 @@ class StreamingPageProcessor extends EventTarget {
     this.isProcessing = false;
     this.processingScheduled = false;
     
+    // 智能终止机制
+    this.consecutiveEmptyRuns = 0; // 连续空运行次数
+    this.maxEmptyRuns = 3; // 最大连续空运行次数
+    this.lastProcessTime = 0; // 上次处理时间
+    
     // IntersectionObserver 用于视感受知
     this.intersectionObserver = new IntersectionObserver(
       this.handleIntersection.bind(this),
@@ -324,6 +329,17 @@ class StreamingPageProcessor extends EventTarget {
     // 获取可见的未处理节点，按优先级排序
     const visibleNodes = this.getVisibleUnprocessedNodes();
     
+    // 如果没有可见节点，增加空运行计数
+    if (visibleNodes.length === 0) {
+      this.consecutiveEmptyRuns++;
+      this.isProcessing = false;
+      return; // 直接返回，不继续调度
+    }
+    
+    // 有节点时重置空运行计数
+    this.consecutiveEmptyRuns = 0;
+    this.lastProcessTime = startTime;
+    
     // 在时间允许的情况下处理节点
     while (
       deadline.timeRemaining() > this.options.maxProcessingTime &&
@@ -359,8 +375,9 @@ class StreamingPageProcessor extends EventTarget {
       console.log(`✅ 空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
     }
     
-    // 如果还有未处理的可见节点，继续调度
-    if (this.getVisibleUnprocessedNodes().length > 0) {
+    // 智能继续调度：只有在有未处理节点且连续空运行次数未超限时才继续
+    const remainingNodes = this.getVisibleUnprocessedNodes();
+    if (remainingNodes.length > 0 && this.consecutiveEmptyRuns < this.maxEmptyRuns) {
       this.scheduleProcessing();
     }
   }
@@ -511,48 +528,50 @@ class StreamingPageProcessor extends EventTarget {
    * 移除所有高亮
    */
   removeAllHighlights() {
-    // Edge浏览器调试信息
-    const isEdge = navigator.userAgent.includes('Edg');
-    if (isEdge) {
-      console.log('[Edge调试-流式处理器] 开始移除所有高亮...');
-      const highlightElementsBefore = document.querySelectorAll('.adhd-processed');
-      const wrappersBefore = document.querySelectorAll('.adhd-observer-wrapper');
-      console.log('[Edge调试-流式处理器] 移除前高亮元素数量:', highlightElementsBefore.length);
-      console.log('[Edge调试-流式处理器] 移除前观察包装器数量:', wrappersBefore.length);
-    }
+    console.log('开始移除所有高亮...');
     
-    // 停止观察
+    // 停止观察器
     this.intersectionObserver.disconnect();
-    if (isEdge) console.log('[Edge调试-流式处理器] IntersectionObserver已断开');
     
     // 清理处理队列
     this.processingQueue.clear();
-    this.processedNodes = new WeakSet();
-    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列已清理');
+    
+    // 重置处理状态
+    this.isProcessing = false;
+    this.processingScheduled = false;
+    this.consecutiveEmptyRuns = 0; // 重置智能终止机制状态
     
     // 移除所有高亮元素
-    const highlightedElements = document.querySelectorAll('.adhd-processed');
-    highlightedElements.forEach(element => {
-      const textNode = document.createTextNode(element.textContent);
-      element.parentNode.replaceChild(textNode, element);
+    const highlightElements = document.querySelectorAll('.adhd-highlight');
+    let removedCount = 0;
+    
+    highlightElements.forEach(element => {
+      try {
+        const parent = element.parentNode;
+        if (parent) {
+          // 将高亮元素的内容替换回原始文本
+          const textContent = element.textContent;
+          const textNode = document.createTextNode(textContent);
+          parent.replaceChild(textNode, element);
+          removedCount++;
+        }
+      } catch (error) {
+        console.warn('移除高亮元素失败:', error);
+      }
     });
-    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', highlightedElements.length, '个高亮元素');
     
-    // 移除观察包装器
-    const wrappers = document.querySelectorAll('.adhd-observer-wrapper');
-    wrappers.forEach(wrapper => wrapper.remove());
-    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', wrappers.length, '个观察包装器');
-    
+    // 清理统计数据
     this.resetStats();
-    console.log('已移除所有高亮和流式处理状态');
     
-    if (isEdge) {
-      // 验证清理结果
-      const remainingHighlights = document.querySelectorAll('.adhd-processed');
-      const remainingWrappers = document.querySelectorAll('.adhd-observer-wrapper');
-      console.log('[Edge调试-流式处理器] 清理后剩余高亮元素:', remainingHighlights.length);
-      console.log('[Edge调试-流式处理器] 清理后剩余包装器:', remainingWrappers.length);
-    }
+    console.log(`✅ 高亮移除完成，共移除 ${removedCount} 个高亮元素`);
+    
+    // 触发移除完成事件
+    this.dispatchEvent(new CustomEvent('highlightsRemoved', {
+      detail: {
+        removedCount,
+        timestamp: Date.now()
+      }
+    }));
   }
 
   /**
