@@ -69,4 +69,3 @@ CREATE INDEX IF NOT EXISTS idx_installations_user_hash ON plugin_installations(u
 CREATE INDEX IF NOT EXISTS idx_installations_event_type ON plugin_installations(event_type);
 CREATE INDEX IF NOT EXISTS idx_startups_date ON plugin_startups(date);
 CREATE INDEX IF NOT EXISTS idx_startups_user_hash ON plugin_startups(user_hash);
-CREATE INDEX IF NOT EXISTS idx_usage_daily_date ON plugin_usage_daily(date);
