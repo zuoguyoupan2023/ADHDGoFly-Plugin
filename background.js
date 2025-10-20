@@ -138,14 +138,11 @@ const versionChecker = new SimpleVersionChecker();
 
 // 插件埋点配置
 const ANALYTICS_CONFIG = {
-  // 主API端点（使用自定义域名解决访问问题）
-  API_URL: 'https://plugin-data.adhdgofly.online/api/plugin-analytics',
-  // 备用端点（如果主端点不可用）
+  PRIMARY_URL: 'https://plugin-data.adhdgofly.online/api/plugin-analytics',
   FALLBACK_URL: 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/plugin-events',
-  // 请求超时时间（增加到30秒）
-  TIMEOUT: 30000,
-  // 重试次数
-  MAX_RETRIES: 3
+  TIMEOUT: 10000,
+  RETRY_ATTEMPTS: 2,
+  RETRY_DELAY: 1000
 };
 
 // 生成用户哈希（匿名标识）
@@ -173,11 +170,20 @@ async function sendPluginEvent(eventType, eventData) {
     };
 
     // 尝试发送到主API端点
-    let response = await sendToAPI(ANALYTICS_CONFIG.API_URL, payload);
+    let response = await sendToAPI(ANALYTICS_CONFIG.PRIMARY_URL, payload);
     
     if (!response.success) {
-      console.log('主API端点失败，尝试备用端点...');
-      response = await sendToAPI(ANALYTICS_CONFIG.FALLBACK_URL, payload);
+      console.error(`主API端点失败:`, response.error);
+      
+      // 如果有备用端点，尝试备用端点
+      if (ANALYTICS_CONFIG.FALLBACK_URL) {
+        console.log('主API端点失败，尝试备用端点...');
+        response = await sendToAPI(ANALYTICS_CONFIG.FALLBACK_URL, payload);
+        
+        if (!response.success) {
+          console.error(`备用API端点也失败:`, response.error);
+        }
+      }
     }
 
     if (response.success) {

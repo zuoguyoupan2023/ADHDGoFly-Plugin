@@ -85,7 +85,7 @@ export default async function handler(req, res) {
     };
 
     // 转发到 Cloudflare Worker 的插件事件端点
-    const pluginEventsUrl = workerUrl; // 直接使用workerUrl，因为它已经包含完整路径
+    const pluginEventsUrl = workerUrl; // storeToCloudflareWorker函数会自动添加/api/plugin-events路径
     const workerAuth = process.env.WORKER_AUTH_TOKEN;
     
     try {
@@ -194,10 +194,11 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  // 确保URL正确构建
-  const targetUrl = workerUrl.endsWith('/api/plugin-events') 
-    ? workerUrl 
-    : `${workerUrl}/api/plugin-events`;
+  // 规范化URL，去除尾部斜杠，并确保路径唯一
+  const normalized = (workerUrl || '').replace(/\/+$/, '');
+  const targetUrl = normalized.endsWith('/api/plugin-events')
+    ? normalized
+    : `${normalized}/api/plugin-events`;
 
   console.log('🔗 发送数据到Worker:', targetUrl);
 

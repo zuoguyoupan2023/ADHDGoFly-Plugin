@@ -227,20 +227,22 @@ async function checkTabStartupDuplicate(env, userHash, domainHash, date) {
   }
 }
     
-    // 路由处理
-    if (url.pathname === '/api/track-download' && request.method === 'POST') {
+    // 路由处理（规范化路径，去除重复斜杠）
+    const path = url.pathname.replace(/\/+$/,'').replace(/\/+/g, '/');
+
+    if (path === '/api/track-download' && request.method === 'POST') {
       return handleTrackDownload(request, env);
     }
     
-    if (url.pathname === '/api/plugin-events' && request.method === 'POST') {
+    if (path === '/api/plugin-events' && request.method === 'POST') {
       return handlePluginEvents(request, env);
     }
     
-    if (url.pathname === '/api/stats/public' && request.method === 'GET') {
+    if (path === '/api/stats/public' && request.method === 'GET') {
       return handlePublicStats(request, env);
     }
     
-    if (url.pathname === '/api/stats' && request.method === 'GET') {
+    if (path === '/api/stats' && request.method === 'GET') {
       // 检查是否有认证头，有则返回管理员数据，无则返回公开数据
       const authHeader = request.headers.get('Authorization');
       if (authHeader) {
@@ -250,7 +252,7 @@ async function checkTabStartupDuplicate(env, userHash, domainHash, date) {
       }
     }
     
-    if (url.pathname === '/health' && request.method === 'GET') {
+    if (path === '/health' && request.method === 'GET') {
       return new Response(JSON.stringify({ 
         status: 'ok', 
         timestamp: Date.now(),
