@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     };
 
     // 转发到 Cloudflare Worker 的插件事件端点
-    const pluginEventsUrl = workerUrl.replace('/api/track-download', '/api/plugin-events');
+    const pluginEventsUrl = workerUrl; // 直接使用workerUrl，因为它已经包含完整路径
     const workerAuth = process.env.WORKER_AUTH_TOKEN;
     
     try {
