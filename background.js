@@ -138,12 +138,12 @@ const versionChecker = new SimpleVersionChecker();
 
 // 插件埋点配置
 const ANALYTICS_CONFIG = {
-  // Vercel API 端点
-  API_URL: 'https://adhdgofly-plugin.vercel.app/api/plugin-analytics',
+  // 主API端点（使用自定义域名解决访问问题）
+  API_URL: 'https://plugin-data.adhdgofly.online/api/plugin-analytics',
   // 备用端点（如果主端点不可用）
   FALLBACK_URL: 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/plugin-events',
-  // 请求超时时间
-  TIMEOUT: 10000,
+  // 请求超时时间（增加到30秒）
+  TIMEOUT: 30000,
   // 重试次数
   MAX_RETRIES: 3
 };
