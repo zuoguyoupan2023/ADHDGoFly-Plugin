@@ -28,8 +28,15 @@ export default async function handler(req, res) {
     // 解析请求数据
     const requestData = req.body;
     
+    console.log('📥 收到插件埋点请求:', {
+      event_type: requestData?.event_type,
+      has_data: !!requestData?.data,
+      user_agent: req.headers['user-agent']?.substring(0, 50) + '...'
+    });
+    
     // 基础数据验证
     if (!requestData.event_type || !requestData.data) {
+      console.error('❌ 缺少必要字段:', { event_type: requestData?.event_type, has_data: !!requestData?.data });
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: event_type, data'
@@ -78,7 +85,7 @@ export default async function handler(req, res) {
     };
 
     // 转发到 Cloudflare Worker 的插件事件端点
-    const pluginEventsUrl = workerUrl.replace('/api/track-download', '/api/plugin-events');
+    const pluginEventsUrl = workerUrl; // 直接使用workerUrl，因为它已经包含完整路径
     const workerAuth = process.env.WORKER_AUTH_TOKEN;
     
     try {
@@ -187,7 +194,14 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(`${workerUrl}/api/plugin-events`, {
+  // 确保URL正确构建
+  const targetUrl = workerUrl.endsWith('/api/plugin-events') 
+    ? workerUrl 
+    : `${workerUrl}/api/plugin-events`;
+
+  console.log('🔗 发送数据到Worker:', targetUrl);
+
+  const response = await fetch(targetUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(data)
@@ -195,6 +209,7 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
+    console.error('Worker API 错误:', response.status, response.statusText, errorText);
     throw new Error(`Worker API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
