@@ -88,6 +88,26 @@ export default async function handler(req, res) {
     const pluginEventsUrl = workerUrl; // storeToCloudflareWorker函数会自动添加/api/plugin-events路径
     const workerAuth = process.env.WORKER_AUTH_TOKEN;
     
+    // 添加环境开关，允许跳过后端转发以快速返回，避免阻塞
+    const disableForward = (process.env.DISABLE_WORKER_FORWARD || '').toLowerCase() === 'true';
+    if (disableForward) {
+      console.warn('⚠️ Worker forwarding disabled by env. Skipping backend store.');
+      console.log('Plugin Analytics Data (Forward Disabled):', JSON.stringify({
+        event_type: enhancedData.event_type,
+        request_id: enhancedData.metadata.request_id,
+        version: enhancedData.metadata.version,
+        timestamp: enhancedData.metadata.server_timestamp
+      }, null, 2));
+    
+      return res.status(200).json({
+        success: true,
+        message: 'Accepted for processing (backend forwarding disabled)',
+        event_type: enhancedData.event_type,
+        request_id: enhancedData.metadata.request_id,
+        timestamp: enhancedData.metadata.server_timestamp
+      });
+    }
+    
     try {
       const workerResponse = await storeToCloudflareWorker(enhancedData, pluginEventsUrl, workerAuth);
       
@@ -200,13 +220,32 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
     ? normalized
     : `${normalized}/api/plugin-events`;
 
-  console.log('🔗 发送数据到Worker:', targetUrl);
+  // 增加超时控制，避免函数因远端不可达而卡死
+  const timeoutMs = Number(process.env.WORKER_TIMEOUT_MS || 5000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(data)
-  });
+  console.log('🔗 发送数据到Worker:', targetUrl, `⏱️ timeout=${timeoutMs}ms`);
+
+  let response;
+  try {
+    response = await fetch(targetUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+      signal: controller.signal,
+      cache: 'no-store',
+      redirect: 'follow'
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err && err.name === 'AbortError') {
+      throw new Error(`Worker request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
