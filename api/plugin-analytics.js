@@ -20,8 +20,8 @@ export default async function handler(req, res) {
     });
   }
 
-  // 检查必要的环境变量 - 使用线上环境作为默认值
-  const workerUrl = process.env.CLOUDFLARE_WORKER_URL || 'https://adhdgofly-download-tracker.oliver-409.workers.dev';
+  // 检查必要的环境变量 - 使用新的插件分析 Worker 作为默认值
+  const workerUrl = process.env.CLOUDFLARE_WORKER_URL || 'https://plugin-analytics-production.oliver-409.workers.dev';
   console.log('🔗 使用 Cloudflare Worker:', workerUrl);
 
   try {
