@@ -11,7 +11,7 @@ const path = require('path');
 
 // 配置
 const CONFIG = {
-    DATABASE_NAME: 'adhdgofly_downloads',
+    DATABASE_NAME: 'plugin-download-data-database',
     OUTPUT_FILE: 'public/stats.json',
     TIMEZONE: 'Asia/Shanghai', // 东八区
 };
@@ -36,7 +36,7 @@ function executeWranglerQuery(sql) {
         console.log(`📝 执行命令: ${command}`);
         
         const result = execSync(command, { 
-            cwd: 'workers/download-tracker',
+            cwd: 'workers/plugin-download-data-worker',
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'inherit'] // 显示错误输出
         });

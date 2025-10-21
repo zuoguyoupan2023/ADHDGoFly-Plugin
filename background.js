@@ -139,7 +139,7 @@ const versionChecker = new SimpleVersionChecker();
 // 插件埋点配置
 const ANALYTICS_CONFIG = {
   PRIMARY_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
-  FALLBACK_URL: 'https://plugin-analytics-production.oliver-409.workers.dev/api/plugin-events',
+  FALLBACK_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000
