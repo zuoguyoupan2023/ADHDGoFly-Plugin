@@ -1,0 +1,33 @@
+{
+  "name": "adhdgofly-plugin-analytics-worker",
+  "version": "1.0.0",
+  "description": "ADHDGoFly 插件埋点数据收集与分析服务 - Cloudflare Workers",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env production",
+    "d1:create": "wrangler d1 create adhdgofly-plugin-analytics",
+    "d1:init": "wrangler d1 execute adhdgofly-plugin-analytics --file=schema.sql",
+    "d1:init:dev": "wrangler d1 execute adhdgofly-plugin-analytics --env dev --file=schema.sql",
+    "d1:init:prod": "wrangler d1 execute adhdgofly-plugin-analytics --env production --file=schema.sql",
+    "d1:query": "wrangler d1 execute adhdgofly-plugin-analytics --command",
+    "d1:backup": "wrangler d1 export adhdgofly-plugin-analytics --output=backup.sql",
+    "test": "node test.js",
+    "logs": "wrangler tail"
+  },
+  "keywords": [
+    "adhdgofly",
+    "plugin",
+    "analytics",
+    "cloudflare",
+    "workers",
+    "d1"
+  ],
+  "author": "ADHDGoFly Team",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
