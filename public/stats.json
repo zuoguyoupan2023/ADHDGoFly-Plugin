@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-10-21 06:18:38",
+  "lastUpdated": "2025-10-21 09:39:08",
   "timezone": "Asia/Shanghai",
   "data": {
     "totalDownloads": 20,
@@ -15,14 +15,13 @@
       "zh": 19,
       "en": 1
     },
-    "todayDownloads": 1,
+    "todayDownloads": 0,
     "weeklyTrend": {
       "2025-10-20": 1,
       "2025-10-17": 4,
       "2025-10-16": 4,
       "2025-10-15": 2,
-      "2025-10-14": 5,
-      "2025-10-13": 4
+      "2025-10-14": 5
     },
     "latestDownload": "2025/10/20 08:18"
   }
