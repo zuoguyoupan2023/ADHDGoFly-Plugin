@@ -1,7 +1,7 @@
 name: 实时数据同步
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 每5分钟执行一次
+    - cron: '0 * * * *'  # 每60分钟执行一次
   workflow_dispatch:  # 允许手动触发
 
 jobs:
