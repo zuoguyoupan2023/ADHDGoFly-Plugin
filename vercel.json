@@ -1,7 +1,6 @@
 {
   "buildCommand": "node build.js",
   "outputDirectory": "public",
-  "installCommand": "npm install archiver node-fetch",
   "headers": [
     {
       "source": "/api/(.*)",
