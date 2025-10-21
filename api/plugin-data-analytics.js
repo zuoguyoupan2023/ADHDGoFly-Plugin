@@ -31,12 +31,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // 处理数据格式
+    // 处理数据格式，映射插件字段到Worker期望的格式
     const processedData = {
       event_type: data.event_type || event_type,
       user_hash: data.user_hash,
       version: data.version,
-      timestamp: data.installed_at || data.timestamp || new Date().toISOString(),
+      timestamp: data.installed_at || data.started_at || data.timestamp || new Date().toISOString(),
       date: data.date || new Date().toISOString().split('T')[0]
     };
 
