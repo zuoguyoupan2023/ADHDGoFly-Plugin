@@ -83,9 +83,6 @@ class QuickHighlighter {
       comparative: true
     };
     this.init();
-    
-    // 发送标签页启动事件
-    this.sendTabStartupEvent();
   }
 
   init() {
@@ -116,32 +113,6 @@ class QuickHighlighter {
         this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };
       }
     });
-  }
-
-  // 发送标签页启动事件
-  async sendTabStartupEvent() {
-    try {
-      // 生成域名哈希（保护隐私）
-      const domain = window.location.hostname;
-      const domainHash = btoa(domain).substring(0, 16);
-      
-      // 向background script发送标签页启动事件
-      chrome.runtime.sendMessage({
-        action: 'tabStartup',
-        data: {
-          domain: domain,
-          domainHash: domainHash,
-          url: window.location.href,
-          timestamp: Date.now()
-        }
-      }).catch(error => {
-        console.log('发送标签页启动事件失败:', error);
-      });
-      
-      console.log('🎯 📄 标签页启动事件已发送:', domain);
-    } catch (error) {
-      console.error('发送标签页启动事件时出错:', error);
-    }
   }
 
   toggle() {

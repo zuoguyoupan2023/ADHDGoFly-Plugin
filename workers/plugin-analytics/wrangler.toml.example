@@ -1,0 +1,40 @@
+name = "adhdgofly-plugin-analytics"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "adhdgofly-plugin-analytics"
+database_id = "your-database-id-here"
+
+# 环境变量
+[vars]
+ADMIN_TOKEN = "your-admin-token-here"
+ALLOWED_ORIGINS = "*"
+
+# 开发环境配置
+[env.development]
+name = "adhdgofly-plugin-analytics-dev"
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "adhdgofly-plugin-analytics-dev"
+database_id = "your-dev-database-id-here"
+
+[env.development.vars]
+ADMIN_TOKEN = "dev-admin-token"
+ALLOWED_ORIGINS = "*"
+
+# 生产环境配置
+[env.production]
+name = "adhdgofly-plugin-analytics"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "adhdgofly-plugin-analytics"
+database_id = "your-prod-database-id-here"
+
+[env.production.vars]
+ADMIN_TOKEN = "prod-admin-token-change-me"
+ALLOWED_ORIGINS = "https://adhdgofly.online,https://download-collector.adhdgofly.online"

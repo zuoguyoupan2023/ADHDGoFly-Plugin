@@ -1,4 +1,5 @@
-// Vercel Serverless Function for ADHDGoFly Plugin Data Collection
+// Vercel Serverless Function for ADHDGoFly Plugin Download Statistics Collection
+// 专门处理插件下载统计数据，发送到 Download Tracker Worker
 // 支持自定义域名，避免被墙问题
 
 export default async function handler(req, res) {
@@ -20,9 +21,9 @@ export default async function handler(req, res) {
     });
   }
 
-  // 简化的环境变量调试信息
-  if (!process.env.CLOUDFLARE_WORKER_URL) {
-    console.warn('⚠️ 未配置 CLOUDFLARE_WORKER_URL 环境变量');
+  // 检查Download Tracker Worker配置
+  if (!process.env.CLOUDFLARE_WORKER_URL && !process.env.DOWNLOAD_TRACKER_WORKER_URL) {
+    console.warn('⚠️ 未配置 Download Tracker Worker URL 环境变量');
   }
 
   try {
@@ -56,8 +57,8 @@ export default async function handler(req, res) {
       requestId: generateUUID()
     };
 
-    // 优先：转发到 Cloudflare Workers（写入 D1）
-    const workerUrl = process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
+    // 优先：转发到 Download Tracker Worker（写入 D1）
+    const workerUrl = process.env.DOWNLOAD_TRACKER_WORKER_URL || process.env.CLOUDFLARE_WORKER_URL; // e.g. https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download
     const workerAuth = process.env.WORKER_AUTH_TOKEN;    // optional: Bearer token
     if (workerUrl) {
       try {

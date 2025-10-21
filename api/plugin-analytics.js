@@ -20,9 +20,15 @@ export default async function handler(req, res) {
     });
   }
 
-  // 检查必要的环境变量 - 使用线上环境作为默认值
-  const workerUrl = process.env.CLOUDFLARE_WORKER_URL || 'https://adhdgofly-download-tracker.oliver-409.workers.dev';
-  console.log('🔗 使用 Cloudflare Worker:', workerUrl);
+  // 检查必要的环境变量 - Plugin Analytics Worker
+  const workerUrl = process.env.PLUGIN_ANALYTICS_WORKER_URL || process.env.CLOUDFLARE_WORKER_URL;
+  if (!workerUrl) {
+    return res.status(500).json({
+      success: false,
+      error: 'Plugin Analytics Worker URL not configured'
+    });
+  }
+  console.log('🔗 使用 Plugin Analytics Worker:', workerUrl);
 
   try {
     // 解析请求数据
@@ -84,31 +90,19 @@ export default async function handler(req, res) {
       }
     };
 
-    // 转发到 Cloudflare Worker 的插件事件端点
-    const pluginEventsUrl = workerUrl; // storeToCloudflareWorker函数会自动添加/api/plugin-events路径
-    const workerAuth = process.env.WORKER_AUTH_TOKEN;
-    
+    // 转发到 Plugin Analytics Worker
     try {
-      const workerResponse = await storeToCloudflareWorker(enhancedData, pluginEventsUrl, workerAuth);
+      const result = await storeToCloudflareWorker(enhancedData, workerUrl, process.env.WORKER_AUTH_TOKEN);
       
-      // 记录到 Vercel 日志
-      console.log('Plugin Analytics Data:', JSON.stringify({
-        event_type: enhancedData.event_type,
-        request_id: enhancedData.metadata.request_id,
-        version: enhancedData.metadata.version,
-        timestamp: enhancedData.metadata.server_timestamp
-      }, null, 2));
-
-      // 返回成功响应
+      console.log('✅ 数据成功存储到Plugin Analytics Worker');
+      
       return res.status(200).json({
         success: true,
         message: 'Plugin analytics data collected successfully',
-        event_type: enhancedData.event_type,
         request_id: enhancedData.metadata.request_id,
-        timestamp: enhancedData.metadata.server_timestamp,
-        worker_response: workerResponse
+        event_type: requestData.event_type
       });
-
+      
     } catch (workerError) {
       console.error('Cloudflare Worker storage failed:', workerError.message);
       
@@ -200,7 +194,7 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
     ? normalized
     : `${normalized}/api/plugin-events`;
 
-  console.log('🔗 发送数据到Worker:', targetUrl);
+  console.log('🔗 发送数据到Plugin Analytics Worker:', targetUrl);
 
   const response = await fetch(targetUrl, {
     method: 'POST',
@@ -210,11 +204,12 @@ async function storeToCloudflareWorker(data, workerUrl, authToken) {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
-    console.error('Worker API 错误:', response.status, response.statusText, errorText);
-    throw new Error(`Worker API error: ${response.status} ${response.statusText} - ${errorText}`);
+    console.error('Plugin Analytics Worker API 错误:', response.status, response.statusText, errorText);
+    throw new Error(`Plugin Analytics Worker API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
-  return await response.json().catch(() => ({ success: true }));
+  const result = await response.json();
+  return result;
 }
 
 // 生成UUID

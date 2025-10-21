@@ -1,7 +1,7 @@
 {
   "name": "adhdgofly-download-tracker",
   "version": "1.0.0",
-  "description": "ADHDGoFly 下载统计服务 - Cloudflare Workers",
+  "description": "ADHDGoFly 插件下载统计服务 - Cloudflare Workers (专注下载跟踪)",
   "main": "index.js",
   "scripts": {
     "dev": "wrangler dev",

@@ -101,166 +101,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
     });
     return true; // 保持消息通道开放以支持异步响应
-  } else if (request.action === 'tabStartup') {
-    // 处理标签页启动事件
-    handleTabStartupMessage(request.data, sender);
-    sendResponse({ success: true });
   }
 });
 
-// 处理标签页启动事件消息
-async function handleTabStartupMessage(data, sender) {
-  try {
-    const manifest = chrome.runtime.getManifest();
-    const currentVersion = manifest.version;
-    const userHash = await getUserHash();
-    const now = Date.now();
-    const dateStr = new Date(now).toISOString().split('T')[0];
-    
-    console.log('🎯 📄 收到标签页启动事件:', data.domain);
-    
-    // 发送标签页启动事件数据
-    await sendPluginEvent('tab_startup', {
-      started_at: data.timestamp || now,
-      user_hash: userHash,
-      version: currentVersion,
-      domain_hash: data.domainHash,
-      date: dateStr
-    });
-    
-  } catch (error) {
-    console.error('处理标签页启动事件失败:', error);
-  }
-}
-
 // 初始化版本检查器
 const versionChecker = new SimpleVersionChecker();
-
-// 插件埋点配置
-const ANALYTICS_CONFIG = {
-  PRIMARY_URL: 'https://plugin-data.adhdgofly.online/api/plugin-analytics',
-  FALLBACK_URL: 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/plugin-events',
-  TIMEOUT: 10000,
-  RETRY_ATTEMPTS: 2,
-  RETRY_DELAY: 1000
-};
-
-// 生成用户哈希（匿名标识）
-function generateUserHash() {
-  // 使用插件ID和安装时间生成稳定的用户哈希
-  const extensionId = chrome.runtime.id;
-  const installTime = Date.now().toString();
-  return btoa(extensionId + installTime).substring(0, 16);
-}
-
-// 发送插件事件数据到API
-async function sendPluginEvent(eventType, eventData) {
-  try {
-    console.log(`🚀 发送${eventType}事件数据:`, eventData);
-    
-    const payload = {
-      event_type: eventType,
-      data: eventData,
-      metadata: {
-        request_id: generateRequestId(),
-        timestamp: Date.now(),
-        version: chrome.runtime.getManifest().version,
-        user_agent: navigator.userAgent
-      }
-    };
-
-    // 尝试发送到主API端点
-    let response = await sendToAPI(ANALYTICS_CONFIG.PRIMARY_URL, payload);
-    
-    if (!response.success) {
-      console.error(`主API端点失败:`, response.error);
-      
-      // 如果有备用端点，尝试备用端点
-      if (ANALYTICS_CONFIG.FALLBACK_URL) {
-        console.log('主API端点失败，尝试备用端点...');
-        response = await sendToAPI(ANALYTICS_CONFIG.FALLBACK_URL, payload);
-        
-        if (!response.success) {
-          console.error(`备用API端点也失败:`, response.error);
-        }
-      }
-    }
-
-    if (response.success) {
-      console.log(`✅ ${eventType}事件发送成功`);
-    } else {
-      console.error(`❌ ${eventType}事件发送失败:`, response.error);
-    }
-
-    return response;
-  } catch (error) {
-    console.error(`💥 发送${eventType}事件时出错:`, error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 发送HTTP请求到API
-async function sendToAPI(url, data, retries = 0) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), ANALYTICS_CONFIG.TIMEOUT);
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Extension-ID': chrome.runtime.id
-      },
-      body: JSON.stringify(data),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return { success: true, data: result };
-  } catch (error) {
-    console.error(`API请求失败 (${url}):`, error);
-    
-    // 重试逻辑
-    if (retries < ANALYTICS_CONFIG.MAX_RETRIES && !error.name === 'AbortError') {
-      console.log(`重试第 ${retries + 1} 次...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retries + 1)));
-      return sendToAPI(url, data, retries + 1);
-    }
-    
-    return { success: false, error: error.message };
-  }
-}
-
-// 生成请求ID
-function generateRequestId() {
-  return 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
-}
-
-// 获取或生成用户哈希
-async function getUserHash() {
-  const result = await chrome.storage.local.get(['userHash']);
-  if (result.userHash) {
-    return result.userHash;
-  }
-  
-  const newUserHash = generateUserHash();
-  await chrome.storage.local.set({ userHash: newUserHash });
-  return newUserHash;
-}
 
 // 插件生命周期事件收集
 chrome.runtime.onInstalled.addListener(async (details) => {
   const manifest = chrome.runtime.getManifest();
   const currentVersion = manifest.version;
-  const userHash = await getUserHash();
-  const now = Date.now();
-  const dateStr = new Date(now).toISOString().split('T')[0];
   
   // 获取存储的数据
   const result = await chrome.storage.local.get([
@@ -272,7 +122,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     // 首次安装
     const installData = {
-      installTime: now,
+      installTime: Date.now(),
       lastVersion: currentVersion,
       startupCount: 0
     };
@@ -282,16 +132,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     console.log('🎯 📦 ADHDGoFly插件首次安装');
     console.log('安装时间:', new Date(installData.installTime).toLocaleString());
     console.log('插件版本:', currentVersion);
-    
-    // 发送安装事件数据
-    await sendPluginEvent('installation', {
-      event_type: 'install',
-      version: currentVersion,
-      previous_version: null,
-      installed_at: now,
-      user_hash: userHash,
-      date: dateStr
-    });
     
   } else if (details.reason === 'update') {
     // 插件更新
@@ -305,25 +145,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     console.log('从版本:', previousVersion);
     console.log('到版本:', currentVersion);
     console.log('原安装时间:', new Date(result.installTime).toLocaleString());
-    
-    // 发送更新事件数据
-    await sendPluginEvent('installation', {
-      event_type: 'update',
-      version: currentVersion,
-      previous_version: previousVersion,
-      installed_at: now,
-      user_hash: userHash,
-      date: dateStr
-    });
   }
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   const startupTime = Date.now();
-  const manifest = chrome.runtime.getManifest();
-  const currentVersion = manifest.version;
-  const userHash = await getUserHash();
-  const dateStr = new Date(startupTime).toISOString().split('T')[0];
   
   // 获取当前的启动次数
   const result = await chrome.storage.local.get([
@@ -349,12 +175,4 @@ chrome.runtime.onStartup.addListener(async () => {
     );
     console.log('安装后天数:', daysSinceInstall);
   }
-  
-  // 发送启动事件数据
-  await sendPluginEvent('startup', {
-    started_at: startupTime,
-    user_hash: userHash,
-    version: currentVersion,
-    date: dateStr
-  });
 });
