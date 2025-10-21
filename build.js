@@ -628,8 +628,8 @@ async function main() {
     <script>
     (function() {
         // 统计配置
-        const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
-        const STATS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats';
+        const ANALYTICS_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/download-data';
+        const STATS_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/stats';
         const VERSION = '${version}';
         const LANGUAGE = 'zh';
         
@@ -667,7 +667,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/collect';
+            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/plugin-download-data-collector';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);
@@ -813,7 +813,7 @@ async function main() {
         
         // Cloudflare Workers端点统计
         async function trackViaCloudflare(data, timeout = 5000) {
-            const CLOUDFLARE_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+            const CLOUDFLARE_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/download-data';
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -1390,8 +1390,8 @@ async function main() {
     <script>
     (function() {
         // 统计配置
-        const ANALYTICS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
-        const STATS_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/stats';
+        const ANALYTICS_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/download-data';
+        const STATS_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/stats';
         const VERSION = '${version}';
         const LANGUAGE = 'en';
         
@@ -1429,7 +1429,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/collect';
+            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/plugin-download-data-collector';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);
@@ -1575,7 +1575,7 @@ async function main() {
         
         // Cloudflare Workers端点统计
         async function trackViaCloudflare(data, timeout = 5000) {
-            const CLOUDFLARE_API = 'https://adhdgofly-download-tracker.oliver-409.workers.dev/api/track-download';
+            const CLOUDFLARE_API = 'https://plugin-download-data-worker.oliver-409.workers.dev/api/download-data';
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
