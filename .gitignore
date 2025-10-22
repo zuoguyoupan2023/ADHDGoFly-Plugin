@@ -18,6 +18,9 @@ test*.html
 *.log
 *.tmp
 
+# 备份文件夹
+/old-files/
+
 # 版本控制
 .git/
 .gitattributes
