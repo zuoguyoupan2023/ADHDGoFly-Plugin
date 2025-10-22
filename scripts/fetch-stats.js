@@ -32,13 +32,30 @@ function executeWranglerQuery(sql) {
     try {
         console.log(`🔍 执行查询: ${sql}`);
         
+        // 检查必需的环境变量
+        if (!process.env.PLUGIN_DOWNLOAD_DATABASE_ID) {
+            throw new Error('缺少环境变量: PLUGIN_DOWNLOAD_DATABASE_ID');
+        }
+        if (!process.env.CLOUDFLARE_API_TOKEN) {
+            throw new Error('缺少环境变量: CLOUDFLARE_API_TOKEN');
+        }
+        if (!process.env.CLOUDFLARE_ACCOUNT_ID) {
+            throw new Error('缺少环境变量: CLOUDFLARE_ACCOUNT_ID');
+        }
+        
         const command = `npx wrangler d1 execute ${CONFIG.DATABASE_NAME} --remote --command "${sql}" --json`;
         console.log(`📝 执行命令: ${command}`);
         
         const result = execSync(command, { 
-            cwd: 'workers/plugin-download-data-worker',
             encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'inherit'] // 显示错误输出
+            stdio: ['pipe', 'pipe', 'inherit'], // 显示错误输出
+            env: {
+                ...process.env,
+                CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN,
+                CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID,
+                // 确保 wrangler 能找到数据库
+                WRANGLER_DATABASE_ID: process.env.PLUGIN_DOWNLOAD_DATABASE_ID
+            }
         });
         
         console.log(`📄 原始结果: ${result}`);
@@ -191,14 +208,8 @@ async function main() {
     console.log(`⏰ 执行时间: ${getBeijingTime()} (${CONFIG.TIMEZONE})`);
     
     try {
-        // 检查环境
-        if (!fs.existsSync('workers/plugin-download-data-worker')) {
-            throw new Error('找不到 workers/plugin-download-data-worker 目录');
-        }
-        
-        if (!fs.existsSync('workers/plugin-download-data-worker/wrangler.toml')) {
-            throw new Error('找不到 wrangler.toml 配置文件');
-        }
+        // 检查环境变量（在 executeWranglerQuery 中会进行检查）
+        console.log('📋 使用环境变量配置，无需本地 wrangler.toml 文件');
         
         // 获取统计数据
         const stats = await fetchAllStats();
