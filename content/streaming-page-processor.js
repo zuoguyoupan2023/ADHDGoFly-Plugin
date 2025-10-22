@@ -662,19 +662,8 @@ class StreamingPageProcessor extends EventTarget {
    * 移除所有高亮
    */
   removeAllHighlights() {
-    // Edge浏览器调试信息
-    const isEdge = navigator.userAgent.includes('Edg');
-    if (isEdge) {
-      console.log('[Edge调试-流式处理器] 开始移除所有高亮...');
-      const highlightElementsBefore = document.querySelectorAll('.adhd-processed');
-      const wrappersBefore = document.querySelectorAll('.adhd-observer-wrapper');
-      console.log('[Edge调试-流式处理器] 移除前高亮元素数量:', highlightElementsBefore.length);
-      console.log('[Edge调试-流式处理器] 移除前观察包装器数量:', wrappersBefore.length);
-    }
-    
     // 停止观察
     this.intersectionObserver.disconnect();
-    if (isEdge) console.log('[Edge调试-流式处理器] IntersectionObserver已断开');
     
     // 清理滚动监听器
     if (this.scrollListener) {
@@ -685,48 +674,38 @@ class StreamingPageProcessor extends EventTarget {
     // 清理处理队列
     this.processingQueue.clear();
     this.processedNodes = new WeakSet();
-    if (isEdge) console.log('[Edge调试-流式处理器] 处理队列已清理');
     
-    // 移除所有高亮元素 - 使用正确的类名 .adhd-processed
-    const highlightedElements = document.querySelectorAll('.adhd-processed');
+    // 移除所有高亮元素 - 修正：使用正确的类名 .adhd-processed 而不是 .adhd-highlight
+    const highlightElements = document.querySelectorAll('.adhd-processed');
     let removedCount = 0;
     
-    highlightedElements.forEach(element => {
+    highlightElements.forEach(element => {
       try {
-        const textNode = document.createTextNode(element.textContent);
-        element.parentNode.replaceChild(textNode, element);
-        removedCount++;
+        const parent = element.parentNode;
+        if (parent) {
+          // 将高亮元素的内容替换回原始文本
+          const textContent = element.textContent;
+          const textNode = document.createTextNode(textContent);
+          parent.replaceChild(textNode, element);
+          removedCount++;
+        }
       } catch (error) {
-        console.warn('移除高亮元素时出错:', error);
+        console.warn('移除高亮元素失败:', error);
       }
     });
     
-    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', removedCount, '个高亮元素');
-    
-    // 移除观察包装器
-    const wrappers = document.querySelectorAll('.adhd-observer-wrapper');
-    wrappers.forEach(wrapper => wrapper.remove());
-    if (isEdge) console.log('[Edge调试-流式处理器] 已移除', wrappers.length, '个观察包装器');
-    
+    // 清理统计数据
     this.resetStats();
-    console.log('已移除所有高亮和流式处理状态');
     
-    // 触发高亮移除事件
-    if (removedCount > 0) {
-      const event = new CustomEvent('highlightsRemoved', {
-        detail: { removedCount: removedCount }
-      });
-      document.dispatchEvent(event);
-      if (isEdge) console.log('[Edge调试-流式处理器] 已触发 highlightsRemoved 事件，移除数量:', removedCount);
-    }
+    console.log(`✅ 高亮移除完成，共移除 ${removedCount} 个高亮元素`);
     
-    if (isEdge) {
-      // 验证清理结果
-      const remainingHighlights = document.querySelectorAll('.adhd-processed');
-      const remainingWrappers = document.querySelectorAll('.adhd-observer-wrapper');
-      console.log('[Edge调试-流式处理器] 清理后剩余高亮元素:', remainingHighlights.length);
-      console.log('[Edge调试-流式处理器] 清理后剩余包装器:', remainingWrappers.length);
-    }
+    // 触发移除完成事件
+    this.dispatchEvent(new CustomEvent('highlightsRemoved', {
+      detail: {
+        removedCount,
+        timestamp: Date.now()
+      }
+    }));
   }
 
   /**
