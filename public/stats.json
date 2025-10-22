@@ -1,27 +1,31 @@
 {
-  "lastUpdated": "2025-10-22 08:17:03",
+  "lastUpdated": "2025-10-22 09:29:42",
   "timezone": "Asia/Shanghai",
   "data": {
-    "totalDownloads": 20,
-    "uniqueUsers": 8,
+    "totalDownloads": 24,
+    "uniqueUsers": 11,
     "browserStats": {
-      "chrome": 12,
-      "edge": 8
+      "chrome": 15,
+      "edge": 9
     },
     "versionStats": {
-      "0.1.4": 20
+      "0.1.4": 22,
+      "1.0.0": 1,
+      "1.0.1": 1
     },
     "languageStats": {
-      "zh": 19,
-      "en": 1
+      "zh": 22,
+      "en": 2
     },
-    "todayDownloads": 0,
+    "todayDownloads": 1,
     "weeklyTrend": {
+      "2025-10-22": 1,
+      "2025-10-21": 2,
       "2025-10-20": 1,
       "2025-10-17": 4,
       "2025-10-16": 4,
       "2025-10-15": 2
     },
-    "latestDownload": "2025/10/20 08:18"
+    "latestDownload": "2025/10/22 08:23"
   }
 }
