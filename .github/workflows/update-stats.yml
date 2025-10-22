@@ -97,7 +97,7 @@ jobs:
           [[d1_databases]]
           binding = "DB"
           database_name = "plugin-download-data-database"
-          database_id = "$DATABASE_ID"
+          database_id = "$PLUGIN_DOWNLOAD_DATABASE_ID"
           
           # 环境变量
           [vars]

@@ -192,11 +192,11 @@ async function main() {
     
     try {
         // 检查环境
-        if (!fs.existsSync('workers/download-tracker')) {
-            throw new Error('找不到 workers/download-tracker 目录');
+        if (!fs.existsSync('workers/plugin-download-data-worker')) {
+            throw new Error('找不到 workers/plugin-download-data-worker 目录');
         }
         
-        if (!fs.existsSync('workers/download-tracker/wrangler.toml')) {
+        if (!fs.existsSync('workers/plugin-download-data-worker/wrangler.toml')) {
             throw new Error('找不到 wrangler.toml 配置文件');
         }
         
