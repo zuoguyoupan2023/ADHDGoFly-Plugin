@@ -28,6 +28,7 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "options_page": "debug-privacy.html",
   "web_accessible_resources": [{
     "resources": [
       "dictionaries/*.json",

@@ -1,5 +1,6 @@
-// 导入隐私设置管理器
+// 导入隐私设置管理器和用户状态管理器
 importScripts('privacy-settings-manager.js');
+importScripts('user-state-manager.js');
 
 // 初始化隐私设置管理器
 const privacyManager = new PrivacySettingsManager();
@@ -115,6 +116,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // 处理隐私设置变更通知
     handlePrivacySettingsChanged(request.data);
     sendResponse({ success: true });
+  } else if (request.action === 'TEST_ANALYTICS') {
+    // 测试分析事件发送
+    console.log('收到测试分析请求:', request.data);
+    sendPluginEvent('test_event', {
+      test_data: request.data,
+      timestamp: Date.now()
+    });
+    sendResponse({ success: true, message: '测试事件已发送' });
+  } else if (request.action === 'SIMULATE_INSTALL') {
+    // 模拟安装事件
+    console.log('模拟安装事件');
+    sendPluginEvent('install', {
+      reason: 'test_simulation',
+      version: chrome.runtime.getManifest().version,
+      timestamp: Date.now()
+    });
+    sendResponse({ success: true, message: '安装事件已模拟' });
+  } else if (request.action === 'SIMULATE_STARTUP') {
+    // 模拟启动事件
+    console.log('模拟启动事件');
+    sendPluginEvent('startup', {
+      reason: 'test_simulation',
+      version: chrome.runtime.getManifest().version,
+      timestamp: Date.now()
+    });
+    sendResponse({ success: true, message: '启动事件已模拟' });
+  } else if (request.action === 'GET_USER_STATE_INFO') {
+    // 获取用户状态信息
+    privacyManager.getUserStateInfo().then(stateInfo => {
+      sendResponse({ success: true, data: stateInfo });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  } else if (request.action === 'GET_SERVER_STATS') {
+    // 获取服务器端统计数据
+    privacyManager.getServerStats().then(stats => {
+      sendResponse({ success: true, data: stats });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  } else if (request.action === 'RESET_USER_STATE') {
+    // 重置用户状态（调试用）
+    privacyManager.resetUserState().then(success => {
+      sendResponse({ success: success, message: success ? '用户状态已重置' : '重置失败' });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
   }
 });
 
