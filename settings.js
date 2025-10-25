@@ -2,6 +2,7 @@
 class SettingsManager {
     constructor() {
         this.i18nManager = new I18nManager();
+        this.privacyManager = window.privacySettingsManager || new PrivacySettingsManager();
         this.init();
     }
 
@@ -17,25 +18,50 @@ class SettingsManager {
         // 存储管理相关事件
         this.bindStorageEvents();
         
-        // 匿名统计开关 - 暂时注释掉，后续实现埋点后启用
-        /*
-        const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
-        if (anonymousStatsToggle) {
-            anonymousStatsToggle.addEventListener('change', (e) => {
-                this.saveData({ anonymousStats: e.target.checked });
-            });
-        }
-        */
+        // 隐私设置相关事件
+        this.bindPrivacyEvents();
 
-        // 重置按钮 - 暂时注释掉，后续需要时启用
-        /*
+        // 重置按钮
         const resetBtn = document.getElementById('reset-all-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
                 this.resetAllSettings();
             });
         }
-        */
+    }
+
+    bindPrivacyEvents() {
+        // 匿名信息收集开关
+        const analyticsToggle = document.getElementById('analytics-toggle');
+        if (analyticsToggle) {
+            analyticsToggle.addEventListener('change', async (e) => {
+                const enabled = e.target.checked;
+                const success = await this.privacyManager.setAnalyticsEnabled(enabled);
+                
+                if (success) {
+                    this.showMessage(
+                        enabled ? '已启用匿名信息收集' : '已禁用匿名信息收集',
+                        'success'
+                    );
+                } else {
+                    // 如果保存失败，恢复开关状态
+                    e.target.checked = !enabled;
+                    this.showMessage('设置保存失败，请重试', 'error');
+                }
+            });
+        }
+
+        // 隐私详情展开/收起
+        const privacyDetails = document.querySelector('.privacy-details');
+        const privacySummary = document.querySelector('.privacy-details summary');
+        if (privacyDetails && privacySummary) {
+            privacySummary.addEventListener('click', (e) => {
+                // 添加动画效果
+                setTimeout(() => {
+                    privacyDetails.classList.toggle('expanded');
+                }, 100);
+            });
+        }
     }
 
     bindStorageEvents() {
@@ -85,13 +111,8 @@ class SettingsManager {
                 cacheEnabled: true
             });
 
-            // 匿名统计开关状态 - 暂时注释掉，后续实现埋点后启用
-            /*
-            const anonymousStatsToggle = document.getElementById('anonymous-stats-toggle');
-            if (anonymousStatsToggle) {
-                anonymousStatsToggle.checked = result.anonymousStats;
-            }
-            */
+            // 加载隐私设置
+            await this.loadPrivacySettings();
 
             // 加载存储设置
             await this.loadStorageSettings(result);
@@ -104,6 +125,69 @@ class SettingsManager {
             }
         } catch (error) {
             console.error('加载设置数据失败:', error);
+        }
+    }
+
+    async loadPrivacySettings() {
+        try {
+            // 获取隐私设置
+            const isAnalyticsEnabled = await this.privacyManager.isAnalyticsEnabled();
+            
+            // 设置匿名信息收集开关状态
+            const analyticsToggle = document.getElementById('analytics-toggle');
+            if (analyticsToggle) {
+                analyticsToggle.checked = isAnalyticsEnabled;
+            }
+
+            // 更新隐私设置相关的UI文本
+            await this.updatePrivacyUI();
+        } catch (error) {
+            console.error('加载隐私设置失败:', error);
+        }
+    }
+
+    async updatePrivacyUI() {
+        try {
+            // 使用i18n更新隐私设置相关的文本
+            const privacySection = document.querySelector('.privacy-section');
+            if (privacySection && this.i18nManager) {
+                const titleElement = privacySection.querySelector('h3');
+                if (titleElement) {
+                    titleElement.textContent = this.i18nManager.getMessage('settings.privacy.title');
+                }
+
+                const analyticsLabel = privacySection.querySelector('label[for="analytics-toggle"]');
+                if (analyticsLabel) {
+                    analyticsLabel.textContent = this.i18nManager.getMessage('settings.privacy.analytics');
+                }
+
+                const analyticsDesc = privacySection.querySelector('.analytics-description');
+                if (analyticsDesc) {
+                    analyticsDesc.textContent = this.i18nManager.getMessage('settings.privacy.analyticsDesc');
+                }
+
+                // 更新详情部分
+                const detailsTitle = privacySection.querySelector('.privacy-details summary');
+                if (detailsTitle) {
+                    detailsTitle.textContent = this.i18nManager.getMessage('settings.privacy.detailsTitle');
+                }
+
+                const items = privacySection.querySelectorAll('.privacy-details li');
+                items.forEach((item, index) => {
+                    const key = `settings.privacy.item${index + 1}`;
+                    const text = this.i18nManager.getMessage(key);
+                    if (text) {
+                        item.textContent = text;
+                    }
+                });
+
+                const note = privacySection.querySelector('.privacy-note');
+                if (note) {
+                    note.textContent = this.i18nManager.getMessage('settings.privacy.note');
+                }
+            }
+        } catch (error) {
+            console.error('更新隐私设置UI失败:', error);
         }
     }
 

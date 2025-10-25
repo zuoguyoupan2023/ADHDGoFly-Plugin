@@ -1,3 +1,9 @@
+// 导入隐私设置管理器
+importScripts('privacy-settings-manager.js');
+
+// 初始化隐私设置管理器
+const privacyManager = new PrivacySettingsManager();
+
 // 简化的版本检测器
 class SimpleVersionChecker {
   constructor() {
@@ -105,8 +111,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // 处理标签页启动事件
     handleTabStartupMessage(request.data, sender);
     sendResponse({ success: true });
+  } else if (request.type === 'PRIVACY_SETTINGS_CHANGED') {
+    // 处理隐私设置变更通知
+    handlePrivacySettingsChanged(request.data);
+    sendResponse({ success: true });
   }
 });
+
+// 处理隐私设置变更通知
+function handlePrivacySettingsChanged(data) {
+  try {
+    console.log('🔒 隐私设置已变更:', data);
+    
+    if (data.changeType === 'analyticsEnabled') {
+      const status = data.value ? '启用' : '禁用';
+      console.log(`📊 匿名信息收集已${status}`);
+      
+      // 可以在这里添加其他需要响应隐私设置变更的逻辑
+      // 例如：清理已收集的数据、通知其他组件等
+      
+      if (!data.value) {
+        console.log('🗑️ 用户禁用了数据收集，后续将不再发送匿名统计数据');
+      } else {
+        console.log('📈 用户启用了数据收集，将继续发送匿名统计数据');
+      }
+    } else if (data.changeType === 'reset') {
+      console.log('🔄 隐私设置已重置到默认值');
+    }
+  } catch (error) {
+    console.error('处理隐私设置变更失败:', error);
+  }
+}
 
 // 处理标签页启动事件消息
 async function handleTabStartupMessage(data, sender) {
@@ -156,6 +191,18 @@ function generateUserHash() {
 // 发送插件事件数据到API
 async function sendPluginEvent(eventType, eventData) {
   try {
+    // 检查用户是否启用了匿名信息收集
+    const isAnalyticsEnabled = await privacyManager.isAnalyticsEnabled();
+    
+    if (!isAnalyticsEnabled) {
+      console.log(`🔒 用户已禁用匿名信息收集，跳过${eventType}事件发送`);
+      return { 
+        success: true, 
+        skipped: true, 
+        reason: 'Analytics disabled by user privacy settings' 
+      };
+    }
+    
     console.log(`🚀 发送${eventType}事件数据:`, eventData);
     
     const payload = {
@@ -165,7 +212,8 @@ async function sendPluginEvent(eventType, eventData) {
         request_id: generateRequestId(),
         timestamp: Date.now(),
         version: chrome.runtime.getManifest().version,
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent,
+        privacy_consent: true // 标记用户已同意数据收集
       }
     };
 

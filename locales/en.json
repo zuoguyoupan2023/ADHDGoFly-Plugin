@@ -273,6 +273,18 @@
         "cleanupDesc": "Manually clean cache data to free up storage space",
         "save": "Save Storage Settings"
       },
+      "privacy": {
+        "title": "Privacy Settings",
+        "analytics": "Anonymous Information Collection",
+        "analyticsDesc": "Help us improve the product experience by collecting anonymous usage statistics only, without involving personal privacy data",
+        "detailsTitle": "Information Collection Details",
+        "item1": "Plugin installation and update events",
+        "item2": "Plugin startup events when browser starts",
+        "item3": "Plugin version information",
+        "item4": "Anonymous user identifier (not traceable to individuals)",
+        "item5": "Browser type and language settings",
+        "note": "We promise: No personally identifiable information is collected, no browsing history or website content is collected."
+      },
       "other": {
         "title": "Other Settings",
         "autoUpdate": "Auto-check updates",

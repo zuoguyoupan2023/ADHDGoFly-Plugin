@@ -3383,40 +3383,44 @@
             </div>
           </div>
 
-          <!-- 其他设置 - 暂时注释掉，后续需要时启用 -->
-          <!--
+          <!-- 隐私设置 -->
           <div class="settings-section">
             <div class="section-header">
-              <h4 data-i18n="pages.settings.other.title">其他设置</h4>
+              <h4 data-i18n="pages.settings.privacy.title">隐私设置</h4>
             </div>
             <div class="section-content">
               <div class="setting-item">
                 <label class="setting-label">
-                  <input type="checkbox" id="analytics" checked />
+                  <input type="checkbox" id="analytics-toggle" checked />
                   <span class="checkmark"></span>
-                  <span data-i18n="pages.settings.other.analytics"
-                    >匿名使用统计</span
+                  <span data-i18n="pages.settings.privacy.analytics"
+                    >匿名信息收集</span
                   >
                 </label>
                 <p
                   class="setting-desc"
-                  data-i18n="pages.settings.other.analyticsDesc"
+                  data-i18n="pages.settings.privacy.analyticsDesc"
                 >
-                  帮助我们改进产品（不收集个人信息）
+                  帮助我们改进产品体验，仅收集匿名使用统计信息，不涉及个人隐私数据
                 </p>
-              </div>
-              <div class="setting-actions">
-                <button
-                  class="reset-btn"
-                  id="reset-settings"
-                  data-i18n="pages.settings.other.reset"
-                >
-                  重置所有设置
-                </button>
+                <div class="privacy-details">
+                  <details>
+                    <summary data-i18n="pages.settings.privacy.detailsTitle">收集的信息详情</summary>
+                    <ul class="privacy-list">
+                      <li data-i18n="pages.settings.privacy.item1">插件安装和更新事件</li>
+                      <li data-i18n="pages.settings.privacy.item2">浏览器启动时的插件启动事件</li>
+                      <li data-i18n="pages.settings.privacy.item3">插件版本信息</li>
+                      <li data-i18n="pages.settings.privacy.item4">匿名用户标识（不可追溯到个人）</li>
+                      <li data-i18n="pages.settings.privacy.item5">浏览器类型和语言设置</li>
+                    </ul>
+                    <p class="privacy-note" data-i18n="pages.settings.privacy.note">
+                      我们承诺：不收集任何可识别个人身份的信息，不收集浏览历史或网站内容。
+                    </p>
+                  </details>
+                </div>
               </div>
             </div>
           </div>
-          -->
         </div>
       </div>
     </div>
@@ -3506,6 +3510,7 @@
       <div data-i18n="pages.dict.custom.notification.line2">新加词典在对应语言，展开可见</div>
     </div>
 
+    <script src="privacy-settings-manager.js"></script>
     <script src="settings.js"></script>
   </body>
 </html>
