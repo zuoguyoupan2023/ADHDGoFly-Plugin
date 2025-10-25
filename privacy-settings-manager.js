@@ -1,7 +1,6 @@
 /**
  * 隐私设置管理器
  * 负责处理用户隐私设置的存储、读取和管理
- * 集成用户状态追踪功能
  */
 class PrivacySettingsManager {
   constructor() {
@@ -11,25 +10,6 @@ class PrivacySettingsManager {
       lastUpdated: Date.now(),
       version: '1.0.0'
     };
-    
-    // 初始化用户状态管理器
-    this.initUserStateManager();
-  }
-
-  /**
-   * 初始化用户状态管理器
-   */
-  async initUserStateManager() {
-    try {
-      // 动态导入UserStateManager
-      if (typeof UserStateManager !== 'undefined') {
-        this.userStateManager = new UserStateManager();
-        await this.userStateManager.initializeUserState();
-        console.log('用户状态管理器初始化成功');
-      }
-    } catch (error) {
-      console.error('用户状态管理器初始化失败:', error);
-    }
   }
 
   /**
@@ -122,17 +102,6 @@ class PrivacySettingsManager {
       if (success) {
         // 触发设置变更事件，通知其他组件
         this.notifySettingsChanged('analyticsEnabled', enabled);
-        
-        // 如果用户状态管理器可用，更新用户状态
-        if (this.userStateManager && wasEnabled !== willBeEnabled) {
-          try {
-            await this.userStateManager.updateUserState(willBeEnabled);
-            console.log('用户状态已更新:', willBeEnabled ? '启用数据收集' : '禁用数据收集');
-          } catch (stateError) {
-            console.error('更新用户状态失败:', stateError);
-            // 不影响主要功能，继续执行
-          }
-        }
       }
       
       return success;
@@ -218,23 +187,11 @@ class PrivacySettingsManager {
   async getSettingsSummary() {
     try {
       const settings = await this.getSettings();
-      const summary = {
+      return {
         analyticsEnabled: settings.analyticsEnabled,
         lastUpdated: new Date(settings.lastUpdated).toLocaleString(),
         version: settings.version
       };
-
-      // 如果用户状态管理器可用，添加状态信息
-      if (this.userStateManager) {
-        try {
-          const stateInfo = await this.userStateManager.getStateInfo();
-          summary.userState = stateInfo;
-        } catch (error) {
-          console.error('获取用户状态信息失败:', error);
-        }
-      }
-
-      return summary;
     } catch (error) {
       console.error('获取隐私设置摘要失败:', error);
       return {
@@ -245,58 +202,7 @@ class PrivacySettingsManager {
     }
   }
 
-  /**
-   * 获取用户状态信息
-   * @returns {Promise<Object|null>} 用户状态信息
-   */
-  async getUserStateInfo() {
-    if (!this.userStateManager) {
-      return null;
-    }
 
-    try {
-      return await this.userStateManager.getStateInfo();
-    } catch (error) {
-      console.error('获取用户状态信息失败:', error);
-      return null;
-    }
-  }
-
-  /**
-   * 获取服务器端统计数据
-   * @returns {Promise<Object|null>} 服务器端统计数据
-   */
-  async getServerStats() {
-    if (!this.userStateManager) {
-      return null;
-    }
-
-    try {
-      return await this.userStateManager.getServerStats();
-    } catch (error) {
-      console.error('获取服务器端统计数据失败:', error);
-      return null;
-    }
-  }
-
-  /**
-   * 重置用户状态（调试用）
-   * @returns {Promise<boolean>} 重置是否成功
-   */
-  async resetUserState() {
-    if (!this.userStateManager) {
-      return false;
-    }
-
-    try {
-      await this.userStateManager.resetUserState();
-      console.log('用户状态已重置');
-      return true;
-    } catch (error) {
-      console.error('重置用户状态失败:', error);
-      return false;
-    }
-  }
 }
 
 // 创建全局实例
