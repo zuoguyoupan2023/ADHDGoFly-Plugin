@@ -1139,9 +1139,8 @@
 
 /* FAQ列表容器 */
 .faq-list {
-  flex: 1;
+  flex: 0 0 auto;
   margin-bottom: 20px;
-  overflow-y: auto;
 }
 
 /* FAQ单项样式 */
@@ -1273,7 +1272,6 @@
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
-  margin-top: auto;
   flex-shrink: 0;
 }
 

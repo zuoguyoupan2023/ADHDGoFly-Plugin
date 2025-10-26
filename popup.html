@@ -443,7 +443,7 @@
       /* 页面标题样式 */
       .page .header {
         margin-bottom: 16px;
-        padding-bottom: 12px;
+        padding: 0 16px 12px 16px;
         border-bottom: 2px solid #e9ecef;
       }
 
@@ -454,8 +454,15 @@
         font-weight: 600;
       }
 
-      /* 词典管理页面样式 */
-      .dict-content {
+      /* 页面内容容器统一样式 */
+      .dict-content,
+      .home-content,
+      .colors-content,
+      .text-content,
+      .ai-content,
+      .about-content,
+      .faq-content,
+      .settings-content {
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -1115,6 +1122,7 @@
         border: 1px solid #e0e0e0;
         border-radius: 6px;
         background: white;
+        max-width: 400px;
       }
 
       .control-label {
@@ -1840,13 +1848,14 @@
     <div class="main-content">
       <!-- 主页面 -->
       <div class="page active" id="home-page">
-        <!-- 应用标题和状态 -->
-        <div class="app-header">
-          <div class="app-title">
-            <h3 data-i18n="appName">ADHDGoFly</h3>
-            <div class="status" id="status">状态检查中...</div>
+        <div class="home-content">
+          <!-- 应用标题和状态 -->
+          <div class="app-header">
+            <div class="app-title">
+              <h3 data-i18n="appName">ADHDGoFly</h3>
+              <div class="status" id="status">状态检查中...</div>
+            </div>
           </div>
-        </div>
 
         <!-- 版本信息（紧凑版） -->
         <div class="version-compact" id="versionInfo">
@@ -1915,11 +1924,12 @@
           </div>
         </div>
 
-        <!-- 词典状态显示 -->
-        <div class="dict-summary">
-          <h4 data-i18n="dict.title">词典</h4>
-          <div class="dict-tags" id="dictTags">
-            <!-- 动态生成已启用的词典标签 -->
+          <!-- 词典状态显示 -->
+          <div class="dict-summary">
+            <h4 data-i18n="dict.title">词典</h4>
+            <div class="dict-tags" id="dictTags">
+              <!-- 动态生成已启用的词典标签 -->
+            </div>
           </div>
         </div>
       </div>
@@ -2912,8 +2922,7 @@
         <div class="header">
           <h3 data-i18n="pages.faq.title">常见问题</h3>
         </div>
-        <div class="content">
-          <div class="faq-content">
+        <div class="faq-content">
             <!-- 搜索框 -->
             <div class="faq-search">
               <input 
@@ -2945,7 +2954,6 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
 
