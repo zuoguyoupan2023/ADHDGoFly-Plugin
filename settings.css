@@ -1365,7 +1365,7 @@
 /* 响应式调整 */
 @media (max-height: 600px) {
   .faq-content {
-    padding: 12px 16px;
+    padding: 0;
   }
   
   .faq-question {
