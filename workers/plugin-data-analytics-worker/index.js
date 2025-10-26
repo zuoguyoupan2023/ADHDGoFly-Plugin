@@ -1,5 +1,5 @@
 /**
- * 极简插件数据分析 Worker
+ * 插件数据分析 Worker
  * 功能：接收 Vercel API 转发的数据，存储到 D1 数据库
  */
 
@@ -42,17 +42,17 @@ export default {
         });
       }
 
-      // 插入数据到 D1 数据库
-      const result = await env.plugin_data_analytics.prepare(
-        'INSERT INTO plugin_installations (event_type, user_hash, version, timestamp, date) VALUES (?, ?, ?, ?, ?)'
-      ).bind(event_type, user_hash, version, timestamp, date).run();
+      // 插入数据到数据库
+      const result = await env.plugin_data_analytics.prepare(`
+        INSERT INTO plugin_installations (event_type, user_hash, version, timestamp, date)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(event_type, user_hash, version, timestamp, date).run();
 
-      console.log('Database insert result:', result);
+      console.log('Data inserted:', result);
 
-      // 返回成功响应
       return new Response(JSON.stringify({
         success: true,
-        message: 'Data recorded successfully',
+        message: 'Plugin data recorded successfully',
         event_type: event_type,
         event_id: result.meta.last_row_id,
         timestamp: new Date().toISOString()

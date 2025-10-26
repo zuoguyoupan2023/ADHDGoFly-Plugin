@@ -4,6 +4,256 @@ importScripts('privacy-settings-manager.js');
 // 初始化隐私设置管理器
 const privacyManager = new PrivacySettingsManager();
 
+// ==================== 独立安装信息收集系统 ====================
+
+/**
+ * 🏗️ 独立安装信息收集配置
+ * 使用现有的 plugin-data-analytics API，但发送到独立的数据表
+ */
+const INSTALLATION_CONFIG = {
+  API_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
+  FALLBACK_URL: 'https://plugin-data-analytics-worker.oliver-409.workers.dev',
+  TIMEOUT: 10000,
+  MAX_RETRIES: 10,
+  RETRY_INTERVAL_MINUTES: 30,
+  ALARM_NAME: 'retry_install_data'
+};
+
+/**
+ * 🏗️ 发送安装数据 - 独立于隐私设置的数据收集
+ * @param {Object} installDetails - Chrome安装详情
+ */
+async function sendInstallationData(installDetails) {
+  console.log('🏗️ 开始收集安装信息...');
+  
+  const installData = {
+    event_type: 'plugin_install',
+    timestamp: new Date().toISOString(),
+    plugin_version: chrome.runtime.getManifest().version,
+    browser_type: getBrowserType(),
+    browser_version: getBrowserVersion(),
+    platform: navigator.platform,
+    language: chrome.i18n.getUILanguage(),
+    install_reason: installDetails.reason,
+    anonymous_id: await generateAnonymousInstallId()
+  };
+
+  console.log('🏗️ 安装数据已生成:', installData);
+
+  // 尝试立即发送
+  const success = await sendInstallDataToAPI(installData);
+  
+  if (success) {
+    console.log('🏗️ ✅ 安装数据发送成功');
+  } else {
+    console.log('🏗️ ⚠️ 安装数据发送失败，启动重试机制');
+    // 发送失败，存储到本地待重试
+    await storeInstallDataForRetry(installData);
+    // 设置重试机制
+    scheduleInstallDataRetry();
+  }
+}
+
+/**
+ * 🏗️ 发送安装数据到API (支持主备URL)
+ * @param {Object} data - 安装数据
+ * @returns {boolean} 发送是否成功
+ */
+async function sendInstallDataToAPI(data) {
+  // 修改数据格式以适配现有API，但使用独立的事件类型
+  const apiData = {
+    event_type: 'independent_installation',
+    data: data
+  };
+
+  // 尝试主URL
+  try {
+    console.log('🏗️ 正在发送安装数据到主服务器...');
+    
+    const response = await fetch(INSTALLATION_CONFIG.API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(apiData),
+      signal: AbortSignal.timeout(INSTALLATION_CONFIG.TIMEOUT)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('🏗️ ✅ 安装数据发送成功 (主URL):', result);
+      return true;
+    } else {
+      console.warn('🏗️ ⚠️ 主URL发送失败 - HTTP状态:', response.status);
+    }
+  } catch (error) {
+    console.warn('🏗️ ⚠️ 主URL发送异常:', error.message);
+  }
+
+  // 尝试备用URL
+  try {
+    console.log('🏗️ 正在尝试备用服务器...');
+    
+    const response = await fetch(INSTALLATION_CONFIG.FALLBACK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(apiData),
+      signal: AbortSignal.timeout(INSTALLATION_CONFIG.TIMEOUT)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('🏗️ ✅ 安装数据发送成功 (备用URL):', result);
+      return true;
+    } else {
+      console.warn('🏗️ ⚠️ 备用URL发送失败 - HTTP状态:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.warn('🏗️ ⚠️ 备用URL发送异常:', error.message);
+    return false;
+  }
+}
+
+/**
+ * 🏗️ 存储安装数据用于重试
+ */
+async function storeInstallDataForRetry(data) {
+  try {
+    await chrome.storage.local.set({
+      'pending_install_data': data,
+      'install_data_retry_count': 0,
+      'install_data_last_retry': Date.now()
+    });
+    console.log('🏗️ 📦 安装数据已存储，等待重试');
+  } catch (error) {
+    console.error('🏗️ ❌ 存储安装数据失败:', error);
+  }
+}
+
+/**
+ * 🏗️ 安排安装数据重试
+ */
+function scheduleInstallDataRetry() {
+  console.log('🏗️ ⏰ 设置安装数据重试定时器');
+  chrome.alarms.create(INSTALLATION_CONFIG.ALARM_NAME, {
+    delayInMinutes: 5, // 5分钟后首次重试
+    periodInMinutes: INSTALLATION_CONFIG.RETRY_INTERVAL_MINUTES // 之后每30分钟重试一次
+  });
+}
+
+/**
+ * 🏗️ 重试发送安装数据
+ */
+async function retryInstallDataSending() {
+  try {
+    console.log('🏗️ 🔄 开始重试发送安装数据...');
+    
+    const result = await chrome.storage.local.get([
+      'pending_install_data', 
+      'install_data_retry_count'
+    ]);
+    
+    if (!result.pending_install_data) {
+      console.log('🏗️ ℹ️ 没有待重试的安装数据，清除定时器');
+      chrome.alarms.clear(INSTALLATION_CONFIG.ALARM_NAME);
+      return;
+    }
+
+    const retryCount = result.install_data_retry_count || 0;
+    
+    // 最多重试10次
+    if (retryCount >= INSTALLATION_CONFIG.MAX_RETRIES) {
+      console.warn('🏗️ ⚠️ 安装数据重试次数已达上限，放弃发送');
+      await chrome.storage.local.remove([
+        'pending_install_data', 
+        'install_data_retry_count',
+        'install_data_last_retry'
+      ]);
+      chrome.alarms.clear(INSTALLATION_CONFIG.ALARM_NAME);
+      return;
+    }
+
+    console.log(`🏗️ 🔄 第${retryCount + 1}次重试发送安装数据`);
+    
+    // 尝试发送
+    const success = await sendInstallDataToAPI(result.pending_install_data);
+    
+    if (success) {
+      // 发送成功，清理存储和定时器
+      await chrome.storage.local.remove([
+        'pending_install_data', 
+        'install_data_retry_count',
+        'install_data_last_retry'
+      ]);
+      chrome.alarms.clear(INSTALLATION_CONFIG.ALARM_NAME);
+      console.log('🏗️ ✅ 安装数据重试发送成功');
+    } else {
+      // 发送失败，增加重试计数
+      await chrome.storage.local.set({
+        'install_data_retry_count': retryCount + 1,
+        'install_data_last_retry': Date.now()
+      });
+      console.log(`🏗️ ⚠️ 安装数据重试失败，第${retryCount + 1}次`);
+    }
+  } catch (error) {
+    console.error('🏗️ ❌ 安装数据重试处理异常:', error);
+  }
+}
+
+/**
+ * 🏗️ 获取浏览器类型
+ */
+function getBrowserType() {
+  const userAgent = navigator.userAgent;
+  if (userAgent.includes('Edg/')) {
+    return 'edge';
+  } else if (userAgent.includes('Chrome/')) {
+    return 'chrome';
+  } else {
+    return 'unknown';
+  }
+}
+
+/**
+ * 🏗️ 获取浏览器版本
+ */
+function getBrowserVersion() {
+  const userAgent = navigator.userAgent;
+  const match = userAgent.match(/(Chrome|Edg)\/([0-9.]+)/);
+  return match ? match[2] : 'unknown';
+}
+
+/**
+ * 🏗️ 生成安装匿名ID
+ */
+async function generateAnonymousInstallId() {
+  // 基于安装时间和随机数生成匿名ID
+  const installTime = Date.now();
+  const randomValue = Math.random().toString(36).substring(2);
+  const combined = `install-${installTime}-${randomValue}`;
+  
+  // 使用Web Crypto API生成哈希
+  const encoder = new TextEncoder();
+  const data = encoder.encode(combined);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex.substring(0, 16); // 取前16位作为匿名ID
+}
+
+// 监听定时器事件
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === INSTALLATION_CONFIG.ALARM_NAME) {
+    await retryInstallDataSending();
+  }
+});
+
+// ==================== 独立安装信息收集系统结束 ====================
+
 // 简化的版本检测器
 class SimpleVersionChecker {
   constructor() {
@@ -336,6 +586,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   const userHash = await getUserHash();
   const now = Date.now();
   const dateStr = new Date(now).toISOString().split('T')[0];
+  
+  // 🏗️ 独立安装信息收集 - 不受隐私设置控制
+  if (details.reason === 'install') {
+    console.log('🏗️ 检测到首次安装，启动独立安装数据收集');
+    await sendInstallationData(details);
+  }
   
   // 获取存储的数据
   const result = await chrome.storage.local.get([
