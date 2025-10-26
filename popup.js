@@ -2192,8 +2192,12 @@ class PopupController {
           <span class="faq-question-text">${item.question}</span>
           <span class="faq-toggle">▼</span>
         </div>
-        <div class="faq-answer">${item.answer}</div>
+        <div class="faq-answer"></div>
       `;
+      
+      // 使用textContent来正确处理换行符
+      const answerEl = faqItem.querySelector('.faq-answer');
+      answerEl.textContent = item.answer;
 
       // 添加点击事件
       const questionEl = faqItem.querySelector('.faq-question');
