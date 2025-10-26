@@ -7,8 +7,9 @@ const privacyManager = new PrivacySettingsManager();
 // ==================== 独立安装信息收集系统 ====================
 
 /**
- * 🏗️ 独立安装信息收集配置
- * 使用现有的 plugin-data-analytics API，但发送到独立的数据表
+ * 🚫 已废弃 - 旧安装逻辑的配置 (随旧安装逻辑一起废弃)
+ * @deprecated 此配置用于旧的安装数据发送逻辑，已被独立Worker方式替代
+ * 新的独立安装统计使用 sendIndependentStatsToWorker 直接发送到 Worker
  */
 const INSTALLATION_CONFIG = {
   API_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
@@ -20,7 +21,10 @@ const INSTALLATION_CONFIG = {
 };
 
 /**
- * 🏗️ 发送安装数据 - 独立于隐私设置的数据收集
+ * 🚫 已废弃 - 旧的安装数据发送逻辑
+ * @deprecated 此函数已被 sendIndependentInstallationStats 替代
+ * 旧逻辑：发送到 Vercel API，存储到 plugin_installations 表
+ * 新逻辑：直接发送到 Worker，存储到 independent_installation_stats 表
  * @param {Object} installDetails - Chrome安装详情
  */
 async function sendInstallationData(installDetails) {
@@ -55,7 +59,8 @@ async function sendInstallationData(installDetails) {
 }
 
 /**
- * 🏗️ 发送安装数据到API (支持主备URL)
+ * 🚫 已废弃 - 发送安装数据到API (支持主备URL)
+ * @deprecated 此函数已被 sendIndependentStatsToWorker 替代
  * @param {Object} data - 安装数据
  * @returns {boolean} 发送是否成功
  */
@@ -181,7 +186,8 @@ async function sendIndependentStatsToWorker(data) {
 }
 
 /**
- * 🏗️ 存储安装数据用于重试
+ * 🚫 已废弃 - 存储安装数据用于重试
+ * @deprecated 随旧安装逻辑一起废弃
  */
 async function storeInstallDataForRetry(data) {
   try {
@@ -197,7 +203,8 @@ async function storeInstallDataForRetry(data) {
 }
 
 /**
- * 🏗️ 安排安装数据重试
+ * 🚫 已废弃 - 安排安装数据重试
+ * @deprecated 随旧安装逻辑一起废弃
  */
 function scheduleInstallDataRetry() {
   console.log('🏗️ ⏰ 设置安装数据重试定时器');
@@ -208,7 +215,8 @@ function scheduleInstallDataRetry() {
 }
 
 /**
- * 🏗️ 重试发送安装数据
+ * 🚫 已废弃 - 重试发送安装数据
+ * @deprecated 随旧安装逻辑一起废弃
  */
 async function retryInstallDataSending() {
   try {
@@ -653,9 +661,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   // 🏗️ 独立安装信息收集 - 不受隐私设置控制
   if (details.reason === 'install') {
     console.log('🏗️ 检测到首次安装，启动独立安装数据收集');
-    await sendInstallationData(details);
+    // await sendInstallationData(details); // 🚫 已禁用旧逻辑 - 使用独立逻辑替代
     
-    // 📊 同时发送独立安装统计到新表
+    // 📊 发送独立安装统计到新表
     console.log('📊 启动独立安装统计收集');
     await sendIndependentInstallationStats(details);
   }
