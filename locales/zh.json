@@ -68,14 +68,7 @@
           "text": "没有合适的词典？",
           "link": "在线制作专属词典 →"
         },
-        "form": {
-          "selectFile": "选择词典文件 (.json)",
-          "dictName": "词典名称",
-          "dictNamePlaceholder": "输入词典名称",
-          "language": "语言",
-          "cancel": "取消",
-          "add": "添加词典"
-        },
+        
         "messages": {
           "addSuccess": "词典添加成功！",
           "addError": "添加词典失败，请检查文件格式",
@@ -254,10 +247,14 @@
       "feedback": {
         "wechat": "反馈与支持：微信 zuoguyoupan2023"
       },
-      "contact": {
-        "title": "需要更多帮助？",
-        "wechat": "微信：zuoguyoupan2023",
-        "email": "邮箱：support@adhdgofly.com"
+      "faq": {
+        "title": "常见问题",
+        "content": "FAQ内容正在开发中...",
+        "contact": {
+          "title": "需要更多帮助？",
+          "wechat": "微信：zuoguyoupan2023",
+          "email": "邮箱：support@adhdgofly.com"
+        }
       }
     },
     "qa": {
