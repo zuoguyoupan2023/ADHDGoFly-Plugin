@@ -166,6 +166,17 @@ class I18nManager {
       element.placeholder = translation;
     });
 
+    // 处理带有data-i18n-attr属性的元素
+    const attrElements = document.querySelectorAll('[data-i18n-attr]');
+    attrElements.forEach(element => {
+      const attrConfig = element.getAttribute('data-i18n-attr');
+      const [attrName, key] = attrConfig.split(':');
+      if (attrName && key) {
+        const translation = this.t(key);
+        element.setAttribute(attrName, translation);
+      }
+    });
+
     // 处理特殊的HTML内容
     this.applySpecialTranslations();
   }

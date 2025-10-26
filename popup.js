@@ -395,7 +395,7 @@ class PopupController {
       }
       
       // 如果当前显示的是FAQ页面，重新加载FAQ数据以应用新语言
-      if (currentPage && currentPage.id === 'faqPage') {
+      if (currentPage && currentPage.id === 'faq-page') {
         this.loadFAQData();
       }
     });
