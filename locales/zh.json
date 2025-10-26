@@ -246,14 +246,14 @@
       },
       "feedback": {
         "wechat": "反馈与支持：微信 zuoguyoupan2023"
-      },
-      "faq": {
-        "title": "常见问题",
-        "contact": {
-          "title": "需要更多帮助？",
-          "wechat": "微信：zuoguyoupan2023",
-          "email": "邮箱：support@adhdgofly.com"
-        }
+      }
+    },
+    "faq": {
+      "title": "常见问题",
+      "contact": {
+        "title": "需要更多帮助？",
+        "wechat": "微信：zuoguyoupan2023",
+        "email": "邮箱：support@adhdgofly.com"
       }
     },
     "qa": {
