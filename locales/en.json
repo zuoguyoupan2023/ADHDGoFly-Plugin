@@ -242,6 +242,7 @@
     },
     "faq": {
       "title": "Frequently Asked Questions",
+      "searchPlaceholder": "Search questions...",
       "contact": {
         "title": "Contact Us",
         "feedback": "Feedback",

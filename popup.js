@@ -393,6 +393,11 @@ class PopupController {
       if (currentPage && currentPage.id === 'aiPage') {
         this.loadAIAnalysis();
       }
+      
+      // 如果当前显示的是FAQ页面，重新加载FAQ数据以应用新语言
+      if (currentPage && currentPage.id === 'faqPage') {
+        this.loadFAQData();
+      }
     });
   }
   

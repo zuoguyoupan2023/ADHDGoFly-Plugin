@@ -250,6 +250,7 @@
     },
     "faq": {
       "title": "常见问题",
+      "searchPlaceholder": "搜索问题...",
       "contact": {
         "title": "联系我们",
         "feedback": "意见反馈",
