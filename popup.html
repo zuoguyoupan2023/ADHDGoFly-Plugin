@@ -2907,6 +2907,55 @@
         </div>
       </div>
 
+      <!-- FAQ页面 -->
+      <div class="page" id="faq-page">
+        <div class="header">
+          <h3 data-i18n="pages.faq.title">常见问题</h3>
+        </div>
+
+        <div class="faq-content">
+          <!-- 搜索框 -->
+          <div class="faq-search">
+            <input 
+              type="text" 
+              id="faq-search" 
+              data-i18n-placeholder="pages.faq.searchPlaceholder"
+              placeholder="搜索问题..."
+              class="search-input"
+            />
+          </div>
+
+          <!-- 分类导航 -->
+          <div class="faq-categories">
+            <button class="faq-category-btn active" data-category="all" data-i18n="pages.faq.categories.all">全部</button>
+            <button class="faq-category-btn" data-category="installation" data-i18n="pages.faq.categories.installation">安装</button>
+            <button class="faq-category-btn" data-category="usage" data-i18n="pages.faq.categories.usage">使用</button>
+            <button class="faq-category-btn" data-category="troubleshooting" data-i18n="pages.faq.categories.troubleshooting">故障</button>
+            <button class="faq-category-btn" data-category="privacy" data-i18n="pages.faq.categories.privacy">隐私</button>
+          </div>
+
+          <!-- FAQ列表 -->
+          <div class="faq-list" id="faq-list">
+            <!-- 动态生成FAQ内容 -->
+          </div>
+
+          <!-- 联系我们 -->
+          <div class="faq-contact">
+            <h4 data-i18n="pages.faq.contact.title">没找到答案？</h4>
+            <div class="contact-methods">
+              <a href="https://feedback.adhdgofly.online" target="_blank" class="contact-link">
+                <span>🌐</span>
+                <span data-i18n="pages.faq.contact.website">反馈网站</span>
+              </a>
+              <div class="contact-link">
+                <span>💬</span>
+                <span data-i18n="pages.faq.contact.wechat">微信: zuoguyoupan2023</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 关于页面 -->
       <div class="page" id="about-page">
         <div class="header">
@@ -3474,6 +3523,15 @@
 
       <button
         class="sidebar-btn"
+        id="faq-btn"
+        title="常见问题"
+        data-i18n-title="sidebar.faq"
+      >
+        <span style="color: #ff3b30;">❔</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
         id="about-btn"
         title="关于"
         data-i18n-title="sidebar.about"
@@ -3510,6 +3568,7 @@
       <div data-i18n="pages.dict.custom.notification.line2">新加词典在对应语言，展开可见</div>
     </div>
 
+    <script src="faq-data.js"></script>
     <script src="privacy-settings-manager.js"></script>
     <script src="settings.js"></script>
   </body>

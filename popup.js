@@ -447,6 +447,10 @@ class PopupController {
         this.showPage('ai');
         this.loadAIAnalysis();
         break;
+      case 'faq-btn':
+        this.showPage('faq');
+        this.loadFAQData();
+        break;
       case 'about-btn':
         this.showPage('about');
         break;
@@ -2109,6 +2113,152 @@ class PopupController {
     // 可以在这里实现统一的错误消息显示逻辑
     // 暂时使用alert，后续可以改为更优雅的UI提示
     alert(message);
+  }
+
+  // FAQ相关方法
+  /**
+   * 加载FAQ数据并初始化FAQ页面
+   */
+  loadFAQData() {
+    try {
+      // 获取当前语言
+      const currentLang = window.i18n.getCurrentLanguage() || 'zh';
+      
+      // 获取FAQ数据
+      const faqData = window.FAQ_DATA && window.FAQ_DATA[currentLang] ? window.FAQ_DATA[currentLang] : window.FAQ_DATA.zh;
+      
+      // 渲染FAQ列表
+      this.renderFAQList(faqData);
+      
+      // 绑定FAQ事件
+      this.bindFAQEvents();
+      
+    } catch (error) {
+      console.error('加载FAQ数据失败:', error);
+      this.showError('加载FAQ数据失败');
+    }
+  }
+
+  /**
+   * 渲染FAQ列表
+   * @param {Array} faqData - FAQ数据数组
+   */
+  renderFAQList(faqData) {
+    const faqList = document.getElementById('faq-list');
+    if (!faqList || !faqData || !Array.isArray(faqData)) return;
+
+    // 清空现有内容
+    faqList.innerHTML = '';
+
+    // 渲染FAQ项目
+    faqData.forEach((faq, index) => {
+      const faqItem = document.createElement('div');
+      faqItem.className = 'faq-item';
+      faqItem.dataset.category = faq.category;
+      
+      faqItem.innerHTML = `
+        <div class="faq-question" data-faq-index="${index}">
+          <span class="faq-question-text">${faq.question}</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer" style="display: none;">
+          ${faq.answer}
+        </div>
+      `;
+      
+      faqList.appendChild(faqItem);
+    });
+  }
+
+  /**
+   * 绑定FAQ页面事件
+   */
+  bindFAQEvents() {
+    // 绑定搜索事件
+    const searchInput = document.getElementById('faq-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.filterFAQs(e.target.value);
+      });
+    }
+
+    // 绑定分类按钮事件
+    const categoryBtns = document.querySelectorAll('.faq-category-btn');
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // 移除所有active状态
+        categoryBtns.forEach(b => b.classList.remove('active'));
+        // 添加当前按钮的active状态
+        btn.classList.add('active');
+        
+        const category = btn.dataset.category;
+        this.filterFAQsByCategory(category);
+      });
+    });
+
+    // 绑定FAQ项目点击事件
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    faqQuestions.forEach(question => {
+      question.addEventListener('click', () => {
+        this.toggleFAQAnswer(question);
+      });
+    });
+  }
+
+  /**
+   * 根据搜索关键词过滤FAQ
+   * @param {string} keyword - 搜索关键词
+   */
+  filterFAQs(keyword) {
+    const faqItems = document.querySelectorAll('.faq-item');
+    const lowerKeyword = keyword.toLowerCase();
+
+    faqItems.forEach(item => {
+      const question = item.querySelector('.faq-question-text').textContent.toLowerCase();
+      const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+      
+      if (question.includes(lowerKeyword) || answer.includes(lowerKeyword)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  /**
+   * 根据分类过滤FAQ
+   * @param {string} category - 分类名称
+   */
+  filterFAQsByCategory(category) {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+      if (category === 'all' || item.dataset.category === category) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  /**
+   * 切换FAQ答案的显示/隐藏
+   * @param {Element} questionElement - 问题元素
+   */
+  toggleFAQAnswer(questionElement) {
+    const faqItem = questionElement.closest('.faq-item');
+    const answer = faqItem.querySelector('.faq-answer');
+    const toggle = questionElement.querySelector('.faq-toggle');
+    
+    if (answer.style.display === 'none' || !answer.style.display) {
+      answer.style.display = 'block';
+      toggle.textContent = '-';
+      faqItem.classList.add('expanded');
+    } else {
+      answer.style.display = 'none';
+      toggle.textContent = '+';
+      faqItem.classList.remove('expanded');
+    }
   }
 }
 
