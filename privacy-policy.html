@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADHDGoFly插件隐私政策 | Privacy Policy</title>
+    <meta name="description" content="ADHDGoFly浏览器插件隐私政策详情页，了解我们如何收集、使用、存储和保护您的个人信息。">
+    <meta name="keywords" content="ADHDGoFly,隐私政策,浏览器插件,数据保护,GDPR">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://privacy.adhdgofly.online/">
+    <meta property="og:title" content="ADHDGoFly插件隐私政策">
+    <meta property="og:description" content="了解ADHDGoFly插件如何保护您的隐私和数据安全">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://privacy.adhdgofly.online/">
+    <meta property="twitter:title" content="ADHDGoFly插件隐私政策">
+    <meta property="twitter:description" content="了解ADHDGoFly插件如何保护您的隐私和数据安全">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fafafa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+        
+        /* Header */
+        .header {
+            background: #000;
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Navigation */
+        .nav {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: #333;
+        }
+        
+        .last-updated {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        /* Main Content */
+        .main {
+            background: white;
+            margin: 40px auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .content {
+            padding: 60px;
+        }
+        
+        /* Table of Contents */
+        .toc {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        
+        .toc h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .toc-list a {
+            text-decoration: none;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+            display: block;
+        }
+        
+        .toc-list a:hover {
+            background-color: #e3f2fd;
+        }
+        
+        /* Typography */
+        h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #333;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 1.4rem;
+            margin: 30px 0 15px 0;
+        }
+        
+        h4 {
+            color: #555;
+            font-size: 1.2rem;
+            margin: 25px 0 10px 0;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        /* Highlight boxes */
+        .highlight-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .success-box {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* Code blocks */
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+        
+        /* Contact section */
+        .contact-section {
+            background: #333;
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .contact-section h3 {
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .contact-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-links a:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: white;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .content {
+                padding: 30px;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                gap: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .toc-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Section spacing */
+        section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>ADHDGoFly插件隐私政策</h1>
+            <p>我们深知个人信息对您的重要性，因此致力于保护您的隐私安全</p>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container nav-container">
+            <div class="nav-links">
+                <a href="#overview">概述</a>
+                <a href="#principles">收集原则</a>
+                <a href="#data-collection">收集信息</a>
+                <a href="#data-usage">使用方式</a>
+                <a href="#data-security">存储安全</a>
+                <a href="#user-rights">您的权利</a>
+                <a href="#contact">联系我们</a>
+            </div>
+            <div class="last-updated">
+                最后更新：2025年10月17日
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <div class="content">
+                <!-- Table of Contents -->
+                <div class="toc">
+                    <h3>📋 目录导航</h3>
+                    <ul class="toc-list">
+                        <li><a href="#overview">概述</a></li>
+                        <li><a href="#principles">信息收集原则</a></li>
+                        <li><a href="#data-collection">我们收集的信息</a></li>
+                        <li><a href="#data-usage">信息使用方式</a></li>
+                        <li><a href="#data-security">信息存储与安全</a></li>
+                        <li><a href="#data-sharing">信息共享与披露</a></li>
+                        <li><a href="#user-rights">您的权利</a></li>
+                        <li><a href="#children-privacy">儿童隐私</a></li>
+                        <li><a href="#policy-updates">隐私政策更新</a></li>
+                        <li><a href="#technical-details">技术实现说明</a></li>
+                        <li><a href="#contact">联系我们</a></li>
+                        <li><a href="#legal">法律适用</a></li>
+                    </ul>
+                </div>
+
+                <!-- Overview -->
+                <section id="overview">
+                    <h2>概述</h2>
+                    <p>本隐私政策旨在向您说明ADHDGoFly浏览器插件（以下简称"本插件"）如何收集、使用、存储和保护您的个人信息。我们深知个人信息对您的重要性，因此致力于保护您的隐私安全。</p>
+                </section>
+
+                <!-- Principles -->
+                <section id="principles">
+                    <h2>一、信息收集原则</h2>
+                    
+                    <h3>1.1 数据最小化原则</h3>
+                    <p>我们只收集为您提供服务所必需的最少信息，不会收集与插件功能无关的个人信息。</p>
+                    
+                    <h3>1.2 匿名化处理原则</h3>
+                    <p>所有收集的数据均进行匿名化处理，不与您的真实身份关联。</p>
+                    
+                    <h3>1.3 透明化原则</h3>
+                    <p>我们明确告知您我们收集哪些信息以及如何使用这些信息。</p>
+                    
+                    <h3>1.4 用户控制原则</h3>
+                    <p>您有权控制是否允许我们收集数据，并可随时更改您的选择。</p>
+                </section>
+
+                <!-- Data Collection -->
+                <section id="data-collection">
+                    <h2>二、我们收集的信息</h2>
+                    
+                    <h3>2.1 基础信息</h3>
+                    <div class="info-box">
+                        <strong>这些信息是插件正常运行所必需的，无法关闭：</strong>
+                    </div>
+                    
+                    <h4>1. 插件运行基础信息</h4>
+                    <ul>
+                        <li>插件版本号</li>
+                        <li>浏览器User-Agent信息（包含浏览器类型、版本、操作系统信息）</li>
+                        <li>插件更新、启动时间戳</li>
+                        <li>插件启动次数统计</li>
+                    </ul>
+                    
+                    <h4>2. 技术运行信息</h4>
+                    <ul>
+                        <li>插件内部ID（用于技术识别）</li>
+                        <li>请求ID（用于日志追踪和错误诊断）</li>
+                        <li>事件类型标识（安装、启动、标签页启动等）</li>
+                    </ul>
+                    
+                    <h4>3. 匿名用户标识信息</h4>
+                    <ul>
+                        <li>生成的用户哈希值（基于插件ID和安装时间生成，不关联真实身份）</li>
+                        <li>日期字符串（用于按日统计）</li>
+                    </ul>
+                    
+                    <h3>2.2 功能信息</h3>
+                    <div class="success-box">
+                        <strong>这些信息需要您明确授权后才会收集，您可以在设置中随时关闭：</strong>
+                    </div>
+                    
+                    <h4>1. 增强分析信息</h4>
+                    <ul>
+                        <li>地理位置信息（通过IP地址推断的国家/地区）</li>
+                        <li>详细的浏览器环境信息</li>
+                        <li>页面来源信息（Referrer）</li>
+                    </ul>
+                    
+                    <h4>2. 功能使用信息</h4>
+                    <ul>
+                        <li>高亮功能开启/关闭</li>
+                        <li>词典启用/禁用</li>
+                        <li>颜色方案</li>
+                        <li>文本样式</li>
+                    </ul>
+                    
+                    <h4>3. 性能优化信息</h4>
+                    <ul>
+                        <li>页面处理时间</li>
+                        <li>词典加载时间</li>
+                        <li>文本分词处理时间</li>
+                        <li>错误类型统计（脱敏处理）</li>
+                    </ul>
+                    
+                    <h3>2.3 我们不会收集的信息</h3>
+                    <div class="warning-box">
+                        <strong>我们绝不会收集以下信息：</strong>
+                    </div>
+                    
+                    <h4>1. 个人身份信息</h4>
+                    <ul>
+                        <li>真实姓名、身份证号、银行卡号</li>
+                        <li>用户名和密码、邮箱地址、手机号码</li>
+                        <li>生物识别信息（指纹、面部识别等）</li>
+                    </ul>
+                    
+                    <h4>2. 页面内容信息</h4>
+                    <ul>
+                        <li>您浏览的具体网页内容</li>
+                        <li>页面中的文本内容</li>
+                        <li>表单填写数据</li>
+                        <li>搜索关键词</li>
+                    </ul>
+                    
+                    <h4>3. 媒体内容信息</h4>
+                    <ul>
+                        <li>图片、音频、视频内容</li>
+                    </ul>
+                    
+                    <h4>4. 通信隐私信息</h4>
+                    <ul>
+                        <li>聊天记录、邮件内容</li>
+                        <li>语音通话内容、视频通话内容</li>
+                    </ul>
+                    
+                    <h4>5. 系统敏感权限</h4>
+                    <ul>
+                        <li>摄像头、麦克风直接调用</li>
+                        <li>GPS精确定位</li>
+                        <li>读取系统文件、修改系统设置</li>
+                    </ul>
+                </section>
+
+                <!-- Data Usage -->
+                <section id="data-usage">
+                    <h2>三、信息使用方式</h2>
+                    
+                    <h3>3.1 基础运营统计</h3>
+                    <ul>
+                        <li>统计插件安装、更新和启动次数</li>
+                        <li>了解插件版本分布情况</li>
+                        <li>监控插件基本运行状态</li>
+                    </ul>
+                    
+                    <h3>3.2 技术支持和问题诊断</h3>
+                    <ul>
+                        <li>通过错误日志诊断技术问题</li>
+                        <li>分析插件在不同环境下的运行情况</li>
+                        <li>提供技术支持时的问题定位</li>
+                    </ul>
+                    
+                    <h3>3.3 产品使用分析</h3>
+                    <ul>
+                        <li>了解用户访问的网站类型（通过域名统计）</li>
+                        <li>分析插件在不同网站上的使用情况</li>
+                        <li>优化插件对不同网站的兼容性</li>
+                    </ul>
+                    
+                    <h3>3.4 匿名统计分析</h3>
+                    <ul>
+                        <li>统计活跃用户数量（通过匿名哈希）</li>
+                        <li>分析使用时间分布和频率</li>
+                        <li>制定产品发展和改进策略</li>
+                    </ul>
+                </section>
+
+                <!-- Data Security -->
+                <section id="data-security">
+                    <h2>四、信息存储与安全</h2>
+                    
+                    <h3>4.1 存储方式</h3>
+                    <ul>
+                        <li>数据主要存储在Cloudflare Workers平台的全球分布式网络</li>
+                        <li>使用Cloudflare D1数据库进行数据存储</li>
+                        <li>备用存储服务：Vercel平台</li>
+                        <li>所有存储服务均符合国际数据保护标准</li>
+                        <li>本地数据加密存储在您的设备上</li>
+                    </ul>
+                    
+                    <h3>4.2 安全措施</h3>
+                    <ul>
+                        <li>所有数据传输使用HTTPS加密</li>
+                        <li>数据发送至以下API端点：
+                            <ul>
+                                <li>主要端点：<code>adhdgofly.online/api/plugin-analytics</code></li>
+                                <li>备用端点：<code>download-collector.adhdgofly.online/api/collect.js</code></li>
+                            </ul>
+                        </li>
+                        <li>采用TLS加密协议确保传输安全</li>
+                        <li>包含重试机制确保数据传输可靠性</li>
+                        <li>对敏感数据进行加密存储</li>
+                        <li>定期进行安全审计</li>
+                        <li>限制数据访问权限</li>
+                    </ul>
+                    
+                    <h3>4.3 数据保留</h3>
+                    <ul>
+                        <li>插件事件数据：保留12个月</li>
+                        <li>错误日志和诊断信息：保留3个月</li>
+                        <li>匿名用户标识：保留至数据过期自动清理</li>
+                        <li>您可以随时要求删除您的数据</li>
+                    </ul>
+                </section>
+
+                <!-- Data Sharing -->
+                <section id="data-sharing">
+                    <h2>五、信息共享与披露</h2>
+                    
+                    <h3>5.1 我们不会共享您的信息</h3>
+                    <div class="success-box">
+                        <ul>
+                            <li>不会出售您的数据给任何第三方</li>
+                            <li>不会与广告商共享您的数据</li>
+                            <li>不会将您的数据用于广告投放</li>
+                        </ul>
+                    </div>
+                    
+                    <h3>5.2 法律要求的披露</h3>
+                    <p>在以下情况下，我们可能会披露您的信息：</p>
+                    <ul>
+                        <li>遵守法律法规的要求</li>
+                        <li>响应法院或其他政府机构的合法要求</li>
+                        <li>保护我们的合法权益</li>
+                    </ul>
+                </section>
+
+                <!-- User Rights -->
+                <section id="user-rights">
+                    <h2>六、您的权利</h2>
+                    
+                    <h3>6.1 控制权</h3>
+                    <ul>
+                        <li>您可以随时在设置中关闭数据收集</li>
+                        <li>您可以查看我们收集的数据类型</li>
+                        <li>您可以要求删除您的数据</li>
+                    </ul>
+                    
+                    <h3>6.2 数据访问权</h3>
+                    <ul>
+                        <li>您有权了解我们收集了哪些关于您的数据</li>
+                        <li>您可以要求我们提供您数据的副本</li>
+                    </ul>
+                    
+                    <h3>6.3 数据删除权</h3>
+                    <ul>
+                        <li>您有权要求删除您的所有数据</li>
+                        <li>您可以通过联系我们的隐私团队来行使此权利</li>
+                    </ul>
+                    
+                    <h3>6.4 撤回同意权</h3>
+                    <ul>
+                        <li>您可以随时撤回对我们收集数据的同意</li>
+                        <li>撤回同意不会影响之前基于同意进行的数据处理</li>
+                    </ul>
+                </section>
+
+                <!-- Children Privacy -->
+                <section id="children-privacy">
+                    <h2>七、儿童隐私</h2>
+                    <p>本插件不针对13岁以下儿童设计，我们不会故意收集儿童的个人信息。如果您是家长或监护人，并发现您的孩子在未经您同意的情况下提供了个人信息，请联系我们。</p>
+                </section>
+
+                <!-- Policy Updates -->
+                <section id="policy-updates">
+                    <h2>八、隐私政策更新</h2>
+                    <p>我们可能会不时更新本隐私政策。如果有重大变更，我们会在插件中通知您。我们建议您定期查看本政策以了解最新信息。</p>
+                </section>
+
+                <!-- Technical Details -->
+                <section id="technical-details">
+                    <h2>九、技术实现说明</h2>
+                    <p>为了提高透明度，我们提供以下技术实现细节：</p>
+                    
+                    <h3>9.1 数据收集机制</h3>
+                    <ul>
+                        <li>插件通过 <code>background.js</code> 脚本收集基础运行数据</li>
+                        <li>标签页启动时通过 <code>content.js</code> 脚本收集页面访问信息</li>
+                        <li>所有数据收集均在本地处理后再发送</li>
+                    </ul>
+                    
+                    <h3>9.2 匿名化处理</h3>
+                    <ul>
+                        <li>用户哈希通过插件ID和安装时间生成，不包含个人信息</li>
+                        <li>域名哈希使用16位哈希算法，保护隐私的同时保留统计价值</li>
+                        <li>不收集任何可直接识别个人身份的信息</li>
+                    </ul>
+                    
+                    <h3>9.3 数据传输</h3>
+                    <ul>
+                        <li>使用POST请求发送数据到指定API端点</li>
+                        <li>包含自动重试机制，确保数据传输可靠性</li>
+                        <li>所有请求均包含必要的错误处理</li>
+                    </ul>
+                </section>
+
+                <!-- Contact -->
+                <section id="contact">
+                    <div class="contact-section">
+                        <h3>联系我们</h3>
+                        <p>如果您对本隐私政策有任何疑问或需要行使您的权利，请通过以下方式联系我们：</p>
+                        <div class="contact-links">
+                            <a href="mailto:privacy@adhdgofly.com">📧 privacy@adhdgofly.com</a>
+                            <a href="https://github.com/adhdgofly/ADHDGoFly-Plugin/issues" target="_blank">🐛 GitHub Issues</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Legal -->
+                <section id="legal">
+                    <h2>十、法律适用</h2>
+                    <p>本隐私政策遵守以下法律法规：</p>
+                    <ul>
+                        <li>欧盟GDPR（通用数据保护条例）</li>
+                        <li>美国CCPA（加州消费者隐私法案）</li>
+                        <li>中国《个人信息保护法》</li>
+                        <li>其他适用的数据保护法律法规</li>
+                    </ul>
+                </section>
+
+                <!-- Effective Date -->
+                <section>
+                    <h2>生效日期</h2>
+                    <div class="highlight-box">
+                        <p><strong>本隐私政策自2025年10月17日起生效。</strong></p>
+                    </div>
+                </section>
+
+                <!-- Thank You -->
+                <section>
+                    <div class="info-box">
+                        <p><strong>感谢您选择ADHDGoFly插件！我们致力于在保护您隐私的前提下，为您提供更好的产品体验。</strong></p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 ADHDGoFly. 保留所有权利。</p>
+            <p>本隐私政策最后更新于 2025年10月17日</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in navigation
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .nav-links a.active {
+            color: #333;
+            font-weight: 600;
+        }
+    </style>
+</body>
+</html>
