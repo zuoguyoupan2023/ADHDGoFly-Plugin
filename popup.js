@@ -302,6 +302,9 @@ class PopupController {
     // AI分析事件
     this.bindAIEvents();
     
+    // FAQ事件
+    this.bindFAQEvents();
+    
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
@@ -449,6 +452,10 @@ class PopupController {
         break;
       case 'about-btn':
         this.showPage('about');
+        break;
+      case 'faq-btn':
+        this.showPage('faq');
+        this.loadFAQContent();
         break;
       case 'settings-btn':
         this.showPage('settings');
@@ -1952,6 +1959,203 @@ class PopupController {
     await this.loadAIAnalysis();
   }
 
+  // FAQ相关方法
+  bindFAQEvents() {
+    // 搜索框事件
+    const searchInput = document.getElementById('faq-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => this.filterFAQs(e.target.value));
+    }
+
+    // 分类按钮事件将在loadFAQContent中动态绑定
+  }
+
+  async loadFAQContent() {
+    console.log('加载FAQ内容...');
+    
+    try {
+      const currentLanguage = window.i18nManager ? window.i18nManager.getCurrentLanguage() : 'zh';
+      const faqFile = currentLanguage === 'en' ? '001-常见问题解答-en.md' : '001-常见问题解答.md';
+      
+      // 从扩展包中读取FAQ文件
+      const response = await fetch(chrome.runtime.getURL(`docs/QA/${faqFile}`));
+      if (!response.ok) {
+        throw new Error(`Failed to load FAQ file: ${response.status}`);
+      }
+      
+      const content = await response.text();
+      this.parseFAQContent(content);
+      
+    } catch (error) {
+      console.error('加载FAQ内容失败:', error);
+      this.showFAQError();
+    }
+  }
+
+  parseFAQContent(content) {
+    const lines = content.split('\n');
+    const faqs = [];
+    let currentFAQ = null;
+    let currentCategory = '通用';
+    
+    for (let line of lines) {
+      line = line.trim();
+      
+      // 检测分类标题 (## 开头)
+      if (line.startsWith('## ') && !line.includes('?')) {
+        currentCategory = line.replace('## ', '').trim();
+        continue;
+      }
+      
+      // 检测问题 (### 开头或包含?)
+      if (line.startsWith('### ') || (line.includes('?') && line.length < 200)) {
+        if (currentFAQ) {
+          faqs.push(currentFAQ);
+        }
+        currentFAQ = {
+          question: line.replace('### ', '').trim(),
+          answer: '',
+          category: currentCategory
+        };
+        continue;
+      }
+      
+      // 收集答案内容
+      if (currentFAQ && line && !line.startsWith('#')) {
+        if (currentFAQ.answer) {
+          currentFAQ.answer += '\n' + line;
+        } else {
+          currentFAQ.answer = line;
+        }
+      }
+    }
+    
+    // 添加最后一个FAQ
+    if (currentFAQ) {
+      faqs.push(currentFAQ);
+    }
+    
+    this.faqData = faqs;
+    this.renderFAQs(faqs);
+    this.renderCategories();
+  }
+
+  renderCategories() {
+    const categoriesContainer = document.querySelector('.faq-categories');
+    if (!categoriesContainer || !this.faqData) return;
+    
+    // 获取所有分类
+    const categories = ['全部', ...new Set(this.faqData.map(faq => faq.category))];
+    
+    categoriesContainer.innerHTML = '';
+    categories.forEach((category, index) => {
+      const btn = document.createElement('button');
+      btn.className = `category-btn ${index === 0 ? 'active' : ''}`;
+      btn.textContent = category;
+      btn.addEventListener('click', () => this.filterByCategory(category, btn));
+      categoriesContainer.appendChild(btn);
+    });
+  }
+
+  renderFAQs(faqs) {
+    const faqList = document.getElementById('faq-list');
+    if (!faqList) return;
+    
+    if (faqs.length === 0) {
+      faqList.innerHTML = `
+        <div class="faq-no-results">
+          <div class="no-results-icon">🔍</div>
+          <p data-i18n="faq.noResults">未找到相关问题</p>
+        </div>
+      `;
+      return;
+    }
+    
+    faqList.innerHTML = '';
+    faqs.forEach((faq, index) => {
+      const faqItem = document.createElement('div');
+      faqItem.className = 'faq-item';
+      faqItem.innerHTML = `
+        <div class="faq-question" onclick="toggleFAQItem(${index})">
+          <span class="faq-question-text">${this.escapeHtml(faq.question)}</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <div class="faq-answer-content">${this.formatFAQAnswer(faq.answer)}</div>
+        </div>
+      `;
+      faqList.appendChild(faqItem);
+    });
+  }
+
+  formatFAQAnswer(answer) {
+    // 简单的Markdown格式化
+    return answer
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n- /g, '\n• ')
+      .replace(/\n/g, '<br>')
+      .replace(/`(.*?)`/g, '<code>$1</code>');
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  filterFAQs(searchTerm) {
+    if (!this.faqData) return;
+    
+    const filtered = this.faqData.filter(faq => 
+      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    this.renderFAQs(filtered);
+    
+    // 重置分类按钮状态
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector('.category-btn').classList.add('active');
+  }
+
+  filterByCategory(category, clickedBtn) {
+    if (!this.faqData) return;
+    
+    // 更新按钮状态
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    clickedBtn.classList.add('active');
+    
+    // 过滤FAQ
+    const filtered = category === '全部' ? 
+      this.faqData : 
+      this.faqData.filter(faq => faq.category === category);
+    
+    this.renderFAQs(filtered);
+    
+    // 清空搜索框
+    const searchInput = document.getElementById('faq-search-input');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+  }
+
+  showFAQError() {
+    const faqList = document.getElementById('faq-list');
+    if (faqList) {
+      faqList.innerHTML = `
+        <div class="faq-no-results">
+          <div class="no-results-icon">❌</div>
+          <p data-i18n="faq.loadError">加载FAQ内容失败，请稍后重试</p>
+        </div>
+      `;
+    }
+  }
+
   /**
    * 检查版本更新
    * 获取当前版本并检查是否有新版本可用
@@ -2160,6 +2364,16 @@ function toggleLanguageGroup(language) {
 window.toggleLanguageGroup = toggleLanguageGroup;
 window.initLanguageGroupListeners = initLanguageGroupListeners;
 window.hasActualProfessionalDicts = hasActualProfessionalDicts;
+
+// FAQ相关全局函数
+function toggleFAQItem(index) {
+  const faqItems = document.querySelectorAll('.faq-item');
+  if (faqItems[index]) {
+    faqItems[index].classList.toggle('expanded');
+  }
+}
+
+window.toggleFAQItem = toggleFAQItem;
 
 // 检查语言组是否有实际的专业词典内容
 function hasActualProfessionalDicts(languageGroup) {

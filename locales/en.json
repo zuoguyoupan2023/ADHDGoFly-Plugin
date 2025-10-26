@@ -251,6 +251,27 @@
         }
       }
     },
+    "faq": {
+      "title": "FAQ",
+      "description": "Find answers to frequently asked questions",
+      "search": {
+        "placeholder": "Search questions..."
+      },
+      "categories": {
+        "all": "All",
+        "general": "General",
+        "installation": "Installation & Usage",
+        "features": "Features",
+        "troubleshooting": "Troubleshooting"
+      },
+      "noResults": "No related questions found",
+      "loadError": "Failed to load FAQ content, please try again later",
+      "contact": {
+        "title": "Need more help?",
+        "wechat": "WeChat: zuoguyoupan2023",
+        "email": "Email: support@adhdgofly.com"
+      }
+    },
     "settings": {
       "title": "Settings",
       "storage": {
@@ -300,10 +321,11 @@
     "dict": "Dictionary",
     "colors": "Colors",
     "text": "Text",
-    "ai": "AI Analysis",
+    "ai": "AI",
     "about": "About",
+    "faq": "FAQ",
     "settings": "Settings",
-    "language": "Switch Language"
+    "language": "Language"
   },
   "languages": {
     "zh": "中文",
