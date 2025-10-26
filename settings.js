@@ -151,9 +151,25 @@ class SettingsManager {
                     analyticsLabel.textContent = this.i18nManager.t('pages.settings.privacy.analytics');
                 }
 
-                const analyticsDesc = privacySection.querySelector('.analytics-description');
-                if (analyticsDesc) {
-                    analyticsDesc.textContent = this.i18nManager.t('pages.settings.privacy.analyticsDesc');
+                // 更新4行隐私描述文本
+                const line1 = privacySection.querySelector('[data-i18n="pages.settings.privacy.line1"]');
+                if (line1) {
+                    line1.textContent = this.i18nManager.t('pages.settings.privacy.line1');
+                }
+
+                const line2 = privacySection.querySelector('[data-i18n="pages.settings.privacy.line2"]');
+                if (line2) {
+                    line2.textContent = this.i18nManager.t('pages.settings.privacy.line2');
+                }
+
+                const line3 = privacySection.querySelector('[data-i18n="pages.settings.privacy.line3"]');
+                if (line3) {
+                    line3.textContent = this.i18nManager.t('pages.settings.privacy.line3');
+                }
+
+                const line4 = privacySection.querySelector('[data-i18n="pages.settings.privacy.line4"]');
+                if (line4) {
+                    line4.textContent = this.i18nManager.t('pages.settings.privacy.line4');
                 }
 
                 // 更新隐私链接

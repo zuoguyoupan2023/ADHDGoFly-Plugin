@@ -1427,6 +1427,29 @@
   background: #a8a8a8;
 }
 
+/* 隐私描述行样式 */
+.privacy-desc-lines {
+  margin: 8px 0 12px 0;
+}
+
+.privacy-desc-line {
+  font-size: 12px;
+  color: #555;
+  margin: 4px 0;
+  line-height: 1.4;
+  padding-left: 16px;
+  position: relative;
+}
+
+.privacy-desc-line:before {
+  content: "•";
+  color: #007AFF;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
 /* 隐私链接样式 */
 .privacy-links {
   margin-top: 12px;

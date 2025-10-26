@@ -344,6 +344,10 @@
       "privacy": {
         "title": "Privacy Settings",
         "analytics": "Anonymous Information Collection",
+        "line1": "Check to allow us to collect anonymous information",
+        "line2": "Uncheck to prohibit collection",
+        "line3": "We request your permission, this helps improve the plugin",
+        "line4": "The collected information is absolutely anonymous",
         "analyticsDesc": "Help us improve the product experience by collecting anonymous usage statistics only, without involving personal privacy data",
         "detailsTitle": "Information Collection Details",
         "item1": "Plugin installation and update events",
