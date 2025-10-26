@@ -8,7 +8,7 @@ const FAQ_DATA = {
       answer: `
         <p><strong>Chrome浏览器</strong>: 访问 Chrome网上应用店搜索"ADHDGoFly"，点击"添加至Chrome"</p>
         <p><strong>Edge浏览器</strong>: 访问 Microsoft Edge加载项商店搜索"ADHDGoFly"，点击"获取"</p>
-        <p><strong>手动安装</strong>: 下载插件压缩包，在浏览器扩展管理页面开启"开发者模式"，选择"加载已解压的扩展程序"</p>
+        <p><strong>手动安装</strong>: 具体看下一个问题</p>
       `
     },
     {
@@ -17,7 +17,7 @@ const FAQ_DATA = {
       question: '如何手动安装插件？',
       answer: `
         <ol>
-          <li>访问 <code>https://download.adhdgofly.online</code> 下载对应浏览器的zip安装包</li>
+          <li>访问 <code style="word-break: break-all;">https://download.adhdgofly.online</code> 下载对应浏览器的zip安装包</li>
           <li>解压缩文件：Mac双击zip文件自动解压，Windows右键选择"解压缩"</li>
           <li>打开浏览器扩展管理页面：Chrome访问 <code>chrome://extensions/</code>，Edge访问 <code>edge://extensions/</code></li>
           <li>开启"开发者模式"或"开发人员模式"</li>
@@ -186,7 +186,7 @@ const FAQ_DATA = {
       answer: `
         <p><strong>Chrome Browser</strong>: Visit the Chrome Web Store, search for "ADHDGoFly", and click "Add to Chrome"</p>
         <p><strong>Edge Browser</strong>: Visit the Microsoft Edge Add-ons Store, search for "ADHDGoFly", and click "Get"</p>
-        <p><strong>Manual Installation</strong>: Download the plugin zip file, enable "Developer mode" in your browser's extension management page, and select "Load unpacked extension"</p>
+        <p><strong>Manual Installation</strong>: See the next question for details</p>
       `
     },
     {
@@ -195,7 +195,7 @@ const FAQ_DATA = {
       question: 'How to manually install the plugin?',
       answer: `
         <ol>
-          <li>Visit <code>https://download.adhdgofly.online</code> to download the zip package for your browser</li>
+          <li>Visit <code style="word-break: break-all;">https://download.adhdgofly.online</code> to download the zip package for your browser</li>
           <li>Extract the file: Double-click the zip file on Mac for auto-extraction, or right-click and select "Extract" on Windows</li>
           <li>Open browser extension management page: Visit <code>chrome://extensions/</code> for Chrome, or <code>edge://extensions/</code> for Edge</li>
           <li>Enable "Developer mode"</li>
