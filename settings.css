@@ -1426,3 +1426,45 @@
 .faq-list::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* 隐私链接样式 */
+.privacy-links {
+  margin-top: 12px;
+}
+
+.privacy-links-desc {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.privacy-link-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.privacy-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  color: #495057;
+  text-decoration: none;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.privacy-link-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #212529;
+  text-decoration: none;
+}
+
+.privacy-link-btn span:first-child {
+  font-size: 14px;
+}

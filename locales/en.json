@@ -323,6 +323,7 @@
       "storage": {
         "title": "Storage Management",
         "retentionTime": "Cache Retention Time",
+        "minutes3": "🧪 3 Minutes (Test Mode)",
         "days3": "3 Days",
         "days7": "7 Days",
         "days14": "14 Days",
@@ -350,7 +351,10 @@
         "item3": "Plugin version information",
         "item4": "Anonymous user identifier (not traceable to individuals)",
         "item5": "Browser type and language settings",
-        "note": "We promise: No personally identifiable information is collected, no browsing history or website content is collected."
+        "note": "We promise: No personally identifiable information is collected, no browsing history or website content is collected.",
+        "linksDesc": "Learn more:",
+        "policyLink": "Privacy Policy",
+        "whyCollectLink": "Why Collect"
       },
       "other": {
         "title": "Other Settings",

@@ -51,17 +51,7 @@ class SettingsManager {
             });
         }
 
-        // 隐私详情展开/收起
-        const privacyDetails = document.querySelector('.privacy-details');
-        const privacySummary = document.querySelector('.privacy-details summary');
-        if (privacyDetails && privacySummary) {
-            privacySummary.addEventListener('click', (e) => {
-                // 添加动画效果
-                setTimeout(() => {
-                    privacyDetails.classList.toggle('expanded');
-                }, 100);
-            });
-        }
+        // 隐私链接不需要特殊事件处理，使用默认的链接行为
     }
 
     bindStorageEvents() {
@@ -166,24 +156,20 @@ class SettingsManager {
                     analyticsDesc.textContent = this.i18nManager.getMessage('settings.privacy.analyticsDesc');
                 }
 
-                // 更新详情部分
-                const detailsTitle = privacySection.querySelector('.privacy-details summary');
-                if (detailsTitle) {
-                    detailsTitle.textContent = this.i18nManager.getMessage('settings.privacy.detailsTitle');
+                // 更新隐私链接
+                const linksDesc = privacySection.querySelector('[data-i18n="pages.settings.privacy.linksDesc"]');
+                if (linksDesc) {
+                    linksDesc.textContent = this.i18nManager.getMessage('settings.privacy.linksDesc');
                 }
 
-                const items = privacySection.querySelectorAll('.privacy-details li');
-                items.forEach((item, index) => {
-                    const key = `settings.privacy.item${index + 1}`;
-                    const text = this.i18nManager.getMessage(key);
-                    if (text) {
-                        item.textContent = text;
-                    }
-                });
+                const policyLink = privacySection.querySelector('[data-i18n="pages.settings.privacy.policyLink"]');
+                if (policyLink) {
+                    policyLink.textContent = this.i18nManager.getMessage('settings.privacy.policyLink');
+                }
 
-                const note = privacySection.querySelector('.privacy-note');
-                if (note) {
-                    note.textContent = this.i18nManager.getMessage('settings.privacy.note');
+                const whyCollectLink = privacySection.querySelector('[data-i18n="pages.settings.privacy.whyCollectLink"]');
+                if (whyCollectLink) {
+                    whyCollectLink.textContent = this.i18nManager.getMessage('settings.privacy.whyCollectLink');
                 }
             }
         } catch (error) {
