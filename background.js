@@ -60,9 +60,9 @@ async function sendInstallationData(installDetails) {
  * @returns {boolean} 发送是否成功
  */
 async function sendInstallDataToAPI(data) {
-  // 修改数据格式以适配现有API，但使用独立的事件类型
+  // 使用原来的数据格式
   const apiData = {
-    event_type: 'independent_installation',
+    event_type: 'plugin_install',
     data: data
   };
 
