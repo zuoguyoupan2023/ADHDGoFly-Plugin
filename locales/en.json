@@ -209,12 +209,122 @@
         "installation": "Installation",
         "usage": "Usage",
         "troubleshooting": "Troubleshooting",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "compatibility": "Compatibility",
+        "advanced": "Advanced",
+        "support": "Support",
+        "settings": "Settings"
       },
       "contact": {
         "title": "Can't find the answer?",
         "website": "Feedback Website",
         "wechat": "WeChat: zuoguyoupan2023"
+      },
+      "questions": {
+        "q1": {
+          "question": "How to install ADHDGoFly plugin?",
+          "answer": "<p><strong>Chrome Browser</strong>: Visit <a href=\"https://chrome.google.com/webstore/category/extensions\" target=\"_blank\">Chrome Web Store</a>, search for \"ADHDGoFly\", click \"Add to Chrome\"</p><p><strong>Edge Browser</strong>: Visit <a href=\"https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home\" target=\"_blank\">Microsoft Edge Add-ons Store</a>, search for \"ADHDGoFly\", click \"Get\"</p><p><strong>Manual Installation</strong>: Download the plugin zip file, enable \"Developer mode\" in browser extension management page, select \"Load unpacked extension\"</p>"
+        },
+        "q2": {
+          "question": "How to manually install the plugin?",
+          "answer": "<ol><li>Visit <code style=\"word-break: break-all;\">https://download.adhdgofly.online</code> to download the zip installation package for your browser</li><li>Extract the files:<ul><li><strong>Mac</strong>: Double-click the zip file to auto-extract</li><li><strong>Windows</strong>: Right-click the zip file and select \"Extract\"</li></ul></li><li>Open browser extension management page:<ul><li><strong>Chrome</strong>: Visit <code>chrome://extensions/</code></li><li><strong>Edge</strong>: Visit <code>edge://extensions/</code></li></ul></li><li>Enable \"Developer mode\" (Chrome) or \"Developer mode\" (Edge)</li><li>Click \"Load unpacked\" or \"Load unpacked extension\"</li><li>Select the entire extracted folder (don't select individual files within the folder)</li></ol>"
+        },
+        "q3": {
+          "question": "Can't see the plugin icon after installation?",
+          "answer": "<ol><li>Check the extensions icon in the top-right corner of your browser (puzzle piece style 🧩)</li><li>Find ADHDGoFly in the extensions list and click the \"Pin\" icon (📌)</li><li>Ensure the plugin is enabled (switch is in the on position)</li></ol>"
+        },
+        "q4": {
+          "question": "Which browsers does the plugin support?",
+          "answer": "<ul><li>✅ Chrome 88+</li><li>✅ Microsoft Edge 88+</li><li>✅ Firefox (planned support)</li><li>✅ Safari (planned support)</li><li>❌ IE browser (not supported)</li></ul>"
+        },
+        "q5": {
+          "question": "Why are versions inconsistent?",
+          "answer": "<ul><li><strong>Manual installation</strong>: Requires manual download of updated versions</li><li><strong>App store installation</strong>: Auto-updates, but may have 1-7 day delays due to official review</li></ul>"
+        },
+        "q6": {
+          "question": "How to use the highlighting feature?",
+          "answer": "<ol><li>After installing the plugin, visit any webpage</li><li>The plugin will automatically detect page language and load enabled dictionaries</li><li>Based on set vocabulary categories and color schemes, highlight page vocabulary</li><li>Click the plugin icon to adjust settings</li><li>Click the close button to restore all highlighted vocabulary to original appearance</li></ol>"
+        },
+        "q7": {
+          "question": "Which languages support vocabulary highlighting?",
+          "answer": "<ul><li>🇨🇳 <strong>Chinese</strong> (idioms, poetry, technical terms, etc.) - enabled by default</li><li>🇺🇸 <strong>English</strong> - enabled by default</li><li>🇪🇸 <strong>Spanish</strong> - requires manual activation</li><li>🇫🇷 <strong>French</strong> - requires manual activation</li><li>🇷🇺 <strong>Russian</strong> - requires manual activation</li><li>🇯🇵 <strong>Japanese</strong> - requires manual activation</li><li>More languages being added continuously...</li></ul>"
+        },
+        "q8": {
+          "question": "How to modify highlighting colors?",
+          "answer": "<ol><li>Click the plugin icon to open the settings panel</li><li>Select the \"Color Settings\" tab</li><li>Choose from preset color schemes (custom colors will be supported in the future)</li><li>Save settings and apply to current page</li></ol>"
+        },
+        "q9": {
+          "question": "Can I add my own vocabulary?",
+          "answer": "<ol><li>In the dictionary tab, expand \"Custom Dictionary\" and click the add button</li><li>Import custom dictionary JSON file</li><li>Can modify dictionary name, language, and domain type (defaults to JSON file settings)</li></ol>"
+        },
+        "q10": {
+          "question": "How to create custom dictionaries?",
+          "answer": "<ol><li>Visit the custom dictionary tool: <a href=\"https://dictionary.adhdgofly.online/\" target=\"_blank\">https://dictionary.adhdgofly.online/</a></li><li>Create and export JSON file, then import to the plugin</li><li>After adding, it's enabled by default and can be managed in the corresponding language dictionary list</li></ol>"
+        },
+        "q11": {
+          "question": "Does the plugin affect webpage loading speed?",
+          "answer": "<ul><li>The plugin uses asynchronous loading and intelligent caching technology</li><li>Minimal impact on page loading speed (typically <50ms)</li></ul>"
+        },
+        "q12": {
+          "question": "Why don't some page contents get highlighted?",
+          "answer": "<p><strong>Reason</strong>: Different website structures and content display logic</p><p><strong>Solutions</strong>:</p><ul><li>If it's a commonly used website, please contact us for feedback</li><li>We will analyze page structure and adjust highlighting logic</li></ul><p><strong>Special cases</strong>: Login, payment pages involving password verification</p><ul><li>If verification fails, please disable plugin highlighting first</li><li>The plugin doesn't steal passwords, but highlighting code may affect some websites' verification mechanisms</li></ul>"
+        },
+        "q13": {
+          "question": "Why does it show \"Connection failed, please retry\"?",
+          "answer": "<p>Common causes:</p><ol><li><strong>Plugin update</strong>: Current page was opened before the update<ul><li><strong>Solution</strong>: Refresh the page and click the plugin icon again</li></ul></li><li><strong>Special pages</strong>: Extension management pages cannot be highlighted<ul><li><strong>Solution</strong>: Test on other regular websites</li></ul></li><li><strong>File corruption</strong>: Manually installed plugin files were accidentally deleted<ul><li><strong>Solution</strong>: Completely uninstall and reinstall the plugin</li></ul></li></ol>"
+        },
+        "q14": {
+          "question": "Plugin doesn't work properly on certain websites?",
+          "answer": "<ul><li>If highlighting works on other websites but not on a specific one, that website may prohibit plugin usage</li><li>Please submit the problematic website to us, and we'll analyze the specific cause</li></ul>"
+        },
+        "q15": {
+          "question": "Highlighting is inaccurate or incorrect?",
+          "answer": "<ol><li>This is quite common, as there are often new vocabulary words, and our dictionary doesn't 100% include all vocabulary</li><li>We recommend checking question 9 and considering using custom dictionaries</li></ol>"
+        },
+        "q16": {
+          "question": "Plugin uses too much memory?",
+          "answer": "<ol><li>Enable \"Power saving mode\" in settings</li><li>Reduce the number of simultaneously loaded dictionaries</li><li>Clean up useless vocabulary in custom dictionaries</li><li>Regularly clear plugin cache</li></ol>"
+        },
+        "q17": {
+          "question": "Does the plugin collect my personal information?",
+          "answer": "<ul><li>❌ <strong>Does not collect</strong>: Personal identification information, browsing history, page content</li><li>✅ <strong>Only collects with your permission</strong>: Anonymous usage statistics (such as language preferences, feature usage frequency)</li><li>🔒 <strong>Promise</strong>: All data is completely anonymous and cannot be traced to individuals</li><li>📋 <strong>Details</strong>: View complete privacy policy (<a href=\"https://privacy.adhdgofly.online\" target=\"_blank\">https://privacy.adhdgofly.online</a>) for more information</li></ul>"
+        },
+        "q18": {
+          "question": "How to disable data collection?",
+          "answer": "<ol><li>Find \"Privacy Settings\" in plugin settings</li><li>Turn off \"Anonymous Usage Statistics\" switch</li><li>After turning off, no usage data will be collected</li><li>Does not affect normal plugin functionality</li></ol>"
+        },
+        "q19": {
+          "question": "Is the plugin safe?",
+          "answer": "<ul><li>✅ Open source code, viewable on GitHub</li><li>✅ Passed browser store security review</li><li>✅ Does not access sensitive permissions</li><li>✅ Regular security updates, no malicious code</li></ul>"
+        },
+        "q20": {
+          "question": "Can it be used on mobile phones?",
+          "answer": "<ul><li>Currently Edge mobile can install some official extensions</li><li>ADHDGoFly plugin is not yet on the official support list</li><li>We are applying to join the official support list</li><li>If you use Edge, please rate us in the add-ons store to help us get support earlier</li></ul>"
+        },
+        "q21": {
+          "question": "What to do about conflicts with other plugins?",
+          "answer": "<ol><li>Identify conflicting plugins (usually other page modification plugins)</li><li>Adjust plugin priority in settings</li><li>Use \"Compatibility mode\" to reduce conflicts</li><li>Temporarily disable other plugins for testing if necessary</li></ol>"
+        },
+        "q22": {
+          "question": "Settings lost after plugin update?",
+          "answer": "<ul><li>Normally updates don't affect settings</li><li>Future versions will support settings file export functionality</li></ul>"
+        },
+        "q23": {
+          "question": "Does it support keyboard shortcuts to enable/disable highlighting?",
+          "answer": "<ul><li>Currently does not support keyboard shortcuts</li><li>Future versions will consider adding keyboard shortcut settings</li></ul>"
+        },
+        "q24": {
+          "question": "How to get technical support when encountering problems?",
+          "answer": "<ol><li><strong>WeChat contact</strong>: zuoguyoupan2023</li><li><strong>Feedback website</strong>: <a href=\"https://feedback.adhdgofly.online\" target=\"_blank\">feedback.adhdgofly.online</a></li><li><strong>Email contact</strong>: support@adhdgofly.com</li><li><strong>Online documentation</strong>: View detailed usage instructions</li></ol>"
+        },
+        "q25": {
+          "question": "How to submit feature suggestions?",
+          "answer": "<ol><li>Submit suggestions via WeChat zuoguyoupan2023 or feedback website (<a href=\"https://feedback.adhdgofly.online\" target=\"_blank\">https://feedback.adhdgofly.online</a>)</li><li>Describe feature requirements and usage scenarios in detail</li><li>Participate in community discussions</li><li>Follow project updates for development progress</li></ol>"
+        },
+        "q27": {
+          "question": "Is the plugin free?",
+          "answer": "<ul><li>✅ <strong>Free</strong>: Free</li><li>✅ <strong>Open source</strong>: Code is public</li></ul>"
+        }
       }
     },
     "about": {
