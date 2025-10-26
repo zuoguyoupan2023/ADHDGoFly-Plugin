@@ -304,9 +304,14 @@
         "a24": "1. WeChat contact: zuoguyoupan2023\n2. Feedback website: https://feedback.adhdgofly.online\n3. Online documentation: View detailed usage instructions"
       }
     },
+    "settings": {
+      "title": "Settings",
+      "version": {
+        "title": "Version Information"
+      },
       "dictionaries": {
-        "title": "Dictionary Sources",
-        "descriptions": {
+         "title": "Dictionary Sources",
+         "descriptions": {
           "zh": "Based on Jieba Chinese word segmentation dictionary, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
           "en": "Based on WordNet English dictionary, providing accurate part-of-speech classification and semantic relationships. WordNet is a large English lexical database developed by Princeton University.",
           "fr": "Sourced from Morphalou French morphological dictionary, containing basic vocabulary part-of-speech information and morphological analysis.",
@@ -314,10 +319,7 @@
           "es": "Sourced from Apertium open-source machine translation platform's Spanish linguistic resources, supporting common vocabulary recognition.",
           "ja": "Based on JMdict open-source Japanese multilingual dictionary, containing part-of-speech information for kana and kanji. Completely open and supports commercial use."
         }
-      }
-    },
-    "settings": {
-      "title": "Settings",
+     },
       "storage": {
         "title": "Storage Management",
         "retentionTime": "Cache Retention Time",
@@ -358,7 +360,8 @@
         "analyticsDesc": "Help us improve the product (no personal information collected)",
         "reset": "Reset All Settings"
       }
-    },
+    }
+  },
   "sidebar": {
     "home": "Home",
     "dict": "Dictionary",
