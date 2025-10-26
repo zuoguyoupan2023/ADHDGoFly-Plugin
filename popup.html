@@ -2913,7 +2913,38 @@
           <h3 data-i18n="pages.faq.title">常见问题</h3>
         </div>
         <div class="content">
-          <p data-i18n="pages.faq.content">FAQ内容正在开发中...</p>
+          <div class="faq-content">
+            <!-- 搜索框 -->
+            <div class="faq-search">
+              <input 
+                type="text" 
+                id="faq-search-input" 
+                data-i18n-placeholder="pages.faq.searchPlaceholder"
+                placeholder="搜索问题..."
+                class="search-input"
+              />
+            </div>
+
+            <!-- FAQ列表 -->
+            <div class="faq-list" id="faq-list">
+              <!-- 动态生成FAQ内容 -->
+            </div>
+
+            <!-- 联系我们 -->
+            <div class="faq-contact">
+              <h4 data-i18n="pages.faq.contact.title">没找到答案？</h4>
+              <div class="contact-methods">
+                <a href="https://feedback.adhdgofly.online" target="_blank" class="contact-link">
+                  <span>🌐</span>
+                  <span data-i18n="pages.faq.contact.website">反馈网站</span>
+                </a>
+                <div class="contact-link">
+                  <span>💬</span>
+                  <span data-i18n="pages.faq.contact.wechat">微信: zuoguyoupan2023</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -246,9 +246,8 @@
         "title": "Need more help?",
         "wechat": "WeChat: zuoguyoupan2023",
         "email": "Email: support@adhdgofly.com"
-      }
-    },
-    "qa": {
+      },
+      "content": {
         "q0": "What is ADHDGoFly plugin?",
         "a0": "ADHDGoFly is a browser extension designed specifically for ADHD users to improve reading comprehension and focus. It highlights important vocabulary on web pages, provides multilingual dictionary support, and features intelligent analysis capabilities.",
         "q1": "How to install ADHDGoFly plugin?",
@@ -265,7 +264,8 @@
         "a6": "Possible reasons:\n1. Web page content is dynamically loaded, need to wait for loading completion\n2. Some websites have special security policies\n3. Web page content is mainly images or videos\n4. The plugin may be blocked by the website's content security policy",
         "q7": "How to contact technical support?",
         "a7": "If you encounter problems or have suggestions, you can contact us through:\n• WeChat: zuoguyoupan2023\n• Email: support@adhdgofly.com\nWe will respond to your questions as soon as possible."
-      },
+      }
+    },
       "dictionaries": {
         "title": "Dictionary Sources",
         "descriptions": {

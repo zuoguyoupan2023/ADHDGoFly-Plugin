@@ -487,6 +487,11 @@ class PopupController {
           this.bindDictTooltipEvents();
         }, 50);
       }
+      
+      // 如果是FAQ页面，初始化FAQ功能
+      if (pageId === 'faq') {
+        this.initFAQ();
+      }
     }
   }
 
@@ -2112,6 +2117,115 @@ class PopupController {
     // 可以在这里实现统一的错误消息显示逻辑
     // 暂时使用alert，后续可以改为更优雅的UI提示
     alert(message);
+  }
+
+  // FAQ相关方法
+  initFAQ() {
+    this.expandedFAQItems = new Set();
+    this.bindFAQEvents();
+    this.loadFAQData();
+  }
+
+  bindFAQEvents() {
+    // 搜索功能
+    const searchInput = document.getElementById('faq-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.filterFAQs(e.target.value.toLowerCase());
+      });
+    }
+  }
+
+  async loadFAQData() {
+    try {
+      // 获取当前语言设置
+      const result = await chrome.storage.sync.get(['language']);
+      const currentLanguage = result.language || 'zh';
+      
+      // 加载对应语言的FAQ数据
+      const localeData = await this.loadLocaleData(currentLanguage);
+      if (localeData && localeData.pages && localeData.pages.faq && localeData.pages.faq.content) {
+        this.renderFAQs(localeData.pages.faq.content);
+      }
+    } catch (error) {
+      console.error('Failed to load FAQ data:', error);
+    }
+  }
+
+  async loadLocaleData(language) {
+    try {
+      const response = await fetch(`locales/${language}.json`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to load locale data for ${language}:`, error);
+      return null;
+    }
+  }
+
+  renderFAQs(faqData) {
+    const faqList = document.getElementById('faq-list');
+    if (!faqList) return;
+
+    faqList.innerHTML = '';
+
+    // 遍历FAQ数据中的所有Q&A对
+    const questions = [];
+    for (let i = 0; faqData[`q${i}`] && faqData[`a${i}`]; i++) {
+      questions.push({
+        id: `faq-${i}`,
+        question: faqData[`q${i}`],
+        answer: faqData[`a${i}`]
+      });
+    }
+
+    questions.forEach(item => {
+      const faqItem = document.createElement('div');
+      faqItem.className = 'faq-item';
+      faqItem.dataset.id = item.id;
+
+      faqItem.innerHTML = `
+        <div class="faq-question">
+          <span class="faq-question-text">${item.question}</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">${item.answer}</div>
+      `;
+
+      // 添加点击事件
+      const questionEl = faqItem.querySelector('.faq-question');
+      questionEl.addEventListener('click', () => {
+        this.toggleFAQItem(item.id, faqItem);
+      });
+
+      faqList.appendChild(faqItem);
+    });
+  }
+
+  toggleFAQItem(itemId, itemElement) {
+    if (this.expandedFAQItems.has(itemId)) {
+      // 收起
+      this.expandedFAQItems.delete(itemId);
+      itemElement.classList.remove('expanded');
+    } else {
+      // 展开
+      this.expandedFAQItems.add(itemId);
+      itemElement.classList.add('expanded');
+    }
+  }
+
+  filterFAQs(searchQuery) {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+      const questionText = item.querySelector('.faq-question-text').textContent.toLowerCase();
+      const answerText = item.querySelector('.faq-answer').textContent.toLowerCase();
+      
+      if (questionText.includes(searchQuery) || answerText.includes(searchQuery)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
   }
 }
 
