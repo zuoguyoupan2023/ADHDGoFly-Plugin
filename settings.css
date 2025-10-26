@@ -1279,11 +1279,23 @@
 
 /* 侧边栏FAQ按钮特殊样式 */
 .sidebar-btn#faq-btn span {
-  font-size: 16px;
+  color: #ff3b30 !important;
+  font-size: 16px !important;
+  font-weight: normal !important;
 }
 
 .sidebar-btn#faq-btn.active span {
-  font-size: 16px;
+  color: white !important;
+  font-size: 16px !important;
+}
+
+/* 确保FAQ按钮emoji颜色不被其他样式覆盖 */
+button.sidebar-btn#faq-btn span {
+  color: #ff3b30 !important;
+}
+
+button.sidebar-btn#faq-btn.active span {
+  color: white !important;
 }
 
 /* 响应式调整 */
