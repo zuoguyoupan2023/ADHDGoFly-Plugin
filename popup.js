@@ -393,12 +393,6 @@ class PopupController {
       if (currentPage && currentPage.id === 'aiPage') {
         this.loadAIAnalysis();
       }
-      
-      // 如果FAQ页面已加载，立即重新加载FAQ数据
-      const faqList = document.getElementById('faq-list');
-      if (faqList && faqList.children.length > 0) {
-        this.loadFAQData();
-      }
     });
   }
   
@@ -406,6 +400,12 @@ class PopupController {
     const currentLang = window.i18n.getCurrentLanguage();
     const newLang = currentLang === 'zh' ? 'en' : 'zh';
     await window.i18n.switchLanguage(newLang);
+    
+    // 如果当前在FAQ页面，重新加载FAQ数据以显示正确的语言内容
+    const faqPage = document.getElementById('faq');
+    if (faqPage && !faqPage.classList.contains('hidden')) {
+      this.loadFAQData();
+    }
   }
   
   updateLanguageUI(language) {
