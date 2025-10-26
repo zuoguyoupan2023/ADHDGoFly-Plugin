@@ -239,6 +239,32 @@
       "feedback": {
         "wechat": "Feedback & Support: WeChat zuoguyoupan2023"
       },
+      "faq": {
+        "title": "Frequently Asked Questions",
+        "contact": {
+          "title": "Need more help?",
+          "wechat": "WeChat: zuoguyoupan2023",
+          "email": "Email: support@adhdgofly.com"
+        }
+      },
+      "qa": {
+        "q0": "What is ADHDGoFly plugin?",
+        "a0": "ADHDGoFly is a browser extension designed specifically for ADHD users to improve reading comprehension and focus. It highlights important vocabulary on web pages, provides multilingual dictionary support, and features intelligent analysis capabilities.",
+        "q1": "How to install ADHDGoFly plugin?",
+        "a1": "1. Download the plugin from Chrome Web Store or Edge Add-ons Store\n2. Click the \"Add to Browser\" button\n3. Confirm installation permissions\n4. After installation, the plugin icon will appear in your browser toolbar",
+        "q2": "What languages does the plugin support?",
+        "a2": "The plugin currently supports dictionary functions for Chinese, English, Spanish, French, Japanese, Russian, and other languages. The interface language supports switching between Chinese and English.",
+        "q3": "How to use the highlighting feature?",
+        "a3": "1. Click the plugin icon to open the settings panel\n2. Select dictionaries to enable in \"Dictionary Settings\"\n3. Choose an appropriate color scheme\n4. Important vocabulary will be automatically highlighted when browsing web pages",
+        "q4": "Can I customize dictionaries?",
+        "a4": "Yes! You can add custom dictionaries:\n1. Click \"Custom Dictionaries\" in the settings panel\n2. Click the \"Add Dictionary\" button\n3. Upload a JSON format dictionary file\n4. Set dictionary name and description\n5. Enable the newly added dictionary",
+        "q5": "What to do if the plugin doesn't work?",
+        "a5": "Please try the following solutions:\n1. Refresh the current web page\n2. Check if the plugin is enabled\n3. Confirm that dictionaries are selected and enabled\n4. Restart your browser\n5. If the problem persists, please contact technical support",
+        "q6": "Why don't some web pages show highlighting?",
+        "a6": "Possible reasons:\n1. Web page content is dynamically loaded, need to wait for loading completion\n2. Some websites have special security policies\n3. Web page content is mainly images or videos\n4. The plugin may be blocked by the website's content security policy",
+        "q7": "How to contact technical support?",
+        "a7": "If you encounter problems or have suggestions, you can contact us through:\n• WeChat: zuoguyoupan2023\n• Email: support@adhdgofly.com\nWe will respond to your questions as soon as possible."
+      },
       "dictionaries": {
         "title": "Dictionary Sources",
         "descriptions": {
