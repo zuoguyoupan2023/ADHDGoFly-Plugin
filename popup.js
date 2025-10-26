@@ -447,6 +447,9 @@ class PopupController {
         this.showPage('ai');
         this.loadAIAnalysis();
         break;
+      case 'faq-btn':
+        this.showPage('faq');
+        break;
       case 'about-btn':
         this.showPage('about');
         break;
