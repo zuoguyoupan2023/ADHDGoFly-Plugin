@@ -224,122 +224,12 @@
         "installation": "安装",
         "usage": "使用",
         "troubleshooting": "故障",
-        "privacy": "隐私",
-        "compatibility": "兼容性",
-        "advanced": "高级功能",
-        "support": "支持",
-        "settings": "设置"
+        "privacy": "隐私"
       },
       "contact": {
         "title": "没找到答案？",
         "website": "反馈网站",
         "wechat": "微信: zuoguyoupan2023"
-      },
-      "questions": {
-        "q1": {
-          "question": "如何安装 ADHDGoFly 插件？",
-          "answer": "<p><strong>Chrome浏览器</strong>: 访问 <a href=\"https://chrome.google.com/webstore/category/extensions\" target=\"_blank\">Chrome网上应用店</a> 搜索\"ADHDGoFly\"，点击\"添加至Chrome\"</p><p><strong>Edge浏览器</strong>: 访问 <a href=\"https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home\" target=\"_blank\">Microsoft Edge加载项商店</a> 搜索\"ADHDGoFly\"，点击\"获取\"</p><p><strong>手动安装</strong>: 下载插件压缩包，在浏览器扩展管理页面开启\"开发者模式\"，选择\"加载已解压的扩展程序\"</p>"
-        },
-        "q2": {
-          "question": "如何手动安装插件？",
-          "answer": "<ol><li>访问 <code style=\"word-break: break-all;\">https://download.adhdgofly.online</code> 下载对应浏览器的zip安装包</li><li>解压缩文件：<ul><li><strong>Mac</strong>: 双击zip文件自动解压</li><li><strong>Windows</strong>: 右键zip文件选择\"解压缩\"</li></ul></li><li>打开浏览器扩展管理页面：<ul><li><strong>Chrome</strong>: 访问 <code>chrome://extensions/</code></li><li><strong>Edge</strong>: 访问 <code>edge://extensions/</code></li></ul></li><li>开启\"开发者模式\"（Chrome）或\"开发人员模式\"（Edge）</li><li>点击\"加载未打包的扩展程序\"或\"加载解压缩的扩展\"</li><li>选择解压后的整个文件夹（不要选择文件夹内的单个文件）</li></ol>"
-        },
-        "q3": {
-          "question": "安装后看不到插件图标怎么办？",
-          "answer": "<ol><li>检查浏览器右上角扩展程序图标（拼图样式 🧩）</li><li>在扩展程序列表中找到ADHDGoFly，点击\"固定\"图标（📌）</li><li>确保插件已启用（开关处于开启状态）</li></ol>"
-        },
-        "q4": {
-          "question": "插件支持哪些浏览器？",
-          "answer": "<ul><li>✅ Chrome 88+</li><li>✅ Microsoft Edge 88+</li><li>✅ Firefox（计划支持）</li><li>✅ Safari（计划支持）</li><li>❌ IE浏览器（不支持）</li></ul>"
-        },
-        "q5": {
-          "question": "为什么版本不一致？",
-          "answer": "<ul><li><strong>手动安装</strong>: 需要手动下载更新版本</li><li><strong>应用商店安装</strong>: 会自动更新，但因官方审核可能有1-7天延迟</li></ul>"
-        },
-        "q6": {
-          "question": "如何使用高亮功能？",
-          "answer": "<ol><li>安装插件后，访问任意网页</li><li>插件会自动检测页面语言并加载已开启的词典</li><li>根据设置的词汇类别和颜色方案，对页面词汇进行高亮显示</li><li>点击插件图标可以调整设置</li><li>点击关闭按钮，所有高亮词汇恢复原样</li></ol>"
-        },
-        "q7": {
-          "question": "支持哪些语言的词汇高亮？",
-          "answer": "<ul><li>🇨🇳 <strong>中文</strong>（成语、诗词、专业术语等）- 默认开启</li><li>🇺🇸 <strong>英文</strong> - 默认开启</li><li>🇪🇸 <strong>西班牙语</strong> - 需手动开启</li><li>🇫🇷 <strong>法语</strong> - 需手动开启</li><li>🇷🇺 <strong>俄语</strong> - 需手动开启</li><li>🇯🇵 <strong>日语</strong> - 需手动开启</li><li>更多语言持续添加中...</li></ul>"
-        },
-        "q8": {
-          "question": "如何修改高亮颜色？",
-          "answer": "<ol><li>点击插件图标打开设置面板</li><li>选择\"颜色设置\"选项卡</li><li>从预设颜色方案中选择（未来将支持自定义颜色）</li><li>保存设置并应用到当前页面</li></ol>"
-        },
-        "q9": {
-          "question": "可以添加自己的词汇吗？",
-          "answer": "<ol><li>在词典选项卡中展开\"自建词典\"，点击添加按钮</li><li>导入自建词典JSON文件</li><li>可修改词典名称、语言、领域类型（默认使用JSON文件设置）</li></ol>"
-        },
-        "q10": {
-          "question": "怎样自建词典？",
-          "answer": "<ol><li>访问自建词典工具：<a href=\"https://dictionary.adhdgofly.online/\" target=\"_blank\">https://dictionary.adhdgofly.online/</a></li><li>创建并导出JSON文件，然后导入到插件</li><li>添加后默认启用，可在对应语言词典列表中管理</li></ol>"
-        },
-        "q11": {
-          "question": "插件会影响网页加载速度吗？",
-          "answer": "<ul><li>插件采用异步加载和智能缓存技术</li><li>对页面加载速度影响极小（通常<50ms）</li></ul>"
-        },
-        "q12": {
-          "question": "为什么有些页面部分内容不高亮？",
-          "answer": "<p><strong>原因</strong>: 不同网站结构和内容展示逻辑不同</p><p><strong>解决方案</strong>:</p><ul><li>如果是常用网站，请联系我们反馈</li><li>我们会分析页面结构并调整高亮逻辑</li></ul><p><strong>特殊情况</strong>: 登录、付款等涉及密码验证的页面</p><ul><li>如果验证失败，请先关闭插件高亮</li><li>插件不会窃取密码，但高亮代码可能影响某些网站的验证机制</li></ul>"
-        },
-        "q13": {
-          "question": "为什么显示\"链接失败，请重试\"？",
-          "answer": "<p>常见原因：</p><ol><li><strong>插件更新</strong>: 当前页面是更新前打开的<ul><li><strong>解决</strong>: 刷新页面后重新点击插件图标</li></ul></li><li><strong>特殊页面</strong>: 扩展管理页面等无法高亮<ul><li><strong>解决</strong>: 在其他常规网站测试</li></ul></li><li><strong>文件损坏</strong>: 手动安装的插件文件被误删<ul><li><strong>解决</strong>: 彻底卸载后重新安装插件</li></ul></li></ol>"
-        },
-        "q14": {
-          "question": "某些网站上插件无法正常工作？",
-          "answer": "<ul><li>如果其他网站都能高亮，某个网站不能，可能是该网站禁止使用插件</li><li>请将问题网站提交给我们，我们会分析具体原因</li></ul>"
-        },
-        "q15": {
-          "question": "高亮显示不准确或有误？",
-          "answer": "<ol><li>这种情况很常见，毕竟有很多时候会有新词汇，而我们的词典也不是100%收纳所有词汇</li><li>推荐看 问题9，考虑使用自建词典</li></ol>"
-        },
-        "q16": {
-          "question": "插件占用内存过多？",
-          "answer": "<ol><li>在设置中启用\"节能模式\"</li><li>减少同时加载的词典数量</li><li>清理自定义词典中的无用词汇</li><li>定期清除插件缓存</li></ol>"
-        },
-        "q17": {
-          "question": "插件会收集我的个人信息吗？",
-          "answer": "<ul><li>❌ <strong>不收集</strong>: 个人身份信息、浏览历史、页面内容</li><li>✅ <strong>仅在你允许的情况下收集</strong>: 匿名使用统计（如语言偏好、功能使用频率）</li><li>🔒 <strong>承诺</strong>: 所有数据完全匿名，无法追踪到个人</li><li>📋 <strong>详情</strong>: 查看完整隐私政策（<a href=\"https://privacy.adhdgofly.online\" target=\"_blank\">https://privacy.adhdgofly.online</a>）了解更多</li></ul>"
-        },
-        "q18": {
-          "question": "如何禁用数据收集？",
-          "answer": "<ol><li>在插件设置中找到\"隐私设置\"</li><li>关闭\"匿名使用统计\"开关</li><li>关闭后不会收集任何使用数据</li><li>不影响插件的正常功能使用</li></ol>"
-        },
-        "q19": {
-          "question": "插件是否安全？",
-          "answer": "<ul><li>✅ 开源代码，可在GitHub查看</li><li>✅ 通过浏览器商店安全审核</li><li>✅ 不访问敏感权限</li><li>✅ 定期安全更新、无恶意代码</li></ul>"
-        },
-        "q20": {
-          "question": "手机上可以使用吗？",
-          "answer": "<ul><li>目前Edge移动版可以安装部分官方扩展</li><li>ADHDGoFly插件暂未在官方支持名单中</li><li>我们正在申请加入官方支持名单</li><li>如果您使用Edge，请在加载项商店给我们评分，有助于更早获得支持</li></ul>"
-        },
-        "q21": {
-          "question": "与其他插件冲突怎么办？",
-          "answer": "<ol><li>识别冲突插件（通常是其他页面修改类插件）</li><li>在设置中调整插件优先级</li><li>使用\"兼容模式\"减少冲突</li><li>必要时可暂时禁用其他插件进行测试</li></ol>"
-        },
-        "q22": {
-          "question": "插件更新后设置丢失？",
-          "answer": "<ul><li>正常情况下更新不会影响设置</li><li>未来版本将支持设置文件导出功能</li></ul>"
-        },
-        "q23": {
-          "question": "是否支持快捷键开启/关闭高亮？",
-          "answer": "<ul><li>目前暂不支持快捷键功能</li><li>后续版本会考虑添加快捷键设置</li></ul>"
-        },
-        "q24": {
-          "question": "遇到问题如何获取技术支持？",
-          "answer": "<ol><li><strong>微信联系</strong>: zuoguyoupan2023</li><li><strong>反馈网站</strong>: <a href=\"https://feedback.adhdgofly.online\" target=\"_blank\">feedback.adhdgofly.online</a></li><li><strong>邮件联系</strong>: support@adhdgofly.com</li><li><strong>在线文档</strong>: 查看详细使用说明</li></ol>"
-        },
-        "q25": {
-          "question": "如何提交功能建议？",
-          "answer": "<ol><li>通过微信wechat zuoguyoupan2023 或反馈网站 (<a href=\"https://feedback.adhdgofly.online\" target=\"_blank\">https://feedback.adhdgofly.online</a>) 提交建议</li><li>详细描述功能需求和使用场景</li><li>参与社区讨论</li><li>关注项目更新了解开发进度</li></ol>"
-        },
-        "q27": {
-          "question": "插件是免费的吗？",
-          "answer": "<ul><li>✅ <strong>免费</strong>: 免费</li><li>✅ <strong>开源</strong>: 代码公开</li></ul>"
-        }
       }
     },
     "about": {
