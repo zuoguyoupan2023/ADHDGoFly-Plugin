@@ -272,10 +272,10 @@
 /* 设置页面样式 */
 .settings-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
   padding: 0 16px;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   box-sizing: border-box;
   background: white;
