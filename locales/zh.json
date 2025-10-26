@@ -266,27 +266,6 @@
         }
       }
     },
-    "faq": {
-      "title": "常见问题",
-      "description": "查找常见问题的解答",
-      "search": {
-        "placeholder": "搜索问题..."
-      },
-      "categories": {
-        "all": "全部",
-        "general": "通用",
-        "installation": "安装使用",
-        "features": "功能相关",
-        "troubleshooting": "故障排除"
-      },
-      "noResults": "未找到相关问题",
-      "loadError": "加载FAQ内容失败，请稍后重试",
-      "contact": {
-        "title": "需要更多帮助？",
-        "wechat": "微信：zuoguyoupan2023",
-        "email": "邮箱：support@adhdgofly.com"
-      }
-    },
     "settings": {
       "title": "设置",
       "version": {
@@ -350,11 +329,10 @@
     "dict": "词典",
     "colors": "颜色",
     "text": "文本",
-    "ai": "AI",
+    "ai": "AI分析",
     "about": "关于",
-    "faq": "常见问题",
     "settings": "设置",
-    "language": "语言"
+    "language": "切换语言"
   },
   "languages": {
     "zh": "中文",
