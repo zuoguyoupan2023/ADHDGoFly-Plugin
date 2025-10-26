@@ -274,15 +274,17 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0;
+  padding: 16px;
   display: block;
   width: 100%;
   box-sizing: border-box;
+  background: white;
 }
 
 .settings-section {
   margin-bottom: 24px;
-  background: #f8f9fa;
+  background: white;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
   overflow: hidden;
   width: 100%;
@@ -1119,7 +1121,7 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 14px;
-  background: #f8f9fa;
+  background: white;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
