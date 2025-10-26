@@ -201,22 +201,6 @@
       "noData": "No data available",
       "error": "Analysis failed, please try again"
     },
-    "faq": {
-      "title": "Frequently Asked Questions",
-      "searchPlaceholder": "Search questions...",
-      "categories": {
-        "all": "All",
-        "installation": "Installation",
-        "usage": "Usage",
-        "troubleshooting": "Troubleshooting",
-        "privacy": "Privacy"
-      },
-      "contact": {
-        "title": "Can't find the answer?",
-        "website": "Feedback Website",
-        "wechat": "WeChat: zuoguyoupan2023"
-      }
-    },
     "about": {
       "title": "About",
       "about": {
@@ -317,7 +301,6 @@
     "colors": "Colors",
     "text": "Text",
     "ai": "AI Analysis",
-    "faq": "FAQ",
     "about": "About",
     "settings": "Settings",
     "language": "Switch Language"
