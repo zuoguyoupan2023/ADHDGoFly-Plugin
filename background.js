@@ -118,6 +118,69 @@ async function sendInstallDataToAPI(data) {
 }
 
 /**
+ * 📊 独立安装统计 - 发送到独立表
+ * @param {Object} installDetails - Chrome安装详情
+ */
+async function sendIndependentInstallationStats(installDetails) {
+  console.log('📊 开始收集独立安装统计...');
+  
+  const installData = {
+    event_type: 'independent_installation',
+    timestamp: new Date().toISOString(),
+    plugin_version: chrome.runtime.getManifest().version,
+    browser_type: getBrowserType(),
+    browser_version: getBrowserVersion(),
+    platform: navigator.platform,
+    language: chrome.i18n.getUILanguage(),
+    install_reason: installDetails.reason,
+    anonymous_id: await generateAnonymousInstallId()
+  };
+
+  console.log('📊 独立安装统计数据已生成:', installData);
+
+  // 直接发送到Worker，不经过Vercel API
+  const success = await sendIndependentStatsToWorker(installData);
+  
+  if (success) {
+    console.log('📊 ✅ 独立安装统计发送成功');
+  } else {
+    console.log('📊 ⚠️ 独立安装统计发送失败');
+  }
+}
+
+/**
+ * 📊 直接发送独立统计到Worker
+ * @param {Object} data - 安装统计数据
+ * @returns {boolean} 发送是否成功
+ */
+async function sendIndependentStatsToWorker(data) {
+  try {
+    console.log('📊 发送独立统计到Worker:', data);
+    
+    const response = await fetch('https://plugin-data-analytics-worker.oliver-409.workers.dev', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(INSTALLATION_CONFIG.TIMEOUT)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('📊 Worker响应:', result);
+      return true;
+    } else {
+      console.error('📊 Worker响应错误:', response.status, response.statusText);
+      return false;
+    }
+  } catch (error) {
+    console.error('📊 发送独立统计失败:', error);
+    return false;
+  }
+}
+
+/**
  * 🏗️ 存储安装数据用于重试
  */
 async function storeInstallDataForRetry(data) {
@@ -591,6 +654,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     console.log('🏗️ 检测到首次安装，启动独立安装数据收集');
     await sendInstallationData(details);
+    
+    // 📊 同时发送独立安装统计到新表
+    console.log('📊 启动独立安装统计收集');
+    await sendIndependentInstallationStats(details);
   }
   
   // 获取存储的数据
