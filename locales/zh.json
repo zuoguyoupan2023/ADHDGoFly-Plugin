@@ -256,10 +256,8 @@
         "feedback": "意见反馈",
         "wechat": "微信联系",
         "wechatId": "zuoguyoupan2023",
-        "email": "邮件联系",
-        "emailAddress": "support@adhdgofly.com",
         "website": "反馈网站",
-        "websiteUrl": "feedback.adhdgofly.online"
+        "websiteUrl": "https://feedback.adhdgofly.online"
       },
       "content": {
         "q0": "插件是免费的吗？",
@@ -311,7 +309,7 @@
         "q23": "是否支持快捷键开启/关闭高亮？",
         "a23": "目前暂不支持快捷键功能，后续版本会考虑添加快捷键设置",
         "q24": "遇到问题如何获取技术支持？",
-        "a24": "1. 微信联系：zuoguyoupan2023\n2. 反馈网站：feedback.adhdgofly.online\n3. 邮件联系：support@adhdgofly.com\n4. 在线文档：查看详细使用说明"
+        "a24": "1. 微信联系：zuoguyoupan2023\n2. 反馈网站：https://feedback.adhdgofly.online\n3. 在线文档：查看详细使用说明"
       }
     },
     "settings": {

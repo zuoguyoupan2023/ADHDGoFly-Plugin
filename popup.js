@@ -2144,8 +2144,7 @@ class PopupController {
   async loadFAQData() {
     try {
       // 获取当前语言设置
-      const result = await chrome.storage.sync.get(['language']);
-      const currentLanguage = result.language || 'zh';
+      const currentLanguage = window.i18n.getCurrentLanguage();
       
       // 加载对应语言的FAQ数据
       const localeData = await this.loadLocaleData(currentLanguage);

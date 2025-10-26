@@ -248,10 +248,8 @@
         "feedback": "Feedback",
         "wechat": "WeChat Contact",
         "wechatId": "zuoguyoupan2023",
-        "email": "Email Contact",
-        "emailAddress": "support@adhdgofly.com",
         "website": "Feedback Website",
-        "websiteUrl": "feedback.adhdgofly.online"
+        "websiteUrl": "https://feedback.adhdgofly.online"
       },
       "content": {
         "q0": "Is the plugin free?",
@@ -303,7 +301,7 @@
         "q23": "Does it support hotkeys to enable/disable highlighting?",
         "a23": "Currently hotkey functionality is not supported, future versions will consider adding hotkey settings",
         "q24": "How to get technical support when encountering problems?",
-        "a24": "1. WeChat contact: zuoguyoupan2023\n2. Feedback website: feedback.adhdgofly.online\n3. Email contact: support@adhdgofly.com\n4. Online documentation: View detailed usage instructions"
+        "a24": "1. WeChat contact: zuoguyoupan2023\n2. Feedback website: https://feedback.adhdgofly.online\n3. Online documentation: View detailed usage instructions"
       }
     },
       "dictionaries": {
