@@ -196,6 +196,7 @@ class I18nManager {
       'colors-btn': 'sidebar.colors',
       'text-btn': 'sidebar.text',
       'ai-btn': 'sidebar.ai',
+      'about-btn': 'sidebar.about',
       'settings-btn': 'sidebar.settings',
       'languageToggle': 'sidebar.language'
     };
