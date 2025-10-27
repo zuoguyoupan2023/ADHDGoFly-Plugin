@@ -455,9 +455,6 @@ class PopupController {
       case 'faq-btn':
         this.showPage('faq');
         break;
-      case 'about-btn':
-        this.showPage('about');
-        break;
       case 'settings-btn':
         this.showPage('settings');
         // 初始化设置页面
