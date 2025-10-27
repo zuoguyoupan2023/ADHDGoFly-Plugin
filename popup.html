@@ -1468,27 +1468,37 @@
         background: #004085;
       }
 
-      /* 词典工具链接 */
-      .vocabulary-tools-link {
-        margin-top: 8px;
+      /* 词典工具区域 */
+      .vocabulary-tools-section {
+        margin-top: 12px;
         text-align: center;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
       }
 
-      .dictionary-tool-link {
-        display: inline-block;
-        color: #007bff;
-        text-decoration: none;
-        font-size: 10px;
-        padding: 4px 8px;
-        border: 1px solid #007bff;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-      }
-
-      .dictionary-tool-link:hover {
-        background: #007bff;
+      .dictionary-tool-btn {
+        background: #28a745;
         color: white;
-        text-decoration: none;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+
+      .dictionary-tool-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .dictionary-tool-btn:active {
+        background: #1e7e34;
+        transform: translateY(0);
       }
 
       .vocabulary-category {
@@ -3118,13 +3128,16 @@
                   📋 复制词汇
                 </button>
               </div>
+              
+              <!-- 词典工具链接（默认隐藏，复制成功后显示） -->
+              <div class="vocabulary-tools-section" id="vocabularyToolsSection" style="display: none;">
+                <button class="dictionary-tool-btn" id="dictionaryToolBtn">
+                  🔗 去制作词典
+                </button>
+              </div>
+              
               <div class="stat-content" id="vocabularyStats">
                 <div class="loading">分析中...</div>
-              </div>
-              <div class="vocabulary-tools-link">
-                <a href="https://dictionary.adhdgofly.online" target="_blank" class="dictionary-tool-link">
-                  🔗 词典制作工具
-                </a>
               </div>
             </div>
           </div>

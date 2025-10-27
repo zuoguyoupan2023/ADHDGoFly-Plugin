@@ -1797,6 +1797,14 @@ class PopupController {
     if (copyBtn) {
       copyBtn.addEventListener('click', () => this.copyAllVocabulary());
     }
+    
+    // 添加词典工具按钮事件监听器
+    const dictionaryBtn = document.getElementById('dictionaryToolBtn');
+    if (dictionaryBtn) {
+      dictionaryBtn.addEventListener('click', () => {
+        chrome.tabs.create({ url: 'https://dictionary.adhdgofly.online' });
+      });
+    }
   }
 
   /**
@@ -1947,6 +1955,9 @@ class PopupController {
       // 显示成功提示
       this.showToast(`已复制 ${vocabularyData.length} 个词汇`, 'success');
       
+      // 显示词典工具链接
+      this.showVocabularyTools();
+      
       console.log('词汇数据已复制到剪贴板:', jsonData);
     } catch (error) {
       console.error('❌ 复制词汇失败:', error);
@@ -2016,6 +2027,19 @@ class PopupController {
         }
       }, 300);
     }, 3000);
+  }
+
+  /**
+   * 显示词典工具链接
+   */
+  showVocabularyTools() {
+    const toolsSection = document.getElementById('vocabularyToolsSection');
+    if (toolsSection) {
+      toolsSection.style.display = 'block';
+      console.log('✅ 词典工具链接已显示');
+    } else {
+      console.error('❌ 找不到词典工具链接元素');
+    }
   }
 
   async loadAIAnalysis() {

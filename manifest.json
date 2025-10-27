@@ -3,7 +3,7 @@
   "name": "ADHDGoFly, highlight your sight",
   "version": "0.1.5",
   "description": "Text highlighting for better reading",
-  "permissions": ["activeTab", "storage", "management", "alarms"],
+  "permissions": ["activeTab", "storage", "management", "alarms", "tabs"],
   "host_permissions": ["https://api.github.com/*"],
   "background": {
     "service_worker": "background.js"
