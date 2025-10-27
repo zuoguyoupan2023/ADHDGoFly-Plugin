@@ -1962,6 +1962,9 @@ class PopupController {
     
     html += '</div>';
     container.innerHTML = html;
+    
+    // 绑定展开事件
+    this.bindVocabularyExpandEvents();
   }
 
   renderVocabularyCategory(categoryId, title, words) {
@@ -1970,21 +1973,126 @@ class PopupController {
     html += `<h5 class="vocabulary-category-title">${title}</h5>`;
     html += '<div class="vocabulary-list">';
     
-    // 显示所有词汇，不进行折叠
-    words.forEach((item, index) => {
-      html += `<div class="vocabulary-item">
-        <span class="vocabulary-rank">${index + 1}.</span>
-        <span class="vocabulary-word">${item.word}</span>
-        <span class="vocabulary-count">${item.count}</span>
-      </div>`;
-    });
+    if (totalCount === 0) {
+      html += '<div class="vocabulary-item">暂无数据</div>';
+    } else {
+      // 默认显示前20个词汇
+      const displayLimit = 20;
+      const wordsToShow = words.slice(0, displayLimit);
+      const hasMore = totalCount > displayLimit;
+      
+      // 显示前20个词汇
+      wordsToShow.forEach((item, index) => {
+        html += `<div class="vocabulary-item">
+          <span class="vocabulary-rank">${index + 1}.</span>
+          <span class="vocabulary-word">${item.word}</span>
+          <span class="vocabulary-count">${item.count}</span>
+        </div>`;
+      });
+      
+      // 隐藏的词汇（超过20个的部分）
+      if (hasMore) {
+        const hiddenWords = words.slice(displayLimit);
+        hiddenWords.forEach((item, index) => {
+          html += `<div class="vocabulary-item vocabulary-hidden" style="display: none;">
+            <span class="vocabulary-rank">${displayLimit + index + 1}.</span>
+            <span class="vocabulary-word">${item.word}</span>
+            <span class="vocabulary-count">${item.count}</span>
+          </div>`;
+        });
+        
+        // 添加展开按钮
+        html += `<div class="vocabulary-expand-controls">
+          <button class="vocabulary-expand-btn" data-category="${categoryId}">
+            展开全部 (${totalCount})
+          </button>
+        </div>`;
+      }
+    }
     
     html += '</div>';
     html += '</div>';
     return html;
   }
 
+  /**
+   * 展开/收起词汇列表
+   * @param {string} categoryId - 词汇类别ID
+   */
+  expandVocabulary(categoryId) {
+    console.log('🚀 expandVocabulary 被调用，categoryId:', categoryId);
+    const categoryElement = document.querySelector(`[data-category="${categoryId}"]`);
+    if (!categoryElement) {
+      console.error('找不到词汇类别元素:', categoryId);
+      return;
+    }
 
+    const hiddenItems = categoryElement.querySelectorAll('.vocabulary-hidden');
+    const expandBtn = categoryElement.querySelector('.vocabulary-expand-btn');
+    
+    console.log('🔍 找到隐藏项目数量:', hiddenItems.length);
+    console.log('🔍 找到展开按钮:', expandBtn);
+    
+    if (!expandBtn) {
+      console.error('❌ 找不到展开按钮');
+      return;
+    }
+
+    const isExpanded = hiddenItems[0] && hiddenItems[0].style.display !== 'none';
+    console.log('📊 当前展开状态:', isExpanded);
+    
+    if (isExpanded) {
+      // 收起：隐藏额外的词汇
+      hiddenItems.forEach(item => {
+        item.style.display = 'none';
+      });
+      
+      // 更新按钮文本
+      const totalCount = categoryElement.querySelectorAll('.vocabulary-item:not(.vocabulary-expand-controls)').length;
+      expandBtn.textContent = `展开全部 (${totalCount})`;
+    } else {
+      // 展开：显示所有词汇
+      hiddenItems.forEach(item => {
+        item.style.display = 'block';
+      });
+      
+      // 更新按钮文本
+      expandBtn.textContent = '收起';
+    }
+  }
+
+  /**
+   * 绑定词汇展开事件
+   */
+  bindVocabularyExpandEvents() {
+    console.log('🔧 bindVocabularyExpandEvents 被调用');
+    // 确保全局可访问
+    if (!window.popupController) {
+      window.popupController = this;
+      console.log('✅ 设置 window.popupController:', this);
+    } else {
+      console.log('ℹ️ window.popupController 已存在:', window.popupController);
+    }
+    
+    // 为所有展开按钮添加事件监听器
+    const expandButtons = document.querySelectorAll('.vocabulary-expand-btn');
+    console.log('🔍 找到展开按钮数量:', expandButtons.length);
+    
+    expandButtons.forEach((button, index) => {
+      const categoryId = button.getAttribute('data-category');
+      console.log(`🎯 为按钮 ${index + 1} 绑定事件，categoryId:`, categoryId);
+      
+      // 移除之前的事件监听器（如果有）
+      button.removeEventListener('click', this.handleExpandClick);
+      
+      // 添加新的事件监听器
+      button.addEventListener('click', (event) => {
+        console.log('🖱️ 按钮被点击，categoryId:', categoryId);
+        event.preventDefault();
+        this.expandVocabulary(categoryId);
+      });
+    });
+  }
 
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
