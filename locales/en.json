@@ -192,7 +192,8 @@
       "stats": {
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
-        "posDistribution": "Part of Speech Distribution"
+        "posDistribution": "Part of Speech Distribution",
+        "vocabulary": "Vocabulary Statistics (Top 100)"
       },
 
       "refresh": "🔄 Refresh Analysis",

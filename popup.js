@@ -1823,6 +1823,7 @@ class PopupController {
     
     document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
+    document.getElementById('vocabularyStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     
     // 高亮统计UI已隐藏，检查元素是否存在再操作
     const highlightStatsElement = document.getElementById('highlightStats');
@@ -1845,6 +1846,9 @@ class PopupController {
     
     // 显示高亮统计
     this.displayHighlightStats(data.highlights || {});
+    
+    // 显示词汇统计
+    this.displayVocabularyStats(data.vocabulary || null);
     
     // 显示推荐
     // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
@@ -1931,6 +1935,65 @@ class PopupController {
     container.innerHTML = html;
   }
 
+  displayVocabularyStats(vocabulary) {
+    const container = document.getElementById('vocabularyStats');
+    
+    if (!vocabulary || (!vocabulary.nouns.length && !vocabulary.verbs.length && !vocabulary.adjectives.length)) {
+      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
+      return;
+    }
+    
+    let html = '<div class="vocabulary-stats">';
+    
+    // 显示名词
+    if (vocabulary.nouns.length > 0) {
+      html += '<div class="vocabulary-category">';
+      html += '<h5 class="vocabulary-category-title">📝 名词 (Nouns)</h5>';
+      html += '<div class="vocabulary-list">';
+      vocabulary.nouns.slice(0, 100).forEach((item, index) => {
+        html += `<div class="vocabulary-item">
+          <span class="vocabulary-rank">${index + 1}.</span>
+          <span class="vocabulary-word">${item.word}</span>
+          <span class="vocabulary-count">${item.count}</span>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+    
+    // 显示动词
+    if (vocabulary.verbs.length > 0) {
+      html += '<div class="vocabulary-category">';
+      html += '<h5 class="vocabulary-category-title">🏃 动词 (Verbs)</h5>';
+      html += '<div class="vocabulary-list">';
+      vocabulary.verbs.slice(0, 100).forEach((item, index) => {
+        html += `<div class="vocabulary-item">
+          <span class="vocabulary-rank">${index + 1}.</span>
+          <span class="vocabulary-word">${item.word}</span>
+          <span class="vocabulary-count">${item.count}</span>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+    
+    // 显示形容词
+    if (vocabulary.adjectives.length > 0) {
+      html += '<div class="vocabulary-category">';
+      html += '<h5 class="vocabulary-category-title">🎨 形容词 (Adjectives)</h5>';
+      html += '<div class="vocabulary-list">';
+      vocabulary.adjectives.slice(0, 100).forEach((item, index) => {
+        html += `<div class="vocabulary-item">
+          <span class="vocabulary-rank">${index + 1}.</span>
+          <span class="vocabulary-word">${item.word}</span>
+          <span class="vocabulary-count">${item.count}</span>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
   /**
@@ -1942,6 +2005,7 @@ class PopupController {
     
     document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
+    document.getElementById('vocabularyStats').innerHTML = `<div class="error">${errorText}</div>`;
     
     // 高亮统计UI已隐藏，检查元素是否存在再操作
     const highlightStatsElement = document.getElementById('highlightStats');

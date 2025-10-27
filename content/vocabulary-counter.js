@@ -183,6 +183,33 @@ class VocabularyCounter {
   }
 
   /**
+   * 获取前N个高频词汇
+   * @param {string} category - 词汇类别 ('nouns', 'verbs', 'adjectives')
+   * @param {number} limit - 返回词汇数量限制，默认100
+   * @returns {Array} 排序后的词汇数组 [{word, count}, ...]
+   */
+  getTopWords(category, limit = 100) {
+    const words = this.stats.stats[category] || {};
+    return Object.entries(words)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, limit)
+      .map(([word, count]) => ({ word, count }));
+  }
+
+  /**
+   * 获取所有类别的前N个高频词汇
+   * @param {number} limit - 每个类别返回的词汇数量限制，默认100
+   * @returns {Object} 包含各类别前N词汇的对象
+   */
+  getTopWordsByCategory(limit = 100) {
+    return {
+      nouns: this.getTopWords('nouns', limit),
+      verbs: this.getTopWords('verbs', limit),
+      adjectives: this.getTopWords('adjectives', limit)
+    };
+  }
+
+  /**
    * 重置统计数据
    */
   reset() {

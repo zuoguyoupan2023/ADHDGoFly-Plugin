@@ -1064,6 +1064,16 @@ class ADHDHighlighter {
         errors: processingStats.errors || 0
       };
       
+      // 获取词汇统计数据
+      let vocabularyStats = null;
+      if (window.vocabularyCounter) {
+        try {
+          vocabularyStats = window.vocabularyCounter.getTopWordsByCategory(100);
+        } catch (error) {
+          console.error('获取词汇统计失败:', error);
+        }
+      }
+      
       // 生成智能推荐 - 暂时禁用
       // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
       
@@ -1071,6 +1081,7 @@ class ADHDHighlighter {
         languages: languageStats,
         partOfSpeech: posStats,
         highlights: highlightStats,
+        vocabulary: vocabularyStats,
         // recommendations: recommendations, // 暂时禁用推荐功能
         summary: processingSummary
       };
