@@ -1438,8 +1438,7 @@
 
       /* 词汇统计样式 */
       .vocabulary-stats {
-        max-height: 400px;
-        overflow-y: auto;
+        /* 移除独立滚动，与其他统计区域作为整体滚动 */
       }
 
       .vocabulary-category {
@@ -1458,11 +1457,13 @@
         font-weight: 600;
         color: #333;
         border-radius: 6px 6px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
 
       .vocabulary-list {
-        max-height: 200px;
-        overflow-y: auto;
+        /* 移除独立滚动 */
         padding: 4px;
       }
 
@@ -1502,6 +1503,81 @@
         border-radius: 10px;
         min-width: 20px;
         text-align: center;
+      }
+
+      .vocabulary-expand-btn {
+        background: none;
+        border: none;
+        color: #007aff;
+        font-size: 10px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+      }
+
+      .vocabulary-expand-btn:hover {
+        background: #f0f8ff;
+      }
+
+      .vocabulary-expand-section {
+        padding: 4px 8px;
+        border-top: 1px solid #f0f0f0;
+        background: #fafafa;
+        text-align: center;
+      }
+
+      .vocabulary-expand-section button {
+        background: none;
+        border: 1px solid #007aff;
+        color: #007aff;
+        font-size: 10px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        margin: 2px 4px;
+        transition: all 0.2s ease;
+        min-width: 60px;
+      }
+
+      .vocabulary-expand-section button:hover {
+        background: #007aff;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      .vocabulary-expand-section button[data-expand="50"] {
+        border-color: #28a745;
+        color: #28a745;
+      }
+
+      .vocabulary-expand-section button[data-expand="50"]:hover {
+        background: #28a745;
+        color: white;
+      }
+
+      .vocabulary-expand-section button[data-expand="all"] {
+        border-color: #ffc107;
+        color: #e0a800;
+      }
+
+      .vocabulary-expand-section button[data-expand="all"]:hover {
+        background: #ffc107;
+        color: #333;
+      }
+
+      .vocabulary-expand-section button[data-collapse] {
+        border-color: #6c757d;
+        color: #6c757d;
+      }
+
+      .vocabulary-expand-section button[data-collapse]:hover {
+        background: #6c757d;
+        color: white;
+      }
+
+      .vocabulary-hidden {
+        display: none;
       }
 
       /* AI助手页面样式 */
