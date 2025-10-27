@@ -375,7 +375,45 @@
         "analytics": "Anonymous usage statistics",
         "analyticsDesc": "Help us improve the product (no personal information collected)",
         "reset": "Reset All Settings"
-      }
+      },
+      "feedback": {
+        "title": "Feedback & Support",
+        "wechat": "WeChat zuoguyoupan2023",
+        "websiteUrl": "https://feedback.adhdgofly.online"
+      },
+       "about": {
+         "title": "About Us",
+         "description": "ADHDGoFly is an ADHD-friendly text highlighting plugin that helps users better understand and read web content through intelligent part-of-speech recognition and color marking.",
+         "version": "Version:",
+         "developer": "Developer:",
+         "website": "Website:"
+       },
+       "changelog": {
+         "title": "Update Log",
+         "v014": {
+           "title": "Dictionary Features & Performance Enhancement",
+           "feature1": "Added custom dictionary functionality",
+           "feature2": "Implemented caching logic",
+           "feature3": "Optimized homepage UI and sidebar UI",
+           "feature4": "Fixed minor bugs"
+         },
+         "v013": {
+           "title": "Interface Optimization & Feature Enhancement",
+           "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
+           "feature2": "Support for English comparative and superlative purple logic",
+           "feature3": "Implement basic settings management and storage functionality"
+         },
+         "v012": {
+           "title": "Multi-language Support & Performance Optimization",
+           "feature1": "Multiple color schemes: warm, cool, soft, high contrast",
+           "feature2": "Added font size, line spacing, word spacing logic"
+         },
+         "v011": {
+           "title": "Basic Feature Release",
+           "feature1": "Support for Chinese and English part-of-speech recognition",
+           "feature2": "Provide color highlighting for nouns, verbs, adjectives"
+         }
+       }
     }
   },
   "sidebar": {
