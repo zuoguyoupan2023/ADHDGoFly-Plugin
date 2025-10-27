@@ -1962,9 +1962,6 @@ class PopupController {
     
     html += '</div>';
     container.innerHTML = html;
-    
-    // 绑定展开按钮事件
-    this.bindVocabularyExpandEvents();
   }
 
   renderVocabularyCategory(categoryId, title, words) {
@@ -1973,8 +1970,8 @@ class PopupController {
     html += `<h5 class="vocabulary-category-title">${title}</h5>`;
     html += '<div class="vocabulary-list">';
     
-    // 默认显示前10个
-    words.slice(0, 10).forEach((item, index) => {
+    // 显示所有词汇，不进行折叠
+    words.forEach((item, index) => {
       html += `<div class="vocabulary-item">
         <span class="vocabulary-rank">${index + 1}.</span>
         <span class="vocabulary-word">${item.word}</span>
@@ -1982,104 +1979,12 @@ class PopupController {
       </div>`;
     });
     
-    // 11-50个词汇（如果有的话）
-    if (totalCount > 10) {
-      words.slice(10, 50).forEach((item, index) => {
-        html += `<div class="vocabulary-item vocabulary-hidden" data-level="50">
-          <span class="vocabulary-rank">${index + 11}.</span>
-          <span class="vocabulary-word">${item.word}</span>
-          <span class="vocabulary-count">${item.count}</span>
-        </div>`;
-      });
-    }
-    
-    // 51+个词汇（如果有的话）
-    if (totalCount > 50) {
-      words.slice(50).forEach((item, index) => {
-        html += `<div class="vocabulary-item vocabulary-hidden" data-level="all">
-          <span class="vocabulary-rank">${index + 51}.</span>
-          <span class="vocabulary-word">${item.word}</span>
-          <span class="vocabulary-count">${item.count}</span>
-        </div>`;
-      });
-    }
-    
     html += '</div>';
-    
-    // 添加展开按钮
-    if (totalCount > 10) {
-      html += '<div class="vocabulary-expand-section">';
-      
-      if (totalCount > 50) {
-        // 超过50个：显示"展示前50"和"展开全部"
-        html += `<button onclick="window.popupManager.expandVocabulary('${categoryId}', '50')" data-expand="50">展示前50</button>`;
-        html += `<button onclick="window.popupManager.expandVocabulary('${categoryId}', 'all')" data-expand="all">展开全部</button>`;
-      } else {
-        // 10-50个：只显示"展开全部"
-        html += `<button onclick="window.popupManager.expandVocabulary('${categoryId}', 'all')" data-expand="all">展开全部</button>`;
-      }
-      
-      html += `<button onclick="window.popupManager.collapseVocabulary('${categoryId}')" data-collapse style="display:none;">收起</button>`;
-      html += '</div>';
-    }
-    
     html += '</div>';
     return html;
   }
 
-  expandVocabulary(categoryId, level) {
-    const category = document.querySelector(`[data-category="${categoryId}"]`);
-    if (!category) return;
-    
-    const expandSection = category.querySelector('.vocabulary-expand-section');
-    const expandButtons = expandSection.querySelectorAll('[data-expand]');
-    const collapseButton = expandSection.querySelector('[data-collapse]');
-    
-    if (level === '50') {
-      // 显示前50个
-      const items50 = category.querySelectorAll('[data-level="50"]');
-      items50.forEach(item => item.classList.remove('vocabulary-hidden'));
-      
-      // 隐藏"展示前50"按钮
-      expandSection.querySelector('[data-expand="50"]').style.display = 'none';
-    } else if (level === 'all') {
-      // 显示全部
-      const allItems = category.querySelectorAll('.vocabulary-item.vocabulary-hidden');
-      allItems.forEach(item => item.classList.remove('vocabulary-hidden'));
-      
-      // 隐藏所有展开按钮
-      expandButtons.forEach(btn => btn.style.display = 'none');
-    }
-    
-    // 显示收起按钮
-    collapseButton.style.display = 'inline-block';
-  }
 
-  collapseVocabulary(categoryId) {
-    const category = document.querySelector(`[data-category="${categoryId}"]`);
-    if (!category) return;
-    
-    const expandSection = category.querySelector('.vocabulary-expand-section');
-    const expandButtons = expandSection.querySelectorAll('[data-expand]');
-    const collapseButton = expandSection.querySelector('[data-collapse]');
-    
-    // 隐藏所有扩展项
-    const hiddenItems = category.querySelectorAll('.vocabulary-item[data-level]');
-    hiddenItems.forEach(item => item.classList.add('vocabulary-hidden'));
-    
-    // 显示所有展开按钮
-    expandButtons.forEach(btn => btn.style.display = 'inline-block');
-    
-    // 隐藏收起按钮
-    collapseButton.style.display = 'none';
-  }
-
-  bindVocabularyExpandEvents() {
-    // 确保popupManager在全局可访问
-    if (!window.popupManager) {
-      window.popupManager = this;
-    }
-  }
 
   // displayRecommendations方法已删除 - 推荐功能已禁用
 
@@ -2515,7 +2420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await window.i18n.init();
   
   // 然后创建PopupController
-  popupController = new PopupController();
+  window.popupController = new PopupController();
   
   // 延迟初始化语言分组监听器，确保DOM完全加载
   setTimeout(() => {
