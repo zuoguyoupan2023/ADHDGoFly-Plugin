@@ -16,6 +16,7 @@
         "content/dictionary-adapter.js",
         "content/language-detector.js",
         "content/en-noun-morphology.js",
+        "content/vocabulary-counter.js",
         "content/text-segmenter.js",
         "content/page-processor.js",
         "content/streaming-page-processor.js",

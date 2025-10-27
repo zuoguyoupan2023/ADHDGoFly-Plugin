@@ -4,6 +4,8 @@ if (typeof module !== 'undefined' && module.exports && typeof EnglishMorphology 
   const EnglishMorphology = require('./en-noun-morphology.js');
 }
 
+// 词汇计数器将在需要时检查是否可用
+
 class TextSegmenter {
   constructor() {
     // 标点符号和分隔符模式
@@ -209,6 +211,8 @@ class TextSegmenter {
           
           if (pos) {
             const normalizedPos = this.normalizePartOfSpeech(pos);
+            // 记录词汇统计
+            this.recordVocabulary(nonCJKWord, normalizedPos);
             // 根据高亮开关决定是否应用高亮
             const shouldHighlight = (
               (normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -244,6 +248,8 @@ class TextSegmenter {
         
         if (pos) {
           const normalizedPos = this.normalizePartOfSpeech(pos);
+          // 记录词汇统计
+          this.recordVocabulary(word, normalizedPos);
           // 根据高亮开关决定是否应用高亮
           const shouldHighlight = (
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -293,6 +299,8 @@ class TextSegmenter {
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         
         // 如果是名词或动词，优先使用词典标记
         if (normalizedPos === 'n' || normalizedPos === 'v') {
@@ -377,6 +385,8 @@ class TextSegmenter {
               if (dictionary[stem]) {
                 const pos = dictionary[stem];
                 const normalizedPos = this.normalizePartOfSpeech(pos);
+                // 记录词汇统计
+                this.recordVocabulary(cleanWord, normalizedPos);
                 // 根据高亮开关决定是否应用变形匹配高亮
                 const shouldHighlight = (
                   (normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -425,6 +435,8 @@ class TextSegmenter {
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         
         // 根据词性和高亮开关决定是否高亮
         const shouldHighlight = (
@@ -551,6 +563,8 @@ class TextSegmenter {
       
       if (pos) {
         let normalizedPos = this.normalizePartOfSpeech(pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         console.log(`标准化词性: ${normalizedPos}`);
         
         // 检查是否应该高亮
@@ -890,6 +904,8 @@ class TextSegmenter {
       
       if (pos) {
         let normalizedPos = this.normalizePartOfSpeech(pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         
         // 检查是否应该高亮
         if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -1852,6 +1868,8 @@ class TextSegmenter {
       
       if (foundEntry.pos) {
         let normalizedPos = this.normalizePartOfSpeech(foundEntry.pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         
         // 检查是否应该高亮
         if ((normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -2028,6 +2046,8 @@ class TextSegmenter {
       if (cleanWord && dictionary[cleanWord]) {
         const pos = dictionary[cleanWord];
         const normalizedPos = this.normalizePartOfSpeech(pos);
+        // 记录词汇统计
+        this.recordVocabulary(cleanWord, normalizedPos);
         
         // 如果是名词或动词，优先使用词典标记
         if (normalizedPos === 'n' || normalizedPos === 'v') {
@@ -2112,6 +2132,8 @@ class TextSegmenter {
               if (dictionary[stem]) {
                 const pos = dictionary[stem];
                 const normalizedPos = this.normalizePartOfSpeech(pos);
+                // 记录词汇统计
+                this.recordVocabulary(cleanWord, normalizedPos);
                 // 根据高亮开关决定是否应用变形匹配高亮
                 const shouldHighlight = (
                   (normalizedPos === 'n' && this.highlightingToggles.noun) ||
@@ -2210,6 +2232,21 @@ class TextSegmenter {
     const normalized = posMap[pos.toLowerCase()];
     // 只返回支持的词性，不支持的词性返回null（不进行高亮）
     return normalized || null;
+  }
+
+  /**
+   * 记录词汇到统计计数器
+   * @param {string} word - 词汇
+   * @param {string} normalizedPos - 标准化词性 ('n', 'v', 'a')
+   */
+  recordVocabulary(word, normalizedPos) {
+    if (typeof window !== 'undefined' && window.vocabularyCounter && word && normalizedPos) {
+      try {
+        window.vocabularyCounter.recordWord(word, normalizedPos);
+      } catch (error) {
+        console.error('记录词汇统计失败:', error);
+      }
+    }
   }
 
   /**
