@@ -5,7 +5,6 @@ class PopupController {
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
     this.customDictionaries = []; // 自定义词典列表
-    this.browserInfo = null; // 浏览器信息
     this.dictSettings = {
       // 基础词典
       'zh-preset': true,
@@ -257,9 +256,6 @@ class PopupController {
   async init() {
     console.log('初始化Popup控制器...');
     
-    // 检测浏览器信息
-    this.detectBrowser();
-    
     // 设置初始状态文本
     const statusDiv = document.getElementById('status');
     if (statusDiv) {
@@ -286,226 +282,6 @@ class PopupController {
     
     // 显示评价引导
     this.showReviewPrompt();
-  }
-
-  /**
-   * 检测浏览器类型和版本信息
-   * 支持检测：Chrome、Edge、Firefox、Safari、其他Chrome内核浏览器、无法识别的浏览器
-   */
-  detectBrowser() {
-    const userAgent = navigator.userAgent;
-    const vendor = navigator.vendor || '';
-    
-    let browserInfo = {
-      name: 'Unknown',
-      version: 'Unknown',
-      engine: 'Unknown',
-      category: 'unknown',
-      fullUserAgent: userAgent,
-      vendor: vendor,
-      platform: navigator.platform,
-      language: navigator.language,
-      cookieEnabled: navigator.cookieEnabled,
-      onLine: navigator.onLine
-    };
-
-    // 检测主流浏览器
-    if (userAgent.includes('Firefox') && !userAgent.includes('Seamonkey')) {
-      // Firefox
-      browserInfo.name = 'Firefox';
-      browserInfo.engine = 'Gecko';
-      browserInfo.category = 'firefox';
-      const match = userAgent.match(/Firefox\/(\d+(?:\.\d+)*)/);
-      if (match) browserInfo.version = match[1];
-      
-    } else if (userAgent.includes('Safari') && userAgent.includes('Version') && !userAgent.includes('Chrome') && !userAgent.includes('Chromium')) {
-      // Safari (真正的Safari，不是Chrome内核)
-      browserInfo.name = 'Safari';
-      browserInfo.engine = 'WebKit';
-      browserInfo.category = 'safari';
-      const match = userAgent.match(/Version\/(\d+(?:\.\d+)*)/);
-      if (match) browserInfo.version = match[1];
-      
-    } else if (userAgent.includes('Edg/')) {
-      // Microsoft Edge (Chromium-based)
-      browserInfo.name = 'Microsoft Edge';
-      browserInfo.engine = 'Blink';
-      browserInfo.category = 'edge';
-      const match = userAgent.match(/Edg\/(\d+(?:\.\d+)*)/);
-      if (match) browserInfo.version = match[1];
-      
-    } else if (userAgent.includes('Edge/')) {
-      // Microsoft Edge Legacy (EdgeHTML)
-      browserInfo.name = 'Microsoft Edge Legacy';
-      browserInfo.engine = 'EdgeHTML';
-      browserInfo.category = 'edge';
-      const match = userAgent.match(/Edge\/(\d+(?:\.\d+)*)/);
-      if (match) browserInfo.version = match[1];
-      
-    } else if (userAgent.includes('Chrome') || userAgent.includes('Chromium')) {
-      // Chrome内核浏览器检测
-      browserInfo.engine = 'Blink';
-      
-      if (userAgent.includes('OPR/') || userAgent.includes('Opera/')) {
-        // Opera
-        browserInfo.name = 'Opera';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/(?:OPR|Opera)\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('Brave/')) {
-        // Brave
-        browserInfo.name = 'Brave';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/Brave\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('Vivaldi/')) {
-        // Vivaldi
-        browserInfo.name = 'Vivaldi';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/Vivaldi\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('QQBrowser/')) {
-        // QQ浏览器
-        browserInfo.name = 'QQ Browser';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/QQBrowser\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('360SE') || userAgent.includes('360EE')) {
-        // 360浏览器
-        browserInfo.name = '360 Browser';
-        browserInfo.category = 'chrome-based';
-        // 360浏览器通常不暴露真实版本号
-        
-      } else if (userAgent.includes('UCBrowser/')) {
-        // UC浏览器
-        browserInfo.name = 'UC Browser';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/UCBrowser\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('SamsungBrowser/')) {
-        // Samsung Internet
-        browserInfo.name = 'Samsung Internet';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/SamsungBrowser\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('YaBrowser/')) {
-        // Yandex Browser
-        browserInfo.name = 'Yandex Browser';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/YaBrowser\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('Chrome/')) {
-        // Google Chrome (原生Chrome)
-        browserInfo.name = 'Google Chrome';
-        browserInfo.category = 'chrome';
-        const match = userAgent.match(/Chrome\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else if (userAgent.includes('Chromium/')) {
-        // Chromium
-        browserInfo.name = 'Chromium';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/Chromium\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-        
-      } else {
-        // 其他Chrome内核浏览器
-        browserInfo.name = 'Chrome-based Browser';
-        browserInfo.category = 'chrome-based';
-        const match = userAgent.match(/Chrome\/(\d+(?:\.\d+)*)/);
-        if (match) browserInfo.version = match[1];
-      }
-      
-    } else if (userAgent.includes('Trident/') || userAgent.includes('MSIE')) {
-      // Internet Explorer
-      browserInfo.name = 'Internet Explorer';
-      browserInfo.engine = 'Trident';
-      browserInfo.category = 'ie';
-      const match = userAgent.match(/(?:MSIE |rv:)(\d+(?:\.\d+)*)/);
-      if (match) browserInfo.version = match[1];
-      
-    } else {
-      // 无法识别的浏览器
-      browserInfo.name = 'Unknown Browser';
-      browserInfo.category = 'unknown';
-    }
-
-    // 存储浏览器信息
-    this.browserInfo = browserInfo;
-
-    // 在控制台输出详细的浏览器信息
-    console.group('🌐 浏览器检测结果');
-    console.log('📱 浏览器名称:', browserInfo.name);
-    console.log('🔢 版本号:', browserInfo.version);
-    console.log('⚙️ 渲染引擎:', browserInfo.engine);
-    console.log('📂 分类:', this.getBrowserCategoryName(browserInfo.category));
-    console.log('🖥️ 平台:', browserInfo.platform);
-    console.log('🌍 语言:', browserInfo.language);
-    console.log('🍪 Cookie支持:', browserInfo.cookieEnabled ? '是' : '否');
-    console.log('🌐 在线状态:', browserInfo.onLine ? '在线' : '离线');
-    console.log('👤 User Agent:', browserInfo.fullUserAgent);
-    console.log('🏢 厂商信息:', browserInfo.vendor || '未知');
-    console.groupEnd();
-
-    // 根据浏览器类型给出特定提示
-    this.logBrowserSpecificInfo(browserInfo);
-  }
-
-  /**
-   * 获取浏览器分类的中文名称
-   */
-  getBrowserCategoryName(category) {
-    const categoryNames = {
-      'chrome': 'Google Chrome',
-      'edge': 'Microsoft Edge',
-      'firefox': 'Mozilla Firefox', 
-      'safari': 'Apple Safari',
-      'chrome-based': 'Chrome内核浏览器',
-      'ie': 'Internet Explorer',
-      'unknown': '无法识别'
-    };
-    return categoryNames[category] || '未知分类';
-  }
-
-  /**
-   * 根据浏览器类型输出特定信息
-   */
-  logBrowserSpecificInfo(browserInfo) {
-    console.group('💡 浏览器特定信息');
-    
-    switch (browserInfo.category) {
-      case 'chrome':
-        console.log('✅ 检测到原生Chrome浏览器，插件兼容性最佳');
-        break;
-      case 'edge':
-        console.log('✅ 检测到Microsoft Edge浏览器，基于Chromium内核，兼容性良好');
-        break;
-      case 'firefox':
-        console.log('✅ 检测到Firefox浏览器，使用Gecko引擎，部分功能可能有差异');
-        break;
-      case 'safari':
-        console.log('✅ 检测到Safari浏览器，使用WebKit引擎，部分功能可能有限制');
-        break;
-      case 'chrome-based':
-        console.log('✅ 检测到Chrome内核浏览器，基本兼容Chrome插件功能');
-        console.log('📝 具体浏览器:', browserInfo.name);
-        break;
-      case 'ie':
-        console.warn('⚠️ 检测到Internet Explorer，该浏览器不支持现代扩展');
-        break;
-      case 'unknown':
-        console.warn('❓ 无法识别的浏览器，可能存在兼容性问题');
-        break;
-    }
-    
-    console.groupEnd();
   }
 
   bindEvents() {
@@ -3022,7 +2798,7 @@ class PopupController {
       </div>
       
       <!-- 第四行：去评价按钮和不再提醒 -->
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
         <a href="https://feedback.adhdgofly.online" target="_blank" style="
           display: inline-block;
           background: #007AFF;
