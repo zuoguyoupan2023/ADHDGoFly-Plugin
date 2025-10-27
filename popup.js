@@ -2675,10 +2675,10 @@ class PopupController {
     }
 
     // 获取国际化文本
-    const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意帮助更多人提升阅读体验吗？';
+    const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意向其他人推荐这个插件吗？';
     const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
-    const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '立即评价';
-    const laterBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.later') : '下次提醒';
+    const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
+    const reasonBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
     const neverBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.never') : '不再提醒';
 
     // 创建评价提示元素
@@ -2692,8 +2692,8 @@ class PopupController {
     const containerWidth = window.innerWidth;
     
     // 计算提示框尺寸
-    const promptWidth = 300;
-    const promptHeight = 160;
+    const promptWidth = 280;
+    const promptHeight = 180;
     
     // 判断位置：优先插件下方，如果空间不够则放在左侧
     let positionStyle = '';
@@ -2739,8 +2739,9 @@ class PopupController {
     `;
 
     promptDiv.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        <div style="font-weight: 600; color: #333; font-size: 15px; flex: 1; padding-right: 8px;">
+      <!-- 第一行：标题和关闭按钮 -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div style="font-weight: 600; color: #333; font-size: 15px; flex: 1; padding-right: 8px; text-align: center;">
           ${title}
         </div>
         <button id="close-review-prompt" style="
@@ -2758,48 +2759,69 @@ class PopupController {
           flex-shrink: 0;
         ">×</button>
       </div>
-      <div style="color: #555; margin-bottom: 16px; font-size: 13px;">
+      
+      <!-- 第二行：五个空心五角星 -->
+      <div style="display: flex; justify-content: center; margin-bottom: 16px; gap: 4px;">
+        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="1">☆</span>
+        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="2">☆</span>
+        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="3">☆</span>
+        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="4">☆</span>
+        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="5">☆</span>
+      </div>
+      
+      <!-- 第三行："我需要理由"可展开 -->
+      <div style="text-align: center; margin-bottom: 16px;">
+        <button id="reason-toggle" style="
+          background: none;
+          border: none;
+          color: #666;
+          font-size: 13px;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 4px 8px;
+        ">${reasonBtnText}</button>
+      </div>
+      
+      <!-- 可展开的描述内容 -->
+      <div id="reason-content" style="
+        display: none;
+        color: #555;
+        margin-bottom: 16px;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007AFF;
+      ">
         ${description}
       </div>
-      <div style="display: flex; gap: 8px; justify-content: center;">
+      
+      <!-- 第四行：去评价按钮和不再提醒 -->
+      <div style="display: flex; justify-content: space-between; align-items: center;">
         <a href="https://feedback.adhdgofly.online" target="_blank" style="
           display: inline-block;
           background: #007AFF;
           color: white;
           text-decoration: none;
-          padding: 6px 12px;
-          border-radius: 4px;
+          padding: 8px 16px;
+          border-radius: 6px;
           font-weight: 500;
-          font-size: 12px;
+          font-size: 13px;
           transition: background-color 0.2s;
         " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
           ${reviewBtnText}
-         </a>
-         <button id="later-review-prompt" style="
-           background: #f0f0f0;
-           color: #666;
-           border: none;
-           padding: 6px 12px;
-           border-radius: 4px;
-           font-weight: 500;
-           font-size: 12px;
-           cursor: pointer;
-           transition: background-color 0.2s;
-         " onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
-           ${laterBtnText}
-         </button>
-         <button id="never-review-prompt" style="
-           background: none;
-           color: #999;
-           border: none;
-           padding: 6px 12px;
-           border-radius: 4px;
-           font-weight: 500;
-           font-size: 12px;
-           cursor: pointer;
-           text-decoration: underline;
-         " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
-           ${neverBtnText}
+        </a>
+        <button id="never-review-prompt" style="
+          background: none;
+          border: none;
+          color: #999;
+          font-size: 12px;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 4px 8px;
+        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
+          ${neverBtnText}
         </button>
       </div>
     `;
@@ -2809,8 +2831,10 @@ class PopupController {
 
     // 绑定事件
     const closeBtn = document.getElementById('close-review-prompt');
-    const laterBtn = document.getElementById('later-review-prompt');
+    const reasonToggle = document.getElementById('reason-toggle');
+    const reasonContent = document.getElementById('reason-content');
     const neverBtn = document.getElementById('never-review-prompt');
+    const stars = promptDiv.querySelectorAll('.star-rating');
     
     const removePrompt = () => {
       if (promptDiv.parentNode) {
@@ -2818,17 +2842,46 @@ class PopupController {
       }
     };
 
+    // 关闭按钮事件
     if (closeBtn) {
       closeBtn.addEventListener('click', removePrompt);
     }
     
-    if (laterBtn) {
-      laterBtn.addEventListener('click', () => {
-        // 可以在这里添加"稍后提醒"的逻辑
-        removePrompt();
+    // "我需要理由"展开/收起事件
+    if (reasonToggle && reasonContent) {
+      reasonToggle.addEventListener('click', () => {
+        const isVisible = reasonContent.style.display !== 'none';
+        reasonContent.style.display = isVisible ? 'none' : 'block';
+        reasonToggle.textContent = isVisible ? reasonBtnText : '收起理由';
       });
     }
     
+    // 星星评分事件
+    stars.forEach((star, index) => {
+      star.addEventListener('mouseenter', () => {
+        // 鼠标悬停时高亮当前星星及之前的星星
+        stars.forEach((s, i) => {
+          s.style.color = i <= index ? '#FFD700' : '#ddd';
+          s.textContent = i <= index ? '★' : '☆';
+        });
+      });
+      
+      star.addEventListener('mouseleave', () => {
+        // 鼠标离开时恢复默认状态
+        stars.forEach(s => {
+          s.style.color = '#ddd';
+          s.textContent = '☆';
+        });
+      });
+      
+      star.addEventListener('click', () => {
+        // 点击星星时直接跳转到评价页面
+        window.open('https://feedback.adhdgofly.online', '_blank');
+        removePrompt();
+      });
+    });
+    
+    // "不再提醒"事件
     if (neverBtn) {
       neverBtn.addEventListener('click', () => {
         // 可以在这里添加"不再提醒"的逻辑

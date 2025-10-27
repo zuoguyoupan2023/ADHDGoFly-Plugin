@@ -435,12 +435,12 @@
   "review": {
     "prompt": {
       "main": {
-        "title": "Would you like to help others enhance their reading experience?",
+        "title": "Would you like to recommend this extension to others?",
         "description": "Your review helps more people discover this extension—whether they struggle with ADHD, reading difficulties, or simply feel overwhelmed by heavy reading, they can all benefit from easier reading with this tool."
       },
       "buttons": {
         "review": "Leave a Review",
-        "later": "Remind Me Later", 
+        "reason": "I need a reason",
         "never": "Don't Ask Again"
       }
     }
