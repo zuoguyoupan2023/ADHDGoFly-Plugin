@@ -1969,7 +1969,7 @@ class PopupController {
 
   renderVocabularyCategory(categoryId, title, words) {
     const totalCount = words.length;
-    let html = `<div class="vocabulary-category" data-category="${categoryId}">`;
+    let html = `<div class="vocabulary-category" data-category-id="${categoryId}">`;
     html += `<h5 class="vocabulary-category-title">${title}</h5>`;
     html += '<div class="vocabulary-list">';
     
@@ -1994,7 +1994,7 @@ class PopupController {
       if (hasMore) {
         const hiddenWords = words.slice(displayLimit);
         hiddenWords.forEach((item, index) => {
-          html += `<div class="vocabulary-item vocabulary-hidden" style="display: none;">
+          html += `<div class="vocabulary-item vocabulary-hidden">
             <span class="vocabulary-rank">${displayLimit + index + 1}.</span>
             <span class="vocabulary-word">${item.word}</span>
             <span class="vocabulary-count">${item.count}</span>
@@ -2002,9 +2002,10 @@ class PopupController {
         });
         
         // 添加展开按钮
+        const hiddenCount = totalCount - displayLimit;
         html += `<div class="vocabulary-expand-controls">
           <button class="vocabulary-expand-btn" data-category="${categoryId}">
-            展开全部 (${totalCount})
+            展开全部 (${hiddenCount})
           </button>
         </div>`;
       }
@@ -2021,43 +2022,58 @@ class PopupController {
    */
   expandVocabulary(categoryId) {
     console.log('🚀 expandVocabulary 被调用，categoryId:', categoryId);
-    const categoryElement = document.querySelector(`[data-category="${categoryId}"]`);
-    if (!categoryElement) {
-      console.error('找不到词汇类别元素:', categoryId);
-      return;
-    }
-
-    const hiddenItems = categoryElement.querySelectorAll('.vocabulary-hidden');
-    const expandBtn = categoryElement.querySelector('.vocabulary-expand-btn');
-    
-    console.log('🔍 找到隐藏项目数量:', hiddenItems.length);
-    console.log('🔍 找到展开按钮:', expandBtn);
+    const expandBtn = document.querySelector(`[data-category="${categoryId}"]`);
+    console.log('🔍 找到的按钮:', expandBtn);
     
     if (!expandBtn) {
-      console.error('❌ 找不到展开按钮');
+      console.error('找不到展开按钮:', categoryId);
       return;
     }
 
-    const isExpanded = hiddenItems[0] && hiddenItems[0].style.display !== 'none';
+    // 找到包含词汇列表的容器
+    const categoryElement = expandBtn.closest('.vocabulary-category');
+    console.log('🔍 找到的容器:', categoryElement);
+    
+    if (!categoryElement) {
+      console.error('找不到词汇类别容器:', categoryId);
+      return;
+    }
+
+    // 查找所有词汇项目（包括隐藏和显示的）
+    const allItems = categoryElement.querySelectorAll('.vocabulary-item');
+    const hiddenItems = categoryElement.querySelectorAll('.vocabulary-hidden');
+    console.log('🔍 所有词汇项目数量:', allItems.length);
+    console.log('🔍 隐藏项目数量:', hiddenItems.length);
+    
+    // 如果所有项目都少于等于20个，说明不需要展开功能
+    if (allItems.length <= 20) {
+      console.warn('词汇数量不超过20个，无需展开功能');
+      return;
+    }
+
+    // 判断当前状态：如果有隐藏项目，说明是收起状态；如果没有，说明是展开状态
+    const isExpanded = hiddenItems.length === 0;
     console.log('📊 当前展开状态:', isExpanded);
     
     if (isExpanded) {
-      // 收起：隐藏额外的词汇
-      hiddenItems.forEach(item => {
-        item.style.display = 'none';
+      // 收起：隐藏第21个及以后的词汇
+      const itemsToHide = Array.from(allItems).slice(20); // 从第21个开始
+      itemsToHide.forEach(item => {
+        item.classList.add('vocabulary-hidden');
       });
       
       // 更新按钮文本
-      const totalCount = categoryElement.querySelectorAll('.vocabulary-item:not(.vocabulary-expand-controls)').length;
-      expandBtn.textContent = `展开全部 (${totalCount})`;
+      expandBtn.textContent = `展开全部 (${itemsToHide.length})`;
+      console.log('✅ 收起完成，隐藏了', itemsToHide.length, '个项目');
     } else {
       // 展开：显示所有词汇
       hiddenItems.forEach(item => {
-        item.style.display = 'block';
+        item.classList.remove('vocabulary-hidden');
       });
       
       // 更新按钮文本
       expandBtn.textContent = '收起';
+      console.log('✅ 展开完成，显示了', hiddenItems.length, '个项目');
     }
   }
 
@@ -2069,9 +2085,7 @@ class PopupController {
     // 确保全局可访问
     if (!window.popupController) {
       window.popupController = this;
-      console.log('✅ 设置 window.popupController:', this);
-    } else {
-      console.log('ℹ️ window.popupController 已存在:', window.popupController);
+      console.log('✅ 设置 window.popupController');
     }
     
     // 为所有展开按钮添加事件监听器
@@ -2080,7 +2094,7 @@ class PopupController {
     
     expandButtons.forEach((button, index) => {
       const categoryId = button.getAttribute('data-category');
-      console.log(`🎯 为按钮 ${index + 1} 绑定事件，categoryId:`, categoryId);
+      console.log(`🎯 按钮 ${index + 1} categoryId:`, categoryId);
       
       // 移除之前的事件监听器（如果有）
       button.removeEventListener('click', this.handleExpandClick);
