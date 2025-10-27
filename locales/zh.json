@@ -201,7 +201,7 @@
         "title": "📊 页面统计",
         "language": "语言分布",
         "posDistribution": "词性分布",
-        "vocabulary": "词汇统计 (前100)"
+        "vocabulary": "词汇统计"
       },
 
       "refresh": "🔄 刷新分析",

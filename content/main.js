@@ -1068,7 +1068,7 @@ class ADHDHighlighter {
       let vocabularyStats = null;
       if (window.vocabularyCounter) {
         try {
-          vocabularyStats = window.vocabularyCounter.getTopWordsByCategory(100);
+          vocabularyStats = window.vocabularyCounter.getTopWordsByCategory();
         } catch (error) {
           console.error('获取词汇统计失败:', error);
         }
