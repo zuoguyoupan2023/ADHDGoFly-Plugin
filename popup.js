@@ -305,9 +305,6 @@ class PopupController {
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
-    // 绑定关于页面事件
-    this.bindAboutEvents();
-    
     // 加载设置
     this.loadDictSettings();
     this.loadColorSettings();
@@ -316,7 +313,7 @@ class PopupController {
 
   }
 
-  bindAboutEvents() {
+  bindSettingsAboutEvents() {
     // 更新日志折叠展开事件
     const changelogHeaders = document.querySelectorAll('.changelog-header');
     changelogHeaders.forEach(header => {
@@ -455,15 +452,15 @@ class PopupController {
       case 'faq-btn':
         this.showPage('faq');
         break;
-      case 'about-btn':
-        this.showPage('about');
-        break;
+
       case 'settings-btn':
         this.showPage('settings');
         // 初始化设置页面
         if (typeof initSettings === 'function') {
           initSettings();
         }
+        // 绑定设置页面中关于部分的事件
+        this.bindSettingsAboutEvents();
         break;
     }
   }
