@@ -1805,67 +1805,113 @@ class PopupController {
    */
   getAllVocabularyData() {
     try {
-      // 从当前页面获取词汇统计数据
-      const tabs = document.querySelectorAll('[data-tab]');
-      let currentTab = null;
+      console.log('🔍 开始获取词汇数据...');
       
-      // 找到当前激活的标签页
-      tabs.forEach(tab => {
-        if (tab.classList.contains('active')) {
-          currentTab = tab.getAttribute('data-tab');
-        }
-      });
+      // 检查是否在AI分析页面
+      const aiPage = document.getElementById('ai-page');
+      const isAIPageVisible = aiPage && aiPage.style.display !== 'none';
+      console.log('🔍 AI页面是否可见:', isAIPageVisible);
+      
+      // 检查词汇统计区域是否存在
+      const vocabularyStats = document.getElementById('vocabularyStats');
+      console.log('🔍 词汇统计区域是否存在:', !!vocabularyStats);
+      
+      if (!isAIPageVisible) {
+        console.log('❌ 当前不在AI分析页面，无法获取词汇数据');
+        return [];
+      }
 
-      // 如果不在AI分析页面，返回空数组
-      if (currentTab !== 'ai') {
-        console.log('当前不在AI分析页面，无法获取词汇数据');
+      if (!vocabularyStats) {
+        console.log('❌ 词汇统计区域不存在');
         return [];
       }
 
       // 从DOM中获取所有词汇数据
       const vocabularyData = [];
-      const categories = document.querySelectorAll('.vocabulary-category');
       
-      categories.forEach(category => {
-        const categoryId = category.getAttribute('data-category-id');
-        let posType = '';
+      // 首先尝试从词汇统计区域内查找
+      const categories = vocabularyStats.querySelectorAll('.vocabulary-category');
+      console.log('🔍 在词汇统计区域内找到词汇类别数量:', categories.length);
+      
+      // 如果在词汇统计区域内没找到，尝试全局查找
+      if (categories.length === 0) {
+        const globalCategories = document.querySelectorAll('.vocabulary-category');
+        console.log('🔍 全局查找到词汇类别数量:', globalCategories.length);
         
-        // 根据categoryId确定词性
-        switch (categoryId) {
-          case 'nouns':
-            posType = 'n';
-            break;
-          case 'verbs':
-            posType = 'v';
-            break;
-          case 'adjectives':
-            posType = 'a';
-            break;
-          default:
-            return;
-        }
-        
-        // 获取该类别下的所有词汇项目（包括隐藏的）
-        const vocabularyItems = category.querySelectorAll('.vocabulary-item');
-        vocabularyItems.forEach(item => {
-          const wordElement = item.querySelector('.vocabulary-word');
-          if (wordElement) {
-            const word = wordElement.textContent.trim();
-            if (word && word !== '暂无数据') {
-              vocabularyData.push({
-                word: word,
-                pos: posType
-              });
-            }
-          }
+        globalCategories.forEach((category, categoryIndex) => {
+          this.processVocabularyCategory(category, categoryIndex, vocabularyData);
         });
-      });
+      } else {
+        categories.forEach((category, categoryIndex) => {
+          this.processVocabularyCategory(category, categoryIndex, vocabularyData);
+        });
+      }
+      
+      console.log('✅ 总共获取到词汇数量:', vocabularyData.length);
+      console.log('📋 词汇数据:', vocabularyData);
       
       return vocabularyData;
     } catch (error) {
-      console.error('获取词汇数据失败:', error);
+      console.error('❌ 获取词汇数据失败:', error);
       return [];
     }
+  }
+
+  /**
+   * 处理单个词汇类别
+   * @param {Element} category - 词汇类别元素
+   * @param {number} categoryIndex - 类别索引
+   * @param {Array} vocabularyData - 词汇数据数组
+   */
+  processVocabularyCategory(category, categoryIndex, vocabularyData) {
+    const categoryId = category.getAttribute('data-category-id');
+    console.log(`🔍 处理类别 ${categoryIndex + 1}:`, categoryId);
+    
+    let posType = '';
+    
+    // 根据categoryId确定词性
+    switch (categoryId) {
+      case 'nouns':
+        posType = 'n';
+        break;
+      case 'verbs':
+        posType = 'v';
+        break;
+      case 'adjectives':
+        posType = 'a';
+        break;
+      default:
+        console.log(`⚠️ 未知的类别ID: ${categoryId}`);
+        return;
+    }
+    
+    // 获取该类别下的所有词汇项目（包括隐藏的）
+    const vocabularyItems = category.querySelectorAll('.vocabulary-item');
+    console.log(`🔍 类别 ${categoryId} 中找到词汇项目数量:`, vocabularyItems.length);
+    
+    vocabularyItems.forEach((item, itemIndex) => {
+      // 跳过"暂无数据"的项目
+      if (item.textContent.includes('暂无数据')) {
+        console.log(`⚠️ 跳过"暂无数据"项目`);
+        return;
+      }
+      
+      const wordElement = item.querySelector('.vocabulary-word');
+      if (wordElement) {
+        const word = wordElement.textContent.trim();
+        console.log(`🔍 词汇 ${itemIndex + 1}:`, word);
+        
+        if (word && word !== '暂无数据') {
+          vocabularyData.push({
+            word: word,
+            pos: posType
+          });
+        }
+      } else {
+        console.log(`⚠️ 词汇项目 ${itemIndex + 1} 中没有找到 .vocabulary-word 元素`);
+        console.log(`📝 项目内容:`, item.textContent.trim());
+      }
+    });
   }
 
   /**
@@ -1873,9 +1919,13 @@ class PopupController {
    */
   async copyAllVocabulary() {
     try {
+      console.log('🚀 开始复制词汇...');
+      
       const vocabularyData = this.getAllVocabularyData();
+      console.log('📊 获取到的词汇数据:', vocabularyData);
       
       if (vocabularyData.length === 0) {
+        console.log('⚠️ 没有词汇数据可复制');
         this.showToast('暂无词汇数据可复制', 'warning');
         return;
       }
@@ -1888,16 +1938,18 @@ class PopupController {
 
       // 转换为JSON字符串
       const jsonString = JSON.stringify(jsonData, null, 2);
+      console.log('📋 准备复制的JSON数据:', jsonString);
 
       // 复制到剪贴板
       await navigator.clipboard.writeText(jsonString);
+      console.log('✅ 复制成功');
       
       // 显示成功提示
       this.showToast(`已复制 ${vocabularyData.length} 个词汇`, 'success');
       
       console.log('词汇数据已复制到剪贴板:', jsonData);
     } catch (error) {
-      console.error('复制词汇失败:', error);
+      console.error('❌ 复制词汇失败:', error);
       this.showToast('复制失败，请重试', 'error');
     }
   }
