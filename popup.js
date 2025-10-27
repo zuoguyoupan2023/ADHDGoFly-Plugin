@@ -279,6 +279,9 @@ class PopupController {
     
     // 加载词典设置
     await this.loadDictSettings();
+    
+    // 显示评价引导
+    this.showReviewPrompt();
   }
 
   bindEvents() {
@@ -2663,6 +2666,89 @@ class PopupController {
         item.style.display = 'none';
       }
     });
+  }
+
+  showReviewPrompt() {
+    // 检查是否已经存在评价提示
+    if (document.getElementById('review-prompt')) {
+      return;
+    }
+
+    // 创建评价提示元素
+    const promptDiv = document.createElement('div');
+    promptDiv.id = 'review-prompt';
+    promptDiv.style.cssText = `
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: #f0f8ff;
+      border: 2px solid #007AFF;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    `;
+
+    promptDiv.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+        <div style="font-weight: bold; color: #007AFF; font-size: 16px;">
+          💡 帮助我们改进
+        </div>
+        <button id="close-review-prompt" style="
+          background: none;
+          border: none;
+          font-size: 18px;
+          cursor: pointer;
+          color: #666;
+          padding: 0;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">×</button>
+      </div>
+      <div style="color: #333; margin-bottom: 12px;">
+        您好！感谢使用 ADHDGoFly 插件。如果您在使用过程中遇到任何问题或有改进建议，请点击下方链接告诉我们：
+      </div>
+      <div style="text-align: center;">
+        <a href="https://feedback.adhdgofly.online" target="_blank" style="
+          display: inline-block;
+          background: #007AFF;
+          color: white;
+          text-decoration: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: 500;
+          transition: background-color 0.2s;
+        " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
+          📝 提交反馈
+        </a>
+      </div>
+    `;
+
+    // 添加到页面
+    document.body.appendChild(promptDiv);
+
+    // 绑定关闭按钮事件
+    const closeBtn = document.getElementById('close-review-prompt');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        promptDiv.remove();
+      });
+    }
+
+    // 3秒后自动淡出（可选）
+    setTimeout(() => {
+      if (promptDiv.parentNode) {
+        promptDiv.style.transition = 'opacity 0.5s';
+        promptDiv.style.opacity = '0.8';
+      }
+    }, 3000);
   }
 }
 
