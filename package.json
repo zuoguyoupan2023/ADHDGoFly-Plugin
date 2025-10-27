@@ -1,6 +1,6 @@
 {
   "name": "adhdgofly-plugin",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "ADHDGoFly - 智能阅读助手浏览器插件",
   "scripts": {
     "build": "node build.js",
