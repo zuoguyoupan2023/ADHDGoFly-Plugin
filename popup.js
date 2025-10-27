@@ -2674,29 +2674,74 @@ class PopupController {
       return;
     }
 
+    // 获取国际化文本
+    const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意帮助更多人提升阅读体验吗？';
+    const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
+    const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '立即评价';
+    const laterBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.later') : '下次提醒';
+    const neverBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.never') : '不再提醒';
+
     // 创建评价提示元素
     const promptDiv = document.createElement('div');
     promptDiv.id = 'review-prompt';
+    
+    // 获取插件容器的位置和尺寸
+    const popupContainer = document.body;
+    const containerRect = popupContainer.getBoundingClientRect();
+    const containerHeight = window.innerHeight;
+    const containerWidth = window.innerWidth;
+    
+    // 计算提示框尺寸
+    const promptWidth = 300;
+    const promptHeight = 160;
+    
+    // 判断位置：优先插件下方，如果空间不够则放在左侧
+    let positionStyle = '';
+    if (containerHeight - containerRect.bottom >= promptHeight + 10) {
+      // 插件下方有足够空间
+      positionStyle = `
+        position: fixed;
+        top: ${containerRect.bottom + 3}px;
+        left: 50%;
+        transform: translateX(-50%);
+      `;
+    } else {
+      // 空间不够，放在左侧
+      positionStyle = `
+        position: fixed;
+        top: 50%;
+        left: ${containerRect.left - promptWidth - 5}px;
+        transform: translateY(-50%);
+      `;
+      // 如果左侧也没有空间，则居中显示
+      if (containerRect.left < promptWidth + 10) {
+        positionStyle = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        `;
+      }
+    }
+    
     promptDiv.style.cssText = `
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      background: #f0f8ff;
-      border: 2px solid #007AFF;
+      ${positionStyle}
+      background: white;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       z-index: 10000;
+      width: ${promptWidth}px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.4;
     `;
 
     promptDiv.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-        <div style="font-weight: bold; color: #007AFF; font-size: 16px;">
-          💡 帮助我们改进
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div style="font-weight: 600; color: #333; font-size: 15px; flex: 1; padding-right: 8px;">
+          ${title}
         </div>
         <button id="close-review-prompt" style="
           background: none;
@@ -2710,43 +2755,92 @@ class PopupController {
           display: flex;
           align-items: center;
           justify-content: center;
+          flex-shrink: 0;
         ">×</button>
       </div>
-      <div style="color: #333; margin-bottom: 12px;">
-        您好！感谢使用 ADHDGoFly 插件。如果您在使用过程中遇到任何问题或有改进建议，请点击下方链接告诉我们：
+      <div style="color: #555; margin-bottom: 16px; font-size: 13px;">
+        ${description}
       </div>
-      <div style="text-align: center;">
+      <div style="display: flex; gap: 8px; justify-content: center;">
         <a href="https://feedback.adhdgofly.online" target="_blank" style="
           display: inline-block;
           background: #007AFF;
           color: white;
           text-decoration: none;
-          padding: 8px 16px;
-          border-radius: 6px;
+          padding: 6px 12px;
+          border-radius: 4px;
           font-weight: 500;
+          font-size: 12px;
           transition: background-color 0.2s;
         " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
-          📝 提交反馈
-        </a>
+          ${reviewBtnText}
+         </a>
+         <button id="later-review-prompt" style="
+           background: #f0f0f0;
+           color: #666;
+           border: none;
+           padding: 6px 12px;
+           border-radius: 4px;
+           font-weight: 500;
+           font-size: 12px;
+           cursor: pointer;
+           transition: background-color 0.2s;
+         " onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
+           ${laterBtnText}
+         </button>
+         <button id="never-review-prompt" style="
+           background: none;
+           color: #999;
+           border: none;
+           padding: 6px 12px;
+           border-radius: 4px;
+           font-weight: 500;
+           font-size: 12px;
+           cursor: pointer;
+           text-decoration: underline;
+         " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
+           ${neverBtnText}
+        </button>
       </div>
     `;
 
     // 添加到页面
     document.body.appendChild(promptDiv);
 
-    // 绑定关闭按钮事件
+    // 绑定事件
     const closeBtn = document.getElementById('close-review-prompt');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
+    const laterBtn = document.getElementById('later-review-prompt');
+    const neverBtn = document.getElementById('never-review-prompt');
+    
+    const removePrompt = () => {
+      if (promptDiv.parentNode) {
         promptDiv.remove();
+      }
+    };
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', removePrompt);
+    }
+    
+    if (laterBtn) {
+      laterBtn.addEventListener('click', () => {
+        // 可以在这里添加"稍后提醒"的逻辑
+        removePrompt();
+      });
+    }
+    
+    if (neverBtn) {
+      neverBtn.addEventListener('click', () => {
+        // 可以在这里添加"不再提醒"的逻辑
+        removePrompt();
       });
     }
 
-    // 3秒后自动淡出（可选）
+    // 3秒后自动淡化
     setTimeout(() => {
       if (promptDiv.parentNode) {
         promptDiv.style.transition = 'opacity 0.5s';
-        promptDiv.style.opacity = '0.8';
+        promptDiv.style.opacity = '0.9';
       }
     }, 3000);
   }
