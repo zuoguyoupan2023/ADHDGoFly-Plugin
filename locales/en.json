@@ -267,7 +267,7 @@
         "q6": "How to use highlighting feature?",
         "a6": "1. After installing plugin, visit any webpage\n2. Plugin automatically detects page language and loads enabled dictionaries\n3. Highlights page vocabulary based on set vocabulary categories and color schemes\n4. Click plugin icon to adjust settings\n5. Click close button to restore all highlighted words to original appearance",
         "q7": "Which languages support vocabulary highlighting?",
-        "a7": "🇨🇳 Chinese (idioms, poetry, technical terms, etc.) - Default enabled\n🇺🇸 English - Default enabled\n🇪🇸 Spanish - Manual enable required\n🇫🇷 French - Manual enable required\n🇷🇺 Russian - Manual enable required\n🇯🇵 Japanese - Manual enable required\nMore languages continuously being added...",
+        "a7": "🇨🇳 Chinese - Default enabled\n🇺🇸 English - Default enabled\n🇪🇸 Spanish - Manual enable required\n🇫🇷 French - Manual enable required\n🇷🇺 Russian - Manual enable required\n🇯🇵 Japanese - Manual enable required\nMore languages continuously being added...",
         "q8": "How to modify highlight colors?",
         "a8": "1. Click plugin icon to open settings panel\n2. Select \"Color Settings\" tab\n3. Choose from preset color schemes (custom colors will be supported in future)\n4. Save settings and apply to current page",
         "q9": "Can I add my own vocabulary?",
