@@ -302,6 +302,9 @@ class PopupController {
     // AI分析事件
     this.bindAIEvents();
     
+    // 复制词汇事件
+    this.bindCopyVocabularyEvents();
+    
     // 绑定语言切换事件
     this.bindLanguageEvents();
     
@@ -1786,6 +1789,181 @@ class PopupController {
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => this.refreshAIAnalysis());
     }
+  }
+
+  // 复制词汇相关方法
+  bindCopyVocabularyEvents() {
+    const copyBtn = document.getElementById('copyVocabularyBtn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => this.copyAllVocabulary());
+    }
+  }
+
+  /**
+   * 获取所有词汇数据
+   * @returns {Array} 包含所有词汇和属性的数组
+   */
+  getAllVocabularyData() {
+    try {
+      // 从当前页面获取词汇统计数据
+      const tabs = document.querySelectorAll('[data-tab]');
+      let currentTab = null;
+      
+      // 找到当前激活的标签页
+      tabs.forEach(tab => {
+        if (tab.classList.contains('active')) {
+          currentTab = tab.getAttribute('data-tab');
+        }
+      });
+
+      // 如果不在AI分析页面，返回空数组
+      if (currentTab !== 'ai') {
+        console.log('当前不在AI分析页面，无法获取词汇数据');
+        return [];
+      }
+
+      // 从DOM中获取所有词汇数据
+      const vocabularyData = [];
+      const categories = document.querySelectorAll('.vocabulary-category');
+      
+      categories.forEach(category => {
+        const categoryId = category.getAttribute('data-category-id');
+        let posType = '';
+        
+        // 根据categoryId确定词性
+        switch (categoryId) {
+          case 'nouns':
+            posType = 'n';
+            break;
+          case 'verbs':
+            posType = 'v';
+            break;
+          case 'adjectives':
+            posType = 'a';
+            break;
+          default:
+            return;
+        }
+        
+        // 获取该类别下的所有词汇项目（包括隐藏的）
+        const vocabularyItems = category.querySelectorAll('.vocabulary-item');
+        vocabularyItems.forEach(item => {
+          const wordElement = item.querySelector('.vocabulary-word');
+          if (wordElement) {
+            const word = wordElement.textContent.trim();
+            if (word && word !== '暂无数据') {
+              vocabularyData.push({
+                word: word,
+                pos: posType
+              });
+            }
+          }
+        });
+      });
+      
+      return vocabularyData;
+    } catch (error) {
+      console.error('获取词汇数据失败:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 复制所有词汇到剪贴板
+   */
+  async copyAllVocabulary() {
+    try {
+      const vocabularyData = this.getAllVocabularyData();
+      
+      if (vocabularyData.length === 0) {
+        this.showToast('暂无词汇数据可复制', 'warning');
+        return;
+      }
+
+      // 按JSON格式生成词汇数据
+      const jsonData = vocabularyData.map(item => ({
+        word: item.word,
+        pos: item.pos
+      }));
+
+      // 转换为JSON字符串
+      const jsonString = JSON.stringify(jsonData, null, 2);
+
+      // 复制到剪贴板
+      await navigator.clipboard.writeText(jsonString);
+      
+      // 显示成功提示
+      this.showToast(`已复制 ${vocabularyData.length} 个词汇`, 'success');
+      
+      console.log('词汇数据已复制到剪贴板:', jsonData);
+    } catch (error) {
+      console.error('复制词汇失败:', error);
+      this.showToast('复制失败，请重试', 'error');
+    }
+  }
+
+  /**
+   * 显示Toast提示
+   * @param {string} message - 提示消息
+   * @param {string} type - 提示类型 ('success', 'warning', 'error')
+   */
+  showToast(message, type = 'info') {
+    // 创建toast元素
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // 添加样式
+    Object.assign(toast.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '6px',
+      color: 'white',
+      fontSize: '14px',
+      fontWeight: '500',
+      zIndex: '10000',
+      opacity: '0',
+      transform: 'translateY(-20px)',
+      transition: 'all 0.3s ease'
+    });
+
+    // 根据类型设置背景色
+    switch (type) {
+      case 'success':
+        toast.style.backgroundColor = '#28a745';
+        break;
+      case 'warning':
+        toast.style.backgroundColor = '#ffc107';
+        toast.style.color = '#212529';
+        break;
+      case 'error':
+        toast.style.backgroundColor = '#dc3545';
+        break;
+      default:
+        toast.style.backgroundColor = '#007bff';
+    }
+
+    // 添加到页面
+    document.body.appendChild(toast);
+
+    // 显示动画
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    }, 100);
+
+    // 自动隐藏
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-20px)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
   }
 
   async loadAIAnalysis() {

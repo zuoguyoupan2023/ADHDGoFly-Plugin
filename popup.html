@@ -1441,6 +1441,56 @@
         /* 移除独立滚动，与其他统计区域作为整体滚动 */
       }
 
+      /* 词汇统计标题和操作按钮 */
+      .stat-title-with-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .copy-vocabulary-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .copy-vocabulary-btn:hover {
+        background: #0056b3;
+      }
+
+      .copy-vocabulary-btn:active {
+        background: #004085;
+      }
+
+      /* 词典工具链接 */
+      .vocabulary-tools-link {
+        margin-top: 8px;
+        text-align: center;
+      }
+
+      .dictionary-tool-link {
+        display: inline-block;
+        color: #007bff;
+        text-decoration: none;
+        font-size: 10px;
+        padding: 4px 8px;
+        border: 1px solid #007bff;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .dictionary-tool-link:hover {
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+      }
+
       .vocabulary-category {
         margin-bottom: 15px;
         border: 1px solid #e0e0e0;
@@ -3060,11 +3110,21 @@
 
             <!-- 词汇统计 -->
             <div class="stat-group">
-              <div class="stat-title" data-i18n="pages.ai.stats.vocabulary">
-                词汇统计
+              <div class="stat-title-with-actions">
+                <div class="stat-title" data-i18n="pages.ai.stats.vocabulary">
+                  词汇统计
+                </div>
+                <button class="copy-vocabulary-btn" id="copyVocabularyBtn" title="复制所有词汇">
+                  📋 复制词汇
+                </button>
               </div>
               <div class="stat-content" id="vocabularyStats">
                 <div class="loading">分析中...</div>
+              </div>
+              <div class="vocabulary-tools-link">
+                <a href="https://dictionary.adhdgofly.online" target="_blank" class="dictionary-tool-link">
+                  🔗 词典制作工具
+                </a>
               </div>
             </div>
           </div>
