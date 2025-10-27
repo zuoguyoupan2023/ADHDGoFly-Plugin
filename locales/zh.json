@@ -319,6 +319,14 @@
       },
       "dictionaries": {
          "title": "词典来源",
+         "titles": {
+          "zh": "中文词典 (ZH) - Jieba",
+          "en": "英文词典 (EN) - WordNet",
+          "fr": "法语词典 (FR) - Morphalou",
+          "ru": "俄语词典 (RU) - OpenCorpora",
+          "es": "西班牙语词典 (ES) - Apertium",
+          "ja": "日语词典 (JA) - JMdict"
+        },
          "descriptions": {
           "zh": "基于Jieba中文分词词典，包含常用词汇的词性标注。数据来源于公开的中文语言学资源。",
           "en": "基于WordNet英语词典，提供准确的词性分类和语义关系。WordNet是普林斯顿大学开发的大型英语词汇数据库。",

@@ -311,6 +311,14 @@
       },
       "dictionaries": {
          "title": "Dictionary Sources",
+         "titles": {
+          "zh": "Chinese Dictionary (ZH) - Jieba",
+          "en": "English Dictionary (EN) - WordNet",
+          "fr": "French Dictionary (FR) - Morphalou",
+          "ru": "Russian Dictionary (RU) - OpenCorpora",
+          "es": "Spanish Dictionary (ES) - Apertium",
+          "ja": "Japanese Dictionary (JA) - JMdict"
+        },
          "descriptions": {
           "zh": "Based on Jieba Chinese word segmentation dictionary, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
           "en": "Based on WordNet English dictionary, providing accurate part-of-speech classification and semantic relationships. WordNet is a large English lexical database developed by Princeton University.",
