@@ -201,7 +201,45 @@
       "noData": "No data available",
       "error": "Analysis failed, please try again"
     },
-
+    "about": {
+      "title": "About",
+      "about": {
+        "title": "About Us",
+        "description": "ADHDGoFly is a text highlighting plugin designed specifically for ADHD users, helping users better understand and read web content through intelligent part-of-speech recognition and color marking.",
+        "version": "Version:",
+        "developer": "Developer:",
+        "website": "Website:"
+      },
+      "changelog": {
+        "title": "Update Log",
+        "v014": {
+          "title": "Dictionary Features & Performance Enhancement",
+          "feature1": "Added custom dictionary functionality",
+          "feature2": "Implemented caching logic",
+          "feature3": "Optimized homepage UI and sidebar UI",
+          "feature4": "Fixed minor bugs"
+        },
+        "v013": {
+          "title": "Interface Optimization & Feature Enhancement",
+          "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
+          "feature2": "Support for English comparative and superlative purple logic",
+          "feature3": "Implement basic settings management and storage functionality"
+        },
+        "v012": {
+          "title": "Multi-language Support & Performance Optimization",
+          "feature1": "Multiple color schemes: warm, cool, soft, high contrast",
+          "feature2": "Added font size, line spacing, word spacing logic"
+        },
+        "v011": {
+          "title": "Basic Feature Release",
+          "feature1": "Support for Chinese and English part-of-speech recognition",
+          "feature2": "Provide color highlighting for nouns, verbs, adjectives"
+        }
+      },
+      "feedback": {
+        "wechat": "Feedback & Support: WeChat zuoguyoupan2023"
+      }
+    },
     "faq": {
       "title": "Frequently Asked Questions",
       "searchPlaceholder": "Search questions...",
@@ -281,7 +319,7 @@
           "es": "Sourced from Apertium open-source machine translation platform's Spanish linguistic resources, supporting common vocabulary recognition.",
           "ja": "Based on JMdict open-source Japanese multilingual dictionary, containing part-of-speech information for kana and kanji. Completely open and supports commercial use."
         }
-      },
+     },
       "storage": {
         "title": "Storage Management",
         "retentionTime": "Cache Retention Time",
@@ -339,6 +377,7 @@
     "text": "Text",
     "ai": "AI Analysis",
     "faq": "FAQ",
+    "about": "About",
     "settings": "Settings",
     "language": "Switch Language"
   },
