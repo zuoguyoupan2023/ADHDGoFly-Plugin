@@ -1,3 +1,77 @@
+// 浏览器检测功能 - 改进版本
+(function detectBrowser() {
+  const userAgent = navigator.userAgent;
+  let browserInfo = {
+    name: '未知浏览器',
+    version: '未知版本',
+    engine: '未知引擎'
+  };
+  
+  // 检测浏览器类型和版本
+  if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+    browserInfo.name = 'Chrome';
+    browserInfo.engine = 'Blink';
+    // 尝试从 User Agent 中提取真实版本
+    const chromeMatch = userAgent.match(/Chrome\/(\d+\.\d+\.\d+\.\d+)/);
+    if (chromeMatch) {
+      browserInfo.version = chromeMatch[1];
+    }
+  } else if (userAgent.includes('Firefox')) {
+    browserInfo.name = 'Firefox';
+    browserInfo.engine = 'Gecko';
+    const firefoxMatch = userAgent.match(/Firefox\/(\d+\.\d+)/);
+    if (firefoxMatch) {
+      browserInfo.version = firefoxMatch[1];
+    }
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    browserInfo.name = 'Safari';
+    browserInfo.engine = 'WebKit';
+    const safariMatch = userAgent.match(/Version\/(\d+\.\d+)/);
+    if (safariMatch) {
+      browserInfo.version = safariMatch[1];
+    }
+  } else if (userAgent.includes('Edg')) {
+    browserInfo.name = 'Microsoft Edge';
+    browserInfo.engine = 'Blink';
+    const edgeMatch = userAgent.match(/Edg\/(\d+\.\d+\.\d+\.\d+)/);
+    if (edgeMatch) {
+      browserInfo.version = edgeMatch[1];
+    }
+  } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+    browserInfo.name = 'Opera';
+    browserInfo.engine = 'Blink';
+    const operaMatch = userAgent.match(/(?:Opera|OPR)\/(\d+\.\d+)/);
+    if (operaMatch) {
+      browserInfo.version = operaMatch[1];
+    }
+  }
+  
+  // 获取更多浏览器信息
+  const additionalInfo = {
+    platform: navigator.platform,
+    language: navigator.language,
+    cookieEnabled: navigator.cookieEnabled,
+    onLine: navigator.onLine,
+    vendor: navigator.vendor || '未知厂商'
+  };
+  
+  // 输出详细信息
+  console.log(`[ADHD插件] 浏览器检测结果:`);
+  console.log(`  - 浏览器: ${browserInfo.name}`);
+  console.log(`  - 版本: ${browserInfo.version}`);
+  console.log(`  - 引擎: ${browserInfo.engine}`);
+  console.log(`  - 平台: ${additionalInfo.platform}`);
+  console.log(`  - 语言: ${additionalInfo.language}`);
+  console.log(`  - 厂商: ${additionalInfo.vendor}`);
+  console.log(`[ADHD插件] 完整 User Agent: ${userAgent}`);
+  
+  // 检测是否可能是伪造的 User Agent
+  if (browserInfo.name === 'Chrome' && browserInfo.version.startsWith('141.')) {
+    console.warn(`[ADHD插件] 警告: 检测到可能不准确的Chrome版本号 ${browserInfo.version}`);
+    console.log(`[ADHD插件] 这可能是由于浏览器隐私设置或User Agent伪造导致的`);
+  }
+})();
+
 // 主控制器模块
 class ADHDHighlighter {
   constructor() {
