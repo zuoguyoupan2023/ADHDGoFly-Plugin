@@ -1,5 +1,5 @@
 /**
- * DualCounter - 双重计数器系统
+ * ADHDGoFlyCounter - ADHD专注飞行计数器系统
  * 
  * 功能说明：
  * 1. 页面计数器：统计不重复页面访问，1小时内同一页面只计数一次
@@ -8,7 +8,7 @@
  * 4. 隐私保护：URL使用SHA-256哈希值存储
  */
 
-class DualCounter {
+class ADHDGoFlyCounter {
     constructor() {
         // 存储键定义
         this.STORAGE_KEYS = {
@@ -40,10 +40,10 @@ class DualCounter {
             
             await this._setStorageData(this.STORAGE_KEYS.NODE_COUNT, newCount);
             
-            console.log(`📊 节点计数更新: ${currentCount} → ${newCount} (+${count})`);
+            console.log(`ADHDGoFlyCounter日志：📊 节点计数更新: ${currentCount} → ${newCount} (+${count})`);
             return newCount;
         } catch (error) {
-            console.error('❌ 节点计数更新失败:', error);
+            console.error('ADHDGoFlyCounter日志：❌ 节点计数更新失败:', error);
             return 0;
         }
     }
@@ -83,15 +83,15 @@ class DualCounter {
                 const newPageCount = currentPageCount + 1;
                 await this._setStorageData(this.STORAGE_KEYS.PAGE_COUNT, newPageCount);
                 
-                console.log(`📄 页面计数更新: ${currentPageCount} → ${newPageCount} (新页面: ${url})`);
+                console.log(`ADHDGoFlyCounter日志：📄 页面计数更新: ${currentPageCount} → ${newPageCount} (新页面: ${url})`);
                 return newPageCount;
             } else {
                 const timeSinceLastVisit = Math.round((currentTime - lastVisit.timestamp) / (1000 * 60));
-                console.log(`⏰ 页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟)`);
+                console.log(`ADHDGoFlyCounter日志：⏰ 页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟)`);
                 return await this.getPageCount();
             }
         } catch (error) {
-            console.error('❌ 页面计数更新失败:', error);
+            console.error('ADHDGoFlyCounter日志：❌ 页面计数更新失败:', error);
             return 0;
         }
     }
@@ -164,10 +164,10 @@ class DualCounter {
                 metadata.shownReminders = shownReminders;
                 await this._setStorageData(this.STORAGE_KEYS.METADATA, metadata);
                 
-                console.log(`✅ 评价提醒已标记为显示: ${reminderKey}`);
+                console.log(`ADHDGoFlyCounter日志：✅ 评价提醒已标记为显示: ${reminderKey}`);
             }
         } catch (error) {
-            console.error('❌ 标记评价提醒失败:', error);
+            console.error('ADHDGoFlyCounter日志：❌ 标记评价提醒失败:', error);
         }
     }
 
@@ -198,7 +198,7 @@ class DualCounter {
                 averagePagesPerDay: daysSinceInstall > 0 ? Math.round(pageCount / daysSinceInstall) : 0
             };
         } catch (error) {
-            console.error('❌ 获取元数据失败:', error);
+            console.error('ADHDGoFlyCounter日志：❌ 获取元数据失败:', error);
             return {};
         }
     }
@@ -213,9 +213,9 @@ class DualCounter {
             await this._removeStorageData(this.STORAGE_KEYS.PAGE_VISITS);
             await this._removeStorageData(this.STORAGE_KEYS.METADATA);
             
-            console.log('🔄 所有计数器已重置');
+            console.log('ADHDGoFlyCounter日志：🔄 所有计数器已重置');
         } catch (error) {
-            console.error('❌ 重置计数器失败:', error);
+            console.error('ADHDGoFlyCounter日志：❌ 重置计数器失败:', error);
         }
     }
 
@@ -314,7 +314,7 @@ class DualCounter {
 
 // 导出类
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DualCounter;
+    module.exports = ADHDGoFlyCounter;
 } else if (typeof window !== 'undefined') {
-    window.DualCounter = DualCounter;
+    window.ADHDGoFlyCounter = ADHDGoFlyCounter;
 }

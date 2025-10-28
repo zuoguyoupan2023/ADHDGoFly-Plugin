@@ -118,9 +118,9 @@ class ADHDHighlighter {
     this.eventCacheManager = null;
     this.initEventCacheSystem();
     
-    // 初始化双重计数器系统
-    this.dualCounter = null;
-    this.initDualCounter();
+    // 初始化ADHD专注飞行计数器系统
+    this.adhdGoFlyCounter = null;
+    this.initADHDGoFlyCounter();
     
     // 初始化评价计时器系统
     this.reviewTimer = null;
@@ -162,21 +162,21 @@ class ADHDHighlighter {
   }
 
   /**
-   * 初始化双重计数器系统
+   * 初始化ADHD专注飞行计数器系统
    */
-  async initDualCounter() {
+  async initADHDGoFlyCounter() {
     try {
-      if (typeof DualCounter !== 'undefined') {
-        this.dualCounter = new DualCounter();
-        console.log('✅ 双重计数器系统初始化成功');
+      if (typeof ADHDGoFlyCounter !== 'undefined') {
+        this.adhdGoFlyCounter = new ADHDGoFlyCounter();
+        console.log('✅ ADHD专注飞行计数器系统初始化成功');
         
         // 页面加载时增加页面计数
-        await this.dualCounter.incrementPageCount();
+        await this.adhdGoFlyCounter.incrementPageCount();
       } else {
-        console.warn('⚠️ DualCounter 未加载，跳过双重计数器初始化');
+        console.warn('⚠️ ADHDGoFlyCounter 未加载，跳过ADHD专注飞行计数器初始化');
       }
     } catch (error) {
-      console.error('❌ 双重计数器系统初始化失败:', error);
+      console.error('❌ ADHD专注飞行计数器系统初始化失败:', error);
     }
   }
 
@@ -336,8 +336,8 @@ class ADHDHighlighter {
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);
       
-      // 更新双重计数器
-      await this.updateDualCounter(eventData);
+      // 更新ADHD专注飞行计数器
+      await this.updateADHDGoFlyCounter(eventData);
       
       // 更新评价计数器
       await this.updateReviewCounter(eventData);
@@ -349,12 +349,12 @@ class ADHDHighlighter {
   }
 
   /**
-   * 更新双重计数器
+   * 更新ADHD专注飞行计数器
    */
-  async updateDualCounter(eventData) {
+  async updateADHDGoFlyCounter(eventData) {
     try {
-      if (!this.dualCounter) {
-        console.warn('⚠️ 双重计数器未初始化，跳过计数');
+      if (!this.adhdGoFlyCounter) {
+        console.warn('⚠️ ADHD专注飞行计数器未初始化，跳过计数');
         return;
       }
 
@@ -366,19 +366,19 @@ class ADHDHighlighter {
 
       // 增加节点计数（按处理的元素数量计数）
       const nodeCount = eventData.elements.length;
-      const newCount = await this.dualCounter.incrementNodeCount(nodeCount);
+      const newCount = await this.adhdGoFlyCounter.incrementNodeCount(nodeCount);
       
       console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
       // 检查是否需要显示评价提醒
-      const ratingCheck = await this.dualCounter.shouldShowRatingReminder();
+      const ratingCheck = await this.adhdGoFlyCounter.shouldShowRatingReminder();
       if (ratingCheck.shouldShow) {
         console.log('⭐ 触发评价提醒条件:', ratingCheck);
         await this.showRatingReminder(ratingCheck);
       }
 
     } catch (error) {
-      console.error('❌ 更新双重计数器失败:', error);
+      console.error('❌ 更新ADHD专注飞行计数器失败:', error);
       // 计数器失败不应影响主流程
     }
   }
@@ -427,7 +427,7 @@ class ADHDHighlighter {
   async showRatingReminder(ratingData) {
     try {
       // 标记提醒已显示
-      await this.dualCounter.markRatingReminderShown(ratingData.reminderKey);
+      await this.adhdGoFlyCounter.markRatingReminderShown(ratingData.reminderKey);
       
       // 这里可以添加实际的评价提醒UI逻辑
       console.log(`🌟 评价提醒: 您已使用插件 ${ratingData.days} 天，处理了 ${ratingData.nodes} 个节点！`);
