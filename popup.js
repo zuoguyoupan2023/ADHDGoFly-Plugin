@@ -280,8 +280,8 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
-    // 显示评价引导
-    this.showReviewPrompt();
+    // 检查并显示评价引导（基于时间条件）
+    await this.checkAndShowReviewPrompt();
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
@@ -2671,6 +2671,27 @@ class PopupController {
     });
   }
 
+  async checkAndShowReviewPrompt() {
+    try {
+      // 创建ReviewTimer实例
+      const reviewTimer = new ReviewTimer();
+      
+      // 检查是否应该触发评价提醒
+      const shouldTrigger = await reviewTimer.shouldTrigger();
+      
+      if (shouldTrigger) {
+        // 显示评价提醒
+        this.showReviewPrompt();
+        
+        // 记录触发事件
+        await reviewTimer.recordTrigger('popup_shown');
+      }
+    } catch (error) {
+      console.error('检查评价提醒条件时出错:', error);
+      // 如果出错，不显示评价提醒，避免影响用户体验
+    }
+  }
+
   updateFeedbackLink() {
     try {
       const feedbackLink = document.getElementById('feedback-link');
@@ -2825,7 +2846,7 @@ class PopupController {
       
       <!-- 第四行：去评价按钮和不再提醒 -->
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <a href="https://feedback.adhdgofly.online" target="_blank" style="
+        <a id="review-btn" href="#" style="
           display: inline-block;
           background: #007AFF;
           color: white;
@@ -2835,6 +2856,7 @@ class PopupController {
           font-weight: 500;
           font-size: 13px;
           transition: background-color 0.2s;
+          cursor: pointer;
         " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
           ${reviewBtnText}
         </a>
@@ -2860,6 +2882,7 @@ class PopupController {
     const reasonToggle = document.getElementById('reason-toggle');
     const reasonContent = document.getElementById('reason-content');
     const neverBtn = document.getElementById('never-review-prompt');
+    const reviewBtn = document.getElementById('review-btn');
     const stars = promptDiv.querySelectorAll('.star-rating');
     
     const removePrompt = () => {
@@ -2900,19 +2923,64 @@ class PopupController {
         });
       });
       
-      star.addEventListener('click', () => {
-        // 点击星星时直接跳转到评价页面
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        removePrompt();
+      star.addEventListener('click', async () => {
+        try {
+          // 记录用户点击评价
+          const reviewTimer = new ReviewTimer();
+          await reviewTimer.recordTrigger('rated');
+          
+          // 点击星星时直接跳转到评价页面
+          const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+          window.open(storeUrl, '_blank');
+          removePrompt();
+        } catch (error) {
+          console.error('记录评价点击时出错:', error);
+          // 即使出错也要跳转和移除提示框
+          const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+          window.open(storeUrl, '_blank');
+          removePrompt();
+        }
       });
     });
     
     // "不再提醒"事件
     if (neverBtn) {
-      neverBtn.addEventListener('click', () => {
-        // 可以在这里添加"不再提醒"的逻辑
-        removePrompt();
+      neverBtn.addEventListener('click', async () => {
+        try {
+          // 创建ReviewTimer实例并记录用户选择"永不提醒"
+          const reviewTimer = new ReviewTimer();
+          await reviewTimer.recordTrigger('never_remind');
+          
+          // 移除提示框
+          removePrompt();
+        } catch (error) {
+          console.error('记录"不再提醒"选择时出错:', error);
+          // 即使出错也要移除提示框
+          removePrompt();
+        }
+      });
+    }
+
+    // "去评价"按钮事件
+    if (reviewBtn) {
+      reviewBtn.addEventListener('click', async (e) => {
+        e.preventDefault(); // 阻止默认的链接跳转
+        try {
+          // 记录用户点击评价
+          const reviewTimer = new ReviewTimer();
+          await reviewTimer.recordTrigger('rated');
+          
+          // 跳转到评价页面
+          const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+          window.open(storeUrl, '_blank');
+          removePrompt();
+        } catch (error) {
+          console.error('记录评价点击时出错:', error);
+          // 即使出错也要跳转和移除提示框
+          const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+          window.open(storeUrl, '_blank');
+          removePrompt();
+        }
       });
     }
 
