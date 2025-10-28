@@ -100,10 +100,6 @@ class ADHDHighlighter {
     this.languageDetector = new LanguageDetector();
     this.textSegmenter = new TextSegmenter();
     
-    // 初始化高亮次数计数器
-    this.highlightCounter = null;
-    this.initHighlightCounter();
-    
     // 页面处理器 - 支持传统和流式处理
     this.pageProcessor = new PageProcessor(
       this.dictionaryManager,
@@ -130,24 +126,6 @@ class ADHDHighlighter {
     
     // 初始化
     this.init();
-  }
-
-  /**
-   * 初始化高亮次数计数器
-   */
-  async initHighlightCounter() {
-    try {
-      // 动态加载高亮计数器
-      if (typeof HighlightCounter === 'undefined') {
-        // 如果类未定义，尝试加载脚本
-        console.log('🔢 正在加载高亮次数计数器...');
-      }
-      
-      this.highlightCounter = new HighlightCounter();
-      console.log('✅ 高亮次数计数器初始化完成');
-    } catch (error) {
-      console.warn('⚠️ 高亮次数计数器初始化失败:', error);
-    }
   }
 
   /**
@@ -268,12 +246,6 @@ class ADHDHighlighter {
   async handleHighlightComplete(eventData) {
     try {
       console.log('🎯 收到高亮完成事件:', eventData);
-      
-      // 增加高亮次数计数
-      if (this.highlightCounter) {
-        const newCount = await this.highlightCounter.incrementCount();
-        console.log('🔢 高亮次数已更新:', newCount);
-      }
       
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);

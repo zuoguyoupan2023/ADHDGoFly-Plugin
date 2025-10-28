@@ -21,7 +21,6 @@
         "content/page-processor.js",
         "content/streaming-page-processor.js",
         "content/storage/event-cache-manager.js",
-        "content/storage/highlight-counter.js",
         "content/main.js"
       ],
     "css": ["styles.css"],
