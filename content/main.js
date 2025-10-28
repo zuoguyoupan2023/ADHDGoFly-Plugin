@@ -122,6 +122,10 @@ class ADHDHighlighter {
     this.dualCounter = null;
     this.initDualCounter();
     
+    // 初始化评价计时器系统
+    this.reviewTimer = null;
+    this.initReviewTimer();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -165,6 +169,26 @@ class ADHDHighlighter {
       }
     } catch (error) {
       console.error('❌ 双重计数器系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 初始化评价计时器系统
+   */
+  async initReviewTimer() {
+    try {
+      if (typeof ReviewTimer !== 'undefined') {
+        this.reviewTimer = new ReviewTimer();
+        await this.reviewTimer.init();
+        console.log('✅ 评价计时器系统初始化成功');
+        
+        // 输出当前状态日志
+        this.reviewTimer.logCurrentStatus();
+      } else {
+        console.warn('⚠️ ReviewTimer 未加载，跳过评价计时器初始化');
+      }
+    } catch (error) {
+      console.error('❌ 评价计时器系统初始化失败:', error);
     }
   }
 
