@@ -56,8 +56,10 @@ class ReviewTimer {
   async init() {
     try {
       const stored = await this.getStoredData();
+      const installTime = stored[this.config.STORAGE_KEYS.installTime];
+      const installVersion = stored[this.config.STORAGE_KEYS.installVersion];
       
-      if (!stored.installTime || this.shouldResetTimer(stored.installVersion)) {
+      if (!installTime || this.shouldResetTimer(installVersion)) {
         await this.recordInstallTime();
       }
       
@@ -134,12 +136,15 @@ class ReviewTimer {
   async checkTriggerCondition() {
     try {
       const stored = await this.getStoredData();
-      if (!stored.installTime || stored.dismissedForever) {
+      const installTime = stored[this.config.STORAGE_KEYS.installTime];
+      const dismissedForever = stored[this.config.STORAGE_KEYS.dismissedForever];
+      
+      if (!installTime || dismissedForever) {
         return { shouldTrigger: false };
       }
 
-      const { days } = this.calculateTimeSinceInstall(stored.installTime);
-      const triggerHistory = stored.triggerHistory || [];
+      const { days } = this.calculateTimeSinceInstall(installTime);
+      const triggerHistory = stored[this.config.STORAGE_KEYS.triggerHistory] || [];
       
       for (const targetDay of this.config.TRIGGER_DAYS) {
         if (days >= targetDay && !triggerHistory.includes(targetDay)) {
@@ -247,13 +252,15 @@ class ReviewTimer {
   async logCurrentStatus() {
     try {
       const stored = await this.getStoredData();
-      if (!stored.installTime) {
+      const installTime = stored[this.config.STORAGE_KEYS.installTime];
+      
+      if (!installTime) {
         console.log('📅 计时器尚未初始化');
         return;
       }
 
-      const { days, hours, minutes } = this.calculateTimeSinceInstall(stored.installTime);
-      const triggerHistory = stored.triggerHistory || [];
+      const { days, hours, minutes } = this.calculateTimeSinceInstall(installTime);
+      const triggerHistory = stored[this.config.STORAGE_KEYS.triggerHistory] || [];
       
       console.log(`📅 插件安装${days}天${hours}小时${minutes}分钟`);
       console.log('⏰ 本计时器仅用于决定是否定时请求用户评价插件');
@@ -272,7 +279,7 @@ class ReviewTimer {
         console.log('🎯 评价引导已完成或被用户禁用');
       }
       
-      if (stored.dismissedForever) {
+      if (stored[this.config.STORAGE_KEYS.dismissedForever]) {
         console.log('🚫 用户已选择永不提醒');
       }
     } catch (error) {
@@ -286,19 +293,21 @@ class ReviewTimer {
   async getFormattedInstallInfo() {
     try {
       const stored = await this.getStoredData();
-      if (!stored.installTime) return null;
+      const installTime = stored[this.config.STORAGE_KEYS.installTime];
+      
+      if (!installTime) return null;
 
-      const { days, hours, minutes } = this.calculateTimeSinceInstall(stored.installTime);
+      const { days, hours, minutes } = this.calculateTimeSinceInstall(installTime);
       
       return {
         days,
         hours,
         minutes,
         formatted: `${days}天${hours}小时${minutes}分钟`,
-        installDate: new Date(stored.installTime).toLocaleString(),
-        version: stored.installVersion || 'unknown',
-        triggerHistory: stored.triggerHistory || [],
-        dismissedForever: stored.dismissedForever || false
+        installDate: new Date(installTime).toLocaleString(),
+        version: stored[this.config.STORAGE_KEYS.installVersion] || 'unknown',
+        triggerHistory: stored[this.config.STORAGE_KEYS.triggerHistory] || [],
+        dismissedForever: stored[this.config.STORAGE_KEYS.dismissedForever] || false
       };
     } catch (error) {
       console.error('获取安装信息失败:', error);
@@ -312,21 +321,23 @@ class ReviewTimer {
   async getStats() {
     try {
       const stored = await this.getStoredData();
-      if (!stored.installTime) return null;
+      const installTime = stored[this.config.STORAGE_KEYS.installTime];
+      
+      if (!installTime) return null;
 
-      const timeInfo = this.calculateTimeSinceInstall(stored.installTime);
-      const triggerHistory = stored.triggerHistory || [];
+      const timeInfo = this.calculateTimeSinceInstall(installTime);
+      const triggerHistory = stored[this.config.STORAGE_KEYS.triggerHistory] || [];
       
       return {
-        installTime: stored.installTime,
-        installDate: new Date(stored.installTime).toISOString(),
+        installTime,
+        installDate: new Date(installTime).toISOString(),
         daysSinceInstall: timeInfo.days,
         hoursSinceInstall: timeInfo.hours,
         minutesSinceInstall: timeInfo.minutes,
-        version: stored.installVersion,
+        version: stored[this.config.STORAGE_KEYS.installVersion],
         triggerHistory,
-        dismissedForever: stored.dismissedForever || false,
-        lastChoice: stored.lastChoice,
+        dismissedForever: stored[this.config.STORAGE_KEYS.dismissedForever] || false,
+        lastChoice: stored[this.config.STORAGE_KEYS.lastChoice],
         nextTriggerDay: this.config.TRIGGER_DAYS.find(day => 
           day > timeInfo.days && !triggerHistory.includes(day)
         )

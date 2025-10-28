@@ -181,9 +181,6 @@ class ADHDHighlighter {
         this.reviewTimer = new ReviewTimer();
         await this.reviewTimer.init();
         console.log('✅ 评价计时器系统初始化成功');
-        
-        // 输出当前状态日志
-        this.reviewTimer.logCurrentStatus();
       } else {
         console.warn('⚠️ ReviewTimer 未加载，跳过评价计时器初始化');
       }
