@@ -2,7 +2,11 @@
 
 /**
  * ADHDGoFly 插件构建脚本
- * 支持多浏览器版本构建和双语言页面生成
+ * 支持多浏览器版本构建
+ * 
+ * 使用方法:
+ * npm run build        - 构建手动安装版本
+ * npm run build:store  - 构建商店版本
  */
 
 const fs = require('fs');
@@ -10,33 +14,112 @@ const path = require('path');
 const { execSync } = require('child_process');
 const archiver = require('archiver');
 
+// 检查命令行参数
+const isStoreVersion = process.argv.includes('--store');
+
 // 检查环境
 function checkEnvironment() {
     console.log('🔍 检查构建环境...');
     // 环境检查逻辑
 }
 
+// 创建安装配置文件
+function createInstallConfig(installType, browserName, version) {
+    const config = {
+        installType: installType,
+        targetBrowser: browserName,
+        version: version,
+        buildTime: new Date().toISOString(),
+        storeUrl: STORE_URLS[installType] || STORE_URLS[INSTALL_TYPES.SELF_INSTALL]
+    };
+    
+    const configContent = `// ADHDGoFly 安装配置 - 构建时自动生成
+window.ADHD_INSTALL_CONFIG = ${JSON.stringify(config, null, 2)};
+
+// 获取安装类型的便捷函数
+window.getInstallType = function() {
+    return window.ADHD_INSTALL_CONFIG ? window.ADHD_INSTALL_CONFIG.installType : 'selfinstallmark';
+};
+
+// 获取商店链接的便捷函数
+window.getStoreUrl = function() {
+    return window.ADHD_INSTALL_CONFIG ? window.ADHD_INSTALL_CONFIG.storeUrl : 'https://feedback.adhdgofly.online/';
+};`;
+    
+    return configContent;
+}
+
+// 安装类型配置
+const INSTALL_TYPES = {
+    SELF_INSTALL: 'selfinstallmark',
+    CHROME_STORE: 'chromestore',
+    EDGE_STORE: 'edgestore',
+    FIREFOX_STORE: 'firefoxstore',
+    SAFARI_STORE: 'safaristore',
+    OPERA_STORE: 'operastore'
+};
+
+// 商店评价链接配置
+const STORE_URLS = {
+    [INSTALL_TYPES.CHROME_STORE]: 'https://chrome.google.com/webstore/detail/adhdgofly/reviews',
+    [INSTALL_TYPES.EDGE_STORE]: 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly',
+    [INSTALL_TYPES.FIREFOX_STORE]: 'https://addons.mozilla.org/firefox/addon/adhdgofly/reviews/',
+    [INSTALL_TYPES.SAFARI_STORE]: 'https://apps.apple.com/app/adhdgofly',
+    [INSTALL_TYPES.OPERA_STORE]: 'https://addons.opera.com/extensions/details/adhdgofly/',
+    [INSTALL_TYPES.SELF_INSTALL]: 'https://feedback.adhdgofly.online/'
+};
+
 // 浏览器配置
 const browserConfigs = {
     chrome: {
         suffix: 'chrome',
+        installType: isStoreVersion ? INSTALL_TYPES.CHROME_STORE : INSTALL_TYPES.SELF_INSTALL,
         manifestChanges: {
             name: 'ADHDGoFly, 点亮你的视野 (Chrome)',
             description: 'Text highlighting for better reading - Chrome Edition'
         }
     },
     edge: {
-        suffix: 'edge', 
+        suffix: 'edge',
+        installType: isStoreVersion ? INSTALL_TYPES.EDGE_STORE : INSTALL_TYPES.SELF_INSTALL,
         manifestChanges: {
             name: 'ADHDGoFly, 点亮你的视野 (Edge)',
             description: 'Text highlighting for better reading - Edge Edition'
+        }
+    },
+    firefox: {
+        suffix: 'firefox',
+        installType: isStoreVersion ? INSTALL_TYPES.FIREFOX_STORE : INSTALL_TYPES.SELF_INSTALL,
+        manifestChanges: {
+            name: 'ADHDGoFly, 点亮你的视野 (Firefox)',
+            description: 'Text highlighting for better reading - Firefox Edition',
+            manifest_version: 2, // Firefox 使用 manifest v2
+            background: {
+                scripts: ['background.js'],
+                persistent: false
+            }
+        }
+    },
+    safari: {
+        suffix: 'safari',
+        installType: isStoreVersion ? INSTALL_TYPES.SAFARI_STORE : INSTALL_TYPES.SELF_INSTALL,
+        manifestChanges: {
+            name: 'ADHDGoFly, 点亮你的视野 (Safari)',
+            description: 'Text highlighting for better reading - Safari Edition'
         }
     }
 };
 
 // 主构建函数
 async function main() {
-    console.log('🚀 开始构建 ADHDGoFly 插件发布包 (多浏览器版本)...');
+    const buildType = isStoreVersion ? '商店版本' : '手动安装版本';
+    console.log(`🚀 开始构建 ADHDGoFly 插件发布包 (${buildType})...`);
+    
+    if (isStoreVersion) {
+        console.log('📦 构建模式: 商店版本 - 包含商店特定的安装标识');
+    } else {
+        console.log('📦 构建模式: 手动安装版本 - 包含自安装标识');
+    }
     
     // 检查环境
     checkEnvironment();
@@ -113,13 +196,18 @@ async function main() {
         const tempManifestPath = path.join(outputDir, `manifest-${config.suffix}.json`);
         fs.writeFileSync(tempManifestPath, JSON.stringify(browserManifest, null, 2));
         
+        // 创建安装配置文件
+        const installConfigContent = createInstallConfig(config.installType, browserName, version);
+        const tempConfigPath = path.join(outputDir, `install-config-${config.suffix}.js`);
+        fs.writeFileSync(tempConfigPath, installConfigContent);
+        
         // 创建zip文件
         const zipName = path.join(outputDir, `${projectName}-v${version}-${config.suffix}.zip`);
         
         try {
-            // 将临时manifest文件添加到包含文件列表中
-            const filesWithManifest = [...includeFiles, tempManifestPath];
-            await createZipFile(zipName, filesWithManifest, browserName, tempManifestPath);
+            // 将临时文件添加到包含文件列表中
+            const filesWithManifest = [...includeFiles, tempManifestPath, tempConfigPath];
+            await createZipFile(zipName, filesWithManifest, browserName, tempManifestPath, tempConfigPath);
             
             // 获取文件大小
             const stats = fs.statSync(zipName);
@@ -137,10 +225,16 @@ async function main() {
             if (fs.existsSync(tempManifestPath)) {
                 fs.unlinkSync(tempManifestPath);
             }
+            if (fs.existsSync(tempConfigPath)) {
+                fs.unlinkSync(tempConfigPath);
+            }
         } catch (error) {
             console.error(`❌ ${browserName.toUpperCase()} 版本构建失败:`, error.message);
             if (fs.existsSync(tempManifestPath)) {
                 fs.unlinkSync(tempManifestPath);
+            }
+            if (fs.existsSync(tempConfigPath)) {
+                fs.unlinkSync(tempConfigPath);
             }
         }
     }
@@ -1778,7 +1872,7 @@ main().catch(error => {
 });
 
 // 创建ZIP文件的函数
-function createZipFile(zipName, includeFiles, browserName, tempManifestPath) {
+function createZipFile(zipName, includeFiles, browserName, tempManifestPath, tempConfigPath) {
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(zipName);
         const archive = archiver('zip', { zlib: { level: 9 } });
@@ -1803,8 +1897,13 @@ function createZipFile(zipName, includeFiles, browserName, tempManifestPath) {
                     archive.directory(item, item);
                 } else {
                     console.log(`📄 添加文件: ${item}`);
-                    // 如果是临时manifest文件，重命名为manifest.json
-                    const fileName = item === tempManifestPath ? 'manifest.json' : item;
+                    // 处理特殊文件重命名
+                    let fileName = item;
+                    if (item === tempManifestPath) {
+                        fileName = 'manifest.json';
+                    } else if (item === tempConfigPath) {
+                        fileName = 'install-config.js';
+                    }
                     archive.file(item, { name: fileName });
                 }
             } else {

@@ -282,6 +282,9 @@ class PopupController {
     
     // 显示评价引导
     this.showReviewPrompt();
+    
+    // 更新反馈链接显示
+    this.updateFeedbackLink();
   }
 
   bindEvents() {
@@ -2668,13 +2671,36 @@ class PopupController {
     });
   }
 
+  updateFeedbackLink() {
+    try {
+      const feedbackLink = document.getElementById('feedback-link');
+      if (feedbackLink && window.getStoreUrl) {
+        const storeUrl = window.getStoreUrl();
+        const installType = window.getInstallType ? window.getInstallType() : 'selfinstallmark';
+        
+        // 根据安装类型更新链接文本
+        if (installType !== 'selfinstallmark') {
+          // 商店版本，显示"去评价"
+          const reviewText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
+          feedbackLink.textContent = reviewText;
+          feedbackLink.title = storeUrl;
+        } else {
+          // 手动安装版本，保持原来的反馈链接
+          feedbackLink.textContent = 'https://feedback.adhdgofly.online';
+          feedbackLink.title = 'https://feedback.adhdgofly.online';
+        }
+      }
+    } catch (error) {
+      console.log('更新反馈链接失败:', error);
+    }
+  }
+
   showReviewPrompt() {
     // 检查是否已经存在评价提示
     if (document.getElementById('review-prompt')) {
       return;
     }
 
-    // 获取国际化文本
     const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意向其他人推荐这个插件吗？';
     const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
     const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
@@ -2876,7 +2902,8 @@ class PopupController {
       
       star.addEventListener('click', () => {
         // 点击星星时直接跳转到评价页面
-        window.open('https://feedback.adhdgofly.online', '_blank');
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        window.open(storeUrl, '_blank');
         removePrompt();
       });
     });

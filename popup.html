@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="settings.css" />
+    <script src="install-config.js"></script>
     <script src="i18n.js"></script>
     <script src="popup.js"></script>
     <style>
@@ -3704,9 +3705,10 @@
                 <p style="margin: 0; color: #666; font-size: 14px">
                   <a 
                     href="#" 
-                    onclick="window.open('https://feedback.adhdgofly.online', '_blank')"
+                    onclick="const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online'; window.open(storeUrl, '_blank')"
                     style="color: #007bff; text-decoration: none; word-break: break-all; line-height: 1.4"
                     data-i18n="pages.settings.feedback.websiteUrl"
+                    id="feedback-link"
                   >
                     https://feedback.adhdgofly.online
                   </a>
