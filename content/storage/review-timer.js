@@ -82,7 +82,7 @@ class ReviewTimer {
     };
     
     await chrome.storage.local.set(data);
-    console.log('📅 计时器已初始化，安装时间:', new Date(now).toLocaleString());
+    console.log('ReviewTimer：📅 计时器已初始化，安装时间:', new Date(now).toLocaleString());
   }
 
   /**
@@ -111,7 +111,7 @@ class ReviewTimer {
     // 主版本更新时重置
     if (this.config.VERSION_RESET.majorVersionReset && 
         current.major > stored.major) {
-      console.log('🔄 检测到主版本更新，重置计时器');
+      console.log('ReviewTimer：🔄 检测到主版本更新，重置计时器');
       return true;
     }
     
@@ -273,8 +273,8 @@ class ReviewTimer {
         return `${year}-${month}-${day} ${hour}:${minute}`;
       };
       
-      console.log(`📅 插件安装${days}天${hours}小时${minutes}分钟 (${formatDateTime(installDate)})`);
-      console.log('⏰ 本计时器仅用于决定是否定时请求用户评价插件');
+      console.log(`📅 ReviewTimer：插件安装${days}天${hours}小时${minutes}分钟 (${formatDateTime(installDate)})`);
+      console.log('⏰ ReviewTimer：本计时器仅用于决定是否定时请求用户评价插件');
       
       // 计算下一个评价节点
       const nextTrigger = this.config.TRIGGER_DAYS.find(day => 
@@ -283,18 +283,18 @@ class ReviewTimer {
       
       if (nextTrigger) {
         const remainingDays = nextTrigger - days;
-        console.log(`🎯 下一个评价节点：第${nextTrigger}天（还需${remainingDays}天）`);
+        console.log(`ReviewTimer：🎯 下一个评价节点：第${nextTrigger}天（还需${remainingDays}天）`);
       } else if (triggerHistory.length < this.config.TRIGGER_DAYS.length) {
-        console.log('🎯 所有评价节点已触发');
+        console.log('ReviewTimer：🎯 所有评价节点已触发');
       } else {
-        console.log('🎯 评价引导已完成或被用户禁用');
+        console.log('ReviewTimer：🎯 评价引导已完成或被用户禁用');
       }
       
       if (stored[this.config.STORAGE_KEYS.dismissedForever]) {
-        console.log('🚫 用户已选择永不提醒');
+        console.log('ReviewTimer：🚫 用户已选择永不提醒');
       }
     } catch (error) {
-      console.error('输出状态日志失败:', error);
+      console.error('ReviewTimer：输出状态日志失败:', error);
     }
   }
 
@@ -333,7 +333,7 @@ class ReviewTimer {
         dismissedForever: stored[this.config.STORAGE_KEYS.dismissedForever] || false
       };
     } catch (error) {
-      console.error('获取安装信息失败:', error);
+      console.error('ReviewTimer：获取安装信息失败:', error);
       return null;
     }
   }
@@ -366,7 +366,7 @@ class ReviewTimer {
         )
       };
     } catch (error) {
-      console.error('获取统计信息失败:', error);
+      console.error('ReviewTimer：获取统计信息失败:', error);
       return null;
     }
   }
@@ -379,9 +379,9 @@ class ReviewTimer {
       const keys = Object.values(this.config.STORAGE_KEYS);
       await chrome.storage.local.remove(keys);
       await this.initialize();
-      console.log('🧪 计时器已重置');
+      console.log('ReviewTimer：🧪 计时器已重置');
     } catch (error) {
-      console.error('重置计时器失败:', error);
+      console.error('ReviewTimer：重置计时器失败:', error);
     }
   }
 }
@@ -418,7 +418,7 @@ class ReviewTimerDebug {
   async simulateTimeAdvance(days) {
     const stored = await this.timer.getStoredData();
     if (!stored.installTime) {
-      console.log('⚠️ 计时器尚未初始化，无法模拟时间推进');
+      console.log('ReviewTimer：⚠️ 计时器尚未初始化，无法模拟时间推进');
       return;
     }
     
@@ -427,7 +427,7 @@ class ReviewTimerDebug {
       [this.timer.config.STORAGE_KEYS.installTime]: newInstallTime
     });
     
-    console.log(`🧪 模拟时间推进${days}天`);
+    console.log(`ReviewTimer：🧪 模拟时间推进${days}天`);
     await this.timer.logCurrentStatus();
   }
   

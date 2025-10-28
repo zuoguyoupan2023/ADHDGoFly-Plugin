@@ -168,7 +168,7 @@ class ADHDHighlighter {
     try {
       if (typeof ADHDGoFlyCounter !== 'undefined') {
         this.adhdGoFlyCounter = new ADHDGoFlyCounter();
-        console.log('✅ ADHD专注飞行计数器系统初始化成功');
+        console.log('✅ ADHDGoFlyCounter计数器系统初始化成功');
         
         // 页面加载时增加页面计数
         await this.adhdGoFlyCounter.incrementPageCount();
@@ -176,7 +176,7 @@ class ADHDHighlighter {
         console.warn('⚠️ ADHDGoFlyCounter 未加载，跳过ADHD专注飞行计数器初始化');
       }
     } catch (error) {
-      console.error('❌ ADHD专注飞行计数器系统初始化失败:', error);
+      console.error('❌ ADHDGoFlyCounter 系统初始化失败:', error);
     }
   }
 
@@ -188,12 +188,12 @@ class ADHDHighlighter {
       if (typeof ReviewTimer !== 'undefined') {
         this.reviewTimer = new ReviewTimer();
         await this.reviewTimer.init();
-        console.log('✅ 评价计时器系统初始化成功');
+        console.log('✅ ReviewTimer系统初始化成功');
       } else {
         console.warn('⚠️ ReviewTimer 未加载，跳过评价计时器初始化');
       }
     } catch (error) {
-      console.error('❌ 评价计时器系统初始化失败:', error);
+      console.error('❌ ReviewTimer系统初始化失败:', error);
     }
   }
 
@@ -205,12 +205,12 @@ class ADHDHighlighter {
       if (typeof ADHDGoFlyTimer !== 'undefined') {
         this.adhdGoFlyTimer = new ADHDGoFlyTimer();
         await this.adhdGoFlyTimer.init();
-        console.log('✅ ADHDGoFly计时器系统初始化成功');
+        console.log('✅ ADHDGoFlyTimer系统初始化成功');
       } else {
-        console.warn('⚠️ ADHDGoFlyTimer 未加载，跳过ADHDGoFly计时器初始化');
+        console.warn('⚠️ ADHDGoFlyTimer 未加载，跳过ADHDGoFlyTimer初始化');
       }
     } catch (error) {
-      console.error('❌ ADHDGoFly计时器系统初始化失败:', error);
+      console.error('❌ ADHDGoFlyTimer系统初始化失败:', error);
     }
   }
 
@@ -222,12 +222,12 @@ class ADHDHighlighter {
       if (typeof ReviewCounter !== 'undefined') {
         this.reviewCounter = new ReviewCounter();
         await this.reviewCounter.init();
-        console.log('✅ 评价计数器系统初始化成功');
+        console.log('✅ ReviewCounter系统初始化成功');
       } else {
-        console.warn('⚠️ ReviewCounter 未加载，跳过评价计数器初始化');
+        console.warn('⚠️ ReviewCounter 未加载，跳过ReviewCounter初始化');
       }
     } catch (error) {
-      console.error('❌ 评价计数器系统初始化失败:', error);
+      console.error('❌ ReviewCounter系统初始化失败:', error);
     }
   }
 
