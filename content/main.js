@@ -126,6 +126,10 @@ class ADHDHighlighter {
     this.reviewTimer = null;
     this.initReviewTimer();
     
+    // 初始化ADHDGoFly计时器系统
+    this.adhdGoFlyTimer = null;
+    this.initADHDGoFlyTimer();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -186,6 +190,23 @@ class ADHDHighlighter {
       }
     } catch (error) {
       console.error('❌ 评价计时器系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 初始化ADHDGoFly计时器系统
+   */
+  async initADHDGoFlyTimer() {
+    try {
+      if (typeof ADHDGoFlyTimer !== 'undefined') {
+        this.adhdGoFlyTimer = new ADHDGoFlyTimer();
+        await this.adhdGoFlyTimer.init();
+        console.log('✅ ADHDGoFly计时器系统初始化成功');
+      } else {
+        console.warn('⚠️ ADHDGoFlyTimer 未加载，跳过ADHDGoFly计时器初始化');
+      }
+    } catch (error) {
+      console.error('❌ ADHDGoFly计时器系统初始化失败:', error);
     }
   }
 
