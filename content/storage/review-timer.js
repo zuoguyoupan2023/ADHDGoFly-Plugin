@@ -53,7 +53,7 @@ class ReviewTimer {
    * 初始化计时器
    * 在插件安装或启动时调用
    */
-  async initialize() {
+  async init() {
     try {
       const stored = await this.getStoredData();
       
@@ -146,46 +146,87 @@ class ReviewTimer {
           return { 
             shouldTrigger: true, 
             triggerDay: targetDay,
-            currentDays: days 
+            triggerCount: triggerHistory.length,
+            currentDays: days,
+            reason: `第${targetDay}天触发条件满足`
           };
         }
       }
       
-      return { shouldTrigger: false, currentDays: days };
+      return { 
+        shouldTrigger: false, 
+        currentDays: days,
+        reason: '未达到触发条件或已触发过'
+      };
     } catch (error) {
       console.error('检查触发条件失败:', error);
-      return { shouldTrigger: false };
+      return { shouldTrigger: false, reason: '检查失败' };
     }
   }
 
   /**
-   * 记录触发历史
+   * 检查是否应该触发评价提醒
+   * 这是checkTriggerCondition的别名，用于匹配008文档的设计
    */
-  async recordTrigger(triggerDay, userChoice) {
+  async shouldTrigger() {
+    return await this.checkTriggerCondition();
+  }
+
+  /**
+   * 记录触发历史
+   * @param {string|number} triggerDayOrChoice - 触发天数或用户选择（支持两种调用方式）
+   * @param {string} userChoice - 用户选择（可选，当第一个参数是天数时使用）
+   */
+  async recordTrigger(triggerDayOrChoice, userChoice = null) {
     try {
       const stored = await this.getStoredData();
       const triggerHistory = stored.triggerHistory || [];
       
-      if (!triggerHistory.includes(triggerDay)) {
-        triggerHistory.push(triggerDay);
+      let actualTriggerDay;
+      let actualUserChoice;
+      
+      // 支持两种调用方式
+      if (typeof triggerDayOrChoice === 'string') {
+        // 新的调用方式：recordTrigger('shown') 
+        actualUserChoice = triggerDayOrChoice;
+        // 找到当前应该触发的天数
+        const { days } = this.calculateTimeSinceInstall(stored.installTime);
+        for (const targetDay of this.config.TRIGGER_DAYS) {
+          if (days >= targetDay && !triggerHistory.includes(targetDay)) {
+            actualTriggerDay = targetDay;
+            break;
+          }
+        }
+        if (!actualTriggerDay) {
+          console.warn('⚠️ 无法确定当前触发天数');
+          return;
+        }
+      } else {
+        // 原有的调用方式：recordTrigger(7, 'shown')
+        actualTriggerDay = triggerDayOrChoice;
+        actualUserChoice = userChoice;
+      }
+      
+      if (!triggerHistory.includes(actualTriggerDay)) {
+        triggerHistory.push(actualTriggerDay);
       }
       
       const updateData = {
         [this.config.STORAGE_KEYS.triggerHistory]: triggerHistory,
         [this.config.STORAGE_KEYS.lastChoice]: {
-          day: triggerDay,
-          choice: userChoice,
+          day: actualTriggerDay,
+          choice: actualUserChoice,
           timestamp: Date.now()
         }
       };
       
-      if (userChoice === 'never') {
+      if (actualUserChoice === 'never') {
         updateData[this.config.STORAGE_KEYS.dismissedForever] = true;
         console.log('🚫 用户选择永不提醒，计时器已禁用');
       }
       
       await chrome.storage.local.set(updateData);
-      console.log(`📝 记录触发历史：第${triggerDay}天，用户选择：${userChoice}`);
+      console.log(`📝 记录触发历史：第${actualTriggerDay}天，用户选择：${actualUserChoice}`);
     } catch (error) {
       console.error('记录触发历史失败:', error);
     }
