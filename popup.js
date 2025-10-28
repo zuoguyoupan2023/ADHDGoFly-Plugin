@@ -280,8 +280,8 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
-    // 显示评价引导
-    this.showReviewPrompt();
+    // 检查并显示评价引导
+    await this.checkAndShowReviewPrompt();
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
@@ -2695,14 +2695,127 @@ class PopupController {
     }
   }
 
-  showReviewPrompt() {
+  /**
+   * 检查并显示评价提醒
+   * 实现7天1000次、21天5000次、50天10000次的复合触发条件
+   */
+  async checkAndShowReviewPrompt() {
+    try {
+      // 检查是否已经存在评价提示
+      if (document.getElementById('review-prompt')) {
+        return;
+      }
+
+      // 获取计时器和计数器数据
+      const shouldShow = await this.checkRatingTriggerConditions();
+      
+      if (shouldShow.shouldShow) {
+        console.log('🌟 触发评价提醒条件:', shouldShow);
+        this.showReviewPrompt(shouldShow);
+      }
+    } catch (error) {
+      console.error('❌ 检查评价提醒条件失败:', error);
+    }
+  }
+
+  /**
+   * 检查评价触发条件
+   * 需要同时满足时间和节点数条件
+   */
+  async checkRatingTriggerConditions() {
+    try {
+      // 评价提醒阈值配置
+      const RATING_THRESHOLDS = [
+        { days: 7, nodes: 1000 },   // 第一次提醒：7天 + 1000节点
+        { days: 21, nodes: 5000 },  // 第二次提醒：21天 + 5000节点
+        { days: 50, nodes: 10000 }  // 第三次提醒：50天 + 10000节点
+      ];
+
+      // 检查是否用户选择永不提醒
+      const neverRemindData = await chrome.storage.local.get('rating_never_remind');
+      if (neverRemindData.rating_never_remind) {
+        console.log('🚫 用户已选择永不提醒评价');
+        return { shouldShow: false };
+      }
+
+      // 获取安装时间和当前统计数据
+      const installData = await chrome.storage.local.get([
+        'review_install_timestamp',
+        'review_counter_node_count',
+        'review_counter_metadata',
+        'adhdgofly_counter_node_count',
+        'adhdgofly_counter_metadata'
+      ]);
+
+      // 计算安装天数
+      const installTime = installData.review_install_timestamp || Date.now();
+      const daysSinceInstall = Math.floor((Date.now() - installTime) / (24 * 60 * 60 * 1000));
+
+      // 获取节点计数（优先使用ReviewCounter，回退到ADHDGoFlyCounter）
+      let nodeCount = 0;
+      if (installData.review_counter_node_count !== undefined) {
+        nodeCount = installData.review_counter_node_count;
+      } else if (installData.adhdgofly_counter_node_count !== undefined) {
+        nodeCount = installData.adhdgofly_counter_node_count;
+      }
+
+      console.log(`📊 评价提醒检查: 安装${daysSinceInstall}天，节点数${nodeCount}`);
+
+      // 检查每个阈值
+      for (let i = 0; i < RATING_THRESHOLDS.length; i++) {
+        const threshold = RATING_THRESHOLDS[i];
+        const reminderKey = `rating_reminder_${threshold.days}_${threshold.nodes}`;
+
+        // 检查是否已经显示过这个提醒
+        const shownReminders = await chrome.storage.local.get(reminderKey);
+        if (shownReminders[reminderKey]) {
+          console.log(`⏭️ 评价提醒已显示过: ${reminderKey}`);
+          continue;
+        }
+
+        // 检查是否同时满足天数和节点数条件
+        if (daysSinceInstall >= threshold.days && nodeCount >= threshold.nodes) {
+          console.log(`✅ 满足评价提醒条件: ${threshold.days}天 + ${threshold.nodes}节点`);
+          
+          // 标记提醒已显示
+          await chrome.storage.local.set({ [reminderKey]: Date.now() });
+          
+          return {
+            shouldShow: true,
+            reminderKey,
+            days: daysSinceInstall,
+            nodes: nodeCount,
+            threshold,
+            triggerType: `${threshold.days}天${threshold.nodes}节点`
+          };
+        }
+      }
+
+      return { shouldShow: false };
+    } catch (error) {
+      console.error('❌ 检查评价触发条件失败:', error);
+      return { shouldShow: false };
+    }
+  }
+
+  showReviewPrompt(triggerData = null) {
     // 检查是否已经存在评价提示
     if (document.getElementById('review-prompt')) {
       return;
     }
 
     const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意向其他人推荐这个插件吗？';
-    const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
+    
+    // 构建描述文本，包含触发条件信息
+    let description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
+    
+    // 如果有触发数据，添加触发条件信息
+    if (triggerData && triggerData.triggerType) {
+      const { triggerType, daysUsed, nodeCount } = triggerData;
+      const triggerInfo = `\n\n🎉 恭喜！你已经使用插件${daysUsed}天，处理了${nodeCount}个节点，达到了${triggerType}评价条件！`;
+      description += triggerInfo;
+    }
+    
     const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
     const reasonBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
     const neverBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.never') : '不再提醒';
@@ -2910,9 +3023,19 @@ class PopupController {
     
     // "不再提醒"事件
     if (neverBtn) {
-      neverBtn.addEventListener('click', () => {
-        // 可以在这里添加"不再提醒"的逻辑
-        removePrompt();
+      neverBtn.addEventListener('click', async () => {
+        try {
+          // 设置永不提醒标志
+          await chrome.storage.local.set({ 
+            'rating_never_remind': true,
+            'rating_never_remind_timestamp': Date.now()
+          });
+          console.log('✅ 用户选择永不提醒评价');
+          removePrompt();
+        } catch (error) {
+          console.error('❌ 设置永不提醒失败:', error);
+          removePrompt();
+        }
       });
     }
 
