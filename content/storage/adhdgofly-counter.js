@@ -87,8 +87,9 @@ class ADHDGoFlyCounter {
                 return newPageCount;
             } else {
                 const timeSinceLastVisit = Math.round((currentTime - lastVisit.timestamp) / (1000 * 60));
-                console.log(`ADHDGoFlyCounter日志：⏰ 页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟)`);
-                return await this.getPageCount();
+                const currentPageCount = await this.getPageCount();
+                console.log(`ADHDGoFlyCounter日志：⏰ 页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟，当前累计: ${currentPageCount}页)`);
+                return currentPageCount;
             }
         } catch (error) {
             console.error('ADHDGoFlyCounter日志：❌ 页面计数更新失败:', error);
