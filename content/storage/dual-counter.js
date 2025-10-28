@@ -152,20 +152,6 @@ class DualCounter {
     }
 
     /**
-     * 检查评价提醒是否已显示
-     */
-    async hasReminderBeenShown(reminderKey) {
-        try {
-            const metadata = await this._getStorageData(this.STORAGE_KEYS.METADATA, {});
-            const shownReminders = metadata.shownReminders || [];
-            return shownReminders.includes(reminderKey);
-        } catch (error) {
-            console.error('❌ 检查评价提醒状态失败:', error);
-            return false;
-        }
-    }
-
-    /**
      * 标记评价提醒已显示
      */
     async markRatingReminderShown(reminderKey) {

@@ -23,7 +23,6 @@
         "content/storage/event-cache-manager.js",
         "content/storage/dual-counter.js",
         "content/storage/review-timer.js",
-        "content/storage/review-counter.js",
         "content/main.js"
       ],
     "css": ["styles.css"],

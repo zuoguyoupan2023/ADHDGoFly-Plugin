@@ -190,23 +190,6 @@ class ADHDHighlighter {
   }
 
   /**
-   * 初始化评价计数器系统
-   */
-  async initReviewCounter() {
-    try {
-      if (typeof ReviewCounter !== 'undefined') {
-        this.reviewCounter = new ReviewCounter();
-        await this.reviewCounter.init();
-        console.log('✅ 评价计数器系统初始化成功');
-      } else {
-        console.warn('⚠️ ReviewCounter 未加载，跳过评价计数器初始化');
-      }
-    } catch (error) {
-      console.error('❌ 评价计数器系统初始化失败:', error);
-    }
-  }
-
-  /**
    * 设置高亮完成事件监听器
    */
   setupHighlightEventListeners() {
@@ -321,138 +304,52 @@ class ADHDHighlighter {
   }
 
   /**
-   * 更新计数器系统（整合评价系统）
+   * 更新双重计数器
    */
   async updateDualCounter(eventData) {
     try {
+      if (!this.dualCounter) {
+        console.warn('⚠️ 双重计数器未初始化，跳过计数');
+        return;
+      }
+
       // 验证数据有效性
       if (!eventData || !eventData.elements || eventData.elements.length === 0) {
         console.warn('⚠️ 高亮数据无效，跳过计数');
         return;
       }
 
+      // 增加节点计数（按处理的元素数量计数）
       const nodeCount = eventData.elements.length;
+      const newCount = await this.dualCounter.incrementNodeCount(nodeCount);
+      
+      console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
-      // 1. 更新DualCounter（用于总体统计和彩蛋功能）
-      if (this.dualCounter) {
-        const totalCount = await this.dualCounter.incrementNodeCount(nodeCount);
-        console.log(`📊 总体节点计数: +${nodeCount} → 总计 ${totalCount}`);
-      } else {
-        console.warn('⚠️ 双重计数器未初始化，跳过总体计数');
+      // 检查是否需要显示评价提醒
+      const ratingCheck = await this.dualCounter.shouldShowRatingReminder();
+      if (ratingCheck.shouldShow) {
+        console.log('⭐ 触发评价提醒条件:', ratingCheck);
+        await this.showRatingReminder(ratingCheck);
       }
-
-      // 2. 更新ReviewCounter（用于评价系统）
-      if (this.reviewCounter) {
-        const reviewCount = await this.reviewCounter.incrementNodeCount(nodeCount);
-        console.log(`⭐ 评价节点计数: +${nodeCount} → 评价计数 ${reviewCount}`);
-      } else {
-        console.warn('⚠️ 评价计数器未初始化，跳过评价计数');
-      }
-
-      // 3. 检查三阶段评价触发条件
-      await this.checkRatingTrigger();
 
     } catch (error) {
-      console.error('❌ 更新计数器系统失败:', error);
+      console.error('❌ 更新双重计数器失败:', error);
       // 计数器失败不应影响主流程
     }
   }
 
   /**
-   * 检查评价触发条件（三阶段逻辑）
-   */
-  async checkRatingTrigger() {
-    try {
-      // 检查是否有必要的组件
-      if (!this.reviewTimer || !this.reviewCounter) {
-        console.warn('⚠️ 评价系统组件未完全初始化，跳过触发检查');
-        return;
-      }
-
-      // 获取安装天数
-      const timerInfo = await this.reviewTimer.getFormattedInstallInfo();
-      if (!timerInfo || timerInfo.days === undefined) {
-        console.warn('⚠️ 无法获取安装天数，跳过触发检查');
-        return;
-      }
-
-      // 检查触发条件
-      const triggerCheck = await this.reviewCounter.checkTriggerCondition(timerInfo.days);
-      
-      if (triggerCheck.shouldTrigger) {
-        console.log('🌟 满足评价触发条件:', triggerCheck);
-        
-        // 构造评价数据
-        const ratingData = {
-          triggerIndex: triggerCheck.triggerIndex,
-          triggerDay: triggerCheck.triggerDay,
-          requiredNodes: triggerCheck.requiredNodes,
-          currentNodes: triggerCheck.currentNodes,
-          days: timerInfo.days,
-          installDateTime: timerInfo.installDateTime,
-          message: triggerCheck.message,
-          reminderKey: `trigger_${triggerCheck.triggerIndex}_${triggerCheck.triggerDay}_${triggerCheck.requiredNodes}`
-        };
-        
-        await this.showRatingReminder(ratingData);
-      } else {
-        console.log('📊 评价触发检查:', triggerCheck.message);
-      }
-
-    } catch (error) {
-      console.error('❌ 评价触发检查失败:', error);
-    }
-  }
-
-  /**
-   * 显示评价提醒（三阶段触发）
+   * 显示评价提醒
    */
   async showRatingReminder(ratingData) {
     try {
-      // 检查是否已经显示过这个提醒
-      if (this.dualCounter) {
-        const alreadyShown = await this.dualCounter.hasReminderBeenShown(ratingData.reminderKey);
-        if (alreadyShown) {
-          console.log('📋 评价提醒已显示过，跳过:', ratingData.reminderKey);
-          return;
-        }
-        
-        // 标记提醒已显示
-        await this.dualCounter.markRatingReminderShown(ratingData.reminderKey);
-      }
+      // 标记提醒已显示
+      await this.dualCounter.markRatingReminderShown(ratingData.reminderKey);
       
-      // 构造阶段信息
-      const stageNames = ['第一次', '第二次', '最后一次'];
-      const stageName = stageNames[ratingData.triggerIndex] || `第${ratingData.triggerIndex + 1}次`;
+      // 这里可以添加实际的评价提醒UI逻辑
+      console.log(`🌟 评价提醒: 您已使用插件 ${ratingData.days} 天，处理了 ${ratingData.nodes} 个节点！`);
       
-      // 显示详细的评价提醒信息
-      console.log(`🌟 ${stageName}评价提醒触发！`);
-      console.log(`📅 安装时间: ${ratingData.installDateTime || '未知'}`);
-      console.log(`⏰ 使用天数: ${ratingData.days} 天`);
-      console.log(`📊 处理节点: ${ratingData.currentNodes} 个`);
-      console.log(`🎯 触发条件: ${ratingData.triggerDay}天 + ${ratingData.requiredNodes}节点`);
-      console.log(`💬 提醒信息: ${ratingData.message}`);
-      
-      // 根据不同阶段显示不同的提醒内容
-      let reminderMessage = '';
-      switch (ratingData.triggerIndex) {
-        case 0:
-          reminderMessage = `🎉 恭喜！您已使用ADHD插件${ratingData.days}天，处理了${ratingData.currentNodes}个节点！如果觉得有帮助，请考虑给我们评价！`;
-          break;
-        case 1:
-          reminderMessage = `🚀 太棒了！您已坚持使用${ratingData.days}天，处理了${ratingData.currentNodes}个节点！您的支持对我们很重要，请分享您的使用体验！`;
-          break;
-        case 2:
-          reminderMessage = `🏆 Amazing！您已是资深用户，使用${ratingData.days}天，处理了${ratingData.currentNodes}个节点！这是最后一次提醒，如果插件对您有价值，请留下珍贵的评价！`;
-          break;
-        default:
-          reminderMessage = `✨ 感谢您使用ADHD插件${ratingData.days}天，处理了${ratingData.currentNodes}个节点！`;
-      }
-      
-      console.log(`💌 ${reminderMessage}`);
-      
-      // TODO: 实现实际的评价提醒弹窗或通知UI
-      // 这里可以调用popup或者创建页面内通知
+      // TODO: 实现实际的评价提醒弹窗或通知
       
     } catch (error) {
       console.error('❌ 显示评价提醒失败:', error);
@@ -1021,12 +918,6 @@ class ADHDHighlighter {
     }
     
     try {
-      // 初始化评价系统（计时器和计数器）
-      await this.initReviewTimer();
-      await this.initReviewCounter();
-      await this.initDualCounter();
-      await this.initEventCacheSystem();
-      
       // 第一步：检查缓存
       const cacheApplied = await this.checkAndApplyCache();
       
@@ -1086,15 +977,6 @@ class ADHDHighlighter {
       }
       
       console.log('文本高亮已启用');
-      
-      // 页面加载时检查评价触发条件
-      setTimeout(async () => {
-        try {
-          await this.checkRatingTrigger();
-        } catch (error) {
-          console.error('❌ 页面加载时评价触发检查失败:', error);
-        }
-      }, 1000); // 延迟1秒确保所有系统初始化完成
       
     } catch (error) {
       console.error('启用高亮失败:', error);
