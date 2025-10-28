@@ -262,7 +262,18 @@ class ReviewTimer {
       const { days, hours, minutes } = this.calculateTimeSinceInstall(installTime);
       const triggerHistory = stored[this.config.STORAGE_KEYS.triggerHistory] || [];
       
-      console.log(`📅 插件安装${days}天${hours}小时${minutes}分钟`);
+      // 格式化安装时间为 yyyy-mm-dd hh:mm
+      const installDate = new Date(installTime);
+      const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hour}:${minute}`;
+      };
+      
+      console.log(`📅 插件安装${days}天${hours}小时${minutes}分钟 (${formatDateTime(installDate)})`);
       console.log('⏰ 本计时器仅用于决定是否定时请求用户评价插件');
       
       // 计算下一个评价节点
@@ -298,13 +309,25 @@ class ReviewTimer {
       if (!installTime) return null;
 
       const { days, hours, minutes } = this.calculateTimeSinceInstall(installTime);
+      const installDate = new Date(installTime);
+      
+      // 格式化为 yyyy-mm-dd hh:mm
+      const formatDateTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hour}:${minute}`;
+      };
       
       return {
         days,
         hours,
         minutes,
         formatted: `${days}天${hours}小时${minutes}分钟`,
-        installDate: new Date(installTime).toLocaleString(),
+        installDate: installDate.toLocaleString(),
+        installDateTime: formatDateTime(installDate), // 新增精确时间格式
         version: stored[this.config.STORAGE_KEYS.installVersion] || 'unknown',
         triggerHistory: stored[this.config.STORAGE_KEYS.triggerHistory] || [],
         dismissedForever: stored[this.config.STORAGE_KEYS.dismissedForever] || false
