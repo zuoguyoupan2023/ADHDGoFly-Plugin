@@ -130,6 +130,10 @@ class ADHDHighlighter {
     this.adhdGoFlyTimer = null;
     this.initADHDGoFlyTimer();
     
+    // 初始化评价计数器系统
+    this.reviewCounter = null;
+    this.initReviewCounter();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -207,6 +211,23 @@ class ADHDHighlighter {
       }
     } catch (error) {
       console.error('❌ ADHDGoFly计时器系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 初始化评价计数器系统
+   */
+  async initReviewCounter() {
+    try {
+      if (typeof ReviewCounter !== 'undefined') {
+        this.reviewCounter = new ReviewCounter();
+        await this.reviewCounter.init();
+        console.log('✅ 评价计数器系统初始化成功');
+      } else {
+        console.warn('⚠️ ReviewCounter 未加载，跳过评价计数器初始化');
+      }
+    } catch (error) {
+      console.error('❌ 评价计数器系统初始化失败:', error);
     }
   }
 
@@ -318,6 +339,9 @@ class ADHDHighlighter {
       // 更新双重计数器
       await this.updateDualCounter(eventData);
       
+      // 更新评价计数器
+      await this.updateReviewCounter(eventData);
+      
       console.log('💾 高亮数据已缓存');
     } catch (error) {
       console.warn('⚠️ 缓存高亮数据失败:', error);
@@ -355,6 +379,44 @@ class ADHDHighlighter {
 
     } catch (error) {
       console.error('❌ 更新双重计数器失败:', error);
+      // 计数器失败不应影响主流程
+    }
+  }
+
+  /**
+   * 更新评价计数器
+   */
+  async updateReviewCounter(eventData) {
+    try {
+      if (!this.reviewCounter) {
+        console.warn('⚠️ 评价计数器未初始化，跳过计数');
+        return;
+      }
+
+      // 验证数据有效性
+      if (!eventData || !eventData.elements || eventData.elements.length === 0) {
+        console.warn('⚠️ 高亮数据无效，跳过计数');
+        return;
+      }
+
+      // 增加节点计数（按处理的元素数量计数）
+      const nodeCount = eventData.elements.length;
+      const newCount = await this.reviewCounter.incrementNodeCount(nodeCount);
+      
+      console.log(`ReviewCounter计数：节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+
+      // 增加页面计数（去重逻辑）
+      await this.reviewCounter.incrementPageCount();
+
+      // 检查是否需要显示评价提醒
+      const ratingCheck = await this.reviewCounter.shouldShowRatingReminder();
+      if (ratingCheck.shouldShow) {
+        console.log('ReviewCounter计数：触发评价提醒条件:', ratingCheck);
+        await this.showRatingReminder(ratingCheck);
+      }
+
+    } catch (error) {
+      console.error('ReviewCounter计数：更新评价计数器失败:', error);
       // 计数器失败不应影响主流程
     }
   }
