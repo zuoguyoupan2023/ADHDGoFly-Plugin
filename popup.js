@@ -280,8 +280,8 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
-    // 显示评价引导
-    this.showReviewPrompt();
+    // 检查并显示评价引导（基于时间条件）
+    await this.checkAndShowReviewPrompt();
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
@@ -2695,7 +2695,38 @@ class PopupController {
     }
   }
 
-  showReviewPrompt() {
+  /**
+   * 检查时间条件并显示评价提醒
+   */
+  async checkAndShowReviewPrompt() {
+    try {
+      // 检查ReviewTimer是否可用
+      if (typeof ReviewTimer === 'undefined') {
+        console.warn('⚠️ ReviewTimer 未加载，跳过评价提醒检查');
+        return;
+      }
+
+      // 创建ReviewTimer实例并检查触发条件
+      const reviewTimer = new ReviewTimer();
+      await reviewTimer.init();
+      
+      const triggerResult = await reviewTimer.checkTriggerCondition();
+      
+      if (triggerResult.shouldTrigger) {
+        console.log('🎯 满足评价提醒时间条件:', triggerResult);
+        this.showReviewPrompt(triggerResult);
+        
+        // 记录触发事件
+        await reviewTimer.recordTrigger(triggerResult.triggerDay);
+      } else {
+        console.log('⏰ 评价提醒时间条件未满足:', triggerResult);
+      }
+    } catch (error) {
+      console.error('❌ 检查评价提醒条件失败:', error);
+    }
+  }
+
+  showReviewPrompt(triggerData = null) {
     // 检查是否已经存在评价提示
     if (document.getElementById('review-prompt')) {
       return;
