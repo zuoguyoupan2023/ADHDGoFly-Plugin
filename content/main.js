@@ -134,6 +134,9 @@ class ADHDHighlighter {
     this.reviewCounter = null;
     this.initReviewCounter();
     
+    // 延迟输出系统状态摘要（等待异步初始化完成）
+    setTimeout(() => this.logSystemStatus(), 100);
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -188,7 +191,7 @@ class ADHDHighlighter {
       if (typeof ReviewTimer !== 'undefined') {
         this.reviewTimer = new ReviewTimer();
         await this.reviewTimer.init();
-        console.log('✅ ReviewTimer系统初始化成功');
+        // ReviewTimer内部已有详细日志，此处仅记录系统级状态
       } else {
         console.warn('⚠️ ReviewTimer 未加载，跳过评价计时器初始化');
       }
@@ -205,7 +208,7 @@ class ADHDHighlighter {
       if (typeof ADHDGoFlyTimer !== 'undefined') {
         this.adhdGoFlyTimer = new ADHDGoFlyTimer();
         await this.adhdGoFlyTimer.init();
-        console.log('✅ ADHDGoFlyTimer系统初始化成功');
+        // ADHDGoFlyTimer内部已有详细日志，此处仅记录系统级状态
       } else {
         console.warn('⚠️ ADHDGoFlyTimer 未加载，跳过ADHDGoFlyTimer初始化');
       }
@@ -222,12 +225,38 @@ class ADHDHighlighter {
       if (typeof ReviewCounter !== 'undefined') {
         this.reviewCounter = new ReviewCounter();
         await this.reviewCounter.init();
-        console.log('✅ ReviewCounter系统初始化成功');
+        // ReviewCounter内部已有详细日志，此处仅记录系统级状态
       } else {
         console.warn('⚠️ ReviewCounter 未加载，跳过ReviewCounter初始化');
       }
     } catch (error) {
       console.error('❌ ReviewCounter系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 输出系统状态摘要
+   */
+  logSystemStatus() {
+    const systems = [
+      { name: 'EventCache', instance: this.eventCacheManager, emoji: '📋' },
+      { name: 'ADHDGoFlyCounter', instance: this.adhdGoFlyCounter, emoji: '⏰' },
+      { name: 'ReviewTimer', instance: this.reviewTimer, emoji: '📅' },
+      { name: 'ADHDGoFlyTimer', instance: this.adhdGoFlyTimer, emoji: '⏱️' },
+      { name: 'ReviewCounter', instance: this.reviewCounter, emoji: '📊' }
+    ];
+    
+    const activeCount = systems.filter(sys => sys.instance !== null).length;
+    const totalCount = systems.length;
+    
+    console.log(`🚀 ADHDHighlighter系统启动完成 - ${activeCount}/${totalCount}个子系统已激活`);
+    
+    // 仅在调试模式下显示详细状态
+    if (window.location.search.includes('debug=true')) {
+      systems.forEach(sys => {
+        const status = sys.instance ? '✅' : '⚠️';
+        console.log(`  ${sys.emoji} ${sys.name}: ${status}`);
+      });
     }
   }
 
