@@ -86,28 +86,10 @@ const browserConfigs = {
             name: 'ADHDGoFly, 点亮你的视野 (Edge)',
             description: 'Text highlighting for better reading - Edge Edition'
         }
-    },
-    firefox: {
-        suffix: 'firefox',
-        installType: isStoreVersion ? INSTALL_TYPES.FIREFOX_STORE : INSTALL_TYPES.SELF_INSTALL,
-        manifestChanges: {
-            name: 'ADHDGoFly, 点亮你的视野 (Firefox)',
-            description: 'Text highlighting for better reading - Firefox Edition',
-            manifest_version: 2, // Firefox 使用 manifest v2
-            background: {
-                scripts: ['background.js'],
-                persistent: false
-            }
-        }
-    },
-    safari: {
-        suffix: 'safari',
-        installType: isStoreVersion ? INSTALL_TYPES.SAFARI_STORE : INSTALL_TYPES.SELF_INSTALL,
-        manifestChanges: {
-            name: 'ADHDGoFly, 点亮你的视野 (Safari)',
-            description: 'Text highlighting for better reading - Safari Edition'
-        }
     }
+    // Firefox 和 Safari 版本正在开发中，敬请期待
+    // firefox: { ... }
+    // safari: { ... }
 };
 
 // 主构建函数
@@ -186,20 +168,9 @@ async function main() {
     }
      
     const buildResults = [];
-    
-    // 过滤浏览器配置 - 商店版本跳过Firefox和Safari
-    let filteredBrowserConfigs = browserConfigs;
-    if (isStoreVersion) {
-        filteredBrowserConfigs = Object.fromEntries(
-            Object.entries(browserConfigs).filter(([browserName]) => 
-                !['firefox', 'safari'].includes(browserName)
-            )
-        );
-        console.log('📝 商店版本构建: 跳过Firefox和Safari (暂未支持商店发布)');
-    }
      
     // 为每个浏览器构建
-    for (const [browserName, config] of Object.entries(filteredBrowserConfigs)) {
+    for (const [browserName, config] of Object.entries(browserConfigs)) {
         console.log(`\n🔨 构建 ${browserName.toUpperCase()} 版本...`);
         
         // 创建临时manifest
@@ -289,9 +260,8 @@ async function main() {
         // 浏览器名称映射
         const browserNameMap = {
             chrome: { zh: 'Chrome', en: 'Chrome', desc_zh: 'Chrome 浏览器', desc_en: 'Chrome Browser' },
-            edge: { zh: 'Edge', en: 'Edge', desc_zh: 'Microsoft Edge 浏览器', desc_en: 'Microsoft Edge Browser' },
-            firefox: { zh: 'Firefox', en: 'Firefox', desc_zh: 'Firefox 浏览器', desc_en: 'Firefox Browser' },
-            safari: { zh: 'Safari', en: 'Safari', desc_zh: 'Safari 浏览器', desc_en: 'Safari Browser' }
+            edge: { zh: 'Edge', en: 'Edge', desc_zh: 'Microsoft Edge 浏览器', desc_en: 'Microsoft Edge Browser' }
+            // Firefox 和 Safari 版本正在开发中，敬请期待
         };
 
         // 生成下载链接HTML
@@ -309,7 +279,17 @@ async function main() {
                                 <small>版本: v${version} | 大小: ${result.size}MB</small>
                             </div>
                         </div>`;
-        }).join('');
+        }).join('') + `
+                        <div class="coming-soon-item">
+                            <h3>Firefox & Safari 版本</h3>
+                            <p>正在开发中，敬请期待</p>
+                            <div class="coming-soon-btn">
+                                🚧 Coming Soon
+                            </div>
+                            <div class="version-info">
+                                <small>预计发布时间：待定</small>
+                            </div>
+                        </div>`;
 
         // 英文版本的下载链接
         const downloadLinksHtmlEn = buildResults.map(result => {
@@ -325,7 +305,17 @@ async function main() {
                                 <small>Version: v${version} | Size: ${result.size}MB</small>
                             </div>
                         </div>`;
-        }).join('');
+        }).join('') + `
+                        <div class="coming-soon-item">
+                            <h3>Firefox & Safari Versions</h3>
+                            <p>Under development, coming soon</p>
+                            <div class="coming-soon-btn">
+                                🚧 Coming Soon
+                            </div>
+                            <div class="version-info">
+                                <small>Expected release: TBD</small>
+                            </div>
+                        </div>`;
             
         // 创建中文版本模板
         function createChineseTemplate() {
@@ -631,6 +621,27 @@ async function main() {
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .coming-soon-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px dashed #dee2e6;
+        }
+        
+        .coming-soon-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #6c757d;
+            color: white;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
         
         .footer {
@@ -1393,6 +1404,27 @@ async function main() {
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .coming-soon-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px dashed #dee2e6;
+        }
+        
+        .coming-soon-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #6c757d;
+            color: white;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
         
         .footer {
