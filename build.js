@@ -186,9 +186,20 @@ async function main() {
     }
      
     const buildResults = [];
+    
+    // 过滤浏览器配置 - 商店版本跳过Firefox和Safari
+    let filteredBrowserConfigs = browserConfigs;
+    if (isStoreVersion) {
+        filteredBrowserConfigs = Object.fromEntries(
+            Object.entries(browserConfigs).filter(([browserName]) => 
+                !['firefox', 'safari'].includes(browserName)
+            )
+        );
+        console.log('📝 商店版本构建: 跳过Firefox和Safari (暂未支持商店发布)');
+    }
      
     // 为每个浏览器构建
-    for (const [browserName, config] of Object.entries(browserConfigs)) {
+    for (const [browserName, config] of Object.entries(filteredBrowserConfigs)) {
         console.log(`\n🔨 构建 ${browserName.toUpperCase()} 版本...`);
         
         // 创建临时manifest
@@ -275,16 +286,24 @@ async function main() {
     // 生成双语言页面
     console.log('🔄 生成双语言 landing page...');
     try {
+        // 浏览器名称映射
+        const browserNameMap = {
+            chrome: { zh: 'Chrome', en: 'Chrome', desc_zh: 'Chrome 浏览器', desc_en: 'Chrome Browser' },
+            edge: { zh: 'Edge', en: 'Edge', desc_zh: 'Microsoft Edge 浏览器', desc_en: 'Microsoft Edge Browser' },
+            firefox: { zh: 'Firefox', en: 'Firefox', desc_zh: 'Firefox 浏览器', desc_en: 'Firefox Browser' },
+            safari: { zh: 'Safari', en: 'Safari', desc_zh: 'Safari 浏览器', desc_en: 'Safari Browser' }
+        };
+
         // 生成下载链接HTML
         // 中文版本的下载链接
         const downloadLinksHtml = buildResults.map(result => {
-            const browserNameZh = result.browser === 'chrome' ? 'Chrome' : 'Edge';
+            const browserInfo = browserNameMap[result.browser] || { zh: result.browser, desc_zh: `${result.browser} 浏览器` };
             return `
                         <div class="download-item">
-                            <h3>${browserNameZh} 版本</h3>
-                            <p>适用于 ${result.browser === 'chrome' ? 'Chrome 浏览器' : 'Microsoft Edge 浏览器'}</p>
+                            <h3>${browserInfo.zh} 版本</h3>
+                            <p>适用于 ${browserInfo.desc_zh}</p>
                             <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
-                                📥 下载 ${browserNameZh} 版本 (${result.size}MB)
+                                📥 下载 ${browserInfo.zh} 版本 (${result.size}MB)
                             </a>
                             <div class="version-info">
                                 <small>版本: v${version} | 大小: ${result.size}MB</small>
@@ -294,13 +313,13 @@ async function main() {
 
         // 英文版本的下载链接
         const downloadLinksHtmlEn = buildResults.map(result => {
-            const browserNameEn = result.browser === 'chrome' ? 'Chrome' : 'Edge';
+            const browserInfo = browserNameMap[result.browser] || { en: result.browser, desc_en: `${result.browser} Browser` };
             return `
                         <div class="download-item">
-                            <h3>${browserNameEn} Version</h3>
-                            <p>For ${result.browser === 'chrome' ? 'Chrome Browser' : 'Microsoft Edge Browser'}</p>
+                            <h3>${browserInfo.en} Version</h3>
+                            <p>For ${browserInfo.desc_en}</p>
                             <a href="ADHDGoFly-Plugin-v${version}-${result.browser}.zip" class="download-btn" download>
-                                📥 Download ${browserNameEn} Version (${result.size}MB)
+                                📥 Download ${browserInfo.en} Version (${result.size}MB)
                             </a>
                             <div class="version-info">
                                 <small>Version: v${version} | Size: ${result.size}MB</small>
