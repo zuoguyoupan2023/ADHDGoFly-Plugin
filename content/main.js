@@ -118,6 +118,10 @@ class ADHDHighlighter {
     this.eventCacheManager = null;
     this.initEventCacheSystem();
     
+    // 初始化双重计数器系统
+    this.dualCounter = null;
+    this.initDualCounter();
+    
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
@@ -142,6 +146,25 @@ class ADHDHighlighter {
       console.log('✅ 事件缓存系统初始化完成');
     } catch (error) {
       console.warn('⚠️ 事件缓存系统初始化失败:', error);
+    }
+  }
+
+  /**
+   * 初始化双重计数器系统
+   */
+  async initDualCounter() {
+    try {
+      if (typeof DualCounter !== 'undefined') {
+        this.dualCounter = new DualCounter();
+        console.log('✅ 双重计数器系统初始化成功');
+        
+        // 页面加载时增加页面计数
+        await this.dualCounter.incrementPageCount();
+      } else {
+        console.warn('⚠️ DualCounter 未加载，跳过双重计数器初始化');
+      }
+    } catch (error) {
+      console.error('❌ 双重计数器系统初始化失败:', error);
     }
   }
 
@@ -250,9 +273,65 @@ class ADHDHighlighter {
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);
       
+      // 更新双重计数器
+      await this.updateDualCounter(eventData);
+      
       console.log('💾 高亮数据已缓存');
     } catch (error) {
       console.warn('⚠️ 缓存高亮数据失败:', error);
+    }
+  }
+
+  /**
+   * 更新双重计数器
+   */
+  async updateDualCounter(eventData) {
+    try {
+      if (!this.dualCounter) {
+        console.warn('⚠️ 双重计数器未初始化，跳过计数');
+        return;
+      }
+
+      // 验证数据有效性
+      if (!eventData || !eventData.elements || eventData.elements.length === 0) {
+        console.warn('⚠️ 高亮数据无效，跳过计数');
+        return;
+      }
+
+      // 增加节点计数（按处理的元素数量计数）
+      const nodeCount = eventData.elements.length;
+      const newCount = await this.dualCounter.incrementNodeCount(nodeCount);
+      
+      console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+
+      // 检查是否需要显示评价提醒
+      const ratingCheck = await this.dualCounter.shouldShowRatingReminder();
+      if (ratingCheck.shouldShow) {
+        console.log('⭐ 触发评价提醒条件:', ratingCheck);
+        await this.showRatingReminder(ratingCheck);
+      }
+
+    } catch (error) {
+      console.error('❌ 更新双重计数器失败:', error);
+      // 计数器失败不应影响主流程
+    }
+  }
+
+  /**
+   * 显示评价提醒
+   */
+  async showRatingReminder(ratingData) {
+    try {
+      // 标记提醒已显示
+      await this.dualCounter.markRatingReminderShown(ratingData.reminderKey);
+      
+      // 这里可以添加实际的评价提醒UI逻辑
+      console.log(`🌟 评价提醒: 您已使用插件 ${ratingData.days} 天，处理了 ${ratingData.nodes} 个节点！`);
+      
+      // TODO: 实现实际的评价提醒弹窗或通知
+      
+    } catch (error) {
+      console.error('❌ 显示评价提醒失败:', error);
     }
   }
 
