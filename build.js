@@ -24,14 +24,49 @@ function checkEnvironment() {
 }
 
 // 创建安装配置文件
+// Chrome商店链接智能处理函数
+function getChromeStoreInfo(storeUrl) {
+    // 检测是否包含占位符
+    if (storeUrl.includes('CHROME_APP_ID')) {
+        return {
+            url: 'https://chrome.google.com/webstore/category/extensions',
+            isPlaceholder: true,
+            searchHint: 'ADHDGoFly'
+        };
+    }
+    return {
+        url: storeUrl,
+        isPlaceholder: false,
+        searchHint: null
+    };
+}
+
 function createInstallConfig(installType, browserName, version) {
+    let storeUrl = STORE_URLS[installType] || STORE_URLS[INSTALL_TYPES.SELF_INSTALL];
+    let chromeStoreInfo = null;
+    
+    // 如果是Chrome商店版本，进行智能处理
+    if (installType === INSTALL_TYPES.CHROME_STORE) {
+        chromeStoreInfo = getChromeStoreInfo(storeUrl);
+        storeUrl = chromeStoreInfo.url;
+    }
+    
     const config = {
         installType: installType,
         targetBrowser: browserName,
         version: version,
         buildTime: new Date().toISOString(),
-        storeUrl: STORE_URLS[installType] || STORE_URLS[INSTALL_TYPES.SELF_INSTALL]
+        storeUrl: storeUrl
     };
+    
+    // 如果是Chrome占位符模式，添加额外信息
+    if (chromeStoreInfo && chromeStoreInfo.isPlaceholder) {
+        config.chromeStoreFallback = {
+            isPlaceholder: true,
+            searchHint: chromeStoreInfo.searchHint,
+            message: '请在Chrome应用商店搜索 "ADHDGoFly" 进行评价'
+        };
+    }
     
     const configContent = `// ADHDGoFly 安装配置 - 构建时自动生成
 window.ADHD_INSTALL_CONFIG = ${JSON.stringify(config, null, 2)};
@@ -41,9 +76,33 @@ window.getInstallType = function() {
     return window.ADHD_INSTALL_CONFIG ? window.ADHD_INSTALL_CONFIG.installType : 'selfinstallmark';
 };
 
-// 获取商店链接的便捷函数
+// 获取商店链接的便捷函数（智能回退支持）
 window.getStoreUrl = function() {
-    return window.ADHD_INSTALL_CONFIG ? window.ADHD_INSTALL_CONFIG.storeUrl : 'https://feedback.adhdgofly.online/';
+    if (!window.ADHD_INSTALL_CONFIG) {
+        return 'https://feedback.adhdgofly.online/';
+    }
+    
+    const config = window.ADHD_INSTALL_CONFIG;
+    
+    // Chrome商店智能回退处理
+    if (config.chromeStoreFallback && config.chromeStoreFallback.isPlaceholder) {
+        // 显示用户友好的提示
+        if (typeof alert !== 'undefined') {
+            alert('Chrome应用商店版本即将上线！\\n\\n' + 
+                  '当前请访问Chrome应用商店，搜索 "' + config.chromeStoreFallback.searchHint + '" 即可找到我们的插件。\\n\\n' +
+                  '点击确定将跳转到Chrome应用商店扩展页面。');
+        }
+    }
+    
+    return config.storeUrl;
+};
+
+// 获取Chrome商店搜索提示信息
+window.getChromeStoreHint = function() {
+    if (window.ADHD_INSTALL_CONFIG && window.ADHD_INSTALL_CONFIG.chromeStoreFallback) {
+        return window.ADHD_INSTALL_CONFIG.chromeStoreFallback;
+    }
+    return null;
 };`;
     
     return configContent;
