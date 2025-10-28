@@ -2721,20 +2721,11 @@ class PopupController {
   /**
    * 检查评价触发条件
    * 需要同时满足时间和节点数条件
-   * 支持版本重置处理和测试模式
    */
   async checkRatingTriggerConditions() {
     try {
-      // 检查是否启用测试模式
-      const testModeData = await chrome.storage.local.get('rating_test_mode');
-      const isTestMode = testModeData.rating_test_mode || false;
-      
       // 评价提醒阈值配置
-      const RATING_THRESHOLDS = isTestMode ? [
-        { days: 1, nodes: 10 },    // 测试模式：1天 + 10节点
-        { days: 2, nodes: 50 },    // 测试模式：2天 + 50节点
-        { days: 3, nodes: 100 }    // 测试模式：3天 + 100节点
-      ] : [
+      const RATING_THRESHOLDS = [
         { days: 7, nodes: 1000 },   // 第一次提醒：7天 + 1000节点
         { days: 21, nodes: 5000 },  // 第二次提醒：21天 + 5000节点
         { days: 50, nodes: 10000 }  // 第三次提醒：50天 + 10000节点
@@ -2750,41 +2741,15 @@ class PopupController {
       // 获取安装时间和当前统计数据
       const installData = await chrome.storage.local.get([
         'review_install_timestamp',
-        'review_install_version',
         'review_counter_node_count',
         'review_counter_metadata',
         'adhdgofly_counter_node_count',
         'adhdgofly_counter_metadata'
       ]);
 
-      // 获取当前版本
-      const currentVersion = chrome.runtime.getManifest().version;
-      const storedVersion = installData.review_install_version;
-
-      // 检查是否发生了主版本重置
-      let effectiveInstallTime = installData.review_install_timestamp || Date.now();
-      let versionResetOccurred = false;
-
-      if (storedVersion && this.shouldResetForMajorVersion(storedVersion, currentVersion)) {
-        // 主版本更新导致重置，需要重新计算评价提醒的基准时间
-        console.log(`🔄 检测到主版本更新重置: ${storedVersion} -> ${currentVersion}`);
-        versionResetOccurred = true;
-        
-        // 查找最近的重置时间作为新的基准时间
-        const resetData = await chrome.storage.local.get([
-          'review_counter_reset_time',
-          'review_timer_reset_time'
-        ]);
-        
-        const resetTime = resetData.review_counter_reset_time || resetData.review_timer_reset_time;
-        if (resetTime) {
-          effectiveInstallTime = resetTime;
-          console.log(`📅 使用重置时间作为评价基准: ${new Date(resetTime).toLocaleString()}`);
-        }
-      }
-
-      // 计算有效使用天数
-      const daysSinceInstall = Math.floor((Date.now() - effectiveInstallTime) / (24 * 60 * 60 * 1000));
+      // 计算安装天数
+      const installTime = installData.review_install_timestamp || Date.now();
+      const daysSinceInstall = Math.floor((Date.now() - installTime) / (24 * 60 * 60 * 1000));
 
       // 获取节点计数（优先使用ReviewCounter，回退到ADHDGoFlyCounter）
       let nodeCount = 0;
@@ -2794,16 +2759,12 @@ class PopupController {
         nodeCount = installData.adhdgofly_counter_node_count;
       }
 
-      const modeLabel = isTestMode ? '测试模式' : '正式模式';
-      const resetLabel = versionResetOccurred ? '(版本重置后)' : '';
-      console.log(`📊 评价提醒检查[${modeLabel}]: 安装${daysSinceInstall}天${resetLabel}，节点数${nodeCount}`);
+      console.log(`📊 评价提醒检查: 安装${daysSinceInstall}天，节点数${nodeCount}`);
 
       // 检查每个阈值
       for (let i = 0; i < RATING_THRESHOLDS.length; i++) {
         const threshold = RATING_THRESHOLDS[i];
-        const reminderKey = isTestMode 
-          ? `rating_reminder_test_${threshold.days}_${threshold.nodes}`
-          : `rating_reminder_${threshold.days}_${threshold.nodes}`;
+        const reminderKey = `rating_reminder_${threshold.days}_${threshold.nodes}`;
 
         // 检查是否已经显示过这个提醒
         const shownReminders = await chrome.storage.local.get(reminderKey);
@@ -2814,7 +2775,7 @@ class PopupController {
 
         // 检查是否同时满足天数和节点数条件
         if (daysSinceInstall >= threshold.days && nodeCount >= threshold.nodes) {
-          console.log(`✅ 满足评价提醒条件[${modeLabel}]: ${threshold.days}天 + ${threshold.nodes}节点`);
+          console.log(`✅ 满足评价提醒条件: ${threshold.days}天 + ${threshold.nodes}节点`);
           
           // 标记提醒已显示
           await chrome.storage.local.set({ [reminderKey]: Date.now() });
@@ -2825,9 +2786,7 @@ class PopupController {
             days: daysSinceInstall,
             nodes: nodeCount,
             threshold,
-            triggerType: `${threshold.days}天${threshold.nodes}节点`,
-            isTestMode,
-            versionResetOccurred
+            triggerType: `${threshold.days}天${threshold.nodes}节点`
           };
         }
       }
@@ -2837,34 +2796,6 @@ class PopupController {
       console.error('❌ 检查评价触发条件失败:', error);
       return { shouldShow: false };
     }
-  }
-
-  /**
-   * 检查是否应该因主版本更新而重置
-   */
-  shouldResetForMajorVersion(storedVersion, currentVersion) {
-    try {
-      const stored = this.parseVersion(storedVersion);
-      const current = this.parseVersion(currentVersion);
-      
-      // 主版本号不同时需要重置
-      return stored.major !== current.major;
-    } catch (error) {
-      console.error('❌ 版本比较失败:', error);
-      return false;
-    }
-  }
-
-  /**
-   * 解析版本号
-   */
-  parseVersion(version) {
-    const parts = version.split('.').map(Number);
-    return {
-      major: parts[0] || 0,
-      minor: parts[1] || 0,
-      patch: parts[2] || 0
-    };
   }
 
   showReviewPrompt(triggerData = null) {
@@ -2880,21 +2811,8 @@ class PopupController {
     
     // 如果有触发数据，添加触发条件信息
     if (triggerData && triggerData.triggerType) {
-      const { triggerType, days, nodes, isTestMode, versionResetOccurred } = triggerData;
-      
-      // 构建触发信息
-      let triggerInfo = `\n\n🎉 恭喜！你已经使用插件${days}天，处理了${nodes}个节点，达到了${triggerType}评价条件！`;
-      
-      // 添加模式标识
-      if (isTestMode) {
-        triggerInfo += '\n\n🧪 当前为测试模式，使用较小的阈值进行验证。';
-      }
-      
-      // 添加版本重置信息
-      if (versionResetOccurred) {
-        triggerInfo += '\n\n🔄 检测到主版本更新，统计数据已从重置时间开始计算。';
-      }
-      
+      const { triggerType, daysUsed, nodeCount } = triggerData;
+      const triggerInfo = `\n\n🎉 恭喜！你已经使用插件${daysUsed}天，处理了${nodeCount}个节点，达到了${triggerType}评价条件！`;
       description += triggerInfo;
     }
     
@@ -3255,110 +3173,6 @@ function initLanguageGroupListeners() {
   });
 }
 
-// 测试模式管理函数
-window.RatingTestMode = {
-  // 启用测试模式
-  async enable() {
-    await chrome.storage.local.set({ rating_test_mode: true });
-    console.log('🧪 评价提醒测试模式已启用');
-    console.log('📋 测试阈值: 1天/10节点, 2天/50节点, 3天/100节点');
-    return true;
-  },
-
-  // 禁用测试模式
-  async disable() {
-    await chrome.storage.local.set({ rating_test_mode: false });
-    console.log('🔒 评价提醒测试模式已禁用');
-    console.log('📋 正式阈值: 7天/1000节点, 21天/5000节点, 50天/10000节点');
-    return true;
-  },
-
-  // 检查当前状态
-  async status() {
-    const data = await chrome.storage.local.get('rating_test_mode');
-    const isEnabled = data.rating_test_mode || false;
-    console.log(`📊 测试模式状态: ${isEnabled ? '启用' : '禁用'}`);
-    return isEnabled;
-  },
-
-  // 清除测试提醒记录
-  async clearTestReminders() {
-    const allData = await chrome.storage.local.get();
-    const testKeys = Object.keys(allData).filter(key => key.startsWith('rating_reminder_test_'));
-    
-    if (testKeys.length > 0) {
-      await chrome.storage.local.remove(testKeys);
-      console.log(`🧹 已清除 ${testKeys.length} 个测试提醒记录:`, testKeys);
-    } else {
-      console.log('✨ 没有找到测试提醒记录');
-    }
-    return testKeys.length;
-  },
-
-  // 清除所有评价提醒记录
-  async clearAllReminders() {
-    const allData = await chrome.storage.local.get();
-    const reminderKeys = Object.keys(allData).filter(key => key.startsWith('rating_reminder_'));
-    
-    if (reminderKeys.length > 0) {
-      await chrome.storage.local.remove(reminderKeys);
-      console.log(`🧹 已清除 ${reminderKeys.length} 个评价提醒记录:`, reminderKeys);
-    } else {
-      console.log('✨ 没有找到评价提醒记录');
-    }
-    return reminderKeys.length;
-  },
-
-  // 重置永不提醒标志
-  async resetNeverRemind() {
-    await chrome.storage.local.remove('rating_never_remind');
-    console.log('🔄 已重置"永不提醒"标志');
-    return true;
-  },
-
-  // 模拟节点计数（用于测试）
-  async simulateNodeCount(count) {
-    await chrome.storage.local.set({ review_counter_node_count: count });
-    console.log(`🎯 已设置节点计数为: ${count}`);
-    return count;
-  },
-
-  // 模拟安装时间（用于测试）
-  async simulateInstallTime(daysAgo) {
-    const timestamp = Date.now() - (daysAgo * 24 * 60 * 60 * 1000);
-    await chrome.storage.local.set({ review_install_timestamp: timestamp });
-    console.log(`📅 已设置安装时间为 ${daysAgo} 天前: ${new Date(timestamp).toLocaleString()}`);
-    return timestamp;
-  },
-
-  // 获取当前统计信息
-  async getStats() {
-    const data = await chrome.storage.local.get([
-      'rating_test_mode',
-      'review_install_timestamp',
-      'review_counter_node_count',
-      'rating_never_remind'
-    ]);
-
-    const installTime = data.review_install_timestamp || Date.now();
-    const daysSinceInstall = Math.floor((Date.now() - installTime) / (24 * 60 * 60 * 1000));
-    const nodeCount = data.review_counter_node_count || 0;
-    const isTestMode = data.rating_test_mode || false;
-    const neverRemind = data.rating_never_remind || false;
-
-    const stats = {
-      testMode: isTestMode,
-      daysSinceInstall,
-      nodeCount,
-      neverRemind,
-      installDate: new Date(installTime).toLocaleString()
-    };
-
-    console.log('📊 当前评价提醒统计:', stats);
-    return stats;
-  }
-};
-
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   // 确保i18n先初始化
@@ -3371,17 +3185,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => {
     initLanguageGroupListeners();
   }, 100);
-  
-  // 在控制台显示测试模式帮助信息
-  console.log('🧪 评价提醒测试模式工具已加载');
-  console.log('📋 可用命令:');
-  console.log('  RatingTestMode.enable() - 启用测试模式');
-  console.log('  RatingTestMode.disable() - 禁用测试模式');
-  console.log('  RatingTestMode.status() - 查看当前状态');
-  console.log('  RatingTestMode.clearTestReminders() - 清除测试提醒记录');
-  console.log('  RatingTestMode.clearAllReminders() - 清除所有提醒记录');
-  console.log('  RatingTestMode.resetNeverRemind() - 重置永不提醒标志');
-  console.log('  RatingTestMode.simulateNodeCount(count) - 模拟节点计数');
-  console.log('  RatingTestMode.simulateInstallTime(daysAgo) - 模拟安装时间');
-  console.log('  RatingTestMode.getStats() - 获取当前统计信息');
 });
