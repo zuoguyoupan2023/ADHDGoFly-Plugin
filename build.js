@@ -61,8 +61,10 @@ const INSTALL_TYPES = {
 
 // 商店评价链接配置
 const STORE_URLS = {
-    [INSTALL_TYPES.CHROME_STORE]: 'https://chrome.google.com/webstore/detail/adhdgofly/reviews',
-    [INSTALL_TYPES.EDGE_STORE]: 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly',
+    // Chrome商店：上架后请将 CHROME_APP_ID 替换为实际的应用ID
+    [INSTALL_TYPES.CHROME_STORE]: process.env.CHROME_STORE_URL || 'https://chrome.google.com/webstore/detail/CHROME_APP_ID',
+    // Edge商店：实际链接（包含中文字符）
+    [INSTALL_TYPES.EDGE_STORE]: 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly-%E7%82%B9%E4%BA%AE%E4%BD%A0%E7%9A%84%E8%A7%86%E9%87%8E-edge/odleggjpbedagojaljdopcgolkcibljh',
     [INSTALL_TYPES.FIREFOX_STORE]: 'https://addons.mozilla.org/firefox/addon/adhdgofly/reviews/',
     [INSTALL_TYPES.SAFARI_STORE]: 'https://apps.apple.com/app/adhdgofly',
     [INSTALL_TYPES.OPERA_STORE]: 'https://addons.opera.com/extensions/details/adhdgofly/',
