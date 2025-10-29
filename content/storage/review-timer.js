@@ -15,10 +15,7 @@
  */
 
 const REVIEW_TIMER_CONFIG = {
-  // 触发节点（天数）
-  TRIGGER_DAYS: [7, 21, 50],
-  
-  // 存储键
+  // 存储键配置存储键
   STORAGE_KEYS: {
     installTime: 'review_install_timestamp',
     installVersion: 'review_install_version',
@@ -130,52 +127,7 @@ class ReviewTimer {
     };
   }
 
-  /**
-   * 检查触发条件
-   */
-  async checkTriggerCondition() {
-    try {
-      const stored = await this.getStoredData();
-      const installTime = stored[this.config.STORAGE_KEYS.installTime];
-      const dismissedForever = stored[this.config.STORAGE_KEYS.dismissedForever];
-      
-      if (!installTime || dismissedForever) {
-        return { shouldTrigger: false };
-      }
 
-      const { days } = this.calculateTimeSinceInstall(installTime);
-      const triggerHistory = stored[this.config.STORAGE_KEYS.triggerHistory] || [];
-      
-      for (const targetDay of this.config.TRIGGER_DAYS) {
-        if (days >= targetDay && !triggerHistory.includes(targetDay)) {
-          return { 
-            shouldTrigger: true, 
-            triggerDay: targetDay,
-            triggerCount: triggerHistory.length,
-            currentDays: days,
-            reason: `第${targetDay}天触发条件满足`
-          };
-        }
-      }
-      
-      return { 
-        shouldTrigger: false, 
-        currentDays: days,
-        reason: '未达到触发条件或已触发过'
-      };
-    } catch (error) {
-      console.error('检查触发条件失败:', error);
-      return { shouldTrigger: false, reason: '检查失败' };
-    }
-  }
-
-  /**
-   * 检查是否应该触发评价提醒
-   * 这是checkTriggerCondition的别名，用于匹配008文档的设计
-   */
-  async shouldTrigger() {
-    return await this.checkTriggerCondition();
-  }
 
   /**
    * 记录触发历史
