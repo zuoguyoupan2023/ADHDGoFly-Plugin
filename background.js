@@ -444,16 +444,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       timestamp: Date.now()
     });
     sendResponse({ success: true, message: '测试事件已发送' });
-  } else if (request.action === 'showReviewBadge') {
-    // 显示评价提醒徽章
-    console.log('收到显示评价徽章请求:', request.data);
-    showReviewBadge(request.data);
-    sendResponse({ success: true, message: '评价徽章已显示' });
-  } else if (request.action === 'hideReviewBadge') {
-    // 隐藏评价提醒徽章
-    console.log('收到隐藏评价徽章请求');
-    hideReviewBadge();
-    sendResponse({ success: true, message: '评价徽章已隐藏' });
   } else if (request.action === 'SIMULATE_INSTALL') {
     // 模拟安装事件
     console.log('模拟安装事件');
@@ -774,61 +764,3 @@ chrome.runtime.onStartup.addListener(async () => {
     date: dateStr
   });
 });
-
-// 评价提醒徽章功能
-function showReviewBadge(data) {
-  try {
-    // 设置徽章文本
-    chrome.action.setBadgeText({
-      text: '!'
-    });
-    
-    // 设置徽章背景色
-    chrome.action.setBadgeBackgroundColor({
-      color: '#FF6B6B'
-    });
-    
-    // 设置徽章标题
-    chrome.action.setTitle({
-      title: '有评价提醒，点击查看'
-    });
-    
-    // 存储徽章数据到storage，供popup使用
-    chrome.storage.local.set({
-      reviewBadgeData: {
-        ...data,
-        badgeShown: true,
-        showTime: Date.now()
-      }
-    }, () => {
-      console.log('评价徽章数据已保存到storage');
-    });
-    
-    console.log('评价提醒徽章已显示');
-  } catch (error) {
-    console.error('显示评价徽章时出错:', error);
-  }
-}
-
-function hideReviewBadge() {
-  try {
-    // 清除徽章文本
-    chrome.action.setBadgeText({
-      text: ''
-    });
-    
-    // 恢复默认标题
-    chrome.action.setTitle({
-      title: 'ADHDGoFly'
-    });
-    
-    // 清除storage中的徽章数据
-    chrome.storage.local.remove('reviewBadgeData', () => {
-      console.log('评价徽章数据已从storage中清除');
-    });
-    
-    console.log('评价提醒徽章已隐藏');
-  } catch (error) {
-    console.error('隐藏评价徽章时出错:', error);
-  }
-}

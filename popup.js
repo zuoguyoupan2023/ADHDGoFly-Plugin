@@ -290,9 +290,6 @@ class PopupController {
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
-    
-    // 检查评价徽章状态
-    await this.checkReviewBadgeStatus();
   }
 
   bindEvents() {
@@ -2931,125 +2928,6 @@ class PopupController {
         promptDiv.style.opacity = '0.9';
       }
     }, 3000);
-  }
-
-  // 检查评价徽章状态
-  async checkReviewBadgeStatus() {
-    try {
-      // 从storage中获取徽章数据
-      const result = await new Promise((resolve) => {
-        chrome.storage.local.get(['reviewBadgeData'], resolve);
-      });
-
-      const badgeData = result.reviewBadgeData;
-      
-      if (badgeData && badgeData.badgeShown) {
-        console.log('检测到评价徽章数据，显示评价提醒');
-        this.showReviewReminder(badgeData);
-        
-        // 隐藏徽章（用户已经看到了popup中的提醒）
-        chrome.runtime.sendMessage({
-          action: 'hideReviewBadge'
-        });
-      }
-    } catch (error) {
-      console.error('检查评价徽章状态时出错:', error);
-    }
-  }
-
-  // 显示评价提醒
-  showReviewReminder(badgeData) {
-    const reviewReminder = document.getElementById('reviewReminder');
-    if (!reviewReminder) {
-      console.error('未找到评价提醒元素');
-      return;
-    }
-
-    // 填充数据
-    const titleElement = reviewReminder.querySelector('.review-title');
-    const descriptionElement = reviewReminder.querySelector('.review-description');
-    
-    if (titleElement) {
-      titleElement.textContent = '感谢您使用ADHDGoFly！';
-    }
-    
-    if (descriptionElement) {
-      let description = `您已使用插件${badgeData.timerInfo || '一段时间'}`;
-      if (badgeData.nodeCount > 0) {
-        description += `，处理了${badgeData.nodeCount}个单词`;
-      }
-      if (badgeData.pageCount > 0) {
-        description += `，浏览了${badgeData.pageCount}个页面`;
-      }
-      description += '。如果您觉得有帮助，请考虑给我们一个好评！';
-      descriptionElement.textContent = description;
-    }
-
-    // 绑定按钮事件
-    this.bindReviewReminderEvents(reviewReminder, badgeData);
-
-    // 显示提醒
-    reviewReminder.style.display = 'block';
-    
-    // 添加动画效果
-    setTimeout(() => {
-      reviewReminder.classList.add('show');
-    }, 100);
-  }
-
-  // 绑定评价提醒事件
-  bindReviewReminderEvents(reviewReminder, badgeData) {
-    const reviewBtn = reviewReminder.querySelector('.review-btn-primary');
-    const laterBtn = reviewReminder.querySelector('.review-btn-secondary');
-    const dismissBtn = reviewReminder.querySelector('.review-btn-dismiss');
-
-    // 评价按钮
-    if (reviewBtn) {
-      reviewBtn.addEventListener('click', () => {
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        this.hideReviewReminder(reviewReminder);
-        
-        // 记录用户已评价
-        chrome.storage.local.set({
-          reviewCompleted: true,
-          reviewCompletedTime: Date.now()
-        });
-      });
-    }
-
-    // 稍后提醒按钮
-    if (laterBtn) {
-      laterBtn.addEventListener('click', () => {
-        this.hideReviewReminder(reviewReminder);
-        
-        // 设置稍后提醒时间（24小时后）
-        chrome.storage.local.set({
-          reviewRemindLater: Date.now() + 24 * 60 * 60 * 1000
-        });
-      });
-    }
-
-    // 不再提醒按钮
-    if (dismissBtn) {
-      dismissBtn.addEventListener('click', () => {
-        this.hideReviewReminder(reviewReminder);
-        
-        // 记录用户选择不再提醒
-        chrome.storage.local.set({
-          reviewDismissed: true,
-          reviewDismissedTime: Date.now()
-        });
-      });
-    }
-  }
-
-  // 隐藏评价提醒
-  hideReviewReminder(reviewReminder) {
-    reviewReminder.classList.remove('show');
-    setTimeout(() => {
-      reviewReminder.style.display = 'none';
-    }, 300);
   }
 }
 
