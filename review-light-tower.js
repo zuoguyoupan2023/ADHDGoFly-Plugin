@@ -112,13 +112,15 @@ class ReviewLightTower {
       }
     }
     
-    if (totalHours > 10 && nodeCount > 1000) {
+    // 临时修改：10小时1000次 -> 10分钟100次 (测试用)
+    const totalMinutes = totalHours * 60;
+    if (totalMinutes > 10 && nodeCount > 100) {
       const conditionId = 'condition_10h_1000n';
       if (!triggeredConditions.includes(conditionId)) {
         return {
           shouldShow: true,
           conditionId: conditionId,
-          reason: `时间大于10小时(${totalHours}小时)且节点数大于1000个(${nodeCount}个)所以显示`
+          reason: `时间大于10分钟(${totalMinutes}分钟)且节点数大于100个(${nodeCount}个)所以显示`
         };
       }
     }
@@ -127,7 +129,7 @@ class ReviewLightTower {
     const satisfiedConditions = [];
     if (totalHours > 23 && nodeCount > 5000) satisfiedConditions.push('23小时+5000节点');
     if (totalHours > 20 && nodeCount > 2000) satisfiedConditions.push('20小时+2000节点');
-    if (totalHours > 10 && nodeCount > 1000) satisfiedConditions.push('10小时+1000节点');
+    if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
     
     if (satisfiedConditions.length > 0) {
       return {
@@ -137,7 +139,7 @@ class ReviewLightTower {
     } else {
       return {
         shouldShow: false,
-        reason: `当前${totalHours}小时${nodeCount}个节点，不满足显示条件(需要>10小时且>1000节点)`
+        reason: `当前${totalMinutes}分钟${nodeCount}个节点，不满足显示条件(需要>10分钟且>100节点)`
       };
     }
   }
@@ -168,7 +170,7 @@ class ReviewLightTower {
         case 'condition_20h_2000n':
           return '20小时+2000节点';
         case 'condition_10h_1000n':
-          return '10小时+1000节点';
+          return '10分钟+100节点'; // 临时修改：测试用
         default:
           return conditionId; // 如果是未知的条件ID，直接显示
       }
@@ -230,8 +232,13 @@ class ReviewLightTower {
       const nodeCount = await counter.getNodeCount();
       const pageCount = await counter.getPageCount();
       
-      // 获取总小时数
-      const totalHours = timerData ? (timerData.days * 24 + timerData.hours) : 0;
+      // 获取总小时数（包含分钟转换）
+      const totalHours = timerData ? (timerData.days * 24 + timerData.hours + timerData.minutes / 60) : 0;
+      
+      // 调试日志：显示时间计算过程
+      if (timerData) {
+        console.log(`ReviewLightTower：时间计算 - 天数:${timerData.days}, 小时:${timerData.hours}, 分钟:${timerData.minutes}, 总小时数:${totalHours.toFixed(2)}`);
+      }
       
       // 检查显示条件（宽松检测），传入已触发条件
       const conditionResult = this.checkDisplayConditions(totalHours, nodeCount, displayRecord.triggeredConditions);
