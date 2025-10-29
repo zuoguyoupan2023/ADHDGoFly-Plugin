@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私设置调试工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 2px solid #007AFF;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.enabled {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disabled {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .test-section {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .network-monitor {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 隐私设置调试工具</h1>
+        <p>此工具帮助验证数据收集控制功能是否正常工作</p>
+    </div>
+
+    <div class="container">
+        <h2>📊 当前状态</h2>
+        <div id="currentStatus" class="status">检查中...</div>
+        <button onclick="checkStatus()">🔄 刷新状态</button>
+        <button onclick="toggleAnalytics()">🔄 切换开关</button>
+    </div>
+
+    <div class="container">
+        <h2>🧪 快速测试</h2>
+        <div class="test-section">
+            <h3>存储测试</h3>
+            <button onclick="testStorage()">测试存储功能</button>
+            <div id="storageResult" class="test-result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>网络请求测试</h3>
+            <div class="network-monitor">
+                <strong>⚠️ 注意：</strong>请打开浏览器开发者工具的Network标签页来监控网络请求
+            </div>
+            <button onclick="triggerAnalytics()">触发数据收集事件</button>
+            <button onclick="simulateInstall()">模拟安装事件</button>
+            <button onclick="simulateStartup()">模拟启动事件</button>
+            <div id="networkResult" class="test-result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>设置持久化测试</h3>
+            <button onclick="testPersistence()">测试设置保存</button>
+            <div id="persistenceResult" class="test-result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🛠️ 调试工具</h2>
+        <button onclick="clearAllData()">🗑️ 清空所有数据</button>
+        <button onclick="resetToDefault()" class="danger">🔄 重置为默认</button>
+        <button onclick="exportSettings()">📤 导出设置</button>
+        <button onclick="showAllStorage()">📋 显示所有存储</button>
+    </div>
+
+    <div class="container">
+        <h2>📝 调试日志</h2>
+        <button onclick="clearLog()">清空日志</button>
+        <div id="debugLog" class="log">等待操作...</div>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('debugLog');
+        
+        // 检查Chrome API是否可用
+        function checkChromeAPI() {
+            if (typeof chrome === 'undefined') {
+                log('Chrome API不可用 - 请确保在扩展环境中运行此页面', 'error');
+                return false;
+            }
+            if (!chrome.storage) {
+                log('Chrome Storage API不可用', 'error');
+                return false;
+            }
+            if (!chrome.runtime) {
+                log('Chrome Runtime API不可用', 'error');
+                return false;
+            }
+            log('Chrome API检查通过', 'success');
+            return true;
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(logMessage);
+        }
+
+        function clearLog() {
+            logElement.textContent = '日志已清空...\n';
+        }
+
+        async function checkStatus() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                const result = await chrome.storage.local.get(['privacySettings']);
+                const settings = result.privacySettings || { analyticsEnabled: true };
+                
+                const statusElement = document.getElementById('currentStatus');
+                if (settings.analyticsEnabled) {
+                    statusElement.textContent = '✅ 数据收集已启用';
+                    statusElement.className = 'status enabled';
+                } else {
+                    statusElement.textContent = '❌ 数据收集已禁用';
+                    statusElement.className = 'status disabled';
+                }
+                
+                log(`当前状态: analyticsEnabled = ${settings.analyticsEnabled}`);
+            } catch (error) {
+                log(`检查状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function toggleAnalytics() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                const result = await chrome.storage.local.get(['privacySettings']);
+                const settings = result.privacySettings || { analyticsEnabled: true };
+                settings.analyticsEnabled = !settings.analyticsEnabled;
+                
+                await chrome.storage.local.set({ privacySettings: settings });
+                log(`开关已切换为: ${settings.analyticsEnabled}`);
+                checkStatus();
+            } catch (error) {
+                log(`切换开关失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStorage() {
+            if (!checkChromeAPI()) return;
+            
+            const resultElement = document.getElementById('storageResult');
+            try {
+                // 测试写入
+                const testData = { analyticsEnabled: false, testTime: Date.now() };
+                await chrome.storage.local.set({ privacySettings: testData });
+                
+                // 测试读取
+                const result = await chrome.storage.local.get(['privacySettings']);
+                
+                if (result.privacySettings && result.privacySettings.testTime === testData.testTime) {
+                    resultElement.textContent = '✅ 存储功能正常';
+                    resultElement.className = 'test-result pass';
+                    log('存储测试通过');
+                } else {
+                    resultElement.textContent = '❌ 存储功能异常';
+                    resultElement.className = 'test-result fail';
+                    log('存储测试失败', 'error');
+                }
+                resultElement.style.display = 'block';
+            } catch (error) {
+                resultElement.textContent = `❌ 存储测试失败: ${error.message}`;
+                resultElement.className = 'test-result fail';
+                resultElement.style.display = 'block';
+                log(`存储测试错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function triggerAnalytics() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                // 发送消息到background script触发分析事件
+                await chrome.runtime.sendMessage({
+                    action: 'TEST_ANALYTICS',
+                    data: { test: true, timestamp: Date.now() }
+                });
+                log('已触发分析事件，请检查Network标签页');
+            } catch (error) {
+                log(`触发分析事件失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateInstall() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                await chrome.runtime.sendMessage({
+                    action: 'SIMULATE_INSTALL'
+                });
+                log('已模拟安装事件');
+            } catch (error) {
+                log(`模拟安装事件失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateStartup() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                await chrome.runtime.sendMessage({
+                    action: 'SIMULATE_STARTUP'
+                });
+                log('已模拟启动事件');
+            } catch (error) {
+                log(`模拟启动事件失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPersistence() {
+            const resultElement = document.getElementById('persistenceResult');
+            try {
+                // 保存测试设置
+                const testSettings = { 
+                    analyticsEnabled: false, 
+                    persistenceTest: true,
+                    timestamp: Date.now()
+                };
+                await chrome.storage.local.set({ privacySettings: testSettings });
+                
+                // 等待一秒后检查
+                setTimeout(async () => {
+                    const result = await chrome.storage.local.get(['privacySettings']);
+                    if (result.privacySettings && result.privacySettings.persistenceTest) {
+                        resultElement.textContent = '✅ 设置持久化正常';
+                        resultElement.className = 'test-result pass';
+                        log('持久化测试通过');
+                    } else {
+                        resultElement.textContent = '❌ 设置持久化失败';
+                        resultElement.className = 'test-result fail';
+                        log('持久化测试失败', 'error');
+                    }
+                    resultElement.style.display = 'block';
+                }, 1000);
+                
+            } catch (error) {
+                resultElement.textContent = `❌ 持久化测试失败: ${error.message}`;
+                resultElement.className = 'test-result fail';
+                resultElement.style.display = 'block';
+                log(`持久化测试错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAllData() {
+            try {
+                await chrome.storage.local.clear();
+                log('所有数据已清空');
+                checkStatus();
+            } catch (error) {
+                log(`清空数据失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function resetToDefault() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                await chrome.storage.local.set({
+                    privacySettings: { analyticsEnabled: true }
+                });
+                log('已重置为默认设置');
+                checkStatus();
+            } catch (error) {
+                log(`重置失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function exportSettings() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                const result = await chrome.storage.local.get(['privacySettings']);
+                const settings = JSON.stringify(result.privacySettings, null, 2);
+                log(`当前设置:\n${settings}`);
+            } catch (error) {
+                log(`导出设置失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function showAllStorage() {
+            if (!checkChromeAPI()) return;
+            
+            try {
+                const result = await chrome.storage.local.get(null);
+                const allData = JSON.stringify(result, null, 2);
+                log(`所有存储数据:\n${allData}`);
+            } catch (error) {
+                log(`显示存储失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时检查状态
+        document.addEventListener('DOMContentLoaded', () => {
+            log('调试工具正在加载...');
+            
+            // 检查Chrome API可用性
+            if (checkChromeAPI()) {
+                // 监听存储变化
+                chrome.storage.onChanged.addListener((changes, namespace) => {
+                    if (changes.privacySettings) {
+                        log(`隐私设置已变更: ${JSON.stringify(changes.privacySettings)}`);
+                        checkStatus();
+                    }
+                });
+                
+                checkStatus();
+                log('调试工具已加载完成');
+            } else {
+                log('请在Chrome扩展环境中打开此页面', 'error');
+                log('方法1: 在扩展管理页面点击"详细信息" -> "扩展程序选项"', 'info');
+                log('方法2: 右键点击扩展图标 -> "选项"', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
