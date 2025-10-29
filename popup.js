@@ -280,6 +280,11 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
+    // 显示简单提醒
+    if (window.simpleReviewReminder) {
+      window.simpleReviewReminder.show();
+    }
+    
     // 显示评价引导
     this.showReviewPrompt();
     
