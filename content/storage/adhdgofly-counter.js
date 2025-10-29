@@ -20,13 +20,6 @@ class ADHDGoFlyCounter {
         
         // 时间常量
         this.ONE_HOUR_MS = 60 * 60 * 1000; // 1小时毫秒数
-        
-        // 评价提醒阈值配置
-        this.RATING_THRESHOLDS = [
-            { days: 7, nodes: 1000 },   // 第一次提醒：7天 + 1000节点
-            { days: 21, nodes: 5000 },  // 第二次提醒：21天 + 5000节点  
-            { days: 50, nodes: 10000 }  // 第三次提醒：50天 + 10000节点
-        ];
     }
 
     /**
@@ -111,46 +104,7 @@ class ADHDGoFlyCounter {
         return await this._getStorageData(this.STORAGE_KEYS.PAGE_COUNT, 0);
     }
 
-    /**
-     * 检查是否应该显示评价提醒
-     */
-    async shouldShowRatingReminder() {
-        try {
-            const metadata = await this._getStorageData(this.STORAGE_KEYS.METADATA, {});
-            const installTime = metadata.installTime || Date.now();
-            const shownReminders = metadata.shownReminders || [];
-            const nodeCount = await this.getNodeCount();
-            
-            const daysSinceInstall = Math.floor((Date.now() - installTime) / (1000 * 60 * 60 * 24));
-            
-            // 检查每个阈值
-            for (let i = 0; i < this.RATING_THRESHOLDS.length; i++) {
-                const threshold = this.RATING_THRESHOLDS[i];
-                const reminderKey = `${threshold.days}d_${threshold.nodes}n`;
-                
-                // 如果已经显示过这个提醒，跳过
-                if (shownReminders.includes(reminderKey)) {
-                    continue;
-                }
-                
-                // 检查是否同时满足天数和节点数条件
-                if (daysSinceInstall >= threshold.days && nodeCount >= threshold.nodes) {
-                    return {
-                        shouldShow: true,
-                        reminderKey,
-                        days: daysSinceInstall,
-                        nodes: nodeCount,
-                        threshold
-                    };
-                }
-            }
-            
-            return { shouldShow: false };
-        } catch (error) {
-            console.error('❌ 检查评价提醒失败:', error);
-            return { shouldShow: false };
-        }
-    }
+
 
     /**
      * 标记评价提醒已显示
