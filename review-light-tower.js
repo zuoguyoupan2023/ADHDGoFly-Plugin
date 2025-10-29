@@ -101,19 +101,20 @@ class ReviewLightTower {
       }
     }
     
-    if (totalHours > 20 && nodeCount > 2000) {
+    // 临时修改：20小时2000次 -> 20分钟500次 (测试用)
+    const totalMinutes = totalHours * 60;
+    if (totalMinutes > 20 && nodeCount > 500) {
       const conditionId = 'condition_20h_2000n';
       if (!triggeredConditions.includes(conditionId)) {
         return {
           shouldShow: true,
           conditionId: conditionId,
-          reason: `时间大于20小时(${totalHours}小时)且节点数大于2000个(${nodeCount}个)所以显示`
+          reason: `时间大于20分钟(${totalMinutes}分钟)且节点数大于500个(${nodeCount}个)所以显示`
         };
       }
     }
     
     // 临时修改：10小时1000次 -> 10分钟100次 (测试用)
-    const totalMinutes = totalHours * 60;
     if (totalMinutes > 10 && nodeCount > 100) {
       const conditionId = 'condition_10h_1000n';
       if (!triggeredConditions.includes(conditionId)) {
@@ -128,7 +129,7 @@ class ReviewLightTower {
     // 不满足任何条件或所有满足的条件都已触发过
     const satisfiedConditions = [];
     if (totalHours > 23 && nodeCount > 5000) satisfiedConditions.push('23小时+5000节点');
-    if (totalHours > 20 && nodeCount > 2000) satisfiedConditions.push('20小时+2000节点');
+    if (totalMinutes > 20 && nodeCount > 500) satisfiedConditions.push('20分钟+500节点');
     if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
     
     if (satisfiedConditions.length > 0) {
@@ -168,7 +169,7 @@ class ReviewLightTower {
         case 'condition_23h_5000n':
           return '23小时+5000节点';
         case 'condition_20h_2000n':
-          return '20小时+2000节点';
+          return '20分钟+500节点'; // 临时修改：测试用
         case 'condition_10h_1000n':
           return '10分钟+100节点'; // 临时修改：测试用
         default:
