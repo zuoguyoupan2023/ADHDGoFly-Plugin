@@ -2,6 +2,9 @@ class ReviewLightTower {
   constructor() {
     this.promptDiv = null;
     this.isReasonExpanded = false;
+    // 24小时检查间隔机制
+    this.lastCheckTime = null;
+    this.checkInterval = 24 * 60 * 60 * 1000; // 24小时，单位：毫秒
   }
 
   async getCurrentVersion() {
@@ -28,12 +31,16 @@ class ReviewLightTower {
         if (!parsed.triggeredConditions) {
           parsed.triggeredConditions = [];
         }
+        // 读取lastCheckTime并设置到实例属性
+        if (parsed.lastCheckTime) {
+          this.lastCheckTime = parsed.lastCheckTime;
+        }
         return parsed;
       }
-      return { count: 0, lastVersion: null, triggeredConditions: [] };
+      return { count: 0, lastVersion: null, triggeredConditions: [], lastCheckTime: null };
     } catch (error) {
       console.error('获取显示记录失败:', error);
-      return { count: 0, lastVersion: null, triggeredConditions: [] };
+      return { count: 0, lastVersion: null, triggeredConditions: [], lastCheckTime: null };
     }
   }
 
@@ -43,7 +50,8 @@ class ReviewLightTower {
       const record = { 
         count, 
         lastVersion: version,
-        triggeredConditions: triggeredConditions || currentRecord.triggeredConditions || []
+        triggeredConditions: triggeredConditions || currentRecord.triggeredConditions || [],
+        lastCheckTime: this.lastCheckTime
       };
       localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
     } catch (error) {
@@ -171,6 +179,19 @@ class ReviewLightTower {
 
   async show() {
     try {
+      // 24小时间隔检查
+      const currentTime = Date.now();
+      if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
+        const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
+        const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
+        console.log(`ReviewLightTower：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
+        return;
+      }
+      
+      // 更新最后检查时间
+      this.lastCheckTime = currentTime;
+      console.log(`ReviewLightTower：开始24小时检查，时间: ${new Date(currentTime).toLocaleString()}`);
+      
       // 获取当前版本
       const currentVersion = await this.getCurrentVersion();
       
@@ -192,6 +213,8 @@ class ReviewLightTower {
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
+        // 即使已达到最大显示次数，也要保存lastCheckTime以确保24小时间隔生效
+        await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
         return;
       }
       
@@ -215,6 +238,8 @@ class ReviewLightTower {
       
       if (!conditionResult.shouldShow) {
         console.log(`ReviewLightTower：不满足显示条件。${conditionResult.reason}`);
+        // 即使不满足显示条件，也要保存lastCheckTime以确保24小时间隔生效
+        await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
         return;
       }
       
