@@ -28,61 +28,19 @@ class ReviewLightTower {
     }
   }
 
-  // 获取国际化文本
-  getI18nText(key, fallback = '') {
-    if (window.i18n && typeof window.i18n.t === 'function') {
-      return window.i18n.t(key);
-    }
-    return fallback;
-  }
-
-  // 生成理由内容HTML
-  generateReasonContent() {
-    const reasonContent = this.getI18nText('review.prompt.reasonContent');
-    
-    if (reasonContent && reasonContent.title && reasonContent.points) {
-      const pointsHtml = reasonContent.points.map(point => 
-        `<div style="margin: 8px 0; padding-left: 16px;">${point}</div>`
-      ).join('');
-      
-      return `
-        <div style="margin-bottom: 12px;">
-          <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #333;">
-            ${reasonContent.title}
-          </h4>
-          ${pointsHtml}
-        </div>
-      `;
-    }
-    
-    // 如果国际化失败，使用默认内容
-    return `
-      <div style="margin-bottom: 12px;">
-        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #333;">
-          为什么推荐这个插件？
-        </h4>
-        <div style="margin: 8px 0; padding-left: 16px;">🎯 专为ADHD和阅读困难人群设计，降低阅读门槛</div>
-        <div style="margin: 8px 0; padding-left: 16px;">📚 智能词汇高亮，帮助快速理解文章重点</div>
-        <div style="margin: 8px 0; padding-left: 16px;">🌍 支持多语言翻译，提升阅读体验</div>
-        <div style="margin: 8px 0; padding-left: 16px;">⚡ 轻量级设计，不影响网页加载速度</div>
-        <div style="margin: 8px 0; padding-left: 16px;">🔒 注重隐私保护，本地处理数据</div>
-        <div style="margin: 8px 0; padding-left: 16px;">💡 持续更新优化，响应用户需求</div>
-      </div>
-    `;
-  }
-
   createReviewPrompt(timerInfo, nodeCount, pageCount) {
     // 如果已经存在提醒框，先移除
     if (this.promptDiv && this.promptDiv.parentNode) {
       this.promptDiv.remove();
     }
 
-    // 获取国际化文本
-    const title = this.getI18nText('review.prompt.main.title', '你愿意向其他人推荐这个插件吗？');
-    const reviewBtnText = this.getI18nText('review.prompt.buttons.review', '去评价');
-    const reasonBtnText = this.getI18nText('review.prompt.buttons.reason', '我需要理由');
-    const reasonCollapseBtnText = this.getI18nText('review.prompt.buttons.reasonCollapse', '收起理由');
-    const neverBtnText = this.getI18nText('review.prompt.buttons.never', '不再提醒');
+    // 使用简单的文本
+    const title = '你愿意向其他人推荐这个插件吗？';
+    const description = '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
+    const reviewBtnText = '去评价';
+    const reasonBtnText = '我需要理由';
+    const reasonCollapseBtnText = '收起理由';
+    const neverBtnText = '不再提醒';
 
     // 创建提醒框
     this.promptDiv = document.createElement('div');
@@ -202,9 +160,7 @@ class ReviewLightTower {
           cursor: pointer;
           text-decoration: underline;
           padding: 4px 8px;
-        " data-reason-text="${reasonBtnText}" data-collapse-text="${reasonCollapseBtnText}">
-          ${reasonBtnText}
-        </button>
+        ">${reasonBtnText}</button>
       </div>
 
       <!-- 理由内容（默认隐藏） -->
@@ -219,7 +175,17 @@ class ReviewLightTower {
         line-height: 1.4;
         border-left: 3px solid #28a745;
       ">
-        ${this.generateReasonContent()}
+        <div style="margin-bottom: 12px;">
+          <div style="margin-bottom: 8px; font-weight: 600; color: #333;">
+            ${description}
+          </div>
+          <div style="margin: 8px 0; padding-left: 16px;">🎯 专为ADHD和阅读困难人群设计，降低阅读门槛</div>
+          <div style="margin: 8px 0; padding-left: 16px;">📚 智能词汇高亮，帮助快速理解文章重点</div>
+          <div style="margin: 8px 0; padding-left: 16px;">🌍 支持多语言翻译，提升阅读体验</div>
+          <div style="margin: 8px 0; padding-left: 16px;">⚡ 轻量级设计，不影响网页加载速度</div>
+          <div style="margin: 8px 0; padding-left: 16px;">🔒 注重隐私保护，本地处理数据</div>
+          <div style="margin: 8px 0; padding-left: 16px;">💡 持续更新优化，响应用户需求</div>
+        </div>
       </div>
 
       <!-- 底部按钮 -->
@@ -257,8 +223,10 @@ class ReviewLightTower {
     // 添加到页面
     document.body.appendChild(this.promptDiv);
 
-    // 绑定事件
-    this.bindEvents();
+    // 确保DOM元素已经添加后再绑定事件
+    setTimeout(() => {
+      this.bindEvents();
+    }, 0);
 
     // 3秒后自动淡化
     setTimeout(() => {
@@ -270,12 +238,22 @@ class ReviewLightTower {
   }
 
   bindEvents() {
-    const closeBtn = document.getElementById('close-review-prompt');
-    const reasonToggle = document.getElementById('reason-toggle');
-    const reasonContent = document.getElementById('reason-content');
-    const neverBtn = document.getElementById('never-review-prompt');
-    const goReviewBtn = document.getElementById('go-review-btn');
+    // 使用this.promptDiv来查找元素，确保在正确的作用域内
+    const closeBtn = this.promptDiv.querySelector('#close-review-prompt');
+    const reasonToggle = this.promptDiv.querySelector('#reason-toggle');
+    const reasonContent = this.promptDiv.querySelector('#reason-content');
+    const neverBtn = this.promptDiv.querySelector('#never-review-prompt');
+    const goReviewBtn = this.promptDiv.querySelector('#go-review-btn');
     const stars = this.promptDiv.querySelectorAll('.star-rating');
+    
+    console.log('绑定事件 - 找到的元素:', {
+      closeBtn: !!closeBtn,
+      reasonToggle: !!reasonToggle,
+      reasonContent: !!reasonContent,
+      neverBtn: !!neverBtn,
+      goReviewBtn: !!goReviewBtn,
+      stars: stars.length
+    });
     
     const removePrompt = () => {
       if (this.promptDiv && this.promptDiv.parentNode) {
@@ -288,17 +266,25 @@ class ReviewLightTower {
     // 关闭按钮事件
     if (closeBtn) {
       closeBtn.addEventListener('click', removePrompt);
+      console.log('关闭按钮事件已绑定');
     }
     
     // "我需要理由"展开/收起事件
     if (reasonToggle && reasonContent) {
-      reasonToggle.addEventListener('click', () => {
+      console.log('开始绑定理由按钮事件');
+      reasonToggle.addEventListener('click', (e) => {
+        console.log('点击了理由按钮'); // 调试日志
+        e.preventDefault();
+        e.stopPropagation();
+        
         this.isReasonExpanded = !this.isReasonExpanded;
+        console.log('展开状态:', this.isReasonExpanded); // 调试日志
         
         if (this.isReasonExpanded) {
           // 展开
+          console.log('执行展开操作');
           reasonContent.style.display = 'block';
-          reasonToggle.textContent = reasonToggle.getAttribute('data-collapse-text');
+          reasonToggle.textContent = '收起理由';
           
           // 添加展开动画
           reasonContent.style.opacity = '0';
@@ -311,16 +297,20 @@ class ReviewLightTower {
           }, 10);
         } else {
           // 收起
+          console.log('执行收起操作');
           reasonContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
           reasonContent.style.opacity = '0';
           reasonContent.style.transform = 'translateY(-10px)';
           
           setTimeout(() => {
             reasonContent.style.display = 'none';
-            reasonToggle.textContent = reasonToggle.getAttribute('data-reason-text');
+            reasonToggle.textContent = '我需要理由';
           }, 300);
         }
       });
+      console.log('理由按钮事件绑定完成');
+    } else {
+      console.error('理由按钮或内容元素未找到:', { reasonToggle: !!reasonToggle, reasonContent: !!reasonContent });
     }
     
     // 星星评分事件
