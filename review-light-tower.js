@@ -146,6 +146,29 @@ class ReviewLightTower {
     }
   }
 
+  logTriggeredConditions(triggeredConditions) {
+    if (!triggeredConditions || triggeredConditions.length === 0) {
+      console.log('ReviewLightTower：当前已经触发的显示条件为：尚未触发');
+      return;
+    }
+
+    // 将条件ID转换为可读的描述
+    const conditionDescriptions = triggeredConditions.map(conditionId => {
+      switch (conditionId) {
+        case 'condition_23h_5000n':
+          return '23小时+5000节点';
+        case 'condition_20h_2000n':
+          return '20小时+2000节点';
+        case 'condition_10h_1000n':
+          return '10小时+1000节点';
+        default:
+          return conditionId; // 如果是未知的条件ID，直接显示
+      }
+    });
+
+    console.log(`ReviewLightTower：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
+  }
+
   async show() {
     try {
       // 获取当前版本
@@ -153,6 +176,9 @@ class ReviewLightTower {
       
       // 获取显示记录
       const displayRecord = await this.getDisplayRecord();
+      
+      // 显示当前已触发的条件
+      this.logTriggeredConditions(displayRecord.triggeredConditions);
       
       // 检查是否需要重置（主版本更新）
       if (displayRecord.lastVersion && this.shouldResetForMajorVersion(currentVersion, displayRecord.lastVersion)) {
