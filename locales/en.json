@@ -440,11 +440,13 @@
       },
       "buttons": {
         "review": "Leave a Review",
-        "reason": "I need a reason",
-        "reasonCollapse": "Hide reason",
+        "reason": "Why",
+        "reasonCollapse": "Hide Reason",
+        "later": "Later",
         "never": "Don't Ask Again"
       },
       "reasonContent": {
+        "description": "Your review helps more people discover this extension, whether they struggle with ADHD, reading difficulties, or simply feel overwhelmed by heavy reading - they all have the chance to use this extension to reduce reading difficulty.",
         "title": "Why recommend this extension?",
         "points": [
           "🎯 Designed for ADHD and reading difficulties, lowering reading barriers",

@@ -448,11 +448,13 @@
       },
       "buttons": {
         "review": "去评价",
-        "reason": "我需要理由",
-        "reasonCollapse": "收起理由",
+        "reason": "为什么",
+        "reasonCollapse": "隐藏理由",
+        "later": "再说",
         "never": "不再提醒"
       },
       "reasonContent": {
+        "description": "你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。",
         "title": "为什么推荐这个插件？",
         "points": [
           "🎯 专为ADHD和阅读困难人群设计，降低阅读门槛",
