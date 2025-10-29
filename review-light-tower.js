@@ -126,6 +126,14 @@ class ReviewLightTower {
         displayRecord.lastVersion = currentVersion;
       }
       
+      // 先检查剩余显示次数
+      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      
+      if (remainingCount <= 0) {
+        console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
+        return;
+      }
+      
       // 查询ReviewTimer信息
       const timer = new ReviewTimer();
       await timer.init();
@@ -149,10 +157,7 @@ class ReviewLightTower {
         return;
       }
       
-      console.log(`ReviewLightTower：满足显示条件，${conditionResult.reason}`);
-      
-      // 计算剩余显示次数
-      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      console.log(`ReviewLightTower：满足显示条件，剩余${remainingCount}次，${conditionResult.reason}`);
       
       // 创建评价提醒UI，传入显示原因
       this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
@@ -162,8 +167,21 @@ class ReviewLightTower {
       
     } catch (error) {
       console.error('ReviewLightTower查询失败:', error);
-      // 即使查询失败也显示评价提醒UI
-      this.createReviewPrompt('查询失败', 0, 0, 0, '查询失败时显示');
+      // 查询失败时也要检查次数限制
+      const displayRecord = await this.getDisplayRecord();
+      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      
+      if (remainingCount <= 0) {
+        console.log(`ReviewLightTower：查询失败，但已达到最大显示次数(3次)，不显示`);
+        return;
+      }
+      
+      // 查询失败但仍有次数时才显示
+      this.createReviewPrompt('查询失败', 0, 0, remainingCount, '查询失败时显示');
+      
+      // 更新显示记录
+      const currentVersion = await this.getCurrentVersion();
+      await this.updateDisplayRecord(displayRecord.count + 1, currentVersion);
     }
   }
 
