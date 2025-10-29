@@ -179,18 +179,18 @@ class ReviewLightTower {
 
   async show() {
     try {
-      // 24小时间隔检查
+      // 24小时间隔检查 - 临时禁用用于测试
       const currentTime = Date.now();
-      if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
-        const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
-        const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
-        console.log(`ReviewLightTower：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
-        return;
-      }
+      // if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
+      //   const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
+      //   const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
+      //   console.log(`ReviewLightTower：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
+      //   return;
+      // }
       
       // 更新最后检查时间
       this.lastCheckTime = currentTime;
-      console.log(`ReviewLightTower：开始24小时检查，时间: ${new Date(currentTime).toLocaleString()}`);
+      console.log(`ReviewLightTower：开始检查，时间: ${new Date(currentTime).toLocaleString()} (24小时限制已临时禁用)`);
       
       // 获取当前版本
       const currentVersion = await this.getCurrentVersion();
