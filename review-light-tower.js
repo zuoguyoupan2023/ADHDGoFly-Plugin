@@ -91,7 +91,7 @@ class ReviewLightTower {
       }
       
       // 计算剩余显示次数
-      const remainingCount = Math.max(0, 3 - displayRecord.count);
+      const remainingCount = Math.max(0, 300 - displayRecord.count);
       
       // 查询ReviewTimer信息
       const timer = new ReviewTimer();
