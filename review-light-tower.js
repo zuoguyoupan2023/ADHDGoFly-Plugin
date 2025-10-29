@@ -63,6 +63,42 @@ class ReviewLightTower {
     }
   }
 
+  /**
+   * 检查显示条件（宽松检测）
+   * @param {number} totalHours - 总使用小时数
+   * @param {number} nodeCount - 处理节点数
+   * @returns {Object} 包含是否显示和原因的对象
+   */
+  checkDisplayConditions(totalHours, nodeCount) {
+    // 宽松条件：满足任意一个条件就显示
+    if (totalHours > 23 && nodeCount > 5000) {
+      return {
+        shouldShow: true,
+        reason: `时间大于23小时(${totalHours}小时)且节点数大于5000个(${nodeCount}个)所以显示`
+      };
+    }
+    
+    if (totalHours > 20 && nodeCount > 2000) {
+      return {
+        shouldShow: true,
+        reason: `时间大于20小时(${totalHours}小时)且节点数大于2000个(${nodeCount}个)所以显示`
+      };
+    }
+    
+    if (totalHours > 10 && nodeCount > 1000) {
+      return {
+        shouldShow: true,
+        reason: `时间大于10小时(${totalHours}小时)且节点数大于1000个(${nodeCount}个)所以显示`
+      };
+    }
+    
+    // 不满足任何条件
+    return {
+      shouldShow: false,
+      reason: `当前${totalHours}小时${nodeCount}个节点，不满足显示条件(需要>10小时且>1000节点)`
+    };
+  }
+
   getI18nText(key, fallback) {
     try {
       if (typeof window !== 'undefined' && window.i18nManager) {
@@ -90,9 +126,6 @@ class ReviewLightTower {
         displayRecord.lastVersion = currentVersion;
       }
       
-      // 计算剩余显示次数
-      const remainingCount = Math.max(0, 300 - displayRecord.count);
-      
       // 查询ReviewTimer信息
       const timer = new ReviewTimer();
       await timer.init();
@@ -105,8 +138,24 @@ class ReviewLightTower {
       const nodeCount = await counter.getNodeCount();
       const pageCount = await counter.getPageCount();
       
-      // 创建评价提醒UI
-      this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount);
+      // 获取总小时数
+      const totalHours = timerData ? (timerData.days * 24 + timerData.hours) : 0;
+      
+      // 检查显示条件（宽松检测）
+      const conditionResult = this.checkDisplayConditions(totalHours, nodeCount);
+      
+      if (!conditionResult.shouldShow) {
+        console.log(`ReviewLightTower：不满足显示条件。${conditionResult.reason}`);
+        return;
+      }
+      
+      console.log(`ReviewLightTower：满足显示条件，${conditionResult.reason}`);
+      
+      // 计算剩余显示次数
+      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      
+      // 创建评价提醒UI，传入显示原因
+      this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
       
       // 更新显示记录
       await this.updateDisplayRecord(displayRecord.count + 1, currentVersion);
@@ -114,11 +163,11 @@ class ReviewLightTower {
     } catch (error) {
       console.error('ReviewLightTower查询失败:', error);
       // 即使查询失败也显示评价提醒UI
-      this.createReviewPrompt('查询失败', 0, 0, 0);
+      this.createReviewPrompt('查询失败', 0, 0, 0, '查询失败时显示');
     }
   }
 
-  createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount = 0) {
+  createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
     // 如果已经存在提醒框，先移除
     if (this.promptDiv && this.promptDiv.parentNode) {
       this.promptDiv.remove();
@@ -199,9 +248,12 @@ class ReviewLightTower {
         <div style="margin-bottom: 5px;">
           <strong>处理节点数：</strong> ${nodeCount} 个 | <strong>页面数：</strong> ${pageCount} 个
         </div>
-        <div style="color: #007bff; font-weight: 600;">
+        <div style="color: #007bff; font-weight: 600; margin-bottom: 5px;">
           <strong>剩余提醒次数：</strong> ${remainingCount} 次
         </div>
+        ${displayReason ? `<div style="color: #28a745; font-weight: 600; font-size: 11px; background: #e8f5e8; padding: 6px; border-radius: 4px; border-left: 3px solid #28a745;">
+          <strong>显示原因：</strong> ${displayReason}
+        </div>` : ''}
       </div>
 
       <!-- 星星评分 -->
