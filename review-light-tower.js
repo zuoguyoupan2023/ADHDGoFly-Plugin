@@ -177,14 +177,11 @@ class ReviewLightTower {
       ">
         <div style="margin-bottom: 12px;">
           <div style="margin-bottom: 8px; font-weight: 600; color: #333;">
-            ${description}
+            为什么需要您的评价？
           </div>
-          <div style="margin: 8px 0; padding-left: 16px;">🎯 专为ADHD和阅读困难人群设计，降低阅读门槛</div>
-          <div style="margin: 8px 0; padding-left: 16px;">📚 智能词汇高亮，帮助快速理解文章重点</div>
-          <div style="margin: 8px 0; padding-left: 16px;">🌍 支持多语言翻译，提升阅读体验</div>
-          <div style="margin: 8px 0; padding-left: 16px;">⚡ 轻量级设计，不影响网页加载速度</div>
-          <div style="margin: 8px 0; padding-left: 16px;">🔒 注重隐私保护，本地处理数据</div>
-          <div style="margin: 8px 0; padding-left: 16px;">💡 持续更新优化，响应用户需求</div>
+          <div style="margin: 8px 0; padding: 12px; background-color: #ffffff; border-radius: 6px; line-height: 1.5; color: #555;">
+            你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。
+          </div>
         </div>
       </div>
 
