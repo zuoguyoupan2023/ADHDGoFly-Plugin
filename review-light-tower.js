@@ -23,18 +23,28 @@ class ReviewLightTower {
     try {
       const record = localStorage.getItem('reviewLightTowerDisplay');
       if (record) {
-        return JSON.parse(record);
+        const parsed = JSON.parse(record);
+        // 确保有triggeredConditions字段
+        if (!parsed.triggeredConditions) {
+          parsed.triggeredConditions = [];
+        }
+        return parsed;
       }
-      return { count: 0, lastVersion: null };
+      return { count: 0, lastVersion: null, triggeredConditions: [] };
     } catch (error) {
       console.error('获取显示记录失败:', error);
-      return { count: 0, lastVersion: null };
+      return { count: 0, lastVersion: null, triggeredConditions: [] };
     }
   }
 
-  async updateDisplayRecord(count, version) {
+  async updateDisplayRecord(count, version, triggeredConditions = null) {
     try {
-      const record = { count, lastVersion: version };
+      const currentRecord = await this.getDisplayRecord();
+      const record = { 
+        count, 
+        lastVersion: version,
+        triggeredConditions: triggeredConditions || currentRecord.triggeredConditions || []
+      };
       localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
     } catch (error) {
       console.error('更新显示记录失败:', error);
@@ -56,7 +66,7 @@ class ReviewLightTower {
 
   async resetDisplayRecord(version) {
     try {
-      const record = { count: 0, lastVersion: version };
+      const record = { count: 0, lastVersion: version, triggeredConditions: [] };
       localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
     } catch (error) {
       console.error('重置显示记录失败:', error);
@@ -67,36 +77,61 @@ class ReviewLightTower {
    * 检查显示条件（宽松检测）
    * @param {number} totalHours - 总使用小时数
    * @param {number} nodeCount - 处理节点数
-   * @returns {Object} 包含是否显示和原因的对象
+   * @param {Array} triggeredConditions - 已触发的条件列表
+   * @returns {Object} 包含是否显示、原因和条件ID的对象
    */
-  checkDisplayConditions(totalHours, nodeCount) {
-    // 宽松条件：满足任意一个条件就显示
+  checkDisplayConditions(totalHours, nodeCount, triggeredConditions = []) {
+    // 宽松条件：满足任意一个条件且该条件未触发过就显示
     if (totalHours > 23 && nodeCount > 5000) {
-      return {
-        shouldShow: true,
-        reason: `时间大于23小时(${totalHours}小时)且节点数大于5000个(${nodeCount}个)所以显示`
-      };
+      const conditionId = 'condition_23h_5000n';
+      if (!triggeredConditions.includes(conditionId)) {
+        return {
+          shouldShow: true,
+          conditionId: conditionId,
+          reason: `时间大于23小时(${totalHours}小时)且节点数大于5000个(${nodeCount}个)所以显示`
+        };
+      }
     }
     
     if (totalHours > 20 && nodeCount > 2000) {
-      return {
-        shouldShow: true,
-        reason: `时间大于20小时(${totalHours}小时)且节点数大于2000个(${nodeCount}个)所以显示`
-      };
+      const conditionId = 'condition_20h_2000n';
+      if (!triggeredConditions.includes(conditionId)) {
+        return {
+          shouldShow: true,
+          conditionId: conditionId,
+          reason: `时间大于20小时(${totalHours}小时)且节点数大于2000个(${nodeCount}个)所以显示`
+        };
+      }
     }
     
     if (totalHours > 10 && nodeCount > 1000) {
-      return {
-        shouldShow: true,
-        reason: `时间大于10小时(${totalHours}小时)且节点数大于1000个(${nodeCount}个)所以显示`
-      };
+      const conditionId = 'condition_10h_1000n';
+      if (!triggeredConditions.includes(conditionId)) {
+        return {
+          shouldShow: true,
+          conditionId: conditionId,
+          reason: `时间大于10小时(${totalHours}小时)且节点数大于1000个(${nodeCount}个)所以显示`
+        };
+      }
     }
     
-    // 不满足任何条件
-    return {
-      shouldShow: false,
-      reason: `当前${totalHours}小时${nodeCount}个节点，不满足显示条件(需要>10小时且>1000节点)`
-    };
+    // 不满足任何条件或所有满足的条件都已触发过
+    const satisfiedConditions = [];
+    if (totalHours > 23 && nodeCount > 5000) satisfiedConditions.push('23小时+5000节点');
+    if (totalHours > 20 && nodeCount > 2000) satisfiedConditions.push('20小时+2000节点');
+    if (totalHours > 10 && nodeCount > 1000) satisfiedConditions.push('10小时+1000节点');
+    
+    if (satisfiedConditions.length > 0) {
+      return {
+        shouldShow: false,
+        reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
+      };
+    } else {
+      return {
+        shouldShow: false,
+        reason: `当前${totalHours}小时${nodeCount}个节点，不满足显示条件(需要>10小时且>1000节点)`
+      };
+    }
   }
 
   getI18nText(key, fallback) {
@@ -127,7 +162,7 @@ class ReviewLightTower {
       }
       
       // 先检查剩余显示次数
-      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      const remainingCount = Math.max(0, 3 - displayRecord.count);
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
@@ -149,8 +184,8 @@ class ReviewLightTower {
       // 获取总小时数
       const totalHours = timerData ? (timerData.days * 24 + timerData.hours) : 0;
       
-      // 检查显示条件（宽松检测）
-      const conditionResult = this.checkDisplayConditions(totalHours, nodeCount);
+      // 检查显示条件（宽松检测），传入已触发条件
+      const conditionResult = this.checkDisplayConditions(totalHours, nodeCount, displayRecord.triggeredConditions);
       
       if (!conditionResult.shouldShow) {
         console.log(`ReviewLightTower：不满足显示条件。${conditionResult.reason}`);
@@ -162,14 +197,15 @@ class ReviewLightTower {
       // 创建评价提醒UI，传入显示原因
       this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
       
-      // 更新显示记录
-      await this.updateDisplayRecord(displayRecord.count + 1, currentVersion);
+      // 更新显示记录，记录新触发的条件
+      const newTriggeredConditions = [...displayRecord.triggeredConditions, conditionResult.conditionId];
+      await this.updateDisplayRecord(displayRecord.count + 1, currentVersion, newTriggeredConditions);
       
     } catch (error) {
       console.error('ReviewLightTower查询失败:', error);
       // 查询失败时也要检查次数限制
       const displayRecord = await this.getDisplayRecord();
-      const remainingCount = Math.max(0, 300 - displayRecord.count);
+      const remainingCount = Math.max(0, 3 - displayRecord.count);
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：查询失败，但已达到最大显示次数(3次)，不显示`);
