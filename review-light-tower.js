@@ -1,3 +1,29 @@
+/**
+ * 评价提醒灯塔系统
+ * 
+ * ========== 配置模式切换说明 ==========
+ * 
+ * 🔧 一键切换测试/正式模式：
+ * 只需修改构造函数中的 this.ReviewLightTowerTest 值：
+ * - false: 正式版本模式（默认）
+ * - true:  测试模式
+ * 
+ * 🎯 正式版本配置（ReviewLightTowerTest = false）：
+ * - 条件1：50天 + 20000个节点
+ * - 条件2：21天 + 1000个节点  
+ * - 条件3：7天 + 2000个节点
+ * 
+ * 🧪 测试模式配置（ReviewLightTowerTest = true）：
+ * - 条件1：50分钟 + 1000个节点
+ * - 条件2：20分钟 + 500个节点
+ * - 条件3：10分钟 + 100个节点
+ * 
+ * ✅ 优势：
+ * - 安全：无需手动修改多处代码
+ * - 简单：只需改一个配置值
+ * - 自动：条件判断和日志描述都会自动切换
+ * - 清晰：控制台会显示当前模式
+ */
 class ReviewLightTower {
   constructor() {
     this.promptDiv = null;
@@ -5,6 +31,11 @@ class ReviewLightTower {
     // 24小时检查间隔机制
     this.lastCheckTime = null;
     this.checkInterval = 24 * 60 * 60 * 1000; // 24小时，单位：毫秒
+    
+    // 🔧 测试模式配置开关
+    // true: 启用测试模式（分钟级别，较小节点数）
+    // false: 正式版本模式（天级别，正常节点数）
+    this.ReviewLightTowerTest = true; // 正式版本设为 false，测试时改为 true
   }
 
   async getCurrentVersion() {
@@ -89,60 +120,124 @@ class ReviewLightTower {
    * @returns {Object} 包含是否显示、原因和条件ID的对象
    */
   checkDisplayConditions(totalHours, nodeCount, triggeredConditions = []) {
-    // 宽松条件：满足任意一个条件且该条件未触发过就显示
-    // 临时修改：23小时5000次 -> 50分钟1000次 (测试用)
-    const totalMinutes = totalHours * 60;
-    if (totalMinutes > 50 && nodeCount > 1000) {
-      const conditionId = 'condition_23h_5000n';
-      if (!triggeredConditions.includes(conditionId)) {
+    // ========== 评价提醒条件配置 ==========
+    // 根据 this.ReviewLightTowerTest 自动选择测试或正式模式
+    // 🔧 只需修改构造函数中的 this.ReviewLightTowerTest 即可切换模式
+    
+    if (this.ReviewLightTowerTest) {
+      // 🧪 测试模式：分钟级别，较小节点数
+      const totalMinutes = totalHours * 60;
+      
+      // 条件1：10分钟 + 100个节点 (最宽松条件)
+      if (totalMinutes > 10 && nodeCount > 100) {
+        const conditionId = 'condition_10h_1000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于10分钟(${totalMinutes}分钟)且节点数大于100个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件2：20分钟 + 500个节点 (中等条件)
+      if (totalMinutes > 20 && nodeCount > 500) {
+        const conditionId = 'condition_20h_2000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于20分钟(${totalMinutes}分钟)且节点数大于500个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件3：50分钟 + 1000个节点 (最严格条件)
+      if (totalMinutes > 50 && nodeCount > 1000) {
+        const conditionId = 'condition_23h_5000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于50分钟(${totalMinutes}分钟)且节点数大于1000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 测试模式：不满足条件的情况
+      const satisfiedConditions = [];
+      if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
+      if (totalMinutes > 20 && nodeCount > 500) satisfiedConditions.push('20分钟+500节点');
+      if (totalMinutes > 50 && nodeCount > 1000) satisfiedConditions.push('50分钟+1000节点');
+      
+      if (satisfiedConditions.length > 0) {
         return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于50分钟(${totalMinutes}分钟)且节点数大于1000个(${nodeCount}个)所以显示`
+          shouldShow: false,
+          reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
+        };
+      } else {
+        return {
+          shouldShow: false,
+          reason: `当前${totalMinutes}分钟${nodeCount}个节点，不满足显示条件(需要>10分钟且>100节点)`
         };
       }
-    }
-    
-    // 临时修改：20小时2000次 -> 20分钟500次 (测试用)
-    if (totalMinutes > 20 && nodeCount > 500) {
-      const conditionId = 'condition_20h_2000n';
-      if (!triggeredConditions.includes(conditionId)) {
-        return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于20分钟(${totalMinutes}分钟)且节点数大于500个(${nodeCount}个)所以显示`
-        };
-      }
-    }
-    
-    // 临时修改：10小时1000次 -> 10分钟100次 (测试用)
-    if (totalMinutes > 10 && nodeCount > 100) {
-      const conditionId = 'condition_10h_1000n';
-      if (!triggeredConditions.includes(conditionId)) {
-        return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于10分钟(${totalMinutes}分钟)且节点数大于100个(${nodeCount}个)所以显示`
-        };
-      }
-    }
-    
-    // 不满足任何条件或所有满足的条件都已触发过
-    const satisfiedConditions = [];
-    if (totalMinutes > 50 && nodeCount > 1000) satisfiedConditions.push('50分钟+1000节点');
-    if (totalMinutes > 20 && nodeCount > 500) satisfiedConditions.push('20分钟+500节点');
-    if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
-    
-    if (satisfiedConditions.length > 0) {
-      return {
-        shouldShow: false,
-        reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
-      };
+      
     } else {
-      return {
-        shouldShow: false,
-        reason: `当前${totalMinutes}分钟${nodeCount}个节点，不满足显示条件(需要>10分钟且>100节点)`
-      };
+      // 🎯 正式模式：天级别，正常节点数
+      
+      // 条件1：7天 + 2000个节点 (最宽松条件)
+      if (totalHours > 7 * 24 && nodeCount > 2000) {
+        const conditionId = 'condition_10h_1000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于7天(${Math.round(totalHours/24)}天)且节点数大于2000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件2：21天 + 1000个节点 (中等条件)
+      if (totalHours > 21 * 24 && nodeCount > 1000) {
+        const conditionId = 'condition_20h_2000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于21天(${Math.round(totalHours/24)}天)且节点数大于1000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件3：50天 + 20000个节点 (最严格条件)
+      if (totalHours > 50 * 24 && nodeCount > 20000) {
+        const conditionId = 'condition_23h_5000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于50天(${Math.round(totalHours/24)}天)且节点数大于20000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 正式模式：不满足条件的情况
+      const satisfiedConditions = [];
+      if (totalHours > 7 * 24 && nodeCount > 2000) satisfiedConditions.push('7天+2000节点');
+      if (totalHours > 21 * 24 && nodeCount > 1000) satisfiedConditions.push('21天+1000节点');
+      if (totalHours > 50 * 24 && nodeCount > 20000) satisfiedConditions.push('50天+20000节点');
+      
+      if (satisfiedConditions.length > 0) {
+        return {
+          shouldShow: false,
+          reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
+        };
+      } else {
+        return {
+          shouldShow: false,
+          reason: `当前${Math.round(totalHours/24)}天${nodeCount}个节点，不满足显示条件(需要>7天且>2000节点)`
+        };
+      }
     }
   }
 
@@ -165,20 +260,37 @@ class ReviewLightTower {
     }
 
     // 将条件ID转换为可读的描述
+    // 根据 this.ReviewLightTowerTest 自动选择对应的描述文本
     const conditionDescriptions = triggeredConditions.map(conditionId => {
-      switch (conditionId) {
-        case 'condition_23h_5000n':
-          return '50分钟+1000节点'; // 临时修改：23小时+5000节点 -> 50分钟+1000节点
-        case 'condition_20h_2000n':
-          return '20分钟+500节点'; // 临时修改：20小时+2000节点 -> 20分钟+500节点
-        case 'condition_10h_1000n':
-          return '10分钟+100节点'; // 临时修改：10小时+1000节点 -> 10分钟+100节点
-        default:
-          return conditionId; // 如果是未知的条件ID，直接显示
+      if (this.ReviewLightTowerTest) {
+        // 🧪 测试模式描述
+        switch (conditionId) {
+          case 'condition_10h_1000n':
+            return '10分钟+100节点';
+          case 'condition_20h_2000n':
+            return '20分钟+500节点';
+          case 'condition_23h_5000n':
+            return '50分钟+1000节点';
+          default:
+            return conditionId;
+        }
+      } else {
+        // 🎯 正式模式描述
+        switch (conditionId) {
+          case 'condition_10h_1000n':
+            return '7天+2000节点';
+          case 'condition_20h_2000n':
+            return '21天+1000节点';
+          case 'condition_23h_5000n':
+            return '50天+20000节点';
+          default:
+            return conditionId;
+        }
       }
     });
 
-    console.log(`ReviewLightTower：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
+    const modeText = this.ReviewLightTowerTest ? '(测试模式)' : '(正式模式)';
+    console.log(`ReviewLightTower${modeText}：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
   }
 
   async show() {
