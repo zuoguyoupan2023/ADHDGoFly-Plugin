@@ -421,13 +421,6 @@ class ADHDHighlighter {
       
       console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
-      // 检查是否需要显示评价提醒
-      const ratingCheck = await this.adhdGoFlyCounter.shouldShowRatingReminder();
-      if (ratingCheck.shouldShow) {
-        console.log('⭐ 触发评价提醒条件:', ratingCheck);
-        await this.showRatingReminder(ratingCheck);
-      }
-
     } catch (error) {
       console.error('❌ 更新ADHD专注飞行计数器失败:', error);
       // 计数器失败不应影响主流程
@@ -458,13 +451,6 @@ class ADHDHighlighter {
 
       // 增加页面计数（去重逻辑）
       await this.reviewCounter.incrementPageCount();
-
-      // 检查是否需要显示评价提醒
-      const ratingCheck = await this.reviewCounter.shouldShowRatingReminder();
-      if (ratingCheck.shouldShow) {
-        console.log('ReviewCounter计数：触发评价提醒条件:', ratingCheck);
-        await this.showRatingReminder(ratingCheck);
-      }
 
       // 检查ReviewLightTower显示条件
       if (this.reviewLightTower) {
