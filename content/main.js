@@ -134,6 +134,10 @@ class ADHDHighlighter {
     this.reviewCounter = null;
     this.initReviewCounter();
     
+    // 初始化评价灯塔系统
+    this.reviewLightTower = null;
+    this.initReviewLightTower();
+    
     // 延迟输出系统状态摘要（等待异步初始化完成）
     setTimeout(() => this.logSystemStatus(), 100);
     
@@ -219,18 +223,35 @@ class ADHDHighlighter {
 
   /**
    * 初始化评价计数器系统
+   * @private
    */
   async initReviewCounter() {
     try {
       if (typeof ReviewCounter !== 'undefined') {
         this.reviewCounter = new ReviewCounter();
         await this.reviewCounter.init();
-        // ReviewCounter内部已有详细日志，此处仅记录系统级状态
       } else {
-        console.warn('⚠️ ReviewCounter 未加载，跳过ReviewCounter初始化');
+        console.warn('ReviewCounter类未加载');
       }
     } catch (error) {
-      console.error('❌ ReviewCounter系统初始化失败:', error);
+      console.error('初始化评价计数器失败:', error);
+    }
+  }
+
+  /**
+   * 初始化评价灯塔系统
+   * @private
+   */
+  async initReviewLightTower() {
+    try {
+      if (typeof ReviewLightTower !== 'undefined') {
+        this.reviewLightTower = new ReviewLightTower();
+        console.log('ReviewLightTower 已在内容脚本中初始化');
+      } else {
+        console.warn('ReviewLightTower类未加载');
+      }
+    } catch (error) {
+      console.error('初始化评价灯塔失败:', error);
     }
   }
 
@@ -243,7 +264,8 @@ class ADHDHighlighter {
       { name: 'ADHDGoFlyCounter', instance: this.adhdGoFlyCounter, emoji: '⏰' },
       { name: 'ReviewTimer', instance: this.reviewTimer, emoji: '📅' },
       { name: 'ADHDGoFlyTimer', instance: this.adhdGoFlyTimer, emoji: '⏱️' },
-      { name: 'ReviewCounter', instance: this.reviewCounter, emoji: '📊' }
+      { name: 'ReviewCounter', instance: this.reviewCounter, emoji: '📊' },
+      { name: 'ReviewLightTower', instance: this.reviewLightTower, emoji: '🗼' }
     ];
     
     const activeCount = systems.filter(sys => sys.instance !== null).length;
@@ -442,6 +464,15 @@ class ADHDHighlighter {
       if (ratingCheck.shouldShow) {
         console.log('ReviewCounter计数：触发评价提醒条件:', ratingCheck);
         await this.showRatingReminder(ratingCheck);
+      }
+
+      // 检查ReviewLightTower显示条件
+      if (this.reviewLightTower) {
+        try {
+          await this.reviewLightTower.show();
+        } catch (error) {
+          console.error('ReviewLightTower显示失败:', error);
+        }
       }
 
     } catch (error) {

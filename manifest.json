@@ -25,6 +25,7 @@
         "content/storage/review-timer.js",
         "content/storage/adhdgofly-timer.js",
         "content/storage/review-counter.js",
+        "review-light-tower.js",
         "content/main.js"
       ],
     "css": ["styles.css"],
