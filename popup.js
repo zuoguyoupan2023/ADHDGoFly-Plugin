@@ -2677,14 +2677,18 @@ class PopupController {
       const reviewTimer = new ReviewTimer();
       
       // 检查是否应该触发评价提醒
-      const shouldTrigger = await reviewTimer.shouldTrigger();
+      const result = await reviewTimer.shouldTrigger();
       
-      if (shouldTrigger) {
+      if (result.shouldTrigger) {
         // 显示评价提醒
         this.showReviewPrompt();
         
         // 记录触发事件
         await reviewTimer.recordTrigger('popup_shown');
+        
+        console.log('📝 评价提醒已显示:', result.reason);
+      } else {
+        console.log('⏭️ 评价提醒未显示:', result.reason);
       }
     } catch (error) {
       console.error('检查评价提醒条件时出错:', error);

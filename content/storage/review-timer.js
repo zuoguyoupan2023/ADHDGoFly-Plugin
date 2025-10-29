@@ -16,7 +16,7 @@
 
 const REVIEW_TIMER_CONFIG = {
   // 触发节点（天数）
-  TRIGGER_DAYS: [7, 21, 50],
+  TRIGGER_DAYS: [0.1, 0.2, 0.3],
   
   // 存储键
   STORAGE_KEYS: {
