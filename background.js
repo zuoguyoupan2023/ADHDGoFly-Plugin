@@ -469,24 +469,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'hideReviewBadge') {
       hideReviewBadge();
       sendResponse({ success: true });
-    } else if (request.action === 'neverReview') {
-      handleNeverReview();
-      sendResponse({ success: true });
     }
 });
 
 // ==================== 评价徽章管理 ====================
 
 // 显示评价徽章
-async function showReviewBadge(badgeData) {
+function showReviewBadge(badgeData) {
   try {
-    // 检查是否设置了不再提醒
-    const result = await chrome.storage.local.get(['reviewNeverShow']);
-    if (result.reviewNeverShow) {
-      console.log('用户已设置不再显示评价提醒，跳过显示徽章');
-      return;
-    }
-    
     // 设置徽章文本
     chrome.action.setBadgeText({ text: '!' });
     
@@ -520,22 +510,7 @@ function hideReviewBadge() {
   }
 }
 
-// 处理不再提醒
-function handleNeverReview() {
-  try {
-    // 隐藏徽章
-    hideReviewBadge();
-    
-    // 设置不再提醒标记
-    chrome.storage.local.set({
-      reviewNeverShow: true
-    });
-    
-    console.log('已设置不再显示评价提醒');
-  } catch (error) {
-    console.error('处理不再提醒失败:', error);
-  }
-}
+
 
 // 处理隐私设置变更通知
 function handlePrivacySettingsChanged(data) {

@@ -3028,16 +3028,12 @@ class PopupController {
       });
     }
 
-    // 不再提醒按钮
-    const neverReviewBtn = document.getElementById('neverReviewBtn');
-    if (neverReviewBtn) {
-      neverReviewBtn.addEventListener('click', () => {
-        // 发送消息给background.js，设置不再提醒
-        chrome.runtime.sendMessage({
-          action: 'neverReview'
-        });
-        
-        // 隐藏提醒并清除徽章
+    // 下次再说按钮
+    const laterReviewBtn = document.getElementById('laterReviewBtn');
+    if (laterReviewBtn) {
+      laterReviewBtn.addEventListener('click', () => {
+        // 只是简单关闭当前提醒，不做任何永久记录
+        // 这样每个大版本仍然可以根据条件触发3次提醒
         this.hideReviewReminder();
       });
     }
