@@ -3010,7 +3010,11 @@ class PopupController {
       reasonToggleBtn.addEventListener('click', () => {
         const isVisible = reasonContent.style.display !== 'none';
         reasonContent.style.display = isVisible ? 'none' : 'block';
-        reasonToggleBtn.textContent = isVisible ? '我需要理由' : '隐藏理由';
+        
+        // 使用国际化文本
+        const reasonText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
+        const reasonCollapseText = window.i18n ? window.i18n.t('review.prompt.buttons.reasonCollapse') : '折叠';
+        reasonToggleBtn.textContent = isVisible ? reasonText : reasonCollapseText;
       });
     }
 
