@@ -462,9 +462,80 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       timestamp: Date.now()
     });
     sendResponse({ success: true, message: '启动事件已模拟' });
-
-  }
+  } else if (request.action === 'showReviewBadge') {
+    // 显示评价徽章
+    showReviewBadge(request.data);
+    sendResponse({ success: true });
+  } else if (request.action === 'hideReviewBadge') {
+      hideReviewBadge();
+      sendResponse({ success: true });
+    } else if (request.action === 'neverReview') {
+      handleNeverReview();
+      sendResponse({ success: true });
+    }
 });
+
+// ==================== 评价徽章管理 ====================
+
+// 显示评价徽章
+async function showReviewBadge(badgeData) {
+  try {
+    // 检查是否设置了不再提醒
+    const result = await chrome.storage.local.get(['reviewNeverShow']);
+    if (result.reviewNeverShow) {
+      console.log('用户已设置不再显示评价提醒，跳过显示徽章');
+      return;
+    }
+    
+    // 设置徽章文本
+    chrome.action.setBadgeText({ text: '!' });
+    
+    // 设置徽章背景色
+    chrome.action.setBadgeBackgroundColor({ color: '#ff4444' });
+    
+    // 存储徽章数据，供popup使用
+    chrome.storage.local.set({
+      reviewBadgeData: badgeData,
+      reviewBadgeVisible: true
+    });
+    
+    console.log('评价徽章已显示', badgeData);
+  } catch (error) {
+    console.error('显示评价徽章失败:', error);
+  }
+}
+
+// 隐藏评价徽章
+function hideReviewBadge() {
+  try {
+    // 清除徽章文本
+    chrome.action.setBadgeText({ text: '' });
+    
+    // 清除存储的徽章数据
+    chrome.storage.local.remove(['reviewBadgeData', 'reviewBadgeVisible']);
+    
+    console.log('评价徽章已隐藏');
+  } catch (error) {
+    console.error('隐藏评价徽章失败:', error);
+  }
+}
+
+// 处理不再提醒
+function handleNeverReview() {
+  try {
+    // 隐藏徽章
+    hideReviewBadge();
+    
+    // 设置不再提醒标记
+    chrome.storage.local.set({
+      reviewNeverShow: true
+    });
+    
+    console.log('已设置不再显示评价提醒');
+  } catch (error) {
+    console.error('处理不再提醒失败:', error);
+  }
+}
 
 // 处理隐私设置变更通知
 function handlePrivacySettingsChanged(data) {

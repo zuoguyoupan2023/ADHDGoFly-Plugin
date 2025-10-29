@@ -290,6 +290,9 @@ class PopupController {
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
+    
+    // 检查是否需要显示评价提醒
+    await this.checkReviewReminder();
   }
 
   bindEvents() {
@@ -2928,6 +2931,168 @@ class PopupController {
         promptDiv.style.opacity = '0.9';
       }
     }, 3000);
+  }
+
+  // ==================== 评价提醒相关方法 ====================
+
+  // 检查是否需要显示评价提醒
+  async checkReviewReminder() {
+    try {
+      const result = await chrome.storage.local.get(['reviewBadgeVisible', 'reviewBadgeData']);
+      
+      if (result.reviewBadgeVisible && result.reviewBadgeData) {
+        console.log('检测到评价徽章数据，显示评价提醒', result.reviewBadgeData);
+        this.showReviewReminder(result.reviewBadgeData);
+        this.bindReviewReminderEvents();
+      }
+    } catch (error) {
+      console.error('检查评价提醒失败:', error);
+    }
+  }
+
+  // 显示评价提醒
+  showReviewReminder(badgeData) {
+    const reviewReminder = document.getElementById('reviewReminder');
+    if (!reviewReminder) {
+      console.error('找不到评价提醒元素');
+      return;
+    }
+
+    // 填充数据
+    this.populateReviewData(badgeData);
+    
+    // 显示提醒
+    reviewReminder.style.display = 'block';
+    
+    console.log('评价提醒已显示');
+  }
+
+  // 填充评价提醒数据
+  populateReviewData(badgeData) {
+    // 填充使用时间
+    const timerElement = document.getElementById('reviewTimerInfo');
+    if (timerElement && badgeData.timerInfo) {
+      timerElement.textContent = badgeData.timerInfo;
+    }
+
+    // 填充节点数和页面数
+    const nodeCountElement = document.getElementById('reviewNodeCount');
+    const pageCountElement = document.getElementById('reviewPageCount');
+    if (nodeCountElement && badgeData.nodeCount) {
+      nodeCountElement.textContent = badgeData.nodeCount;
+    }
+    if (pageCountElement && badgeData.pageCount) {
+      pageCountElement.textContent = badgeData.pageCount;
+    }
+
+    // 填充剩余提醒次数
+    const remainingCountElement = document.getElementById('reviewRemainingCount');
+    if (remainingCountElement && badgeData.remainingCount !== undefined) {
+      remainingCountElement.textContent = badgeData.remainingCount;
+    }
+
+    // 填充显示原因
+    if (badgeData.displayReason) {
+      const displayReasonElement = document.getElementById('reviewDisplayReason');
+      const reasonTextElement = document.getElementById('reviewReasonText');
+      if (displayReasonElement && reasonTextElement) {
+        reasonTextElement.textContent = badgeData.displayReason;
+        displayReasonElement.style.display = 'block';
+      }
+    }
+  }
+
+  // 绑定评价提醒事件
+  bindReviewReminderEvents() {
+    // 我需要理由按钮
+    const reasonToggleBtn = document.getElementById('reasonToggleBtn');
+    const reasonContent = document.getElementById('reasonContent');
+    if (reasonToggleBtn && reasonContent) {
+      reasonToggleBtn.addEventListener('click', () => {
+        const isVisible = reasonContent.style.display !== 'none';
+        reasonContent.style.display = isVisible ? 'none' : 'block';
+        reasonToggleBtn.textContent = isVisible ? '我需要理由' : '隐藏理由';
+      });
+    }
+
+    // 去评价按钮
+    const goReviewBtn = document.getElementById('goReviewBtn');
+    if (goReviewBtn) {
+      goReviewBtn.addEventListener('click', () => {
+        // 打开评价页面
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        window.open(storeUrl, '_blank');
+        
+        // 隐藏提醒并清除徽章
+        this.hideReviewReminder();
+      });
+    }
+
+    // 不再提醒按钮
+    const neverReviewBtn = document.getElementById('neverReviewBtn');
+    if (neverReviewBtn) {
+      neverReviewBtn.addEventListener('click', () => {
+        // 发送消息给background.js，设置不再提醒
+        chrome.runtime.sendMessage({
+          action: 'neverReview'
+        });
+        
+        // 隐藏提醒并清除徽章
+        this.hideReviewReminder();
+      });
+    }
+
+    // 星星点击事件
+    const stars = document.querySelectorAll('.star-rating');
+    stars.forEach((star, index) => {
+      star.addEventListener('click', () => {
+        // 点击星星时直接跳转到评价页面
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        window.open(storeUrl, '_blank');
+        
+        // 隐藏提醒并清除徽章
+        this.hideReviewReminder();
+      });
+
+      // 星星悬停效果
+      star.addEventListener('mouseenter', () => {
+        stars.forEach((s, i) => {
+          if (i <= index) {
+            s.style.color = '#ffa500';
+            s.textContent = '★';
+          } else {
+            s.style.color = '#ddd';
+            s.textContent = '☆';
+          }
+        });
+      });
+    });
+
+    // 星星区域鼠标离开事件
+    const starsContainer = document.querySelector('.review-stars');
+    if (starsContainer) {
+      starsContainer.addEventListener('mouseleave', () => {
+        stars.forEach(s => {
+          s.style.color = '#ddd';
+          s.textContent = '☆';
+        });
+      });
+    }
+  }
+
+  // 隐藏评价提醒
+  hideReviewReminder() {
+    const reviewReminder = document.getElementById('reviewReminder');
+    if (reviewReminder) {
+      reviewReminder.style.display = 'none';
+    }
+
+    // 发送消息给background.js隐藏徽章
+    chrome.runtime.sendMessage({
+      action: 'hideReviewBadge'
+    });
+
+    console.log('评价提醒已隐藏');
   }
 }
 

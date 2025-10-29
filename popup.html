@@ -2061,6 +2061,169 @@
           gap: 10px;
         }
       }
+
+      /* ==================== 评价提醒样式 ==================== */
+      .review-reminder {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 12px 0;
+        color: #333;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .review-content {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .review-icon {
+        font-size: 24px;
+        margin-right: 12px;
+        color: #ffa500;
+      }
+
+      .review-text {
+        flex: 1;
+      }
+
+      .review-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+      }
+
+      .review-description {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .review-stats {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 12px 0;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .stats-row {
+        margin-bottom: 6px;
+      }
+
+      .stats-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .remaining-count {
+        color: #e74c3c;
+        font-weight: 500;
+      }
+
+      .display-reason {
+        color: #2c3e50;
+        font-style: italic;
+      }
+
+      .review-stars {
+        text-align: center;
+        margin: 12px 0;
+        font-size: 20px;
+        letter-spacing: 4px;
+        color: #ddd;
+      }
+
+      .star-rating {
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+
+      .star-rating:hover,
+      .star-rating.active {
+        color: #ffa500;
+      }
+
+      .reason-toggle-section {
+        text-align: center;
+        margin: 12px 0;
+      }
+
+      .reason-toggle-btn {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 12px;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .reason-toggle-btn:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+      }
+
+      .reason-content {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 12px 0;
+        border-left: 3px solid #007bff;
+      }
+
+      .reason-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .reason-text {
+        font-size: 13px;
+        color: #555;
+        line-height: 1.5;
+      }
+
+      .review-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .review-btn {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .review-btn-primary {
+        background: #28a745;
+        color: white;
+      }
+
+      .review-btn-primary:hover {
+        background: #218838;
+      }
+
+      .review-btn-dismiss {
+        background: #6c757d;
+        color: white;
+      }
+
+      .review-btn-dismiss:hover {
+        background: #5a6268;
+      }
     </style>
   </head>
   <body>
@@ -2074,6 +2237,61 @@
             <div class="app-title">
               <h3 data-i18n="appName">ADHDGoFly</h3>
               <div class="status" id="status">状态检查中...</div>
+            </div>
+          </div>
+
+          <!-- 评价提醒区域 -->
+          <div class="review-reminder" id="reviewReminder" style="display: none;">
+            <div class="review-content">
+              <div class="review-icon">⭐</div>
+              <div class="review-text">
+                <div class="review-title">你愿意向其他人推荐这个插件吗？</div>
+                <div class="review-description">你的评价能让更多人看到这个插件</div>
+              </div>
+            </div>
+            
+            <!-- 数据显示区域 -->
+            <div class="review-stats">
+              <div class="stats-row">
+                <strong>插件使用时间：</strong> <span id="reviewTimerInfo">-</span>
+              </div>
+              <div class="stats-row">
+                <strong>处理节点数：</strong> <span id="reviewNodeCount">-</span> 个 | <strong>页面数：</strong> <span id="reviewPageCount">-</span> 个
+              </div>
+              <div class="stats-row remaining-count">
+                <strong>剩余提醒次数：</strong> <span id="reviewRemainingCount">-</span> 次
+              </div>
+              <div class="stats-row display-reason" id="reviewDisplayReason" style="display: none;">
+                <strong>显示原因：</strong> <span id="reviewReasonText">-</span>
+              </div>
+            </div>
+
+            <!-- 星星评分 -->
+            <div class="review-stars">
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+            </div>
+
+            <!-- 我需要理由按钮 -->
+            <div class="reason-toggle-section">
+              <button id="reasonToggleBtn" class="reason-toggle-btn">我需要理由</button>
+            </div>
+
+            <!-- 理由内容（默认隐藏） -->
+            <div id="reasonContent" class="reason-content" style="display: none;">
+              <div class="reason-title">为什么需要您的评价？</div>
+              <div class="reason-text">
+                你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。
+              </div>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div class="review-actions">
+              <button class="review-btn review-btn-primary" id="goReviewBtn">去评价</button>
+              <button class="review-btn review-btn-dismiss" id="laterReviewBtn">下次再说</button>
             </div>
           </div>
 

@@ -246,7 +246,7 @@ class ReviewLightTower {
       console.log(`ReviewLightTower：满足显示条件，剩余${remainingCount}次，${conditionResult.reason}`);
       
       // 创建评价提醒UI，传入显示原因
-      this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
+      this.notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
       
       // 更新显示记录，记录新触发的条件
       const newTriggeredConditions = [...displayRecord.triggeredConditions, conditionResult.conditionId];
@@ -264,7 +264,7 @@ class ReviewLightTower {
       }
       
       // 查询失败但仍有次数时才显示
-      this.createReviewPrompt('查询失败', 0, 0, remainingCount, '查询失败时显示');
+      this.notifyBackgroundShowBadge('查询失败', 0, 0, remainingCount, '查询失败时显示');
       
       // 更新显示记录
       const currentVersion = await this.getCurrentVersion();
@@ -272,216 +272,23 @@ class ReviewLightTower {
     }
   }
 
-  createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
-    // 如果已经存在提醒框，先移除
-    if (this.promptDiv && this.promptDiv.parentNode) {
-      this.promptDiv.remove();
+  notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
+    // 通知background.js显示徽章，并传递评价提醒数据
+    try {
+      chrome.runtime.sendMessage({
+        action: 'showReviewBadge',
+        data: {
+          timerInfo,
+          nodeCount,
+          pageCount,
+          remainingCount,
+          displayReason
+        }
+      });
+      console.log('已通知background显示评价徽章');
+    } catch (error) {
+      console.error('通知background显示徽章失败:', error);
     }
-
-    // 获取i18n文本
-    const title = this.getI18nText('review.title', '你愿意向其他人推荐这个插件吗？');
-    const description = this.getI18nText('review.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。');
-    const reviewBtnText = this.getI18nText('review.goReview', '去评价');
-    const reasonBtnText = this.getI18nText('review.needReason', '我需要理由');
-    const reasonCollapseBtnText = this.getI18nText('review.reasonCollapse', '收起理由');
-    const neverBtnText = this.getI18nText('review.neverAsk', '不再提醒');
-
-    // 创建提醒框
-    this.promptDiv = document.createElement('div');
-    this.promptDiv.id = 'review-light-tower-prompt';
-    this.promptDiv.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      padding: 20px;
-      z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 450px;
-      min-width: 350px;
-      max-height: 80vh;
-      overflow-y: auto;
-    `;
-
-    // 设置HTML内容
-    this.promptDiv.innerHTML = `
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      ">
-        <h3 style="
-          margin: 0;
-          font-size: 16px;
-          font-weight: 600;
-          color: #333;
-          line-height: 1.4;
-        ">${title}</h3>
-        <button id="close-review-prompt" style="
-          background: none;
-          border: none;
-          font-size: 18px;
-          cursor: pointer;
-          color: #999;
-          padding: 0;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">×</button>
-      </div>
-
-      <!-- 数据显示区域 -->
-      <div style="
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 15px;
-        font-size: 12px;
-        color: #666;
-        border-left: 3px solid #007bff;
-      ">
-        <div style="margin-bottom: 5px;">
-          <strong>插件使用时间：</strong> ${timerInfo}
-        </div>
-        <div style="margin-bottom: 5px;">
-          <strong>处理节点数：</strong> ${nodeCount} 个 | <strong>页面数：</strong> ${pageCount} 个
-        </div>
-        <div style="color: #007bff; font-weight: 600; margin-bottom: 5px;">
-          <strong>剩余提醒次数：</strong> ${remainingCount} 次
-        </div>
-        ${displayReason ? `<div style="color: #28a745; font-weight: 600; font-size: 11px; background: #e8f5e8; padding: 6px; border-radius: 4px; border-left: 3px solid #28a745;">
-          <strong>显示原因：</strong> ${displayReason}
-        </div>` : ''}
-      </div>
-
-      <!-- 星星评分 -->
-      <div style="
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin: 20px 0;
-      ">
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-      </div>
-
-      <!-- 我需要理由按钮 -->
-      <div style="text-align: center; margin: 15px 0;">
-        <button id="reason-toggle" style="
-          background: none;
-          border: none;
-          color: #007bff;
-          font-size: 12px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        ">${reasonBtnText}</button>
-      </div>
-
-      <!-- 理由内容（默认隐藏） -->
-      <div id="reason-content" style="
-        display: none;
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 12px;
-        margin: 10px 0;
-        font-size: 12px;
-        color: #666;
-        line-height: 1.4;
-        border-left: 3px solid #28a745;
-      ">
-        <div style="margin-bottom: 12px;">
-          <div style="margin-bottom: 8px; font-weight: 600; color: #333;">
-            ${this.getI18nText('review.reasonContent.title', '为什么需要您的评价？')}
-          </div>
-          <div style="margin: 8px 0; padding: 12px; background-color: #ffffff; border-radius: 6px; line-height: 1.5; color: #555;">
-            ${this.getI18nText('review.reasonContent.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。')}
-          </div>
-        </div>
-      </div>
-
-      <!-- 底部按钮 -->
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        margin-top: 20px;
-      ">
-        <button id="go-review-btn" style="
-          background: #007bff;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          padding: 8px 16px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        " onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-          ${reviewBtnText}
-        </button>
-        <button id="never-review-prompt" style="
-          background: none;
-          border: none;
-          color: #999;
-          font-size: 12px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
-          ${neverBtnText}
-        </button>
-      </div>
-    `;
-
-    // 添加到页面
-    document.body.appendChild(this.promptDiv);
-
-    // 确保DOM元素已经添加后再绑定事件
-    setTimeout(() => {
-      this.bindEvents();
-    }, 0);
-
-    // 3秒后自动淡化
-    setTimeout(() => {
-      if (this.promptDiv && this.promptDiv.parentNode) {
-        this.promptDiv.style.transition = 'opacity 0.5s';
-        this.promptDiv.style.opacity = '0.9';
-      }
-    }, 3000);
   }
 
   bindEvents() {
