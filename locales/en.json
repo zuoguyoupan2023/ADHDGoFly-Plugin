@@ -441,7 +441,19 @@
       "buttons": {
         "review": "Leave a Review",
         "reason": "I need a reason",
+        "reasonCollapse": "Hide reason",
         "never": "Don't Ask Again"
+      },
+      "reasonContent": {
+        "title": "Why recommend this extension?",
+        "points": [
+          "🎯 Designed for ADHD and reading difficulties, lowering reading barriers",
+          "📚 Smart vocabulary highlighting helps quickly understand key points",
+          "🌍 Multi-language translation support enhances reading experience",
+          "⚡ Lightweight design doesn't affect webpage loading speed",
+          "🔒 Privacy-focused with local data processing",
+          "💡 Continuously updated and optimized based on user feedback"
+        ]
       }
     }
   }
