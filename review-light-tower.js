@@ -245,8 +245,8 @@ class ReviewLightTower {
       
       console.log(`ReviewLightTower：满足显示条件，剩余${remainingCount}次，${conditionResult.reason}`);
       
-      // 创建评价提醒UI，传入显示原因
-      this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
+      // 通知background.js显示评价徽章，传入显示原因
+      this.notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
       
       // 更新显示记录，记录新触发的条件
       const newTriggeredConditions = [...displayRecord.triggeredConditions, conditionResult.conditionId];
@@ -263,12 +263,38 @@ class ReviewLightTower {
         return;
       }
       
-      // 查询失败但仍有次数时才显示
-      this.createReviewPrompt('查询失败', 0, 0, remainingCount, '查询失败时显示');
+      // 查询失败但仍有次数时通知显示徽章
+      this.notifyBackgroundShowBadge('查询失败', 0, 0, remainingCount, '查询失败时显示');
       
       // 更新显示记录
       const currentVersion = await this.getCurrentVersion();
       await this.updateDisplayRecord(displayRecord.count + 1, currentVersion);
+    }
+  }
+
+  // 通知background.js显示徽章
+  notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
+    try {
+      // 发送消息给background.js显示徽章
+      chrome.runtime.sendMessage({
+        action: 'showReviewBadge',
+        data: {
+          timerInfo,
+          nodeCount,
+          pageCount,
+          remainingCount,
+          displayReason,
+          timestamp: Date.now()
+        }
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('ReviewLightTower：发送徽章显示消息失败:', chrome.runtime.lastError);
+        } else {
+          console.log('ReviewLightTower：已通知background.js显示评价徽章');
+        }
+      });
+    } catch (error) {
+      console.error('ReviewLightTower：通知background.js显示徽章时出错:', error);
     }
   }
 
