@@ -18,135 +18,17 @@ class ReviewLightTower {
       const nodeCount = await counter.getNodeCount();
       const pageCount = await counter.getPageCount();
       
-      // 获取安装时间（小时）
-      const installHours = await this.getInstallHours(timer);
-      
-      // 检查是否满足显示条件
-      const shouldShow = await this.checkDisplayConditions(installHours, nodeCount);
-      
-      if (shouldShow.show) {
-        // 创建评价提醒UI
-        this.createReviewPrompt(timerInfo, nodeCount, pageCount, shouldShow.displayCount);
-      } else {
-        console.log('ReviewLightTower: 不满足显示条件');
-      }
+      // 创建评价提醒UI
+      this.createReviewPrompt(timerInfo, nodeCount, pageCount);
       
     } catch (error) {
       console.error('ReviewLightTower查询失败:', error);
+      // 即使查询失败也显示评价提醒UI
+      this.createReviewPrompt('查询失败', 0, 0);
     }
   }
 
-  async getInstallHours(timer) {
-    try {
-      const installTime = await timer.getInstallTime();
-      if (installTime) {
-        const now = Date.now();
-        const diffMs = now - installTime;
-        const diffHours = diffMs / (1000 * 60 * 60);
-        return diffHours;
-      }
-      return 0;
-    } catch (error) {
-      console.error('获取安装时间失败:', error);
-      return 0;
-    }
-  }
-
-  async checkDisplayConditions(installHours, nodeCount) {
-    try {
-      // 获取当前版本和显示记录
-      const currentVersion = await this.getCurrentVersion();
-      const displayRecord = await this.getDisplayRecord();
-      
-      // 检查是否需要重置（大版本更新）
-      if (this.shouldResetForMajorVersion(currentVersion, displayRecord.lastVersion)) {
-        await this.resetDisplayRecord(currentVersion);
-        displayRecord.count = 0;
-        displayRecord.lastVersion = currentVersion;
-      }
-      
-      // 如果已经显示过3次，不再显示
-      if (displayRecord.count >= 3) {
-        return { show: false, displayCount: displayRecord.count };
-      }
-      
-      // 检查显示条件
-      const conditions = [
-        { hours: 10, nodes: 1000, displayIndex: 1 },
-        { hours: 20, nodes: 2000, displayIndex: 2 },
-        { hours: 23, nodes: 5000, displayIndex: 3 }
-      ];
-      
-      for (const condition of conditions) {
-        if (installHours >= condition.hours && nodeCount >= condition.nodes) {
-          // 检查是否已经在这个条件下显示过
-          if (displayRecord.count < condition.displayIndex) {
-            // 更新显示记录
-            await this.updateDisplayRecord(condition.displayIndex, currentVersion);
-            return { show: true, displayCount: condition.displayIndex };
-          }
-        }
-      }
-      
-      return { show: false, displayCount: displayRecord.count };
-    } catch (error) {
-      console.error('检查显示条件失败:', error);
-      return { show: false, displayCount: 0 };
-    }
-  }
-
-  async getCurrentVersion() {
-    try {
-      const manifest = chrome.runtime.getManifest();
-      return manifest.version;
-    } catch (error) {
-      console.error('获取版本失败:', error);
-      return '0.1.5'; // 默认版本
-    }
-  }
-
-  async getDisplayRecord() {
-    try {
-      const result = await chrome.storage.local.get(['reviewDisplayRecord']);
-      return result.reviewDisplayRecord || { count: 0, lastVersion: '0.0.0' };
-    } catch (error) {
-      console.error('获取显示记录失败:', error);
-      return { count: 0, lastVersion: '0.0.0' };
-    }
-  }
-
-  shouldResetForMajorVersion(currentVersion, lastVersion) {
-    try {
-      const currentMajor = parseInt(currentVersion.split('.')[0]);
-      const lastMajor = parseInt(lastVersion.split('.')[0]);
-      return currentMajor > lastMajor;
-    } catch (error) {
-      console.error('版本比较失败:', error);
-      return false;
-    }
-  }
-
-  async resetDisplayRecord(currentVersion) {
-    try {
-      await chrome.storage.local.set({
-        reviewDisplayRecord: { count: 0, lastVersion: currentVersion }
-      });
-    } catch (error) {
-      console.error('重置显示记录失败:', error);
-    }
-  }
-
-  async updateDisplayRecord(displayCount, currentVersion) {
-    try {
-      await chrome.storage.local.set({
-        reviewDisplayRecord: { count: displayCount, lastVersion: currentVersion }
-      });
-    } catch (error) {
-      console.error('更新显示记录失败:', error);
-    }
-  }
-
-  createReviewPrompt(timerInfo, nodeCount, pageCount, displayCount = 1) {
+  createReviewPrompt(timerInfo, nodeCount, pageCount) {
     // 如果已经存在提醒框，先移除
     if (this.promptDiv && this.promptDiv.parentNode) {
       this.promptDiv.remove();
@@ -224,11 +106,8 @@ class ReviewLightTower {
         <div style="margin-bottom: 5px;">
           <strong>插件使用时间：</strong> ${timerInfo}
         </div>
-        <div style="margin-bottom: 5px;">
+        <div>
           <strong>处理节点数：</strong> ${nodeCount} 个 | <strong>页面数：</strong> ${pageCount} 个
-        </div>
-        <div style="color: #28a745; font-weight: 600;">
-          <strong>这是第 ${displayCount} 次显示</strong>
         </div>
       </div>
 
