@@ -90,19 +90,20 @@ class ReviewLightTower {
    */
   checkDisplayConditions(totalHours, nodeCount, triggeredConditions = []) {
     // 宽松条件：满足任意一个条件且该条件未触发过就显示
-    if (totalHours > 23 && nodeCount > 5000) {
+    // 临时修改：23小时5000次 -> 50分钟1000次 (测试用)
+    const totalMinutes = totalHours * 60;
+    if (totalMinutes > 50 && nodeCount > 1000) {
       const conditionId = 'condition_23h_5000n';
       if (!triggeredConditions.includes(conditionId)) {
         return {
           shouldShow: true,
           conditionId: conditionId,
-          reason: `时间大于23小时(${totalHours}小时)且节点数大于5000个(${nodeCount}个)所以显示`
+          reason: `时间大于50分钟(${totalMinutes}分钟)且节点数大于1000个(${nodeCount}个)所以显示`
         };
       }
     }
     
     // 临时修改：20小时2000次 -> 20分钟500次 (测试用)
-    const totalMinutes = totalHours * 60;
     if (totalMinutes > 20 && nodeCount > 500) {
       const conditionId = 'condition_20h_2000n';
       if (!triggeredConditions.includes(conditionId)) {
@@ -128,7 +129,7 @@ class ReviewLightTower {
     
     // 不满足任何条件或所有满足的条件都已触发过
     const satisfiedConditions = [];
-    if (totalHours > 23 && nodeCount > 5000) satisfiedConditions.push('23小时+5000节点');
+    if (totalMinutes > 50 && nodeCount > 1000) satisfiedConditions.push('50分钟+1000节点');
     if (totalMinutes > 20 && nodeCount > 500) satisfiedConditions.push('20分钟+500节点');
     if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
     
@@ -167,11 +168,11 @@ class ReviewLightTower {
     const conditionDescriptions = triggeredConditions.map(conditionId => {
       switch (conditionId) {
         case 'condition_23h_5000n':
-          return '23小时+5000节点';
+          return '50分钟+1000节点'; // 临时修改：23小时+5000节点 -> 50分钟+1000节点
         case 'condition_20h_2000n':
-          return '20分钟+500节点'; // 临时修改：测试用
+          return '20分钟+500节点'; // 临时修改：20小时+2000节点 -> 20分钟+500节点
         case 'condition_10h_1000n':
-          return '10分钟+100节点'; // 临时修改：测试用
+          return '10分钟+100节点'; // 临时修改：10小时+1000节点 -> 10分钟+100节点
         default:
           return conditionId; // 如果是未知的条件ID，直接显示
       }
