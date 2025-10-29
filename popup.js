@@ -2763,30 +2763,30 @@ class PopupController {
       background: white;
       border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 16px;
+      padding: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       z-index: 10000;
       width: ${promptWidth}px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
+      font-size: 12px;
+      line-height: 1.3;
     `;
 
     promptDiv.innerHTML = `
       <!-- 第一行：标题和关闭按钮 -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-        <div style="font-weight: 600; color: #333; font-size: 15px; flex: 1; padding-right: 8px; text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+        <div style="font-weight: 600; color: #333; font-size: 13px; flex: 1; padding-right: 8px; text-align: center;">
           ${title}
         </div>
         <button id="close-review-prompt" style="
           background: none;
           border: none;
-          font-size: 18px;
+          font-size: 16px;
           cursor: pointer;
           color: #666;
           padding: 0;
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2795,24 +2795,24 @@ class PopupController {
       </div>
       
       <!-- 第二行：五个空心五角星 -->
-      <div style="display: flex; justify-content: center; margin-bottom: 16px; gap: 4px;">
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="1">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="2">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="3">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="4">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="5">☆</span>
+      <div style="display: flex; justify-content: center; margin-bottom: 10px; gap: 3px;">
+        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="1">☆</span>
+        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="2">☆</span>
+        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="3">☆</span>
+        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="4">☆</span>
+        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="5">☆</span>
       </div>
       
       <!-- 第三行："我需要理由"可展开 -->
-      <div style="text-align: center; margin-bottom: 16px;">
+      <div style="text-align: center; margin-bottom: 10px;">
         <button id="reason-toggle" style="
           background: none;
           border: none;
           color: #666;
-          font-size: 13px;
+          font-size: 11px;
           cursor: pointer;
           text-decoration: underline;
-          padding: 4px 8px;
+          padding: 2px 6px;
         ">${reasonBtnText}</button>
       </div>
       
@@ -2820,13 +2820,12 @@ class PopupController {
       <div id="reason-content" style="
         display: none;
         color: #555;
-        margin-bottom: 16px;
-        font-size: 12px;
-        line-height: 1.4;
-        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 11px;
+        line-height: 1.3;
+        padding: 8px;
         background: #f8f9fa;
-        border-radius: 6px;
-        border-left: 3px solid #007AFF;
+        border-radius: 4px;
       ">
         ${description}
       </div>
@@ -2838,10 +2837,10 @@ class PopupController {
           background: #007AFF;
           color: white;
           text-decoration: none;
-          padding: 8px 16px;
-          border-radius: 6px;
+          padding: 6px 12px;
+          border-radius: 4px;
           font-weight: 500;
-          font-size: 13px;
+          font-size: 11px;
           transition: background-color 0.2s;
         " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
           ${reviewBtnText}
@@ -2850,10 +2849,10 @@ class PopupController {
           background: none;
           border: none;
           color: #999;
-          font-size: 12px;
+          font-size: 10px;
           cursor: pointer;
           text-decoration: underline;
-          padding: 4px 8px;
+          padding: 2px 6px;
         " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
           ${neverBtnText}
         </button>
