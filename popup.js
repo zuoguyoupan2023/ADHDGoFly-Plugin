@@ -301,6 +301,12 @@ class PopupController {
       toggleBtn.addEventListener('click', () => this.handleToggle());
     }
     
+    // 清除ReviewLightTower记录按钮事件
+    const clearLightTowerBtn = document.getElementById('clearLightTowerBtn');
+    if (clearLightTowerBtn) {
+      clearLightTowerBtn.addEventListener('click', () => this.clearLightTowerRecords());
+    }
+    
     // 侧边栏按钮事件
     this.bindSidebarEvents();
     
@@ -3050,6 +3056,57 @@ class PopupController {
     setTimeout(() => {
       reviewReminder.style.display = 'none';
     }, 300);
+  }
+
+  // 清除ReviewLightTower记录
+  async clearLightTowerRecords() {
+    try {
+      // 1. 清除localStorage中的reviewLightTowerDisplay记录
+      localStorage.removeItem('reviewLightTowerDisplay');
+      
+      // 2. 清除chrome.storage.local中的所有相关记录
+      await chrome.storage.local.remove([
+        'reviewBadgeData', 
+        'reviewDismissed', 
+        'reviewDismissedTime',
+        'review_last_check_timestamp',  // ReviewTimer的lastCheckTime
+        'reviewLightTowerDisplay'       // 可能存在的其他存储
+      ]);
+      
+      // 3. 完全重置ReviewLightTower实例
+      if (window.reviewLightTower) {
+        // 重置所有相关属性
+        window.reviewLightTower.lastCheckTime = null;
+        window.reviewLightTower.promptDiv = null;
+        window.reviewLightTower.isReasonExpanded = false;
+        
+        // 强制重新创建实例
+        window.reviewLightTower = new ReviewLightTower();
+      }
+      
+      // 4. 通知background.js隐藏徽章
+      chrome.runtime.sendMessage({ action: 'hideReviewBadge' });
+      
+      // 5. 隐藏当前显示的评价提醒
+      const reviewReminder = document.getElementById('reviewReminder');
+      if (reviewReminder && reviewReminder.style.display !== 'none') {
+        this.hideReviewReminder(reviewReminder);
+      }
+      
+      // 6. 验证清除结果
+      const verifyRecord = localStorage.getItem('reviewLightTowerDisplay');
+      const verifyInstance = window.reviewLightTower ? window.reviewLightTower.lastCheckTime : 'undefined';
+      
+      console.log('清除验证 - localStorage:', verifyRecord);
+      console.log('清除验证 - 实例lastCheckTime:', verifyInstance);
+      
+      // 显示成功提示
+      this.showToast('ReviewLightTower记录已完全清除！可以立即重新测试24小时机制', 'success');
+      
+    } catch (error) {
+      console.error('清除ReviewLightTower记录失败:', error);
+      this.showToast('清除失败: ' + error.message, 'error');
+    }
   }
 }
 
