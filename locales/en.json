@@ -433,15 +433,28 @@
     "en": "English"
   },
   "review": {
-    "title": "Would you like to recommend this extension to others?",
-    "description": "Your review helps more people discover this extension, whether they have ADHD, reading difficulties, or feel tired from extensive reading - they all have the chance to use this extension to reduce reading difficulty.",
-    "goReview": "Leave a Review",
-    "needReason": "I need a reason",
-    "neverAsk": "Don't Ask Again",
-    "reasonCollapse": "Collapse Reason",
-    "reasonContent": {
-      "title": "Why do we need your review?",
-      "description": "Your review helps more people discover this extension, whether they have ADHD, reading difficulties, or feel tired from extensive reading - they all have the chance to use this extension to reduce reading difficulty."
+    "prompt": {
+      "main": {
+        "title": "Would you like to recommend this extension to others?",
+        "description": "Your review helps more people discover this extension—whether they struggle with ADHD, reading difficulties, or simply feel overwhelmed by heavy reading, they can all benefit from easier reading with this tool."
+      },
+      "buttons": {
+        "review": "Leave a Review",
+        "reason": "I need a reason",
+        "reasonCollapse": "Hide reason",
+        "never": "Don't Ask Again"
+      },
+      "reasonContent": {
+        "title": "Why recommend this extension?",
+        "points": [
+          "🎯 Designed for ADHD and reading difficulties, lowering reading barriers",
+          "📚 Smart vocabulary highlighting helps quickly understand key points",
+          "🌍 Multi-language translation support enhances reading experience",
+          "⚡ Lightweight design doesn't affect webpage loading speed",
+          "🔒 Privacy-focused with local data processing",
+          "💡 Continuously updated and optimized based on user feedback"
+        ]
+      }
     }
   }
 }
