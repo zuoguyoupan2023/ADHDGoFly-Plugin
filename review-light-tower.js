@@ -8,7 +8,8 @@ class ReviewLightTower {
       // 查询ReviewTimer信息
       const timer = new ReviewTimer();
       await timer.init();
-      const timerInfo = await timer.getFormattedInstallInfo();
+      const timerData = await timer.getFormattedInstallInfo();
+      const timerInfo = timerData ? timerData.formatted : '查询失败';
       
       // 查询ReviewCounter信息
       const counter = new ReviewCounter();
