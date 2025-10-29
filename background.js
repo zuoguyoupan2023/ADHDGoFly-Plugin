@@ -462,20 +462,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       timestamp: Date.now()
     });
     sendResponse({ success: true, message: '启动事件已模拟' });
-  } else if (request.action === 'showReviewBadge') {
-    // 显示评价徽章
-    showReviewBadge(request.data);
+  } else if (request.action === 'showReviewLightTower') {
+    // 显示评价灯塔
+    showReviewLightTower(request.data);
     sendResponse({ success: true });
-  } else if (request.action === 'hideReviewBadge') {
-      hideReviewBadge();
+  } else if (request.action === 'hideReviewLightTower') {
+    hideReviewLightTower();
       sendResponse({ success: true });
     }
 });
 
 // ==================== 评价徽章管理 ====================
 
-// 显示评价徽章
-function showReviewBadge(badgeData) {
+// 显示评价灯塔
+function showReviewLightTower(badgeData) {
   try {
     // 设置徽章文本
     chrome.action.setBadgeText({ text: '!' });
@@ -483,10 +483,10 @@ function showReviewBadge(badgeData) {
     // 设置徽章背景色
     chrome.action.setBadgeBackgroundColor({ color: '#ff4444' });
     
-    // 存储徽章数据，供popup使用
+    // 存储灯塔数据，供popup使用
     chrome.storage.local.set({
-      reviewBadgeData: badgeData,
-      reviewBadgeVisible: true
+      reviewLightTowerData: badgeData,
+      reviewLightTowerVisible: true
     });
     
     console.log('评价徽章已显示', badgeData);
@@ -495,14 +495,14 @@ function showReviewBadge(badgeData) {
   }
 }
 
-// 隐藏评价徽章
-function hideReviewBadge() {
+// 隐藏评价灯塔
+function hideReviewLightTower() {
   try {
     // 清除徽章文本
     chrome.action.setBadgeText({ text: '' });
     
-    // 清除存储的徽章数据
-    chrome.storage.local.remove(['reviewBadgeData', 'reviewBadgeVisible']);
+    // 移除存储的灯塔数据
+    chrome.storage.local.remove(['reviewLightTowerData', 'reviewLightTowerVisible']);
     
     console.log('评价徽章已隐藏');
   } catch (error) {

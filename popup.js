@@ -2938,11 +2938,11 @@ class PopupController {
   // 检查是否需要显示评价提醒
   async checkReviewReminder() {
     try {
-      const result = await chrome.storage.local.get(['reviewBadgeVisible', 'reviewBadgeData']);
+      const result = await chrome.storage.local.get(['reviewLightTowerVisible', 'reviewLightTowerData']);
       
-      if (result.reviewBadgeVisible && result.reviewBadgeData) {
-        console.log('检测到评价徽章数据，显示评价提醒', result.reviewBadgeData);
-        this.showReviewReminder(result.reviewBadgeData);
+      if (result.reviewLightTowerVisible && result.reviewLightTowerData) {
+        console.log('检测到评价灯塔数据，显示评价提醒', result.reviewLightTowerData);
+        this.showReviewReminder(result.reviewLightTowerData);
         this.bindReviewReminderEvents();
       }
     } catch (error) {
@@ -3082,10 +3082,10 @@ class PopupController {
     if (reviewReminder) {
       reviewReminder.style.display = 'none';
     }
-
-    // 发送消息给background.js隐藏徽章
+    
+    // 发送消息给background隐藏灯塔
     chrome.runtime.sendMessage({
-      action: 'hideReviewBadge'
+      action: 'hideReviewLightTower'
     });
 
     console.log('评价提醒已隐藏');

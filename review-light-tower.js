@@ -273,10 +273,10 @@ class ReviewLightTower {
   }
 
   notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
-    // 通知background.js显示徽章，并传递评价提醒数据
+    // 通知background.js显示灯塔，并传递评价提醒数据
     try {
       chrome.runtime.sendMessage({
-        action: 'showReviewBadge',
+        action: 'showReviewLightTower',
         data: {
           timerInfo,
           nodeCount,
