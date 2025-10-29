@@ -5,6 +5,7 @@ class PopupController {
     this.currentPage = 'home';
     this.versionInfo = null; // 缓存版本信息
     this.customDictionaries = []; // 自定义词典列表
+    this.reviewLightTower = null; // ReviewLightTower实例
     this.dictSettings = {
       // 基础词典
       'zh-preset': true,
@@ -262,6 +263,9 @@ class PopupController {
       statusDiv.textContent = window.i18n.t('status.checking');
     }
     
+    // 初始化ReviewLightTower
+    await this.initReviewLightTower();
+    
     // 绑定事件
     this.bindEvents();
     
@@ -280,7 +284,10 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
-    // 显示评价引导
+    // 检查ReviewLightTower评价提醒
+    await this.checkReviewLightTower();
+    
+    // 显示评价引导（保留原有逻辑作为降级方案）
     this.showReviewPrompt();
     
     // 更新反馈链接显示
@@ -2692,6 +2699,111 @@ class PopupController {
       }
     } catch (error) {
       console.log('更新反馈链接失败:', error);
+    }
+  }
+
+  /**
+   * 初始化ReviewLightTower系统
+   */
+  async initReviewLightTower() {
+    try {
+      console.log('PopupController：初始化ReviewLightTower系统...');
+      
+      // 检查ReviewLightTower类是否可用
+      if (typeof ReviewLightTower === 'undefined') {
+        console.warn('PopupController：ReviewLightTower类未找到，跳过初始化');
+        return false;
+      }
+      
+      // 创建ReviewLightTower实例
+      this.reviewLightTower = new ReviewLightTower();
+      
+      // 初始化系统
+      const initSuccess = await this.reviewLightTower.init();
+      if (initSuccess) {
+        console.log('PopupController：✅ ReviewLightTower系统初始化成功');
+        return true;
+      } else {
+        console.error('PopupController：❌ ReviewLightTower系统初始化失败');
+        this.reviewLightTower = null;
+        return false;
+      }
+    } catch (error) {
+      console.error('PopupController：ReviewLightTower初始化异常:', error);
+      this.reviewLightTower = null;
+      return false;
+    }
+  }
+
+  /**
+   * 检查ReviewLightTower评价提醒
+   */
+  async checkReviewLightTower() {
+    try {
+      // 如果ReviewLightTower未初始化，跳过检查
+      if (!this.reviewLightTower) {
+        console.log('PopupController：ReviewLightTower未初始化，跳过评价提醒检查');
+        return;
+      }
+      
+      console.log('PopupController：检查ReviewLightTower评价提醒条件...');
+      
+      // 检查是否应该显示评价提醒
+      const shouldShow = await this.reviewLightTower.shouldShowReview();
+      
+      if (shouldShow.shouldShow) {
+        console.log('PopupController：🎯 满足评价提醒条件:', shouldShow.reason);
+        
+        // 显示ReviewLightTower评价提醒
+        const promptElement = this.reviewLightTower.showReviewPrompt(shouldShow);
+        
+        if (promptElement) {
+          console.log('PopupController：✅ ReviewLightTower评价提醒已显示');
+          
+          // 记录显示事件
+          await this.logReviewLightTowerEvent('shown', shouldShow);
+        } else {
+          console.error('PopupController：❌ ReviewLightTower评价提醒显示失败');
+        }
+      } else {
+        console.log('PopupController：未满足评价提醒条件:', shouldShow.reason);
+      }
+    } catch (error) {
+      console.error('PopupController：检查ReviewLightTower评价提醒失败:', error);
+    }
+  }
+
+  /**
+   * 记录ReviewLightTower事件
+   * @param {string} event - 事件类型
+   * @param {Object} data - 事件数据
+   */
+  async logReviewLightTowerEvent(event, data) {
+    try {
+      console.log(`PopupController：记录ReviewLightTower事件: ${event}`, data);
+      
+      // 这里可以添加额外的事件记录逻辑
+      // 例如发送到分析服务、记录到本地日志等
+      
+    } catch (error) {
+      console.error('PopupController：记录ReviewLightTower事件失败:', error);
+    }
+  }
+
+  /**
+   * 获取ReviewLightTower状态信息（用于调试）
+   */
+  async getReviewLightTowerStatus() {
+    try {
+      if (!this.reviewLightTower) {
+        return { error: 'ReviewLightTower未初始化' };
+      }
+      
+      const status = await this.reviewLightTower.getStatus();
+      return status;
+    } catch (error) {
+      console.error('PopupController：获取ReviewLightTower状态失败:', error);
+      return { error: error.message };
     }
   }
 
