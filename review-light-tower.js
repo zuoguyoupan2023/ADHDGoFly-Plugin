@@ -1,10 +1,10 @@
-// 最简单的ReviewLightTower - 完全独立，不破坏任何旧逻辑
-class SimpleReviewReminder {
+// ReviewLightTower - 评价提醒灯塔系统
+class ReviewLightTower {
     constructor() {
         this.isShowing = false;
     }
 
-    // 查询ReviewTimer并显示时间信息
+    // 查询ReviewTimer和ReviewCounter并显示信息
     async show() {
         if (this.isShowing) return;
         
@@ -30,10 +30,28 @@ class SimpleReviewReminder {
             console.error('查询ReviewTimer失败:', error);
             timeInfo = "查询时间失败";
         }
+
+        // 查询ReviewCounter节点处理数
+        let counterInfo = "正在查询节点处理数...";
+        try {
+            if (window.ReviewCounter) {
+                const counter = new window.ReviewCounter();
+                await counter.init();
+                const nodeCount = await counter.getNodeCount();
+                const pageCount = await counter.getPageCount();
+                
+                counterInfo = `节点处理数：${nodeCount} | 页面访问数：${pageCount}`;
+            } else {
+                counterInfo = "ReviewCounter未加载";
+            }
+        } catch (error) {
+            console.error('查询ReviewCounter失败:', error);
+            counterInfo = "查询节点处理数失败";
+        }
         
         // 创建提醒框
         const reminder = document.createElement('div');
-        reminder.id = 'simple-review-reminder';
+        reminder.id = 'review-light-tower';
         reminder.innerHTML = `
             <div style="
                 position: fixed;
@@ -46,20 +64,25 @@ class SimpleReviewReminder {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 z-index: 10000;
                 font-family: Arial, sans-serif;
-                max-width: 300px;
+                max-width: 350px;
             ">
                 <div style="
                     font-size: 16px;
                     font-weight: bold;
                     color: #333;
                     margin-bottom: 10px;
-                ">ReviewTimer查询结果</div>
+                ">ReviewLightTower</div>
+                <div style="
+                    font-size: 14px;
+                    color: #666;
+                    margin-bottom: 8px;
+                ">${timeInfo}</div>
                 <div style="
                     font-size: 14px;
                     color: #666;
                     margin-bottom: 15px;
-                ">${timeInfo}</div>
-                <button onclick="document.getElementById('simple-review-reminder').remove(); window.simpleReviewReminder.isShowing = false;" style="
+                ">${counterInfo}</div>
+                <button onclick="document.getElementById('review-light-tower').remove(); window.reviewLightTower.isShowing = false;" style="
                     background: #007cba;
                     color: white;
                     border: none;
@@ -75,7 +98,7 @@ class SimpleReviewReminder {
         
         // 5秒后自动关闭
         setTimeout(() => {
-            const element = document.getElementById('simple-review-reminder');
+            const element = document.getElementById('review-light-tower');
             if (element) {
                 element.remove();
                 this.isShowing = false;
@@ -85,4 +108,4 @@ class SimpleReviewReminder {
 }
 
 // 全局实例
-window.simpleReviewReminder = new SimpleReviewReminder();
+window.reviewLightTower = new ReviewLightTower();

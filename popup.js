@@ -281,8 +281,8 @@ class PopupController {
     await this.loadDictSettings();
     
     // 显示简单提醒
-    if (window.simpleReviewReminder) {
-      window.simpleReviewReminder.show();
+    if (window.reviewLightTower) {
+            window.reviewLightTower.show();
     }
     
     // 显示评价引导
