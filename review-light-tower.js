@@ -4,8 +4,95 @@ class ReviewLightTower {
     this.isReasonExpanded = false;
   }
 
+  async getCurrentVersion() {
+    try {
+      // 尝试从manifest获取版本信息
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
+        const manifest = chrome.runtime.getManifest();
+        return manifest.version;
+      }
+      // 如果无法获取，返回默认版本
+      return '1.0.0';
+    } catch (error) {
+      console.error('获取版本信息失败:', error);
+      return '1.0.0';
+    }
+  }
+
+  async getDisplayRecord() {
+    try {
+      const record = localStorage.getItem('reviewLightTowerDisplay');
+      if (record) {
+        return JSON.parse(record);
+      }
+      return { count: 0, lastVersion: null };
+    } catch (error) {
+      console.error('获取显示记录失败:', error);
+      return { count: 0, lastVersion: null };
+    }
+  }
+
+  async updateDisplayRecord(count, version) {
+    try {
+      const record = { count, lastVersion: version };
+      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+    } catch (error) {
+      console.error('更新显示记录失败:', error);
+    }
+  }
+
+  shouldResetForMajorVersion(currentVersion, lastVersion) {
+    if (!lastVersion) return false;
+    
+    try {
+      const currentMajor = parseInt(currentVersion.split('.')[0]);
+      const lastMajor = parseInt(lastVersion.split('.')[0]);
+      return currentMajor > lastMajor;
+    } catch (error) {
+      console.error('版本比较失败:', error);
+      return false;
+    }
+  }
+
+  async resetDisplayRecord(version) {
+    try {
+      const record = { count: 0, lastVersion: version };
+      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+    } catch (error) {
+      console.error('重置显示记录失败:', error);
+    }
+  }
+
+  getI18nText(key, fallback) {
+    try {
+      if (typeof window !== 'undefined' && window.i18nManager) {
+        return window.i18nManager.t(key) || fallback;
+      }
+      return fallback;
+    } catch (error) {
+      console.error('获取i18n文本失败:', error);
+      return fallback;
+    }
+  }
+
   async show() {
     try {
+      // 获取当前版本
+      const currentVersion = await this.getCurrentVersion();
+      
+      // 获取显示记录
+      const displayRecord = await this.getDisplayRecord();
+      
+      // 检查是否需要重置（主版本更新）
+      if (displayRecord.lastVersion && this.shouldResetForMajorVersion(currentVersion, displayRecord.lastVersion)) {
+        await this.resetDisplayRecord(currentVersion);
+        displayRecord.count = 0;
+        displayRecord.lastVersion = currentVersion;
+      }
+      
+      // 计算剩余显示次数
+      const remainingCount = Math.max(0, 3 - displayRecord.count);
+      
       // 查询ReviewTimer信息
       const timer = new ReviewTimer();
       await timer.init();
@@ -19,28 +106,31 @@ class ReviewLightTower {
       const pageCount = await counter.getPageCount();
       
       // 创建评价提醒UI
-      this.createReviewPrompt(timerInfo, nodeCount, pageCount);
+      this.createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount);
+      
+      // 更新显示记录
+      await this.updateDisplayRecord(displayRecord.count + 1, currentVersion);
       
     } catch (error) {
       console.error('ReviewLightTower查询失败:', error);
       // 即使查询失败也显示评价提醒UI
-      this.createReviewPrompt('查询失败', 0, 0);
+      this.createReviewPrompt('查询失败', 0, 0, 0);
     }
   }
 
-  createReviewPrompt(timerInfo, nodeCount, pageCount) {
+  createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount = 0) {
     // 如果已经存在提醒框，先移除
     if (this.promptDiv && this.promptDiv.parentNode) {
       this.promptDiv.remove();
     }
 
-    // 使用简单的文本
-    const title = '你愿意向其他人推荐这个插件吗？';
-    const description = '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
-    const reviewBtnText = '去评价';
-    const reasonBtnText = '我需要理由';
-    const reasonCollapseBtnText = '收起理由';
-    const neverBtnText = '不再提醒';
+    // 获取i18n文本
+    const title = this.getI18nText('review.title', '你愿意向其他人推荐这个插件吗？');
+    const description = this.getI18nText('review.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。');
+    const reviewBtnText = this.getI18nText('review.goReview', '去评价');
+    const reasonBtnText = this.getI18nText('review.needReason', '我需要理由');
+    const reasonCollapseBtnText = this.getI18nText('review.reasonCollapse', '收起理由');
+    const neverBtnText = this.getI18nText('review.neverAsk', '不再提醒');
 
     // 创建提醒框
     this.promptDiv = document.createElement('div');
@@ -106,8 +196,11 @@ class ReviewLightTower {
         <div style="margin-bottom: 5px;">
           <strong>插件使用时间：</strong> ${timerInfo}
         </div>
-        <div>
+        <div style="margin-bottom: 5px;">
           <strong>处理节点数：</strong> ${nodeCount} 个 | <strong>页面数：</strong> ${pageCount} 个
+        </div>
+        <div style="color: #007bff; font-weight: 600;">
+          <strong>剩余提醒次数：</strong> ${remainingCount} 次
         </div>
       </div>
 
@@ -177,14 +270,11 @@ class ReviewLightTower {
       ">
         <div style="margin-bottom: 12px;">
           <div style="margin-bottom: 8px; font-weight: 600; color: #333;">
-            ${description}
+            ${this.getI18nText('review.reasonContent.title', '为什么需要您的评价？')}
           </div>
-          <div style="margin: 8px 0; padding-left: 16px;">🎯 专为ADHD和阅读困难人群设计，降低阅读门槛</div>
-          <div style="margin: 8px 0; padding-left: 16px;">📚 智能词汇高亮，帮助快速理解文章重点</div>
-          <div style="margin: 8px 0; padding-left: 16px;">🌍 支持多语言翻译，提升阅读体验</div>
-          <div style="margin: 8px 0; padding-left: 16px;">⚡ 轻量级设计，不影响网页加载速度</div>
-          <div style="margin: 8px 0; padding-left: 16px;">🔒 注重隐私保护，本地处理数据</div>
-          <div style="margin: 8px 0; padding-left: 16px;">💡 持续更新优化，响应用户需求</div>
+          <div style="margin: 8px 0; padding: 12px; background-color: #ffffff; border-radius: 6px; line-height: 1.5; color: #555;">
+            ${this.getI18nText('review.reasonContent.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。')}
+          </div>
         </div>
       </div>
 
