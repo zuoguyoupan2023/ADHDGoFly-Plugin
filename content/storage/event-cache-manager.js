@@ -429,19 +429,8 @@ class EventCacheManager {
       
       // 特殊处理：3分钟测试模式
       if (this.cacheRetentionDays === 0.002) {
-        console.warn('⚠️ 检测到测试模式（3分钟缓存），自动重置为正常模式（7天）');
-        
-        // 自动重置为正常模式
-        this.cacheRetentionDays = 7;
-        await chrome.storage.sync.set({
-          cacheRetentionDays: 7
-        });
-        
-        console.log('✅ 已自动重置为正常模式（7天缓存保留期）');
-        this.stopTestModeCleanup();
-      } else {
-        // 确保停止测试模式清理
-        this.stopTestModeCleanup();
+        console.log('🧪 启用3分钟测试模式');
+        this.startTestModeCleanup();
       }
       
       console.log('📋 缓存设置已加载:', {
