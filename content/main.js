@@ -1594,22 +1594,20 @@ class ADHDHighlighter {
     const languageStats = { zh: 0, en: 0, fr: 0, ru: 0, es: 0, ja: 0 };
     
     try {
-      // 直接统计所有高亮词汇元素，通过词汇内容检测语言
-      const highlightedWords = document.querySelectorAll('[class*="adhd-"]');
+      // 获取所有已处理的元素
+      const processedElements = document.querySelectorAll('.adhd-processed');
       
-      if (highlightedWords.length > 0) {
-        highlightedWords.forEach(element => {
-          const text = element.textContent.trim();
-          if (text) {
-            // 使用语言检测器检测每个词汇的语言
-            const detectedLang = this.languageDetector.detectLanguage(text);
-            if (languageStats.hasOwnProperty(detectedLang)) {
-              languageStats[detectedLang]++;
-            }
-          }
-        });
-      } else {
-        // 如果没有高亮词汇，分析当前页面文本（备用方案）
+      processedElements.forEach(element => {
+        const language = element.getAttribute('data-language');
+        if (language && languageStats.hasOwnProperty(language)) {
+          // 统计该语言的词汇数量
+          const words = element.querySelectorAll('[class*="adhd-"]');
+          languageStats[language] += words.length;
+        }
+      });
+      
+      // 如果没有处理过的元素，分析当前页面文本
+      if (Object.values(languageStats).every(count => count === 0)) {
         const textNodes = this.pageProcessor.getTextNodes();
         const sampleTexts = textNodes.slice(0, 50).map(node => node.textContent);
         
