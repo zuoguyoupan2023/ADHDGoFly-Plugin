@@ -9,14 +9,14 @@
  * - true:  测试模式
  * 
  * 🎯 正式版本配置（ReviewLightTowerTest = false）：
- * - 条件1：50天 + 20000个节点
+ * - 条件3：50天 + 20000个节点
  * - 条件2：21天 + 1000个节点  
- * - 条件3：7天 + 2000个节点
+ * - 条件1：7天 + 2000个节点
  * 
  * 🧪 测试模式配置（ReviewLightTowerTest = true）：
- * - 条件1：50分钟 + 1000个节点
+ * - 条件3：50分钟 + 1000个节点
  * - 条件2：20分钟 + 500个节点
- * - 条件3：10分钟 + 100个节点
+ * - 条件1：10分钟 + 100个节点
  * 
  * ✅ 优势：
  * - 安全：无需手动修改多处代码
@@ -35,7 +35,7 @@ class ReviewLightTower {
     // 🔧 测试模式配置开关
     // true: 启用测试模式（分钟级别，较小节点数）
     // false: 正式版本模式（天级别，正常节点数）
-    this.ReviewLightTowerTest = true; // 正式版本设为 false，测试时改为 true
+    this.ReviewLightTowerTest = false; // 正式版本设为 false，测试时改为 true
   }
 
   async getCurrentVersion() {
