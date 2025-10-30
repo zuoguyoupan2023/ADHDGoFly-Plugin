@@ -9,14 +9,14 @@
  * - true:  测试模式
  * 
  * 🎯 正式版本配置（ReviewLightTowerTest = false）：
- * - 条件3：50天 + 20000个节点
+ * - 条件1：50天 + 20000个节点
  * - 条件2：21天 + 1000个节点  
- * - 条件1：7天 + 2000个节点
+ * - 条件3：7天 + 2000个节点
  * 
  * 🧪 测试模式配置（ReviewLightTowerTest = true）：
- * - 条件3：50分钟 + 1000个节点
+ * - 条件1：50分钟 + 1000个节点
  * - 条件2：20分钟 + 500个节点
- * - 条件1：10分钟 + 100个节点
+ * - 条件3：10分钟 + 100个节点
  * 
  * ✅ 优势：
  * - 安全：无需手动修改多处代码
@@ -126,58 +126,6 @@ class ReviewLightTower {
       console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
     } catch (error) {
       console.error('重置显示记录失败:', error);
-    }
-  }
-
-  // 检查是否应该显示评价提醒（用于popup重新验证）
-  async shouldShow() {
-    try {
-      // 获取显示记录（这会设置this.lastCheckTime）
-      const displayRecord = await this.getDisplayRecord();
-      
-      // 获取当前时间
-      const currentTime = Date.now();
-      
-      // 正式模式启用24小时检查，测试模式跳过24小时检查
-      if (!this.ReviewLightTowerTest) {
-        // 正式模式：执行24小时检查
-        if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
-          const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
-          const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
-          console.log(`ReviewLightTower shouldShow(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
-          return false;
-        }
-      }
-      
-      // 检查剩余显示次数
-      const remainingCount = Math.max(0, 3 - displayRecord.count);
-      if (remainingCount <= 0) {
-        console.log(`ReviewLightTower shouldShow：已达到最大显示次数(3次)`);
-        return false;
-      }
-      
-      // 查询ReviewTimer信息
-      const timer = new ReviewTimer();
-      await timer.init();
-      const timerData = await timer.getFormattedInstallInfo();
-      
-      // 查询ReviewCounter信息
-      const counter = new ReviewCounter();
-      await counter.init();
-      const nodeCount = await counter.getNodeCount();
-      
-      // 获取总小时数（包含分钟转换）
-      const totalHours = timerData ? (timerData.days * 24 + timerData.hours + timerData.minutes / 60) : 0;
-      
-      // 检查显示条件
-      const conditionResult = this.checkDisplayConditions(totalHours, nodeCount, displayRecord.triggeredConditions);
-      
-      console.log(`ReviewLightTower shouldShow：条件检查结果 - ${conditionResult.shouldShow ? '满足' : '不满足'}条件，${conditionResult.reason}`);
-      return conditionResult.shouldShow;
-      
-    } catch (error) {
-      console.error('ReviewLightTower shouldShow检查失败:', error);
-      return false;
     }
   }
 

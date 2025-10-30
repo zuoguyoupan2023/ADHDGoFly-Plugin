@@ -12,11 +12,6 @@
  * - 实时计算，不依赖持久化定时器
  * - 精度灵活，支持天/小时/分钟级别显示
  * - 合规安全，符合商店政策
- * 
- * 存储架构：
- * - 使用 IndexedDB 作为主要存储方案（通过 UniversalStorageAdapter）
- * - 自动降级到 Chrome Storage API 或 localStorage
- * - 支持数据迁移和跨浏览器兼容
  */
 
 const REVIEW_TIMER_CONFIG = {
@@ -49,45 +44,6 @@ class ReviewTimer {
   constructor() {
     this.config = REVIEW_TIMER_CONFIG;
     this.currentVersion = chrome.runtime.getManifest().version;
-    
-    // 存储适配器
-    this.storage = null;
-    this.initialized = false;
-  }
-
-  /**
-   * 初始化存储适配器
-   */
-  async _initStorage() {
-    if (this.initialized) return;
-    
-    try {
-      // 如果全局存储适配器存在，使用它
-      if (typeof window !== 'undefined' && window.universalStorage) {
-        this.storage = window.universalStorage;
-        await this.storage.initialize();
-      } else {
-        // 降级到 Chrome Storage API
-        this.storage = {
-          get: (key) => this._getChromeStorage(key),
-          set: (key, value) => this._setChromeStorage(key, value),
-          remove: (key) => this._removeChromeStorage(key)
-        };
-        console.log('ReviewTimer：使用 Chrome Storage API 降级模式');
-      }
-      
-      this.initialized = true;
-      console.log('ReviewTimer：存储适配器初始化完成');
-    } catch (error) {
-      console.error('ReviewTimer：存储适配器初始化失败:', error);
-      // 使用 Chrome Storage API 作为最终降级
-      this.storage = {
-        get: (key) => this._getChromeStorage(key),
-        set: (key, value) => this._setChromeStorage(key, value),
-        remove: (key) => this._removeChromeStorage(key)
-      };
-      this.initialized = true;
-    }
   }
 
   /**
@@ -96,8 +52,6 @@ class ReviewTimer {
    */
   async init() {
     try {
-      await this._initStorage();
-      
       const stored = await this.getStoredData();
       const installTime = stored[this.config.STORAGE_KEYS.installTime];
       const installVersion = stored[this.config.STORAGE_KEYS.installVersion];
@@ -116,16 +70,15 @@ class ReviewTimer {
    * 记录安装时间
    */
   async recordInstallTime() {
-    await this._initStorage();
-    
     const now = Date.now();
+    const data = {
+      [this.config.STORAGE_KEYS.installTime]: now,
+      [this.config.STORAGE_KEYS.installVersion]: this.currentVersion,
+      [this.config.STORAGE_KEYS.triggerHistory]: [],
+      [this.config.STORAGE_KEYS.dismissedForever]: false
+    };
     
-    // 使用新的存储适配器分别设置每个键值
-    await this.storage.set(this.config.STORAGE_KEYS.installTime, now);
-    await this.storage.set(this.config.STORAGE_KEYS.installVersion, this.currentVersion);
-    await this.storage.set(this.config.STORAGE_KEYS.triggerHistory, []);
-    await this.storage.set(this.config.STORAGE_KEYS.dismissedForever, false);
-    
+    await chrome.storage.local.set(data);
     console.log('ReviewTimer：📅 计时器已初始化，安装时间:', new Date(now).toLocaleString());
   }
 
@@ -181,14 +134,15 @@ class ReviewTimer {
    */
   async recordTrigger(userChoice) {
     try {
-      await this._initStorage();
-      
-      await this.storage.set(this.config.STORAGE_KEYS.lastChoice, userChoice);
+      const updateData = {
+        [this.config.STORAGE_KEYS.lastChoice]: userChoice
+      };
       
       if (userChoice === 'never') {
-        await this.storage.set(this.config.STORAGE_KEYS.dismissedForever, true);
+        updateData[this.config.STORAGE_KEYS.dismissedForever] = true;
       }
       
+      await chrome.storage.local.set(updateData);
       console.log(`ReviewTimer：📝 记录用户选择：${userChoice}`);
       
     } catch (error) {
@@ -200,16 +154,8 @@ class ReviewTimer {
    * 获取存储的数据
    */
   async getStoredData() {
-    await this._initStorage();
-    
     const keys = Object.values(this.config.STORAGE_KEYS);
-    const result = {};
-    
-    // 逐个获取每个键的值
-    for (const key of keys) {
-      result[key] = await this.storage.get(key);
-    }
-    
+    const result = await chrome.storage.local.get(keys);
     return result;
   }
 
@@ -326,36 +272,13 @@ class ReviewTimer {
    */
   async reset() {
     try {
-      await this._initStorage();
-      
       const keys = Object.values(this.config.STORAGE_KEYS);
-      
-      // 使用新的存储适配器逐个删除键
-      for (const key of keys) {
-        await this.storage.remove(key);
-      }
-      
-      await this.init();
+      await chrome.storage.local.remove(keys);
+      await this.initialize();
       console.log('ReviewTimer：🧪 计时器已重置');
     } catch (error) {
       console.error('ReviewTimer：重置计时器失败:', error);
     }
-  }
-
-  /**
-   * Chrome Storage API 后备方法（保持向后兼容性）
-   */
-  async _getChromeStorage(key) {
-    const result = await chrome.storage.local.get([key]);
-    return result[key];
-  }
-
-  async _setChromeStorage(key, value) {
-    await chrome.storage.local.set({ [key]: value });
-  }
-
-  async _removeChromeStorage(key) {
-    await chrome.storage.local.remove([key]);
   }
 }
 
