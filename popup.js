@@ -285,14 +285,13 @@ class PopupController {
             window.reviewLightTower.show();
     }
     
-    // 显示评价引导
-    this.showReviewPrompt();
+
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
     
     // 检查是否需要显示评价提醒
-    await this.checkReviewReminder();
+    await this.checkReviewLightTower();
   }
 
   bindEvents() {
@@ -2703,246 +2702,19 @@ class PopupController {
     }
   }
 
-  showReviewPrompt() {
-    // 检查是否已经存在评价提示
-    if (document.getElementById('review-prompt')) {
-      return;
-    }
 
-    const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意向其他人推荐这个插件吗？';
-    const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
-    const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
-    const reasonBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
-    const neverBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.never') : '不再提醒';
-
-    // 创建评价提示元素
-    const promptDiv = document.createElement('div');
-    promptDiv.id = 'review-prompt';
-    
-    // 获取插件容器的位置和尺寸
-    const popupContainer = document.body;
-    const containerRect = popupContainer.getBoundingClientRect();
-    const containerHeight = window.innerHeight;
-    const containerWidth = window.innerWidth;
-    
-    // 计算提示框尺寸
-    const promptWidth = 280;
-    const promptHeight = 180;
-    
-    // 判断位置：优先插件下方，如果空间不够则放在左侧
-    let positionStyle = '';
-    if (containerHeight - containerRect.bottom >= promptHeight + 10) {
-      // 插件下方有足够空间
-      positionStyle = `
-        position: fixed;
-        top: ${containerRect.bottom + 3}px;
-        left: 50%;
-        transform: translateX(-50%);
-      `;
-    } else {
-      // 空间不够，放在左侧
-      positionStyle = `
-        position: fixed;
-        top: 50%;
-        left: ${containerRect.left - promptWidth - 5}px;
-        transform: translateY(-50%);
-      `;
-      // 如果左侧也没有空间，则居中显示
-      if (containerRect.left < promptWidth + 10) {
-        positionStyle = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-        `;
-      }
-    }
-    
-    promptDiv.style.cssText = `
-      ${positionStyle}
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 10000;
-      width: ${promptWidth}px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px;
-      line-height: 1.3;
-    `;
-
-    promptDiv.innerHTML = `
-      <!-- 第一行：标题和关闭按钮 -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-        <div style="font-weight: 600; color: #333; font-size: 13px; flex: 1; padding-right: 8px; text-align: center;">
-          ${title}
-        </div>
-        <button id="close-review-prompt" style="
-          background: none;
-          border: none;
-          font-size: 16px;
-          cursor: pointer;
-          color: #666;
-          padding: 0;
-          width: 18px;
-          height: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        ">×</button>
-      </div>
-      
-      <!-- 第二行：五个空心五角星 -->
-      <div style="display: flex; justify-content: center; margin-bottom: 10px; gap: 3px;">
-        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="1">☆</span>
-        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="2">☆</span>
-        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="3">☆</span>
-        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="4">☆</span>
-        <span style="font-size: 18px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="5">☆</span>
-      </div>
-      
-      <!-- 第三行："我需要理由"可展开 -->
-      <div style="text-align: center; margin-bottom: 10px;">
-        <button id="reason-toggle" style="
-          background: none;
-          border: none;
-          color: #666;
-          font-size: 11px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 2px 6px;
-        ">${reasonBtnText}</button>
-      </div>
-      
-      <!-- 可展开的描述内容 -->
-      <div id="reason-content" style="
-        display: none;
-        color: #555;
-        margin-bottom: 10px;
-        font-size: 11px;
-        line-height: 1.3;
-        padding: 8px;
-        background: #f8f9fa;
-        border-radius: 4px;
-      ">
-        ${description}
-      </div>
-      
-      <!-- 第四行：去评价按钮和不再提醒 -->
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <a href="https://feedback.adhdgofly.online" target="_blank" style="
-          display: inline-block;
-          background: #007AFF;
-          color: white;
-          text-decoration: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          font-weight: 500;
-          font-size: 11px;
-          transition: background-color 0.2s;
-        " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
-          ${reviewBtnText}
-        </a>
-        <button id="never-review-prompt" style="
-          background: none;
-          border: none;
-          color: #999;
-          font-size: 10px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 2px 6px;
-        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
-          ${neverBtnText}
-        </button>
-      </div>
-    `;
-
-    // 添加到页面
-    document.body.appendChild(promptDiv);
-
-    // 绑定事件
-    const closeBtn = document.getElementById('close-review-prompt');
-    const reasonToggle = document.getElementById('reason-toggle');
-    const reasonContent = document.getElementById('reason-content');
-    const neverBtn = document.getElementById('never-review-prompt');
-    const stars = promptDiv.querySelectorAll('.star-rating');
-    
-    const removePrompt = () => {
-      if (promptDiv.parentNode) {
-        promptDiv.remove();
-      }
-    };
-
-    // 关闭按钮事件
-    if (closeBtn) {
-      closeBtn.addEventListener('click', removePrompt);
-    }
-    
-    // "我需要理由"展开/收起事件
-    if (reasonToggle && reasonContent) {
-      reasonToggle.addEventListener('click', () => {
-        const isVisible = reasonContent.style.display !== 'none';
-        reasonContent.style.display = isVisible ? 'none' : 'block';
-        reasonToggle.textContent = isVisible ? reasonBtnText : '收起理由';
-      });
-    }
-    
-    // 星星评分事件
-    stars.forEach((star, index) => {
-      star.addEventListener('mouseenter', () => {
-        // 鼠标悬停时高亮当前星星及之前的星星
-        stars.forEach((s, i) => {
-          s.style.color = i <= index ? '#FFD700' : '#ddd';
-          s.textContent = i <= index ? '★' : '☆';
-        });
-      });
-      
-      star.addEventListener('mouseleave', () => {
-        // 鼠标离开时恢复默认状态
-        stars.forEach(s => {
-          s.style.color = '#ddd';
-          s.textContent = '☆';
-        });
-      });
-      
-      star.addEventListener('click', () => {
-        // 点击星星时直接跳转到评价页面
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        removePrompt();
-      });
-    });
-    
-    // "不再提醒"事件
-    if (neverBtn) {
-      neverBtn.addEventListener('click', () => {
-        // 可以在这里添加"不再提醒"的逻辑
-        removePrompt();
-      });
-    }
-
-    // 3秒后自动淡化
-    setTimeout(() => {
-      if (promptDiv.parentNode) {
-        promptDiv.style.transition = 'opacity 0.5s';
-        promptDiv.style.opacity = '0.9';
-      }
-    }, 3000);
-  }
 
   // ==================== 评价提醒相关方法 ====================
 
   // 检查是否需要显示评价提醒
-  async checkReviewReminder() {
+  async checkReviewLightTower() {
     try {
       const result = await chrome.storage.local.get(['reviewLightTowerVisible', 'reviewLightTowerData']);
       
       if (result.reviewLightTowerVisible && result.reviewLightTowerData) {
         console.log('检测到评价灯塔数据，显示评价提醒', result.reviewLightTowerData);
-        this.showReviewReminder(result.reviewLightTowerData);
-        this.bindReviewReminderEvents();
+        this.showReviewLightTower(result.reviewLightTowerData);
+        this.bindReviewLightTowerEvents();
       }
     } catch (error) {
       console.error('检查评价提醒失败:', error);
@@ -2950,7 +2722,7 @@ class PopupController {
   }
 
   // 显示评价提醒
-  showReviewReminder(badgeData) {
+  showReviewLightTower(badgeData) {
     const reviewReminder = document.getElementById('reviewReminder');
     if (!reviewReminder) {
       console.error('找不到评价提醒元素');
@@ -3075,7 +2847,7 @@ class PopupController {
   }
 
   // 绑定评价提醒事件
-  bindReviewReminderEvents() {
+  bindReviewLightTowerEvents() {
     // 我需要理由按钮
     const reasonToggleBtn = document.getElementById('reasonToggleBtn');
     const reasonContent = document.getElementById('reasonContent');
@@ -3100,7 +2872,7 @@ class PopupController {
         window.open(storeUrl, '_blank');
         
         // 隐藏提醒并清除徽章
-        this.hideReviewReminder();
+        this.hideReviewLightTower();
       });
     }
 
@@ -3110,7 +2882,7 @@ class PopupController {
       laterReviewBtn.addEventListener('click', () => {
         // 只是简单关闭当前提醒，不做任何永久记录
         // 这样每个大版本仍然可以根据条件触发3次提醒
-        this.hideReviewReminder();
+        this.hideReviewLightTower();
       });
     }
 
@@ -3123,7 +2895,7 @@ class PopupController {
         window.open(storeUrl, '_blank');
         
         // 隐藏提醒并清除徽章
-        this.hideReviewReminder();
+        this.hideReviewLightTower();
       });
 
       // 星星悬停效果
@@ -3153,7 +2925,7 @@ class PopupController {
   }
 
   // 隐藏评价提醒
-  hideReviewReminder() {
+  hideReviewLightTower() {
     const reviewReminder = document.getElementById('reviewReminder');
     if (reviewReminder) {
       reviewReminder.style.display = 'none';
