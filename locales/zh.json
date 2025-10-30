@@ -195,8 +195,8 @@
       "reset": "重置默认"
     },
     "ai": {
-      "title": "智能分析",
-      "description": "基于当前页面高亮内容的数据分析",
+      "title": "词汇统计",
+      "description": "基于当前页面词汇的统计分析",
       "stats": {
         "title": "📊 页面统计",
         "language": "语言分布",
@@ -204,8 +204,8 @@
         "vocabulary": "词汇统计"
       },
 
-      "refresh": "🔄 刷新分析",
       "analyzing": "分析中...",
+      "copy": "📋 复制",
 
       "noData": "暂无数据",
       "error": "分析失败，请重试"

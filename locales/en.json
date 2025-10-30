@@ -187,8 +187,8 @@
       "reset": "Reset Default"
     },
     "ai": {
-      "title": "Smart Analysis",
-      "description": "Highlight analysis  based on current page content",
+      "title": "Vocabulary Statistics",
+      "description": "Vocabulary analysis based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
@@ -196,8 +196,8 @@
         "vocabulary": "Vocabulary Statistics"
       },
 
-      "refresh": "🔄 Refresh Analysis",
       "analyzing": "Analyzing...",
+      "copy": "📋 Copy",
 
       "noData": "No data available",
       "error": "Analysis failed, please try again"

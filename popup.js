@@ -1792,11 +1792,7 @@ class PopupController {
 
   // AI分析相关方法
   bindAIEvents() {
-    // 刷新分析按钮事件
-    const refreshBtn = document.getElementById('refresh-analysis-btn');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.refreshAIAnalysis());
-    }
+    // AI分析相关事件绑定（如果需要的话）
   }
 
   // 复制词汇相关方法
@@ -2327,14 +2323,6 @@ class PopupController {
 
   /**
    * 刷新AI分析
-   * 重新加载AI分析数据
-   */
-  async refreshAIAnalysis() {
-    console.log('刷新AI分析...');
-    await this.loadAIAnalysis();
-  }
-
-  /**
    * 检查版本更新
    * 获取当前版本并检查是否有新版本可用
    */
