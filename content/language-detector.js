@@ -3,8 +3,8 @@ class LanguageDetector {
   constructor() {
     // 语言检测的字符模式
     this.patterns = {
-      chinese: /[\u4e00-\u9fff]/g,  // 扩大中文字符范围，包含更多汉字
-      japanese: /[\u3040-\u309f\u30a0-\u30ff]/g,  // 只检测平假名和片假名，不包含汉字
+      chinese: /[\u4e00-\u9fa5]/g,
+      japanese: /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g,
       russian: /[\u0400-\u04ff]/g,
       french: /[àâäéèêëïîôöùûüÿç]/gi,
       spanish: /[ñáéíóúü¿¡]/gi,
@@ -14,8 +14,8 @@ class LanguageDetector {
 
     // 语言检测阈值
     this.thresholds = {
-      chinese: 0.2,   // 降低中文阈值，更容易检测到中文
-      japanese: 0.3,  // 提高日文阈值，需要更多平假名/片假名才能判定为日文
+      chinese: 0.3,
+      japanese: 0.2,
       russian: 0.3,
       french: 0.05,
       spanish: 0.05,
@@ -61,26 +61,9 @@ class LanguageDetector {
       ratios[language] = matches.length / sampleLength_actual;
     }
 
-    // 特殊处理中日文冲突：如果同时检测到中文和日文
-    if (ratios.chinese >= this.thresholds.chinese && ratios.japanese >= this.thresholds.japanese) {
-      // 检测日文特有字符（平假名、片假名）的比例
-      const hiraganaKatakana = (sample.match(/[\u3040-\u309f\u30a0-\u30ff]/g) || []).length;
-      const hiraganaKatakanaRatio = hiraganaKatakana / sampleLength_actual;
-      
-      // 如果平假名/片假名比例很低（<5%），优先判定为中文
-      if (hiraganaKatakanaRatio < 0.05) {
-        return 'zh';
-      }
-      
-      // 如果汉字比例明显高于平假名/片假名，判定为中文
-      if (ratios.chinese > hiraganaKatakanaRatio * 2) {
-        return 'zh';
-      }
-    }
-
-    // 按优先级检查语言（中文优先级最高）
+    // 按优先级检查语言
     const detectionOrder = [
-      'chinese', 'korean', 'arabic', 'russian', 'japanese'
+      'chinese', 'japanese', 'korean', 'arabic', 'russian'
     ];
 
     for (const language of detectionOrder) {

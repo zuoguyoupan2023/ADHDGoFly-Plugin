@@ -227,27 +227,13 @@ class QuickHighlighter {
   detectLanguage(text) {
     const sample = text.slice(0, 200); // 取前200字符样本
     
-    // 中文字符检测（扩大范围）
-    const chineseRatio = (sample.match(/[\u4e00-\u9fff]/g) || []).length / sample.length;
+    // 中文字符检测
+    const chineseRatio = (sample.match(/[\u4e00-\u9fa5]/g) || []).length / sample.length;
+    if (chineseRatio > 0.3) return 'zh';
     
-    // 日文字符检测（只检测平假名、片假名，不包含汉字）
-    const japaneseRatio = (sample.match(/[\u3040-\u309f\u30a0-\u30ff]/g) || []).length / sample.length;
-    
-    // 中日文冲突处理：如果同时检测到中文和日文
-    if (chineseRatio > 0.2 && japaneseRatio > 0.3) {
-      // 如果平假名/片假名比例很低，优先判定为中文
-      if (japaneseRatio < 0.05) {
-        return 'zh';
-      }
-      // 如果汉字比例明显高于平假名/片假名，判定为中文
-      if (chineseRatio > japaneseRatio * 2) {
-        return 'zh';
-      }
-    }
-    
-    // 按优先级检测（中文优先）
-    if (chineseRatio > 0.2) return 'zh';
-    if (japaneseRatio > 0.3) return 'ja';
+    // 日文字符检测（平假名、片假名、汉字）
+    const japaneseRatio = (sample.match(/[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g) || []).length / sample.length;
+    if (japaneseRatio > 0.2) return 'ja';
     
     // 俄文字符检测（西里尔字母）
     const russianRatio = (sample.match(/[\u0400-\u04ff]/g) || []).length / sample.length;
