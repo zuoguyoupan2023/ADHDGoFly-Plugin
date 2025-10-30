@@ -6,6 +6,11 @@
  * 2. 节点计数器：统计实际处理的文本节点数量，每个节点处理完计数一次
  * 3. 评价提醒：基于天数+节点数双重条件触发
  * 4. 隐私保护：URL使用SHA-256哈希值存储
+ * 
+ * 存储架构：
+ * - 使用 IndexedDB 作为主要存储方案（通过 UniversalStorageAdapter）
+ * - 自动降级到 Chrome Storage API 或 localStorage
+ * - 支持数据迁移和跨浏览器兼容
  */
 
 class ADHDGoFlyCounter {
@@ -20,6 +25,45 @@ class ADHDGoFlyCounter {
         
         // 时间常量
         this.ONE_HOUR_MS = 60 * 60 * 1000; // 1小时毫秒数
+        
+        // 存储适配器
+        this.storage = null;
+        this.initialized = false;
+    }
+
+    /**
+     * 初始化存储适配器
+     */
+    async _initStorage() {
+        if (this.initialized) return;
+        
+        try {
+            // 如果全局存储适配器存在，使用它
+            if (typeof window !== 'undefined' && window.universalStorage) {
+                this.storage = window.universalStorage;
+                await this.storage.initialize();
+            } else {
+                // 降级到 Chrome Storage API
+                this.storage = {
+                    get: (key) => this._getChromeStorage(key),
+                    set: (key, value) => this._setChromeStorage(key, value),
+                    remove: (key) => this._removeChromeStorage(key)
+                };
+                console.log('ADHDGoFlyCounter：使用 Chrome Storage API 降级模式');
+            }
+            
+            this.initialized = true;
+            console.log('ADHDGoFlyCounter：存储适配器初始化完成');
+        } catch (error) {
+            console.error('ADHDGoFlyCounter：存储适配器初始化失败:', error);
+            // 使用 Chrome Storage API 作为最终降级
+            this.storage = {
+                get: (key) => this._getChromeStorage(key),
+                set: (key, value) => this._setChromeStorage(key, value),
+                remove: (key) => this._removeChromeStorage(key)
+            };
+            this.initialized = true;
+        }
     }
 
     /**
@@ -28,10 +72,12 @@ class ADHDGoFlyCounter {
      */
     async incrementNodeCount(count = 1) {
         try {
+            await this._initStorage();
+            
             const currentCount = await this.getNodeCount();
             const newCount = currentCount + count;
             
-            await this._setStorageData(this.STORAGE_KEYS.NODE_COUNT, newCount);
+            await this.storage.set(this.STORAGE_KEYS.NODE_COUNT, newCount);
             
             console.log(`ADHDGoFlyCounter日志：📊 节点计数更新: ${currentCount} → ${newCount} (+${count})`);
             return newCount;
@@ -47,12 +93,14 @@ class ADHDGoFlyCounter {
      */
     async incrementPageCount(url = window.location.href) {
         try {
+            await this._initStorage();
+            
             // 生成URL哈希
             const urlHash = await this._generateUrlHash(url);
             const currentTime = Date.now();
             
             // 获取页面访问记录
-            const pageVisits = await this._getStorageData(this.STORAGE_KEYS.PAGE_VISITS, {});
+            const pageVisits = await this.storage.get(this.STORAGE_KEYS.PAGE_VISITS) || {};
             
             // 检查是否需要计数
             const lastVisit = pageVisits[urlHash];
@@ -69,12 +117,12 @@ class ADHDGoFlyCounter {
                 this._cleanExpiredVisits(pageVisits, currentTime);
                 
                 // 保存页面访问记录
-                await this._setStorageData(this.STORAGE_KEYS.PAGE_VISITS, pageVisits);
+                await this.storage.set(this.STORAGE_KEYS.PAGE_VISITS, pageVisits);
                 
                 // 增加页面计数
                 const currentPageCount = await this.getPageCount();
                 const newPageCount = currentPageCount + 1;
-                await this._setStorageData(this.STORAGE_KEYS.PAGE_COUNT, newPageCount);
+                await this.storage.set(this.STORAGE_KEYS.PAGE_COUNT, newPageCount);
                 
                 console.log(`ADHDGoFlyCounter日志：📄 页面计数更新: ${currentPageCount} → ${newPageCount} (新页面: ${url})`);
                 return newPageCount;
@@ -94,14 +142,16 @@ class ADHDGoFlyCounter {
      * 获取节点计数
      */
     async getNodeCount() {
-        return await this._getStorageData(this.STORAGE_KEYS.NODE_COUNT, 0);
+        await this._initStorage();
+        return await this.storage.get(this.STORAGE_KEYS.NODE_COUNT) || 0;
     }
 
     /**
      * 获取页面计数
      */
     async getPageCount() {
-        return await this._getStorageData(this.STORAGE_KEYS.PAGE_COUNT, 0);
+        await this._initStorage();
+        return await this.storage.get(this.STORAGE_KEYS.PAGE_COUNT) || 0;
     }
 
 
@@ -111,13 +161,15 @@ class ADHDGoFlyCounter {
      */
     async markRatingReminderShown(reminderKey) {
         try {
-            const metadata = await this._getStorageData(this.STORAGE_KEYS.METADATA, {});
+            await this._initStorage();
+            
+            const metadata = await this.storage.get(this.STORAGE_KEYS.METADATA) || {};
             const shownReminders = metadata.shownReminders || [];
             
             if (!shownReminders.includes(reminderKey)) {
                 shownReminders.push(reminderKey);
                 metadata.shownReminders = shownReminders;
-                await this._setStorageData(this.STORAGE_KEYS.METADATA, metadata);
+                await this.storage.set(this.STORAGE_KEYS.METADATA, metadata);
                 
                 console.log(`ADHDGoFlyCounter日志：✅ 评价提醒已标记为显示: ${reminderKey}`);
             }
@@ -131,14 +183,16 @@ class ADHDGoFlyCounter {
      */
     async getMetadata() {
         try {
-            const metadata = await this._getStorageData(this.STORAGE_KEYS.METADATA, {});
+            await this._initStorage();
+            
+            const metadata = await this.storage.get(this.STORAGE_KEYS.METADATA) || {};
             const nodeCount = await this.getNodeCount();
             const pageCount = await this.getPageCount();
             
             // 确保安装时间存在
             if (!metadata.installTime) {
                 metadata.installTime = Date.now();
-                await this._setStorageData(this.STORAGE_KEYS.METADATA, metadata);
+                await this.storage.set(this.STORAGE_KEYS.METADATA, metadata);
             }
             
             const daysSinceInstall = Math.floor((Date.now() - metadata.installTime) / (1000 * 60 * 60 * 24));
@@ -163,10 +217,12 @@ class ADHDGoFlyCounter {
      */
     async resetAllCounters() {
         try {
-            await this._removeStorageData(this.STORAGE_KEYS.NODE_COUNT);
-            await this._removeStorageData(this.STORAGE_KEYS.PAGE_COUNT);
-            await this._removeStorageData(this.STORAGE_KEYS.PAGE_VISITS);
-            await this._removeStorageData(this.STORAGE_KEYS.METADATA);
+            await this._initStorage();
+            
+            await this.storage.remove(this.STORAGE_KEYS.NODE_COUNT);
+            await this.storage.remove(this.STORAGE_KEYS.PAGE_COUNT);
+            await this.storage.remove(this.STORAGE_KEYS.PAGE_VISITS);
+            await this.storage.remove(this.STORAGE_KEYS.METADATA);
             
             console.log('ADHDGoFlyCounter日志：🔄 所有计数器已重置');
         } catch (error) {
@@ -225,8 +281,53 @@ class ADHDGoFlyCounter {
         }
     }
 
+    // ==================== Chrome Storage API 降级方法 ====================
+
     /**
-     * 获取存储数据
+     * Chrome Storage API 获取数据（降级模式）
+     */
+    async _getChromeStorage(key) {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([key], (result) => {
+                resolve(result[key] !== undefined ? result[key] : null);
+            });
+        });
+    }
+
+    /**
+     * Chrome Storage API 设置数据（降级模式）
+     */
+    async _setChromeStorage(key, value) {
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.set({ [key]: value }, () => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    /**
+     * Chrome Storage API 删除数据（降级模式）
+     */
+    async _removeChromeStorage(key) {
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.remove([key], () => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    // ==================== 兼容性方法（已弃用，保留用于向后兼容） ====================
+
+    /**
+     * @deprecated 使用 storage.get() 替代
      */
     async _getStorageData(key, defaultValue = null) {
         return new Promise((resolve) => {
@@ -237,7 +338,7 @@ class ADHDGoFlyCounter {
     }
 
     /**
-     * 设置存储数据
+     * @deprecated 使用 storage.set() 替代
      */
     async _setStorageData(key, value) {
         return new Promise((resolve, reject) => {
@@ -252,7 +353,7 @@ class ADHDGoFlyCounter {
     }
 
     /**
-     * 删除存储数据
+     * @deprecated 使用 storage.remove() 替代
      */
     async _removeStorageData(key) {
         return new Promise((resolve, reject) => {

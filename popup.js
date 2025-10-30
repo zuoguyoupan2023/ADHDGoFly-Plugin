@@ -280,17 +280,10 @@ class PopupController {
     // 加载词典设置
     await this.loadDictSettings();
     
-    // 显示简单提醒
-    if (window.reviewLightTower) {
-            window.reviewLightTower.show();
-    }
-    
-
-    
     // 更新反馈链接显示
     this.updateFeedbackLink();
     
-    // 检查是否需要显示评价提醒
+    // 检查是否需要显示评价提醒（统一处理评价提醒逻辑）
     await this.checkReviewLightTower();
   }
 
@@ -2706,16 +2699,51 @@ class PopupController {
 
   // ==================== 评价提醒相关方法 ====================
 
-  // 检查是否需要显示评价提醒
+  // 检查是否需要显示评价提醒（统一处理评价提醒逻辑）
   async checkReviewLightTower() {
     try {
+      // 首先检查是否有存储的评价提醒数据
       const result = await chrome.storage.local.get(['reviewLightTowerVisible', 'reviewLightTowerData']);
       
       if (result.reviewLightTowerVisible && result.reviewLightTowerData) {
-        console.log('检测到评价灯塔数据，显示评价提醒', result.reviewLightTowerData);
-        this.showReviewLightTower(result.reviewLightTowerData);
-        this.bindReviewLightTowerEvents();
+        console.log('检测到存储的评价灯塔数据，重新验证显示条件', result.reviewLightTowerData);
+        
+        // 确保ReviewLightTower已初始化
+        if (!window.reviewLightTower) {
+          console.log('ReviewLightTower未初始化，等待初始化...');
+          // 等待一小段时间让ReviewLightTower初始化
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // 重新验证显示条件，避免显示过期的评价提醒
+        if (window.reviewLightTower) {
+          const shouldShow = await window.reviewLightTower.shouldShow();
+          if (shouldShow) {
+            console.log('存储数据条件验证通过，显示评价提醒', result.reviewLightTowerData);
+            this.showReviewLightTower(result.reviewLightTowerData);
+            this.bindReviewLightTowerEvents();
+            return; // 已显示存储的提醒，不需要再触发新检查
+          } else {
+            console.log('存储数据条件验证失败，清除过期的评价提醒数据');
+            // 清除过期的评价提醒数据
+            await chrome.storage.local.remove(['reviewLightTowerVisible', 'reviewLightTowerData']);
+            // 清除徽章
+            chrome.action.setBadgeText({ text: '' });
+          }
+        } else {
+          console.error('ReviewLightTower初始化失败，无法验证条件，清除存储数据');
+          // 如果ReviewLightTower无法初始化，为安全起见清除存储数据
+          await chrome.storage.local.remove(['reviewLightTowerVisible', 'reviewLightTowerData']);
+          chrome.action.setBadgeText({ text: '' });
+        }
       }
+      
+      // 如果没有存储的评价提醒数据，或者存储的数据已过期，触发新的评价提醒检查
+      if (window.reviewLightTower) {
+        console.log('触发新的评价提醒检查');
+        await window.reviewLightTower.show();
+      }
+      
     } catch (error) {
       console.error('检查评价提醒失败:', error);
     }
