@@ -144,6 +144,9 @@ class ADHDHighlighter {
     // 处理模式配置
     this.processingMode = 'streaming'; // 'traditional' | 'streaming'
     
+    // 颜色方案切换标志位
+    this.isColorSchemeChanging = false;
+    
     // 启动时扫描dictionaries文件夹
     this.scanDictionariesOnStartup();
     
@@ -308,6 +311,12 @@ class ADHDHighlighter {
   async checkAndApplyCache() {
     if (!this.eventCacheManager) {
       console.log('📝 缓存管理器未初始化，跳过缓存检查');
+      return false;
+    }
+
+    // 在颜色方案切换期间跳过缓存应用，避免DOM结构被破坏
+    if (this.isColorSchemeChanging) {
+      console.log('🎨 正在切换颜色方案，跳过缓存应用以避免DOM结构问题');
       return false;
     }
 
@@ -840,6 +849,9 @@ class ADHDHighlighter {
       highlightingToggles: highlightingToggles
     });
     
+    // 设置颜色方案切换标志位
+    this.isColorSchemeChanging = true;
+    
     this.currentColorScheme = scheme;
     this.colorSchemes[scheme] = colors;
     
@@ -888,6 +900,10 @@ class ADHDHighlighter {
       await this.disable();
       await this.enable();
     }
+    
+    // 清除颜色方案切换标志位
+    this.isColorSchemeChanging = false;
+    console.log('🎨 颜色方案切换完成');
   }
 
   /**
