@@ -391,6 +391,16 @@
        },
        "changelog": {
          "title": "Update Log",
+         "v015": {
+           "title": "Cache Logic Optimization & Custom Dictionary Enhancement",
+           "feature1": "Optimized caching logic for improved page loading performance",
+           "feature2": "Added vocabulary-part-of-speech copy function for easier custom dictionary creation",
+           "feature3": "Use official logo",
+           "feature4": "Added Q&A page",
+           "feature5": "Added review reminders",
+           "feature6": "Added anonymous information collection for product optimization",
+           "feature7": "Added feedback functionality"
+         },
          "v014": {
            "title": "Dictionary Features & Performance Enhancement",
            "feature1": "Added custom dictionary functionality",
