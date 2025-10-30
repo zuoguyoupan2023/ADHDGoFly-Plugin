@@ -164,6 +164,11 @@ class StreamingPageProcessor extends EventTarget {
       return false;
     }
 
+    // 检查是否已被缓存处理过（父元素或祖先元素包含 .adhd-processed 类）
+    if (parent.closest('.adhd-processed')) {
+      return false;
+    }
+
     // 检查类名
     const className = parent.className;
     if (typeof className === 'string') {

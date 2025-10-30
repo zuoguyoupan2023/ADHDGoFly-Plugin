@@ -1051,8 +1051,18 @@ class ADHDHighlighter {
       const cacheApplied = await this.checkAndApplyCache();
       
       if (cacheApplied) {
-        console.log('✅ 缓存应用成功，跳过正常高亮流程');
-        if (isEdge) console.log('[Edge调试] 使用缓存，跳过处理');
+        console.log('✅ 缓存应用成功，但仍需启动流式处理器监听新内容');
+        if (isEdge) console.log('[Edge调试] 使用缓存，但启动流式处理器监听新内容');
+        
+        // 即使缓存应用成功，也要启动流式处理器来处理新出现的内容
+        if (this.processingMode === 'streaming') {
+          console.log('启动流式处理器监听新内容...');
+          if (isEdge) console.log('[Edge调试] 启动流式处理器监听新内容...');
+          
+          // 启动流式处理器，但跳过已缓存的内容
+          await this.streamingPageProcessor.processPage();
+          if (isEdge) console.log('[Edge调试] 流式处理器已启动');
+        }
       } else {
         console.log('📝 缓存未命中，执行正常高亮流程');
         
