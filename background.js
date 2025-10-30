@@ -480,8 +480,8 @@ function showReviewLightTower(badgeData) {
     // 设置徽章文本为星星符号
     chrome.action.setBadgeText({ text: '⭐' });
     
-    // 设置徽章背景色为透明
-    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0] });
+    // 设置徽章背景色为红色
+    chrome.action.setBadgeBackgroundColor({ color: '#f42626ff' });
     
     // 存储灯塔数据，供popup使用
     chrome.storage.local.set({
