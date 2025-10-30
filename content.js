@@ -97,7 +97,6 @@ class QuickHighlighter {
         // 更新高亮开关设置
         if (message.highlightingToggles) {
           this.highlightingToggles = { ...this.highlightingToggles, ...message.highlightingToggles };
-          console.log('更新高亮开关设置:', this.highlightingToggles);
           // 如果当前已启用，重新处理页面
           if (this.enabled) {
             this.removeHighlights();

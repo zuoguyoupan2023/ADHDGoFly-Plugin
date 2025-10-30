@@ -896,24 +896,19 @@ class StreamingPageProcessor extends EventTarget {
    * @param {Object} newOptions 新的配置选项
    */
   updateOptions(newOptions) {
-    console.log('🔧 [DEBUG] StreamingPageProcessor 更新选项:', newOptions);
-    
     Object.assign(this.options, newOptions);
     
     // 更新渲染上下文
     if (newOptions.colorScheme !== undefined) {
       this.renderingContext.colorScheme = newOptions.colorScheme;
-      console.log('🔧 [DEBUG] 更新颜色方案:', newOptions.colorScheme);
     }
     
     if (newOptions.highlightingToggles !== undefined) {
       this.renderingContext.highlightingToggles = { ...newOptions.highlightingToggles };
-      console.log('🔧 [DEBUG] 更新高亮开关:', newOptions.highlightingToggles);
     }
     
     // 如果渲染上下文发生变化，清理缓存
     if (newOptions.colorScheme !== undefined || newOptions.highlightingToggles !== undefined) {
-      console.log('🔧 [DEBUG] 渲染上下文变化，清理节点缓存');
       this.nodeLevelCacheManager.clearAllCache();
     }
     

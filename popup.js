@@ -1419,16 +1419,6 @@ class PopupController {
           this.highlightingToggles[type] = true;
         }
         
-        // 添加详细的调试日志
-        console.log('🔧 [DEBUG] 高亮开关按钮点击:', {
-          type: type,
-          wasActive: isActive,
-          newState: this.highlightingToggles[type],
-          buttonElement: e.currentTarget,
-          buttonClasses: e.currentTarget.className,
-          allToggles: JSON.parse(JSON.stringify(this.highlightingToggles))
-        });
-        
         // 立即保存设置
         this.saveColorSettings();
       });
@@ -1591,38 +1581,25 @@ class PopupController {
 
   async saveColorSettings() {
     try {
-      console.log('🔧 [DEBUG] 开始保存颜色设置:', {
-        colorScheme: this.currentColorScheme,
-        highlightingToggles: JSON.parse(JSON.stringify(this.highlightingToggles))
-      });
-      
       // 保存颜色方案和高亮开关设置
       await chrome.storage.local.set({ 
         colorScheme: this.currentColorScheme,
         highlightingToggles: this.highlightingToggles
       });
       
-      console.log('🔧 [DEBUG] 设置已保存到storage');
-      
       // 通知content script更新颜色方案和高亮开关
       try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
-          const message = {
+          await chrome.tabs.sendMessage(tabs[0].id, {
             action: 'updateColorScheme',
             scheme: this.currentColorScheme,
             colors: this.colorSchemes[this.currentColorScheme],
             highlightingToggles: this.highlightingToggles
-          };
-          
-          console.log('🔧 [DEBUG] 发送消息到content script:', message);
-          
-          await chrome.tabs.sendMessage(tabs[0].id, message);
-          
-          console.log('🔧 [DEBUG] 消息发送成功');
+          });
         }
       } catch (error) {
-        console.warn('🔧 [DEBUG] 通知content script失败:', error);
+        console.warn('通知content script失败:', error);
       }
       
       // 显示保存成功提示
@@ -1635,9 +1612,6 @@ class PopupController {
         saveBtn.textContent = originalText;
         saveBtn.style.backgroundColor = '';
       }, 1500);
-      
-      console.log('颜色方案已保存:', this.currentColorScheme);
-      console.log('高亮开关已保存:', this.highlightingToggles);
       
     } catch (error) {
       console.error('保存颜色设置失败:', error);
