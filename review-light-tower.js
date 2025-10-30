@@ -55,19 +55,28 @@ class ReviewLightTower {
 
   async getDisplayRecord() {
     try {
-      const record = localStorage.getItem('reviewLightTowerDisplay');
+      // 使用Chrome Storage API而不是localStorage，确保在插件的不同上下文中数据共享
+      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
+      const record = result.reviewLightTowerDisplay;
+      console.log(`🔍 ReviewLightTower调试：读取Chrome Storage记录:`, record);
+      
       if (record) {
-        const parsed = JSON.parse(record);
+        console.log(`🔍 ReviewLightTower调试：找到存储的记录:`, record);
+        
         // 确保有triggeredConditions字段
-        if (!parsed.triggeredConditions) {
-          parsed.triggeredConditions = [];
+        if (!record.triggeredConditions) {
+          record.triggeredConditions = [];
         }
         // 读取lastCheckTime并设置到实例属性
-        if (parsed.lastCheckTime) {
-          this.lastCheckTime = parsed.lastCheckTime;
+        if (record.lastCheckTime) {
+          this.lastCheckTime = record.lastCheckTime;
         }
-        return parsed;
+        
+        console.log(`🔍 ReviewLightTower调试：当前显示次数: ${record.count}/3`);
+        return record;
       }
+      
+      console.log(`🔍 ReviewLightTower调试：没有找到记录，返回默认值`);
       return { count: 0, lastVersion: null, triggeredConditions: [], lastCheckTime: null };
     } catch (error) {
       console.error('获取显示记录失败:', error);
@@ -84,7 +93,15 @@ class ReviewLightTower {
         triggeredConditions: triggeredConditions || currentRecord.triggeredConditions || [],
         lastCheckTime: this.lastCheckTime
       };
-      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+      
+      console.log(`🔍 ReviewLightTower调试：准备更新记录:`, record);
+      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
+      console.log(`🔍 ReviewLightTower调试：记录已保存到Chrome Storage`);
+      
+      // 验证保存是否成功
+      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
+      console.log(`🔍 ReviewLightTower调试：验证保存结果:`, result.reviewLightTowerDisplay);
+      
     } catch (error) {
       console.error('更新显示记录失败:', error);
     }
@@ -106,7 +123,8 @@ class ReviewLightTower {
   async resetDisplayRecord(version) {
     try {
       const record = { count: 0, lastVersion: version, triggeredConditions: [] };
-      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
+      console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
     } catch (error) {
       console.error('重置显示记录失败:', error);
     }
@@ -334,11 +352,13 @@ class ReviewLightTower {
       
       // 先检查剩余显示次数
       const remainingCount = Math.max(0, 3 - displayRecord.count);
+      console.log(`🔍 ReviewLightTower调试：显示次数检查 - 当前次数: ${displayRecord.count}, 剩余次数: ${remainingCount}`);
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
         // 即使已达到最大显示次数，也要保存lastCheckTime以确保24小时间隔生效
         await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
+        console.log(`🔍 ReviewLightTower调试：已达到最大次数，直接返回，不会调用notifyBackgroundShowBadge`);
         return;
       }
       
@@ -404,6 +424,7 @@ class ReviewLightTower {
   notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
     // 通知background.js显示灯塔，并传递评价提醒数据
     try {
+      console.log(`🔍 ReviewLightTower调试：准备通知background显示徽章，剩余次数: ${remainingCount}`);
       chrome.runtime.sendMessage({
         action: 'showReviewLightTower',
         data: {
