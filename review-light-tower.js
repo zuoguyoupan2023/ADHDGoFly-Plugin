@@ -295,18 +295,26 @@ class ReviewLightTower {
 
   async show() {
     try {
-      // 24小时间隔检查 - 临时禁用用于测试
+      // 24小时间隔检查 - 根据模式决定是否启用
       const currentTime = Date.now();
-      // if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
-      //   const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
-      //   const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
-      //   console.log(`ReviewLightTower：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
-      //   return;
-      // }
+      
+      // 正式模式启用24小时检查，测试模式跳过24小时检查
+      if (!this.ReviewLightTowerTest) {
+        // 正式模式：执行24小时检查
+        if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
+          const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
+          const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
+          console.log(`ReviewLightTower(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
+          return;
+        }
+        console.log(`ReviewLightTower(正式模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()}`);
+      } else {
+        // 测试模式：跳过24小时检查
+        console.log(`ReviewLightTower(测试模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()} (测试模式已跳过24小时限制)`);
+      }
       
       // 更新最后检查时间
       this.lastCheckTime = currentTime;
-      console.log(`ReviewLightTower：开始检查，时间: ${new Date(currentTime).toLocaleString()} (24小时限制已临时禁用)`);
       
       // 获取当前版本
       const currentVersion = await this.getCurrentVersion();
