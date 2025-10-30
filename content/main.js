@@ -1594,17 +1594,11 @@ class ADHDHighlighter {
     const languageStats = { zh: 0, en: 0, fr: 0, ru: 0, es: 0, ja: 0 };
     
     try {
-      // 完全基于词汇统计中的词汇数据进行语言分布统计
-      const nounElements = document.querySelectorAll('.adhd-n');
-      const verbElements = document.querySelectorAll('.adhd-v');
-      const adjElements = document.querySelectorAll('.adhd-a');
+      // 直接统计所有高亮词汇元素，通过词汇内容检测语言
+      const highlightedWords = document.querySelectorAll('[class*="adhd-"]');
       
-      // 合并所有词汇元素（与词汇统计保持一致）
-      const allVocabularyElements = [...nounElements, ...verbElements, ...adjElements];
-      
-      if (allVocabularyElements.length > 0) {
-        // 对每个词汇进行语言检测
-        allVocabularyElements.forEach(element => {
+      if (highlightedWords.length > 0) {
+        highlightedWords.forEach(element => {
           const text = element.textContent.trim();
           if (text) {
             // 使用语言检测器检测每个词汇的语言
@@ -1614,17 +1608,8 @@ class ADHDHighlighter {
             }
           }
         });
-        
-        console.log('语言分布统计 - 基于词汇统计数据:', {
-          总词汇数: allVocabularyElements.length,
-          名词: nounElements.length,
-          动词: verbElements.length,
-          形容词: adjElements.length,
-          语言分布: languageStats
-        });
       } else {
-        // 如果没有词汇统计数据，回退到页面文本分析
-        console.log('语言分布统计 - 无词汇数据，回退到页面文本分析');
+        // 如果没有高亮词汇，分析当前页面文本（备用方案）
         const textNodes = this.pageProcessor.getTextNodes();
         const sampleTexts = textNodes.slice(0, 50).map(node => node.textContent);
         
