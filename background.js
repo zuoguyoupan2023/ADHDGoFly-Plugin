@@ -501,6 +501,9 @@ function hideReviewLightTower() {
     // 清除徽章文本
     chrome.action.setBadgeText({ text: '' });
     
+    // 清除徽章背景色
+    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0] }); // 透明背景
+    
     // 移除存储的灯塔数据
     chrome.storage.local.remove(['reviewLightTowerData', 'reviewLightTowerVisible']);
     

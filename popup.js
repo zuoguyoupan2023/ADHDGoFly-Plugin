@@ -2712,9 +2712,28 @@ class PopupController {
       const result = await chrome.storage.local.get(['reviewLightTowerVisible', 'reviewLightTowerData']);
       
       if (result.reviewLightTowerVisible && result.reviewLightTowerData) {
-        console.log('检测到评价灯塔数据，显示评价提醒', result.reviewLightTowerData);
-        this.showReviewLightTower(result.reviewLightTowerData);
-        this.bindReviewLightTowerEvents();
+        console.log('检测到评价灯塔数据，重新验证是否应该显示', result.reviewLightTowerData);
+        
+        // 重新验证是否应该显示评价提醒
+        if (window.reviewLightTower && typeof window.reviewLightTower.shouldShow === 'function') {
+          const shouldShow = await window.reviewLightTower.shouldShow();
+          if (shouldShow) {
+            console.log('验证通过，显示评价提醒');
+            this.showReviewLightTower(result.reviewLightTowerData);
+            this.bindReviewLightTowerEvents();
+          } else {
+            console.log('验证失败，清除过期的评价提醒数据');
+            // 清除过期数据
+            await chrome.storage.local.remove(['reviewLightTowerVisible', 'reviewLightTowerData']);
+            // 清除徽章文本和背景色
+            chrome.action.setBadgeText({ text: '' });
+            chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0] }); // 透明背景
+          }
+        } else {
+          console.log('ReviewLightTower未初始化，等待后重新检查');
+          // 如果ReviewLightTower还未初始化，等待一下再检查
+          setTimeout(() => this.checkReviewLightTower(), 100);
+        }
       }
     } catch (error) {
       console.error('检查评价提醒失败:', error);
