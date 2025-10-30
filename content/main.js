@@ -1604,23 +1604,13 @@ class ADHDHighlighter {
       
       if (allVocabularyElements.length > 0) {
         // 对每个词汇进行语言检测
-        const detectionResults = [];
-        allVocabularyElements.forEach((element, index) => {
+        allVocabularyElements.forEach(element => {
           const text = element.textContent.trim();
           if (text) {
             // 使用语言检测器检测每个词汇的语言
             const detectedLang = this.languageDetector.detectLanguage(text);
             if (languageStats.hasOwnProperty(detectedLang)) {
               languageStats[detectedLang]++;
-            }
-            
-            // 记录前20个词汇的检测结果用于调试
-            if (index < 20) {
-              detectionResults.push({
-                词汇: text,
-                检测语言: detectedLang,
-                元素类名: element.className
-              });
             }
           }
         });
@@ -1630,8 +1620,7 @@ class ADHDHighlighter {
           名词: nounElements.length,
           动词: verbElements.length,
           形容词: adjElements.length,
-          语言分布: languageStats,
-          前20个词汇检测结果: detectionResults
+          语言分布: languageStats
         });
       } else {
         // 如果没有词汇统计数据，回退到页面文本分析
