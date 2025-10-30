@@ -247,20 +247,53 @@ class NodeLevelCacheManager {
    * 生成缓存键
    * @param {Object} fingerprint 节点指纹
    * @param {string} language 语言
+   * @param {Object} renderingContext 渲染上下文（颜色方案、高亮开关等）
    * @returns {string} 缓存键
    */
-  generateCacheKey(fingerprint, language) {
-    return `${fingerprint.contentHash}_${language}_${fingerprint.parentSignature}`;
+  generateCacheKey(fingerprint, language, renderingContext = {}) {
+    // 基础键值
+    let cacheKey = `${fingerprint.contentHash}_${language}_${fingerprint.parentSignature}`;
+    
+    // 添加颜色方案参数
+    if (renderingContext.colorScheme) {
+      cacheKey += `_scheme_${renderingContext.colorScheme}`;
+    }
+    
+    // 添加高亮开关参数
+    if (renderingContext.highlightingToggles) {
+      const toggles = renderingContext.highlightingToggles;
+      const toggleString = `${toggles.noun ? 'n' : ''}${toggles.verb ? 'v' : ''}${toggles.adj ? 'a' : ''}${toggles.comparative ? 'c' : ''}`;
+      cacheKey += `_toggles_${toggleString}`;
+    }
+    
+    console.log('🔧 [DEBUG] 节点缓存键值生成:', {
+      基础键值: `${fingerprint.contentHash}_${language}_${fingerprint.parentSignature}`,
+      颜色方案: renderingContext.colorScheme || 'default',
+      高亮开关: renderingContext.highlightingToggles || '未提供',
+      最终键值: cacheKey
+    });
+    
+    return cacheKey;
   }
 
   /**
    * 获取节点缓存
    * @param {Object} fingerprint 节点指纹
    * @param {string} language 语言
+   * @param {Object} renderingContext 渲染上下文（颜色方案、高亮开关等）
    * @returns {Object|null} 缓存数据
    */
-  async getNodeCache(fingerprint, language) {
+  async getNodeCache(fingerprint, language, renderingContext = {}) {
+    console.log('🔧 [DEBUG] 节点缓存查询开始:', {
+      缓存可用性: this.isCacheAvailable(),
+      缓存开关: this.cacheEnabled,
+      降级模式: this.fallbackMode,
+      数据库状态: !!this.db,
+      渲染上下文: renderingContext
+    });
+    
     if (!this.isCacheAvailable()) {
+      console.log('🔧 [DEBUG] 节点缓存不可用，跳过查询');
       return null;
     }
 
@@ -268,9 +301,15 @@ class NodeLevelCacheManager {
     this.stats.totalQueries++;
 
     try {
-      const cacheKey = this.generateCacheKey(fingerprint, language);
+      const cacheKey = this.generateCacheKey(fingerprint, language, renderingContext);
       const transaction = this.db.transaction(['nodeCache'], 'readonly');
       const store = transaction.objectStore('nodeCache');
+      
+      console.log('🔧 [DEBUG] 查询节点缓存:', {
+        缓存键值: cacheKey,
+        内容哈希: fingerprint.contentHash,
+        语言: language
+      });
       
       const result = await new Promise((resolve, reject) => {
         const request = store.get(cacheKey);
@@ -285,9 +324,20 @@ class NodeLevelCacheManager {
         this.stats.cacheHits++;
         this.updateAverageQueryTime(performance.now() - startTime);
         
+        console.log('🔧 [DEBUG] 节点缓存命中:', {
+          缓存键值: cacheKey,
+          缓存创建时间: new Date(result.createdAt).toLocaleString(),
+          缓存大小: result.size
+        });
+        
         return result.data;
       } else {
         this.stats.cacheMisses++;
+        console.log('🔧 [DEBUG] 节点缓存未命中:', {
+          缓存键值: cacheKey,
+          查询结果: !!result,
+          验证通过: result ? this.validateCacheEntry(result, fingerprint) : false
+        });
         return null;
       }
     } catch (error) {
@@ -302,14 +352,22 @@ class NodeLevelCacheManager {
    * @param {Object} fingerprint 节点指纹
    * @param {string} language 语言
    * @param {Object} cacheData 缓存数据
+   * @param {Object} renderingContext 渲染上下文（颜色方案、高亮开关等）
    */
-  async storeNodeCache(fingerprint, language, cacheData) {
+  async storeNodeCache(fingerprint, language, cacheData, renderingContext = {}) {
+    console.log('🔧 [DEBUG] 节点缓存存储开始:', {
+      缓存可用性: this.isCacheAvailable(),
+      渲染上下文: renderingContext,
+      数据大小: JSON.stringify(cacheData).length
+    });
+    
     if (!this.isCacheAvailable()) {
+      console.log('🔧 [DEBUG] 节点缓存不可用，跳过存储');
       return false;
     }
 
     try {
-      const cacheKey = this.generateCacheKey(fingerprint, language);
+      const cacheKey = this.generateCacheKey(fingerprint, language, renderingContext);
       const now = Date.now();
       
       const cacheEntry = {
@@ -319,11 +377,20 @@ class NodeLevelCacheManager {
         data: cacheData,
         pageUrl: fingerprint.pageUrl,
         contentHash: fingerprint.contentHash,
+        renderingContext: renderingContext, // 存储渲染上下文
         createdAt: now,
         lastAccessed: now,
         accessCount: 1,
         size: JSON.stringify(cacheData).length
       };
+
+      console.log('🔧 [DEBUG] 存储节点缓存:', {
+        缓存键值: cacheKey,
+        内容哈希: fingerprint.contentHash,
+        语言: language,
+        渲染上下文: renderingContext,
+        数据大小: cacheEntry.size
+      });
 
       const transaction = this.db.transaction(['nodeCache'], 'readwrite');
       const store = transaction.objectStore('nodeCache');
@@ -335,6 +402,11 @@ class NodeLevelCacheManager {
       });
 
       this.stats.cacheStores++;
+      
+      console.log('🔧 [DEBUG] 节点缓存存储成功:', {
+        缓存键值: cacheKey,
+        总存储次数: this.stats.cacheStores
+      });
       
       // 定期清理过期缓存
       if (this.stats.cacheStores % 100 === 0) {

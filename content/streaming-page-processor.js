@@ -9,6 +9,12 @@ class StreamingPageProcessor extends EventTarget {
     // 初始化节点级缓存管理器
     this.nodeLevelCacheManager = new NodeLevelCacheManager();
     
+    // 渲染上下文（颜色方案、高亮开关等）
+    this.renderingContext = {
+      colorScheme: 'default',
+      highlightingToggles: {}
+    };
+    
     // 处理统计
     this.stats = {
       processedNodes: 0,
@@ -16,7 +22,11 @@ class StreamingPageProcessor extends EventTarget {
       skippedNodes: 0,
       errors: 0,
       queuedNodes: 0,
-      visibleNodes: 0
+      visibleNodes: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      cacheStores: 0,
+      cacheErrors: 0
     };
     
     // 配置选项
@@ -573,7 +583,7 @@ class StreamingPageProcessor extends EventTarget {
       const language = this.languageDetector.detectLanguage(text);
       
       // 检查节点级缓存
-      const cachedResult = await this.nodeLevelCacheManager.getNodeCache(fingerprint, language);
+      const cachedResult = await this.nodeLevelCacheManager.getNodeCache(fingerprint, language, this.renderingContext);
       
       let segmentedHtml;
       let fromCache = false;
@@ -608,7 +618,7 @@ class StreamingPageProcessor extends EventTarget {
           };
           
           try {
-            await this.nodeLevelCacheManager.storeNodeCache(fingerprint, language, cacheData);
+            await this.nodeLevelCacheManager.storeNodeCache(fingerprint, language, cacheData, this.renderingContext);
             this.stats.cacheStores++;
           } catch (cacheError) {
             this.stats.cacheErrors++;
@@ -886,7 +896,26 @@ class StreamingPageProcessor extends EventTarget {
    * @param {Object} newOptions 新的配置选项
    */
   updateOptions(newOptions) {
+    console.log('🔧 [DEBUG] StreamingPageProcessor 更新选项:', newOptions);
+    
     Object.assign(this.options, newOptions);
+    
+    // 更新渲染上下文
+    if (newOptions.colorScheme !== undefined) {
+      this.renderingContext.colorScheme = newOptions.colorScheme;
+      console.log('🔧 [DEBUG] 更新颜色方案:', newOptions.colorScheme);
+    }
+    
+    if (newOptions.highlightingToggles !== undefined) {
+      this.renderingContext.highlightingToggles = { ...newOptions.highlightingToggles };
+      console.log('🔧 [DEBUG] 更新高亮开关:', newOptions.highlightingToggles);
+    }
+    
+    // 如果渲染上下文发生变化，清理缓存
+    if (newOptions.colorScheme !== undefined || newOptions.highlightingToggles !== undefined) {
+      console.log('🔧 [DEBUG] 渲染上下文变化，清理节点缓存');
+      this.nodeLevelCacheManager.clearAllCache();
+    }
     
     // 如果更新了观察器相关配置，重新创建观察器
     if (newOptions.rootMargin || newOptions.threshold) {

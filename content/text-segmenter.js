@@ -71,7 +71,14 @@ class TextSegmenter {
    * @param {Object} toggles 高亮开关设置
    */
   updateHighlightingToggles(toggles) {
+    console.log('🔧 [DEBUG] TextSegmenter更新高亮开关:', {
+      oldToggles: JSON.parse(JSON.stringify(this.highlightingToggles)),
+      newToggles: toggles
+    });
+    
     this.highlightingToggles = { ...this.highlightingToggles, ...toggles };
+    
+    console.log('🔧 [DEBUG] TextSegmenter高亮开关更新完成:', this.highlightingToggles);
   }
 
   /**
@@ -308,6 +315,20 @@ class TextSegmenter {
             (normalizedPos === 'n' && this.highlightingToggles.noun) ||
             (normalizedPos === 'v' && this.highlightingToggles.verb)
           );
+          
+          // 添加调试日志
+          if (cleanWord === 'test' || cleanWord === 'example' || Math.random() < 0.01) { // 随机采样1%的词汇进行调试
+            console.log('🔧 [DEBUG] 词性过滤检查:', {
+              word: cleanWord,
+              token: token,
+              pos: pos,
+              normalizedPos: normalizedPos,
+              highlightingToggles: this.highlightingToggles,
+              shouldHighlight: shouldHighlight,
+              nounToggle: this.highlightingToggles.noun,
+              verbToggle: this.highlightingToggles.verb
+            });
+          }
           
           if (shouldHighlight) {
             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;

@@ -834,24 +834,49 @@ class ADHDHighlighter {
    * @param {Object} highlightingToggles 高亮开关设置
    */
   async updateColorScheme(scheme, colors, highlightingToggles) {
-    console.log('更新颜色方案:', scheme, colors, highlightingToggles);
+    console.log('🔧 [DEBUG] 收到updateColorScheme消息:', {
+      scheme: scheme,
+      colors: colors,
+      highlightingToggles: highlightingToggles
+    });
     
     this.currentColorScheme = scheme;
     this.colorSchemes[scheme] = colors;
     
     // 更新高亮开关设置
     if (highlightingToggles) {
+      console.log('🔧 [DEBUG] 开始更新高亮开关设置...');
+      this.highlightingToggles = highlightingToggles;
+      
       // 更新TextSegmenter的高亮开关设置
       if (this.textSegmenter) {
+        console.log('🔧 [DEBUG] 更新前TextSegmenter高亮开关:', this.textSegmenter.highlightingToggles);
         this.textSegmenter.updateHighlightingToggles(highlightingToggles);
-        console.log('TextSegmenter高亮开关设置已更新:', this.textSegmenter.highlightingToggles);
+        console.log('🔧 [DEBUG] 更新后TextSegmenter高亮开关:', this.textSegmenter.highlightingToggles);
+      } else {
+        console.log('🔧 [DEBUG] TextSegmenter不存在');
       }
       
       // 兼容旧的quickHighlighter（如果存在）
       if (this.pageProcessor && this.pageProcessor.quickHighlighter) {
+        console.log('🔧 [DEBUG] 更新前QuickHighlighter高亮开关:', this.pageProcessor.quickHighlighter.highlightingToggles);
         this.pageProcessor.quickHighlighter.highlightingToggles = highlightingToggles;
-        console.log('QuickHighlighter高亮开关设置已更新:', highlightingToggles);
+        console.log('🔧 [DEBUG] 更新后QuickHighlighter高亮开关:', this.pageProcessor.quickHighlighter.highlightingToggles);
+      } else {
+        console.log('🔧 [DEBUG] QuickHighlighter不存在');
       }
+    } else {
+      console.log('🔧 [DEBUG] 没有收到highlightingToggles参数');
+    }
+    
+    // 更新流式处理器的渲染上下文
+    if (this.streamingPageProcessor) {
+      const renderingOptions = {
+        colorScheme: scheme,
+        highlightingToggles: highlightingToggles || {}
+      };
+      console.log('🔧 [DEBUG] 更新流式处理器渲染上下文:', renderingOptions);
+      this.streamingPageProcessor.updateOptions(renderingOptions);
     }
     
     // 应用新的颜色方案
@@ -1236,7 +1261,7 @@ class ADHDHighlighter {
    * @param {Object} settings 新设置
    */
   async updateSettings(settings) {
-    console.log('更新设置:', settings);
+    console.log('🔧 [DEBUG] main.js 更新设置:', settings);
     
     // 更新处理模式
     if (settings.processingMode && ['traditional', 'streaming'].includes(settings.processingMode)) {
@@ -1244,12 +1269,26 @@ class ADHDHighlighter {
       console.log('处理模式已更新为:', this.processingMode);
     }
     
+    // 准备传递给处理器的选项
+    const processorOptions = { ...settings.processing };
+    
+    // 添加颜色方案和高亮开关设置
+    if (this.currentColorScheme) {
+      processorOptions.colorScheme = this.currentColorScheme;
+      console.log('🔧 [DEBUG] 传递颜色方案:', this.currentColorScheme);
+    }
+    
+    if (this.highlightingToggles) {
+      processorOptions.highlightingToggles = { ...this.highlightingToggles };
+      console.log('🔧 [DEBUG] 传递高亮开关:', this.highlightingToggles);
+    }
+    
     // 更新页面处理器选项
-    if (settings.processing) {
+    if (settings.processing || processorOptions.colorScheme || processorOptions.highlightingToggles) {
       if (this.processingMode === 'streaming') {
-        this.streamingPageProcessor.updateOptions(settings.processing);
+        this.streamingPageProcessor.updateOptions(processorOptions);
       } else {
-        this.pageProcessor.updateOptions(settings.processing);
+        this.pageProcessor.updateOptions(processorOptions);
       }
     }
     
