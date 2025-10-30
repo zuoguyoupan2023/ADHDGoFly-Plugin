@@ -55,10 +55,9 @@ class ReviewLightTower {
 
   async getDisplayRecord() {
     try {
-      // 使用Chrome Storage API而不是localStorage，确保在插件的不同上下文中数据共享
-      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
-      const record = result.reviewLightTowerDisplay;
-      console.log(`🔍 ReviewLightTower调试：读取Chrome Storage记录:`, record);
+      // 使用通用存储适配器，支持跨浏览器兼容
+      const record = await window.universalStorage.get('reviewLightTowerDisplay');
+      console.log(`🔍 ReviewLightTower调试：读取存储记录:`, record);
       
       if (record) {
         console.log(`🔍 ReviewLightTower调试：找到存储的记录:`, record);
@@ -95,12 +94,12 @@ class ReviewLightTower {
       };
       
       console.log(`🔍 ReviewLightTower调试：准备更新记录:`, record);
-      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
-      console.log(`🔍 ReviewLightTower调试：记录已保存到Chrome Storage`);
+      await window.universalStorage.set('reviewLightTowerDisplay', record);
+      console.log(`🔍 ReviewLightTower调试：记录已保存到存储`);
       
       // 验证保存是否成功
-      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
-      console.log(`🔍 ReviewLightTower调试：验证保存结果:`, result.reviewLightTowerDisplay);
+      const savedRecord = await window.universalStorage.get('reviewLightTowerDisplay');
+      console.log(`🔍 ReviewLightTower调试：验证保存结果:`, savedRecord);
       
     } catch (error) {
       console.error('更新显示记录失败:', error);
@@ -123,7 +122,7 @@ class ReviewLightTower {
   async resetDisplayRecord(version) {
     try {
       const record = { count: 0, lastVersion: version, triggeredConditions: [] };
-      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
+      await window.universalStorage.set('reviewLightTowerDisplay', record);
       console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
     } catch (error) {
       console.error('重置显示记录失败:', error);
@@ -313,6 +312,10 @@ class ReviewLightTower {
 
   async show() {
     try {
+      // 显示存储信息
+      const storageInfo = window.universalStorage.getStorageInfo();
+      console.log(`🔧 存储适配器状态:`, storageInfo);
+      
       // 24小时间隔检查 - 根据模式决定是否启用
       const currentTime = Date.now();
       
