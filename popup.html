@@ -3327,16 +3327,6 @@
           <div class="analysis-section">
             <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
 
-            <!-- 语言分布 -->
-            <div class="stat-group">
-              <div class="stat-title" data-i18n="pages.ai.stats.language">
-                语言分布
-              </div>
-              <div class="stat-content" id="languageStats">
-                <div class="loading">分析中...</div>
-              </div>
-            </div>
-
             <!-- 词性分布 -->
             <div class="stat-group">
               <div
@@ -3371,6 +3361,16 @@
               </div>
               
               <div class="stat-content" id="vocabularyStats">
+                <div class="loading">分析中...</div>
+              </div>
+            </div>
+
+            <!-- 语言分布（基于词汇统计） -->
+            <div class="stat-group">
+              <div class="stat-title" data-i18n="pages.ai.stats.language">
+                语言分布
+              </div>
+              <div class="stat-content" id="languageStats">
                 <div class="loading">分析中...</div>
               </div>
             </div>
