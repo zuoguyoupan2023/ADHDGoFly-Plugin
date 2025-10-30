@@ -448,8 +448,8 @@
       },
       "buttons": {
         "review": "去评价",
-        "reason": "为什么",
-        "reasonCollapse": "隐藏理由",
+        "reason": "我需要理由",
+        "reasonCollapse": "折叠",
         "later": "再说",
         "never": "不再提醒"
       },

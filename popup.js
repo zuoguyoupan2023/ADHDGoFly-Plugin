@@ -2960,10 +2960,83 @@ class PopupController {
     // 填充数据
     this.populateReviewData(badgeData);
     
+    // 应用理由文本词性高亮
+    this.applyReasonTextHighlight();
+    
     // 显示提醒
     reviewReminder.style.display = 'block';
     
     console.log('评价提醒已显示');
+  }
+
+  // 应用理由文本词性高亮
+  applyReasonTextHighlight() {
+    const reasonTextElement = document.querySelector('.reason-text');
+    if (!reasonTextElement) return;
+
+    // 获取当前文本内容
+    let text = reasonTextElement.textContent || reasonTextElement.innerText;
+    
+    // 定义中文词性映射
+    const chineseWordHighlights = {
+      // 名词（蓝色）
+      '更多人': 'noun',
+      '插件': 'noun', 
+      'ADHD': 'noun',
+      '阅读困难': 'noun',
+      '大量阅读': 'noun',
+      '机会': 'noun',
+      '阅读难度': 'noun',
+      
+      // 动词（红色）
+      '看到': 'verb',
+      '感到': 'verb',
+      '降低': 'verb',
+      
+      // 形容词（绿色）
+      '疲倦': 'adj'
+    };
+
+    // 定义英文词性映射
+    const englishWordHighlights = {
+      // 名词（蓝色）
+      'people': 'noun',
+      'extension': 'noun',
+      'ADHD': 'noun',
+      'difficulties': 'noun',
+      'reading': 'noun',
+      'chance': 'noun',
+      'difficulty': 'noun',
+      
+      // 动词（红色）
+      'discover': 'verb',
+      'struggle': 'verb',
+      'feel': 'verb',
+      'reduce': 'verb',
+      'helps': 'verb',
+      'use': 'verb',
+      
+      // 形容词（绿色）
+      'overwhelmed': 'adj',
+      'heavy': 'adj'
+    };
+
+    // 检测语言并选择对应的词汇映射
+    const isEnglish = /[a-zA-Z]/.test(text) && text.includes('extension');
+    const wordHighlights = isEnglish ? englishWordHighlights : chineseWordHighlights;
+
+    // 应用高亮
+    Object.keys(wordHighlights).forEach(word => {
+      const wordType = wordHighlights[word];
+      // 对于英文，使用单词边界匹配；对于中文，直接匹配
+      const regex = isEnglish ? 
+        new RegExp(`\\b${word}\\b`, 'gi') : 
+        new RegExp(word, 'g');
+      text = text.replace(regex, `<span class="highlight-${wordType}">${word}</span>`);
+    });
+
+    // 更新元素内容
+    reasonTextElement.innerHTML = text;
   }
 
   // 填充评价提醒数据
