@@ -234,13 +234,12 @@ class PageProcessor extends EventTarget {
     }
 
     try {
-      // 处理多语言文本并获取检测到的语言
-      const result = this.processMultiLanguageText(text);
-      const { html: segmentedHtml, language } = result;
+      // 跳过语言检测，直接对所有启用的语言进行匹配
+      const segmentedHtml = this.processMultiLanguageText(text);
       
       // 如果有变化，替换节点
       if (segmentedHtml !== text) {
-        this.replaceTextNode(textNode, segmentedHtml, language);
+        this.replaceTextNode(textNode, segmentedHtml, 'multi');
         
         // 统计高亮词汇数量
         const stats = this.textSegmenter.getSegmentationStats(segmentedHtml);
@@ -262,7 +261,7 @@ class PageProcessor extends EventTarget {
   /**
    * 处理多语言文本，使用语言检测确定正确的分词策略
    * @param {string} text 原始文本
-   * @returns {Object} 包含处理后的HTML和检测到的语言的对象 {html: string, language: string}
+   * @returns {string} 处理后的HTML字符串
    * @private
    */
   processMultiLanguageText(text) {
@@ -270,7 +269,7 @@ class PageProcessor extends EventTarget {
     const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
     
     if (enabledLanguages.length === 0) {
-      return { html: text, language: 'unknown' };
+      return text;
     }
     
     // 如果只有一种语言启用，使用原有逻辑
@@ -278,10 +277,9 @@ class PageProcessor extends EventTarget {
       const language = enabledLanguages[0];
       const dictionary = this.dictionaryManager.getDictionary(language);
       if (dictionary && Object.keys(dictionary).length > 0) {
-        const html = this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
-        return { html, language };
+        return this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
       }
-      return { html: text, language };
+      return text;
     }
     
     // 多语言处理：使用语言检测确定主要语言
@@ -291,8 +289,7 @@ class PageProcessor extends EventTarget {
     if (enabledLanguages.includes(detectedLanguage)) {
       const dictionary = this.dictionaryManager.getDictionary(detectedLanguage);
       if (dictionary && Object.keys(dictionary).length > 0) {
-        const html = this.textSegmenter.segmentText(text, detectedLanguage, dictionary, this.dictionaryManager);
-        return { html, language: detectedLanguage };
+        return this.textSegmenter.segmentText(text, detectedLanguage, dictionary, this.dictionaryManager);
       }
     }
     
@@ -308,12 +305,11 @@ class PageProcessor extends EventTarget {
     for (const language of sortedLanguages) {
       const dictionary = this.dictionaryManager.getDictionary(language);
       if (dictionary && Object.keys(dictionary).length > 0) {
-        const html = this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
-        return { html, language };
+        return this.textSegmenter.segmentText(text, language, dictionary, this.dictionaryManager);
       }
     }
     
-    return { html: text, language: detectedLanguage || 'unknown' };
+    return text;
   }
 
   /**
