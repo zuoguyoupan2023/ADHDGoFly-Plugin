@@ -31,8 +31,20 @@
     "css": ["styles.css"],
     "run_at": "document_end"
   }],
+  "icons": {
+    "16": "public/logo-300x300.png",
+    "32": "public/logo-300x300.png",
+    "48": "public/logo-300x300.png",
+    "128": "public/logo-300x300.png"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "public/logo-300x300.png",
+      "32": "public/logo-300x300.png",
+      "48": "public/logo-300x300.png",
+      "128": "public/logo-300x300.png"
+    }
   },
   "web_accessible_resources": [{
     "resources": [

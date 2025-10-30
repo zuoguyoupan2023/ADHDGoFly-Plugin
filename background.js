@@ -477,11 +477,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // 显示评价灯塔
 function showReviewLightTower(badgeData) {
   try {
-    // 设置徽章文本
-    chrome.action.setBadgeText({ text: '!' });
+    // 设置徽章文本为星星符号
+    chrome.action.setBadgeText({ text: '⭐' });
     
-    // 设置徽章背景色
-    chrome.action.setBadgeBackgroundColor({ color: '#ff4444' });
+    // 设置徽章背景色为透明
+    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0] });
     
     // 存储灯塔数据，供popup使用
     chrome.storage.local.set({
