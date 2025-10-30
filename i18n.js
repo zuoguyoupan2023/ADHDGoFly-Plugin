@@ -149,6 +149,8 @@ class I18nManager {
       // 根据元素类型设置文本
       if (element.tagName === 'INPUT' && (element.type === 'button' || element.type === 'submit')) {
         element.value = translation;
+      } else if (element.tagName === 'BUTTON') {
+        element.textContent = translation;
       } else if (element.tagName === 'INPUT' && element.type === 'text') {
         element.placeholder = translation;
       } else if (element.hasAttribute('title')) {
