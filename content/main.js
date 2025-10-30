@@ -1591,7 +1591,7 @@ class ADHDHighlighter {
    * @returns {Promise<Object>} 语言分布统计
    */
   async analyzeLanguageDistribution() {
-    const languageStats = { zh: 0, en: 0, fr: 0, ru: 0, es: 0, ja: 0 };
+    const languageStats = { zh: 0, en: 0, fr: 0, ru: 0, es: 0, ja: 0, ko: 0, ar: 0 };
     
     try {
       // 完全基于词汇统计中的词汇数据进行语言分布统计
@@ -1602,16 +1602,31 @@ class ADHDHighlighter {
       // 合并所有词汇元素（与词汇统计保持一致）
       const allVocabularyElements = [...nounElements, ...verbElements, ...adjElements];
       
+      console.log('语言分布统计 - 开始分析:', {
+        名词元素数: nounElements.length,
+        动词元素数: verbElements.length,
+        形容词元素数: adjElements.length,
+        总词汇元素数: allVocabularyElements.length
+      });
+      
       if (allVocabularyElements.length > 0) {
         // 对每个词汇进行语言检测
         const detectionResults = [];
+        const unknownLanguages = new Set();
+        
         allVocabularyElements.forEach((element, index) => {
           const text = element.textContent.trim();
           if (text) {
             // 使用语言检测器检测每个词汇的语言
             const detectedLang = this.languageDetector.detectLanguage(text);
+            
             if (languageStats.hasOwnProperty(detectedLang)) {
               languageStats[detectedLang]++;
+            } else {
+              // 记录未知语言
+              unknownLanguages.add(detectedLang);
+              // 默认归类为英文
+              languageStats.en++;
             }
             
             // 记录前20个词汇的检测结果用于调试
@@ -1619,7 +1634,8 @@ class ADHDHighlighter {
               detectionResults.push({
                 词汇: text,
                 检测语言: detectedLang,
-                元素类名: element.className
+                元素类名: element.className,
+                是否已知语言: languageStats.hasOwnProperty(detectedLang)
               });
             }
           }
@@ -1631,7 +1647,8 @@ class ADHDHighlighter {
           动词: verbElements.length,
           形容词: adjElements.length,
           语言分布: languageStats,
-          前20个词汇检测结果: detectionResults
+          前20个词汇检测结果: detectionResults,
+          未知语言: Array.from(unknownLanguages)
         });
       } else {
         // 如果没有词汇统计数据，回退到页面文本分析
