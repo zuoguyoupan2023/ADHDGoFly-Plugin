@@ -6,6 +6,9 @@ class StreamingPageProcessor extends EventTarget {
     this.languageDetector = languageDetector;
     this.textSegmenter = textSegmenter;
     
+    // 初始化节点级缓存管理器
+    this.nodeLevelCacheManager = new NodeLevelCacheManager();
+    
     // 处理统计
     this.stats = {
       processedNodes: 0,
@@ -465,7 +468,7 @@ class StreamingPageProcessor extends EventTarget {
    * 在空闲时间处理节点
    * @param {IdleDeadline} deadline 空闲时间截止点
    */
-  processInIdleTime(deadline) {
+  async processInIdleTime(deadline) {
     this.isProcessing = true;
     this.processingScheduled = false;
     
@@ -484,7 +487,7 @@ class StreamingPageProcessor extends EventTarget {
       const nodeData = visibleNodes.shift();
       
       try {
-        this.processTextNode(nodeData.textNode);
+        await this.processTextNode(nodeData.textNode);
         nodeData.processed = true;
         this.processedNodes.add(nodeData.textNode);
         
@@ -550,33 +553,97 @@ class StreamingPageProcessor extends EventTarget {
    * 处理单个文本节点
    * @param {Node} textNode 要处理的文本节点
    */
-  processTextNode(textNode) {
+  async processTextNode(textNode) {
     const text = textNode.textContent;
     if (!text.trim()) {
       this.stats.skippedNodes++;
       return;
     }
 
+    const startTime = performance.now();
+    
     try {
-      // 使用现有的多语言处理逻辑
-      const segmentedHtml = this.processMultiLanguageText(text);
+      // 生成节点指纹和检测语言
+      const fingerprint = this.nodeLevelCacheManager.generateNodeFingerprint(textNode, window.location.href);
+      const language = this.languageDetector.detectLanguage(text);
+      
+      // 检查节点级缓存
+      const cachedResult = await this.nodeLevelCacheManager.getNodeCache(fingerprint, language);
+      
+      let segmentedHtml;
+      let fromCache = false;
+      
+      if (cachedResult) {
+        // 缓存命中
+        this.stats.cacheHits++;
+        
+        // 使用缓存的结果
+        segmentedHtml = cachedResult.segmentedHtml;
+        fromCache = true;
+        
+        console.log('使用节点级缓存:', {
+          nodeId: this.generateNodeId(textNode),
+          textLength: text.length,
+          language: language
+        });
+      } else {
+        // 缓存未命中，进行实际处理
+        this.stats.cacheMisses++;
+        
+        segmentedHtml = this.processMultiLanguageText(text);
+        
+        // 存储到节点级缓存
+        if (segmentedHtml !== text) {
+          const cacheData = {
+            originalText: text,
+            segmentedHtml: segmentedHtml,
+            timestamp: Date.now(),
+            language: language,
+            stats: this.textSegmenter.getSegmentationStats(segmentedHtml)
+          };
+          
+          try {
+            await this.nodeLevelCacheManager.storeNodeCache(fingerprint, language, cacheData);
+            this.stats.cacheStores++;
+          } catch (cacheError) {
+            this.stats.cacheErrors++;
+            console.warn('存储节点缓存失败:', cacheError);
+          }
+        }
+      }
       
       // 如果有变化，替换节点
       if (segmentedHtml !== text) {
         this.replaceTextNode(textNode, segmentedHtml);
         
         // 统计高亮词汇数量
-        const stats = this.textSegmenter.getSegmentationStats(segmentedHtml);
-        this.stats.highlightedWords += stats.totalWords;
+        const stats = fromCache ? 
+          cachedResult.stats : 
+          this.textSegmenter.getSegmentationStats(segmentedHtml);
+        
+        this.stats.highlightedWords += stats.totalWords || 0;
         
         // 触发高亮完成事件
-        this.dispatchHighlightEvent(textNode, segmentedHtml, stats);
+        this.dispatchHighlightEvent(textNode, segmentedHtml, stats, fromCache);
+      }
+      
+      this.stats.processedNodes++;
+      
+      // 记录处理时间
+      const processingTime = performance.now() - startTime;
+      this.stats.totalProcessingTime += processingTime;
+      if (fromCache) {
+        this.stats.cacheProcessingTime += processingTime;
       }
       
     } catch (error) {
       console.warn('处理文本节点失败:', error);
       this.stats.errors++;
       this.stats.skippedNodes++;
+      
+      // 记录处理时间（即使出错也要记录）
+      const processingTime = performance.now() - startTime;
+      this.stats.totalProcessingTime += processingTime;
     }
   }
 
@@ -718,7 +785,14 @@ class StreamingPageProcessor extends EventTarget {
       skippedNodes: 0,
       errors: 0,
       queuedNodes: 0,
-      visibleNodes: 0
+      visibleNodes: 0,
+      // 缓存相关统计
+      cacheHits: 0,
+      cacheMisses: 0,
+      cacheStores: 0,
+      cacheErrors: 0,
+      cacheProcessingTime: 0,
+      totalProcessingTime: 0
     };
   }
 
@@ -731,6 +805,74 @@ class StreamingPageProcessor extends EventTarget {
       ...this.stats,
       queueSize: this.processingQueue.size,
       isProcessing: this.isProcessing
+    };
+  }
+
+  /**
+   * 获取缓存性能统计
+   * @returns {Object} 缓存性能统计信息
+   */
+  async getCachePerformanceStats() {
+    try {
+      const cacheStats = await this.nodeLevelCacheManager.getPerformanceStats();
+      const processingStats = this.getStats();
+      
+      return {
+        // 缓存命中率
+        hitRate: processingStats.cacheHits + processingStats.cacheMisses > 0 ? 
+          (processingStats.cacheHits / (processingStats.cacheHits + processingStats.cacheMisses) * 100).toFixed(2) : 0,
+        
+        // 处理时间对比
+        avgCacheTime: processingStats.cacheHits > 0 ? 
+          (processingStats.cacheProcessingTime / processingStats.cacheHits).toFixed(2) : 0,
+        avgTotalTime: processingStats.processedNodes > 0 ? 
+          (processingStats.totalProcessingTime / processingStats.processedNodes).toFixed(2) : 0,
+        
+        // 缓存操作统计
+        cacheOperations: {
+          hits: processingStats.cacheHits,
+          misses: processingStats.cacheMisses,
+          stores: processingStats.cacheStores,
+          errors: processingStats.cacheErrors
+        },
+        
+        // 缓存存储统计
+        storage: cacheStats,
+        
+        // 性能提升估算
+        estimatedSpeedup: this.calculateSpeedupEstimate(processingStats)
+      };
+    } catch (error) {
+      console.warn('获取缓存性能统计失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 计算性能提升估算
+   * @param {Object} stats 统计数据
+   * @returns {Object} 性能提升估算
+   */
+  calculateSpeedupEstimate(stats) {
+    if (stats.processedNodes === 0 || stats.cacheHits === 0) {
+      return { speedup: 0, timeSaved: 0 };
+    }
+    
+    const avgCacheTime = stats.cacheProcessingTime / stats.cacheHits;
+    const avgTotalTime = stats.totalProcessingTime / stats.processedNodes;
+    const avgNonCacheTime = (stats.totalProcessingTime - stats.cacheProcessingTime) / 
+      (stats.processedNodes - stats.cacheHits);
+    
+    if (avgNonCacheTime <= avgCacheTime) {
+      return { speedup: 1, timeSaved: 0 };
+    }
+    
+    const speedup = avgNonCacheTime / avgCacheTime;
+    const timeSaved = (avgNonCacheTime - avgCacheTime) * stats.cacheHits;
+    
+    return {
+      speedup: speedup.toFixed(2),
+      timeSaved: timeSaved.toFixed(2)
     };
   }
 
@@ -762,6 +904,10 @@ class StreamingPageProcessor extends EventTarget {
     const stats = this.getStats();
     const totalNodes = stats.processedNodes + stats.queueSize;
     const progress = totalNodes > 0 ? (stats.processedNodes / totalNodes * 100).toFixed(1) : 0;
+    const cacheHitRate = (stats.cacheHits + stats.cacheMisses) > 0 ? 
+      (stats.cacheHits / (stats.cacheHits + stats.cacheMisses) * 100).toFixed(1) : 0;
+    const avgProcessingTime = stats.processedNodes > 0 ? 
+      (stats.totalProcessingTime / stats.processedNodes).toFixed(2) : 0;
     
     return {
       progress: `${progress}%`,
@@ -770,14 +916,21 @@ class StreamingPageProcessor extends EventTarget {
       visible: stats.visibleNodes,
       highlighted: stats.highlightedWords,
       errors: stats.errors,
-      isActive: this.isProcessing || stats.queueSize > 0
+      isActive: this.isProcessing || stats.queueSize > 0,
+      // 缓存性能统计
+      cacheHitRate: `${cacheHitRate}%`,
+      cacheHits: stats.cacheHits,
+      cacheMisses: stats.cacheMisses,
+      cacheStores: stats.cacheStores,
+      cacheErrors: stats.cacheErrors,
+      avgProcessingTime: `${avgProcessingTime}ms`
     };
   }
 
   /**
    * 触发高亮完成事件
    */
-  dispatchHighlightEvent(textNode, segmentedHtml, stats) {
+  dispatchHighlightEvent(textNode, segmentedHtml, stats, fromCache = false) {
     try {
       // 检测处理的语言
       const enabledLanguages = this.dictionaryManager.getEnabledLanguages();
@@ -794,6 +947,7 @@ class StreamingPageProcessor extends EventTarget {
         segmentedHtml: segmentedHtml,
         elements: highlightElements,
         stats: stats,
+        fromCache: fromCache,
         timestamp: Date.now()
       };
       

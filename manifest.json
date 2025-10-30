@@ -19,6 +19,8 @@
         "content/vocabulary-counter.js",
         "content/text-segmenter.js",
         "content/page-processor.js",
+        "content/storage/node-level-cache-manager.js",
+        "content/debug/cache-performance-monitor.js",
         "content/streaming-page-processor.js",
         "content/storage/event-cache-manager.js",
         "content/storage/adhdgofly-counter.js",
