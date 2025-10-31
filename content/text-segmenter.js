@@ -309,6 +309,8 @@ class TextSegmenter {
             (normalizedPos === 'v' && this.highlightingToggles.verb)
           );
           
+
+          
           if (shouldHighlight) {
             html += `<span class="adhd-${normalizedPos}" data-word="${cleanWord}" data-pos="${pos}">${token}</span>`;
           } else {

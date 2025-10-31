@@ -285,14 +285,13 @@ class PopupController {
             window.reviewLightTower.show();
     }
     
-    // 显示评价引导
-    this.showReviewPrompt();
+
     
     // 更新反馈链接显示
     this.updateFeedbackLink();
     
-    // 检查评价徽章状态
-    await this.checkReviewBadgeStatus();
+    // 检查是否需要显示评价提醒
+    await this.checkReviewLightTower();
   }
 
   bindEvents() {
@@ -427,6 +426,16 @@ class PopupController {
     if (languageToggle) {
       const title = language === 'zh' ? 'Switch to English' : '切换到中文';
       languageToggle.setAttribute('title', title);
+    }
+    
+    // 更新动态显示的词典工具按钮
+    const toolsSection = document.getElementById('vocabularyToolsSection');
+    const dictionaryBtn = document.getElementById('dictionaryToolBtn');
+    if (toolsSection && dictionaryBtn && toolsSection.style.display !== 'none') {
+      if (window.i18n) {
+        const translation = window.i18n.t('pages.ai.makeDictionary');
+        dictionaryBtn.textContent = translation;
+      }
     }
   }
 
@@ -1420,8 +1429,6 @@ class PopupController {
           this.highlightingToggles[type] = true;
         }
         
-        console.log(`${type}高亮开关:`, this.highlightingToggles[type]);
-        
         // 立即保存设置
         this.saveColorSettings();
       });
@@ -1616,9 +1623,6 @@ class PopupController {
         saveBtn.style.backgroundColor = '';
       }, 1500);
       
-      console.log('颜色方案已保存:', this.currentColorScheme);
-      console.log('高亮开关已保存:', this.highlightingToggles);
-      
     } catch (error) {
       console.error('保存颜色设置失败:', error);
     }
@@ -1798,11 +1802,7 @@ class PopupController {
 
   // AI分析相关方法
   bindAIEvents() {
-    // 刷新分析按钮事件
-    const refreshBtn = document.getElementById('refresh-analysis-btn');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.refreshAIAnalysis());
-    }
+    // AI分析相关事件绑定（如果需要的话）
   }
 
   // 复制词汇相关方法
@@ -2050,6 +2050,16 @@ class PopupController {
     const toolsSection = document.getElementById('vocabularyToolsSection');
     if (toolsSection) {
       toolsSection.style.display = 'block';
+      
+      // 立即应用i18n翻译到新显示的按钮
+      if (window.i18n) {
+        const dictionaryBtn = document.getElementById('dictionaryToolBtn');
+        if (dictionaryBtn) {
+          const translation = window.i18n.t('pages.ai.makeDictionary');
+          dictionaryBtn.textContent = translation;
+        }
+      }
+      
       console.log('✅ 词典工具链接已显示');
     } else {
       console.error('❌ 找不到词典工具链接元素');
@@ -2089,8 +2099,6 @@ class PopupController {
     // 显示所有分析项为加载中状态
     const loadingText = window.i18n.t('pages.ai.analyzing');
     
-    document.getElementById('languageStats').innerHTML = `<div class="loading">${loadingText}</div>`;
-    document.getElementById('posStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     document.getElementById('vocabularyStats').innerHTML = `<div class="loading">${loadingText}</div>`;
     
     // 高亮统计UI已隐藏，检查元素是否存在再操作
@@ -2106,12 +2114,6 @@ class PopupController {
   displayAIAnalysis(data) {
     console.log('显示AI分析数据:', data);
     
-    // 显示语言分布
-    this.displayLanguageStats(data.languages || {});
-    
-    // 显示词性分布
-    this.displayPOSStats(data.partOfSpeech || {});
-    
     // 显示高亮统计
     this.displayHighlightStats(data.highlights || {});
     
@@ -2122,65 +2124,7 @@ class PopupController {
     // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
   }
 
-  displayLanguageStats(languages) {
-    const container = document.getElementById('languageStats');
-    if (Object.keys(languages).length === 0) {
-      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
-      return;
-    }
-    
-    const total = Object.values(languages).reduce((sum, count) => sum + count, 0);
-    let html = '';
-    
-    Object.entries(languages).forEach(([lang, count]) => {
-      const percentage = ((count / total) * 100).toFixed(1);
-      html += `
-        <div class="stat-bar">
-          <div class="stat-label">${lang.toUpperCase()}</div>
-          <div class="stat-progress">
-            <div class="stat-fill" style="width: ${percentage}%; background-color: #007AFF;"></div>
-          </div>
-          <div class="stat-value">${percentage}%</div>
-        </div>
-      `;
-    });
-    
-    container.innerHTML = html;
-  }
 
-  displayPOSStats(partOfSpeech) {
-    const container = document.getElementById('posStats');
-    if (Object.keys(partOfSpeech).length === 0) {
-      container.innerHTML = `<div class="no-data">${window.i18n.t('pages.ai.noData')}</div>`;
-      return;
-    }
-    
-    const total = Object.values(partOfSpeech).reduce((sum, count) => sum + count, 0);
-    const colors = {
-      'noun': '#0066cc',
-      'verb': '#cc0000',
-      'adj': '#009933',
-      'other': '#666666'
-    };
-    
-    let html = '';
-    
-    Object.entries(partOfSpeech).forEach(([pos, count]) => {
-      const percentage = ((count / total) * 100).toFixed(1);
-      const color = colors[pos] || colors.other;
-      html += `
-        <div class="stat-bar">
-          <div class="stat-label">${pos}</div>
-          <div class="stat-progress">
-            <div class="stat-fill" style="width: ${percentage}%; background-color: ${color};"></div>
-          </div>
-          <div class="stat-value">${percentage}%</div>
-        </div>
-      `;
-    });
-    
-    container.innerHTML = html;
-  }
 
   displayHighlightStats(highlights) {
     // 高亮统计UI已隐藏，但保留逻辑代码以避免调用错误
@@ -2385,8 +2329,6 @@ class PopupController {
   showAIError() {
     const errorText = window.i18n.t('pages.ai.error');
     
-    document.getElementById('languageStats').innerHTML = `<div class="error">${errorText}</div>`;
-    document.getElementById('posStats').innerHTML = `<div class="error">${errorText}</div>`;
     document.getElementById('vocabularyStats').innerHTML = `<div class="error">${errorText}</div>`;
     
     // 高亮统计UI已隐藏，检查元素是否存在再操作
@@ -2401,14 +2343,6 @@ class PopupController {
 
   /**
    * 刷新AI分析
-   * 重新加载AI分析数据
-   */
-  async refreshAIAnalysis() {
-    console.log('刷新AI分析...');
-    await this.loadAIAnalysis();
-  }
-
-  /**
    * 检查版本更新
    * 获取当前版本并检查是否有新版本可用
    */
@@ -2703,353 +2637,241 @@ class PopupController {
     }
   }
 
-  showReviewPrompt() {
-    // 检查是否已经存在评价提示
-    if (document.getElementById('review-prompt')) {
-      return;
-    }
 
-    const title = window.i18n ? window.i18n.t('review.prompt.main.title') : '你愿意向其他人推荐这个插件吗？';
-    const description = window.i18n ? window.i18n.t('review.prompt.main.description') : '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。';
-    const reviewBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.review') : '去评价';
-    const reasonBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
-    const neverBtnText = window.i18n ? window.i18n.t('review.prompt.buttons.never') : '不再提醒';
 
-    // 创建评价提示元素
-    const promptDiv = document.createElement('div');
-    promptDiv.id = 'review-prompt';
-    
-    // 获取插件容器的位置和尺寸
-    const popupContainer = document.body;
-    const containerRect = popupContainer.getBoundingClientRect();
-    const containerHeight = window.innerHeight;
-    const containerWidth = window.innerWidth;
-    
-    // 计算提示框尺寸
-    const promptWidth = 280;
-    const promptHeight = 180;
-    
-    // 判断位置：优先插件下方，如果空间不够则放在左侧
-    let positionStyle = '';
-    if (containerHeight - containerRect.bottom >= promptHeight + 10) {
-      // 插件下方有足够空间
-      positionStyle = `
-        position: fixed;
-        top: ${containerRect.bottom + 3}px;
-        left: 50%;
-        transform: translateX(-50%);
-      `;
-    } else {
-      // 空间不够，放在左侧
-      positionStyle = `
-        position: fixed;
-        top: 50%;
-        left: ${containerRect.left - promptWidth - 5}px;
-        transform: translateY(-50%);
-      `;
-      // 如果左侧也没有空间，则居中显示
-      if (containerRect.left < promptWidth + 10) {
-        positionStyle = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-        `;
-      }
-    }
-    
-    promptDiv.style.cssText = `
-      ${positionStyle}
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 10000;
-      width: ${promptWidth}px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-    `;
+  // ==================== 评价提醒相关方法 ====================
 
-    promptDiv.innerHTML = `
-      <!-- 第一行：标题和关闭按钮 -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-        <div style="font-weight: 600; color: #333; font-size: 15px; flex: 1; padding-right: 8px; text-align: center;">
-          ${title}
-        </div>
-        <button id="close-review-prompt" style="
-          background: none;
-          border: none;
-          font-size: 18px;
-          cursor: pointer;
-          color: #666;
-          padding: 0;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        ">×</button>
-      </div>
-      
-      <!-- 第二行：五个空心五角星 -->
-      <div style="display: flex; justify-content: center; margin-bottom: 16px; gap: 4px;">
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="1">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="2">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="3">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="4">☆</span>
-        <span style="font-size: 20px; color: #ddd; cursor: pointer;" class="star-rating" data-rating="5">☆</span>
-      </div>
-      
-      <!-- 第三行："我需要理由"可展开 -->
-      <div style="text-align: center; margin-bottom: 16px;">
-        <button id="reason-toggle" style="
-          background: none;
-          border: none;
-          color: #666;
-          font-size: 13px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        ">${reasonBtnText}</button>
-      </div>
-      
-      <!-- 可展开的描述内容 -->
-      <div id="reason-content" style="
-        display: none;
-        color: #555;
-        margin-bottom: 16px;
-        font-size: 12px;
-        line-height: 1.4;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 6px;
-        border-left: 3px solid #007AFF;
-      ">
-        ${description}
-      </div>
-      
-      <!-- 第四行：去评价按钮和不再提醒 -->
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <a href="https://feedback.adhdgofly.online" target="_blank" style="
-          display: inline-block;
-          background: #007AFF;
-          color: white;
-          text-decoration: none;
-          padding: 8px 16px;
-          border-radius: 6px;
-          font-weight: 500;
-          font-size: 13px;
-          transition: background-color 0.2s;
-        " onmouseover="this.style.background='#0056CC'" onmouseout="this.style.background='#007AFF'">
-          ${reviewBtnText}
-        </a>
-        <button id="never-review-prompt" style="
-          background: none;
-          border: none;
-          color: #999;
-          font-size: 12px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
-          ${neverBtnText}
-        </button>
-      </div>
-    `;
-
-    // 添加到页面
-    document.body.appendChild(promptDiv);
-
-    // 绑定事件
-    const closeBtn = document.getElementById('close-review-prompt');
-    const reasonToggle = document.getElementById('reason-toggle');
-    const reasonContent = document.getElementById('reason-content');
-    const neverBtn = document.getElementById('never-review-prompt');
-    const stars = promptDiv.querySelectorAll('.star-rating');
-    
-    const removePrompt = () => {
-      if (promptDiv.parentNode) {
-        promptDiv.remove();
-      }
-    };
-
-    // 关闭按钮事件
-    if (closeBtn) {
-      closeBtn.addEventListener('click', removePrompt);
-    }
-    
-    // "我需要理由"展开/收起事件
-    if (reasonToggle && reasonContent) {
-      reasonToggle.addEventListener('click', () => {
-        const isVisible = reasonContent.style.display !== 'none';
-        reasonContent.style.display = isVisible ? 'none' : 'block';
-        reasonToggle.textContent = isVisible ? reasonBtnText : '收起理由';
-      });
-    }
-    
-    // 星星评分事件
-    stars.forEach((star, index) => {
-      star.addEventListener('mouseenter', () => {
-        // 鼠标悬停时高亮当前星星及之前的星星
-        stars.forEach((s, i) => {
-          s.style.color = i <= index ? '#FFD700' : '#ddd';
-          s.textContent = i <= index ? '★' : '☆';
-        });
-      });
-      
-      star.addEventListener('mouseleave', () => {
-        // 鼠标离开时恢复默认状态
-        stars.forEach(s => {
-          s.style.color = '#ddd';
-          s.textContent = '☆';
-        });
-      });
-      
-      star.addEventListener('click', () => {
-        // 点击星星时直接跳转到评价页面
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        removePrompt();
-      });
-    });
-    
-    // "不再提醒"事件
-    if (neverBtn) {
-      neverBtn.addEventListener('click', () => {
-        // 可以在这里添加"不再提醒"的逻辑
-        removePrompt();
-      });
-    }
-
-    // 3秒后自动淡化
-    setTimeout(() => {
-      if (promptDiv.parentNode) {
-        promptDiv.style.transition = 'opacity 0.5s';
-        promptDiv.style.opacity = '0.9';
-      }
-    }, 3000);
-  }
-
-  // 检查评价徽章状态
-  async checkReviewBadgeStatus() {
+  // 检查是否需要显示评价提醒
+  async checkReviewLightTower() {
     try {
-      // 从storage中获取徽章数据
-      const result = await new Promise((resolve) => {
-        chrome.storage.local.get(['reviewBadgeData'], resolve);
-      });
-
-      const badgeData = result.reviewBadgeData;
+      const result = await chrome.storage.local.get(['reviewLightTowerVisible', 'reviewLightTowerData']);
       
-      if (badgeData && badgeData.badgeShown) {
-        console.log('检测到评价徽章数据，显示评价提醒');
-        this.showReviewReminder(badgeData);
-        
-        // 隐藏徽章（用户已经看到了popup中的提醒）
-        chrome.runtime.sendMessage({
-          action: 'hideReviewBadge'
-        });
+      if (result.reviewLightTowerVisible && result.reviewLightTowerData) {
+        console.log('检测到评价灯塔数据，显示评价提醒', result.reviewLightTowerData);
+        this.showReviewLightTower(result.reviewLightTowerData);
+        this.bindReviewLightTowerEvents();
       }
     } catch (error) {
-      console.error('检查评价徽章状态时出错:', error);
+      console.error('检查评价提醒失败:', error);
     }
   }
 
   // 显示评价提醒
-  showReviewReminder(badgeData) {
+  showReviewLightTower(badgeData) {
     const reviewReminder = document.getElementById('reviewReminder');
     if (!reviewReminder) {
-      console.error('未找到评价提醒元素');
+      console.error('找不到评价提醒元素');
       return;
     }
 
     // 填充数据
-    const titleElement = reviewReminder.querySelector('.review-title');
-    const descriptionElement = reviewReminder.querySelector('.review-description');
+    this.populateReviewData(badgeData);
     
-    if (titleElement) {
-      titleElement.textContent = '感谢您使用ADHDGoFly！';
-    }
+    // 应用理由文本词性高亮
+    this.applyReasonTextHighlight();
     
-    if (descriptionElement) {
-      let description = `您已使用插件${badgeData.timerInfo || '一段时间'}`;
-      if (badgeData.nodeCount > 0) {
-        description += `，处理了${badgeData.nodeCount}个单词`;
-      }
-      if (badgeData.pageCount > 0) {
-        description += `，浏览了${badgeData.pageCount}个页面`;
-      }
-      description += '。如果您觉得有帮助，请考虑给我们一个好评！';
-      descriptionElement.textContent = description;
-    }
-
-    // 绑定按钮事件
-    this.bindReviewReminderEvents(reviewReminder, badgeData);
-
     // 显示提醒
     reviewReminder.style.display = 'block';
     
-    // 添加动画效果
-    setTimeout(() => {
-      reviewReminder.classList.add('show');
-    }, 100);
+    console.log('评价提醒已显示');
+  }
+
+  // 应用理由文本词性高亮
+  applyReasonTextHighlight() {
+    const reasonTextElement = document.querySelector('.reason-text');
+    if (!reasonTextElement) return;
+
+    // 获取当前文本内容
+    let text = reasonTextElement.textContent || reasonTextElement.innerText;
+    
+    // 定义中文词性映射
+    const chineseWordHighlights = {
+      // 名词（蓝色）
+      '更多人': 'noun',
+      '插件': 'noun', 
+      'ADHD': 'noun',
+      '阅读困难': 'noun',
+      '大量阅读': 'noun',
+      '机会': 'noun',
+      '阅读难度': 'noun',
+      
+      // 动词（红色）
+      '看到': 'verb',
+      '感到': 'verb',
+      '降低': 'verb',
+      
+      // 形容词（绿色）
+      '疲倦': 'adj'
+    };
+
+    // 定义英文词性映射
+    const englishWordHighlights = {
+      // 名词（蓝色）
+      'people': 'noun',
+      'extension': 'noun',
+      'ADHD': 'noun',
+      'difficulties': 'noun',
+      'reading': 'noun',
+      'chance': 'noun',
+      'difficulty': 'noun',
+      
+      // 动词（红色）
+      'discover': 'verb',
+      'struggle': 'verb',
+      'feel': 'verb',
+      'reduce': 'verb',
+      'helps': 'verb',
+      'use': 'verb',
+      
+      // 形容词（绿色）
+      'overwhelmed': 'adj',
+      'heavy': 'adj'
+    };
+
+    // 检测语言并选择对应的词汇映射
+    const isEnglish = /[a-zA-Z]/.test(text) && text.includes('extension');
+    const wordHighlights = isEnglish ? englishWordHighlights : chineseWordHighlights;
+
+    // 应用高亮
+    Object.keys(wordHighlights).forEach(word => {
+      const wordType = wordHighlights[word];
+      // 对于英文，使用单词边界匹配；对于中文，直接匹配
+      const regex = isEnglish ? 
+        new RegExp(`\\b${word}\\b`, 'gi') : 
+        new RegExp(word, 'g');
+      text = text.replace(regex, `<span class="highlight-${wordType}">${word}</span>`);
+    });
+
+    // 更新元素内容
+    reasonTextElement.innerHTML = text;
+  }
+
+  // 填充评价提醒数据
+  populateReviewData(badgeData) {
+    // 填充使用时间
+    const timerElement = document.getElementById('reviewTimerInfo');
+    if (timerElement && badgeData.timerInfo) {
+      timerElement.textContent = badgeData.timerInfo;
+    }
+
+    // 填充节点数和页面数
+    const nodeCountElement = document.getElementById('reviewNodeCount');
+    const pageCountElement = document.getElementById('reviewPageCount');
+    if (nodeCountElement && badgeData.nodeCount) {
+      nodeCountElement.textContent = badgeData.nodeCount;
+    }
+    if (pageCountElement && badgeData.pageCount) {
+      pageCountElement.textContent = badgeData.pageCount;
+    }
+
+    // 填充剩余提醒次数
+    const remainingCountElement = document.getElementById('reviewRemainingCount');
+    if (remainingCountElement && badgeData.remainingCount !== undefined) {
+      remainingCountElement.textContent = badgeData.remainingCount;
+    }
+
+    // 填充显示原因
+    if (badgeData.displayReason) {
+      const displayReasonElement = document.getElementById('reviewDisplayReason');
+      const reasonTextElement = document.getElementById('reviewReasonText');
+      if (displayReasonElement && reasonTextElement) {
+        reasonTextElement.textContent = badgeData.displayReason;
+        displayReasonElement.style.display = 'block';
+      }
+    }
   }
 
   // 绑定评价提醒事件
-  bindReviewReminderEvents(reviewReminder, badgeData) {
-    const reviewBtn = reviewReminder.querySelector('.review-btn-primary');
-    const laterBtn = reviewReminder.querySelector('.review-btn-secondary');
-    const dismissBtn = reviewReminder.querySelector('.review-btn-dismiss');
+  bindReviewLightTowerEvents() {
+    // 我需要理由按钮
+    const reasonToggleBtn = document.getElementById('reasonToggleBtn');
+    const reasonContent = document.getElementById('reasonContent');
+    if (reasonToggleBtn && reasonContent) {
+      reasonToggleBtn.addEventListener('click', () => {
+        const isVisible = reasonContent.style.display !== 'none';
+        reasonContent.style.display = isVisible ? 'none' : 'block';
+        
+        // 使用国际化文本
+        const reasonText = window.i18n ? window.i18n.t('review.prompt.buttons.reason') : '我需要理由';
+        const reasonCollapseText = window.i18n ? window.i18n.t('review.prompt.buttons.reasonCollapse') : '折叠';
+        reasonToggleBtn.textContent = isVisible ? reasonText : reasonCollapseText;
+      });
+    }
 
-    // 评价按钮
-    if (reviewBtn) {
-      reviewBtn.addEventListener('click', () => {
+    // 去评价按钮
+    const goReviewBtn = document.getElementById('goReviewBtn');
+    if (goReviewBtn) {
+      goReviewBtn.addEventListener('click', () => {
+        // 打开评价页面
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
-        this.hideReviewReminder(reviewReminder);
         
-        // 记录用户已评价
-        chrome.storage.local.set({
-          reviewCompleted: true,
-          reviewCompletedTime: Date.now()
-        });
+        // 隐藏提醒并清除徽章
+        this.hideReviewLightTower();
       });
     }
 
-    // 稍后提醒按钮
-    if (laterBtn) {
-      laterBtn.addEventListener('click', () => {
-        this.hideReviewReminder(reviewReminder);
-        
-        // 设置稍后提醒时间（24小时后）
-        chrome.storage.local.set({
-          reviewRemindLater: Date.now() + 24 * 60 * 60 * 1000
-        });
+    // 下次再说按钮
+    const laterReviewBtn = document.getElementById('laterReviewBtn');
+    if (laterReviewBtn) {
+      laterReviewBtn.addEventListener('click', () => {
+        // 只是简单关闭当前提醒，不做任何永久记录
+        // 这样每个大版本仍然可以根据条件触发3次提醒
+        this.hideReviewLightTower();
       });
     }
 
-    // 不再提醒按钮
-    if (dismissBtn) {
-      dismissBtn.addEventListener('click', () => {
-        this.hideReviewReminder(reviewReminder);
+    // 星星点击事件
+    const stars = document.querySelectorAll('.star-rating');
+    stars.forEach((star, index) => {
+      star.addEventListener('click', () => {
+        // 点击星星时直接跳转到评价页面
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        window.open(storeUrl, '_blank');
         
-        // 记录用户选择不再提醒
-        chrome.storage.local.set({
-          reviewDismissed: true,
-          reviewDismissedTime: Date.now()
+        // 隐藏提醒并清除徽章
+        this.hideReviewLightTower();
+      });
+
+      // 星星悬停效果
+      star.addEventListener('mouseenter', () => {
+        stars.forEach((s, i) => {
+          if (i <= index) {
+            s.style.color = '#ffa500';
+            s.textContent = '★';
+          } else {
+            s.style.color = '#ddd';
+            s.textContent = '☆';
+          }
+        });
+      });
+    });
+
+    // 星星区域鼠标离开事件
+    const starsContainer = document.querySelector('.review-stars');
+    if (starsContainer) {
+      starsContainer.addEventListener('mouseleave', () => {
+        stars.forEach(s => {
+          s.style.color = '#ddd';
+          s.textContent = '☆';
         });
       });
     }
   }
 
   // 隐藏评价提醒
-  hideReviewReminder(reviewReminder) {
-    reviewReminder.classList.remove('show');
-    setTimeout(() => {
+  hideReviewLightTower() {
+    const reviewReminder = document.getElementById('reviewReminder');
+    if (reviewReminder) {
       reviewReminder.style.display = 'none';
-    }, 300);
+    }
+    
+    // 发送消息给background隐藏灯塔
+    chrome.runtime.sendMessage({
+      action: 'hideReviewLightTower'
+    });
+
+    console.log('评价提醒已隐藏');
   }
 }
 

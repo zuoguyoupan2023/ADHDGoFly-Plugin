@@ -187,8 +187,8 @@
       "reset": "Reset Default"
     },
     "ai": {
-      "title": "Smart Analysis",
-      "description": "Highlight analysis  based on current page content",
+      "title": "Vocabulary Statistics",
+      "description": "Vocabulary analysis based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
         "language": "Language Distribution",
@@ -196,8 +196,9 @@
         "vocabulary": "Vocabulary Statistics"
       },
 
-      "refresh": "🔄 Refresh Analysis",
       "analyzing": "Analyzing...",
+      "copy": "📋 Copy",
+      "makeDictionary": "🔗 Create Dictionary",
 
       "noData": "No data available",
       "error": "Analysis failed, please try again"
@@ -391,6 +392,16 @@
        },
        "changelog": {
          "title": "Update Log",
+         "v015": {
+           "title": "Cache Logic Optimization & Custom Dictionary Enhancement",
+           "feature1": "Optimized caching logic for improved page loading performance",
+           "feature2": "Added vocabulary-part-of-speech copy function for easier custom dictionary creation",
+           "feature3": "Use official logo",
+           "feature4": "Added Q&A page",
+           "feature5": "Added review reminders",
+           "feature6": "Added anonymous information collection for product optimization",
+           "feature7": "Added feedback functionality"
+         },
          "v014": {
            "title": "Dictionary Features & Performance Enhancement",
            "feature1": "Added custom dictionary functionality",
@@ -440,11 +451,13 @@
       },
       "buttons": {
         "review": "Leave a Review",
-        "reason": "I need a reason",
-        "reasonCollapse": "Hide reason",
+        "reason": "Why",
+        "reasonCollapse": "Hide Reason",
+        "later": "Later",
         "never": "Don't Ask Again"
       },
       "reasonContent": {
+        "description": "Your review helps more people discover this extension, whether they struggle with ADHD, reading difficulties, or simply feel overwhelmed by heavy reading - they all have the chance to use this extension to reduce reading difficulty.",
         "title": "Why recommend this extension?",
         "points": [
           "🎯 Designed for ADHD and reading difficulties, lowering reading barriers",

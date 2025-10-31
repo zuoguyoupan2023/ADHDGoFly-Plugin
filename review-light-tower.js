@@ -1,3 +1,29 @@
+/**
+ * 评价提醒灯塔系统
+ * 
+ * ========== 配置模式切换说明 ==========
+ * 
+ * 🔧 一键切换测试/正式模式：
+ * 只需修改构造函数中的 this.ReviewLightTowerTest 值：
+ * - false: 正式版本模式（默认）
+ * - true:  测试模式
+ * 
+ * 🎯 正式版本配置（ReviewLightTowerTest = false）：
+ * - 条件3：50天 + 20000个节点
+ * - 条件2：21天 + 1000个节点  
+ * - 条件1：7天 + 2000个节点
+ * 
+ * 🧪 测试模式配置（ReviewLightTowerTest = true）：
+ * - 条件3：50分钟 + 1000个节点
+ * - 条件2：20分钟 + 500个节点
+ * - 条件1：10分钟 + 100个节点
+ * 
+ * ✅ 优势：
+ * - 安全：无需手动修改多处代码
+ * - 简单：只需改一个配置值
+ * - 自动：条件判断和日志描述都会自动切换
+ * - 清晰：控制台会显示当前模式
+ */
 class ReviewLightTower {
   constructor() {
     this.promptDiv = null;
@@ -5,6 +31,11 @@ class ReviewLightTower {
     // 24小时检查间隔机制
     this.lastCheckTime = null;
     this.checkInterval = 24 * 60 * 60 * 1000; // 24小时，单位：毫秒
+    
+    // 🔧 测试模式配置开关
+    // true: 启用测试模式（分钟级别，较小节点数）
+    // false: 正式版本模式（天级别，正常节点数）
+    this.ReviewLightTowerTest = false; // 正式版本设为 false，测试时改为 true
   }
 
   async getCurrentVersion() {
@@ -24,19 +55,28 @@ class ReviewLightTower {
 
   async getDisplayRecord() {
     try {
-      const record = localStorage.getItem('reviewLightTowerDisplay');
+      // 使用Chrome Storage API而不是localStorage，确保在插件的不同上下文中数据共享
+      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
+      const record = result.reviewLightTowerDisplay;
+      console.log(`🔍 ReviewLightTower调试：读取Chrome Storage记录:`, record);
+      
       if (record) {
-        const parsed = JSON.parse(record);
+        console.log(`🔍 ReviewLightTower调试：找到存储的记录:`, record);
+        
         // 确保有triggeredConditions字段
-        if (!parsed.triggeredConditions) {
-          parsed.triggeredConditions = [];
+        if (!record.triggeredConditions) {
+          record.triggeredConditions = [];
         }
         // 读取lastCheckTime并设置到实例属性
-        if (parsed.lastCheckTime) {
-          this.lastCheckTime = parsed.lastCheckTime;
+        if (record.lastCheckTime) {
+          this.lastCheckTime = record.lastCheckTime;
         }
-        return parsed;
+        
+        console.log(`🔍 ReviewLightTower调试：当前显示次数: ${record.count}/3`);
+        return record;
       }
+      
+      console.log(`🔍 ReviewLightTower调试：没有找到记录，返回默认值`);
       return { count: 0, lastVersion: null, triggeredConditions: [], lastCheckTime: null };
     } catch (error) {
       console.error('获取显示记录失败:', error);
@@ -53,7 +93,15 @@ class ReviewLightTower {
         triggeredConditions: triggeredConditions || currentRecord.triggeredConditions || [],
         lastCheckTime: this.lastCheckTime
       };
-      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+      
+      console.log(`🔍 ReviewLightTower调试：准备更新记录:`, record);
+      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
+      console.log(`🔍 ReviewLightTower调试：记录已保存到Chrome Storage`);
+      
+      // 验证保存是否成功
+      const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
+      console.log(`🔍 ReviewLightTower调试：验证保存结果:`, result.reviewLightTowerDisplay);
+      
     } catch (error) {
       console.error('更新显示记录失败:', error);
     }
@@ -75,7 +123,8 @@ class ReviewLightTower {
   async resetDisplayRecord(version) {
     try {
       const record = { count: 0, lastVersion: version, triggeredConditions: [] };
-      localStorage.setItem('reviewLightTowerDisplay', JSON.stringify(record));
+      await chrome.storage.local.set({ reviewLightTowerDisplay: record });
+      console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
     } catch (error) {
       console.error('重置显示记录失败:', error);
     }
@@ -89,56 +138,124 @@ class ReviewLightTower {
    * @returns {Object} 包含是否显示、原因和条件ID的对象
    */
   checkDisplayConditions(totalHours, nodeCount, triggeredConditions = []) {
-    // 宽松条件：满足任意一个条件且该条件未触发过就显示
-    if (totalHours > 23 && nodeCount > 5000) {
-      const conditionId = 'condition_23h_5000n';
-      if (!triggeredConditions.includes(conditionId)) {
+    // ========== 评价提醒条件配置 ==========
+    // 根据 this.ReviewLightTowerTest 自动选择测试或正式模式
+    // 🔧 只需修改构造函数中的 this.ReviewLightTowerTest 即可切换模式
+    
+    if (this.ReviewLightTowerTest) {
+      // 🧪 测试模式：分钟级别，较小节点数
+      const totalMinutes = totalHours * 60;
+      
+      // 条件1：10分钟 + 100个节点 (最宽松条件)
+      if (totalMinutes > 10 && nodeCount > 100) {
+        const conditionId = 'condition_10h_1000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于10分钟(${totalMinutes}分钟)且节点数大于100个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件2：20分钟 + 500个节点 (中等条件)
+      if (totalMinutes > 20 && nodeCount > 500) {
+        const conditionId = 'condition_20h_2000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于20分钟(${totalMinutes}分钟)且节点数大于500个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件3：50分钟 + 1000个节点 (最严格条件)
+      if (totalMinutes > 50 && nodeCount > 1000) {
+        const conditionId = 'condition_23h_5000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于50分钟(${totalMinutes}分钟)且节点数大于1000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 测试模式：不满足条件的情况
+      const satisfiedConditions = [];
+      if (totalMinutes > 10 && nodeCount > 100) satisfiedConditions.push('10分钟+100节点');
+      if (totalMinutes > 20 && nodeCount > 500) satisfiedConditions.push('20分钟+500节点');
+      if (totalMinutes > 50 && nodeCount > 1000) satisfiedConditions.push('50分钟+1000节点');
+      
+      if (satisfiedConditions.length > 0) {
         return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于23小时(${totalHours}小时)且节点数大于5000个(${nodeCount}个)所以显示`
+          shouldShow: false,
+          reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
+        };
+      } else {
+        return {
+          shouldShow: false,
+          reason: `当前${totalMinutes}分钟${nodeCount}个节点，不满足显示条件(需要>10分钟且>100节点)`
         };
       }
-    }
-    
-    if (totalHours > 20 && nodeCount > 2000) {
-      const conditionId = 'condition_20h_2000n';
-      if (!triggeredConditions.includes(conditionId)) {
-        return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于20小时(${totalHours}小时)且节点数大于2000个(${nodeCount}个)所以显示`
-        };
-      }
-    }
-    
-    if (totalHours > 10 && nodeCount > 1000) {
-      const conditionId = 'condition_10h_1000n';
-      if (!triggeredConditions.includes(conditionId)) {
-        return {
-          shouldShow: true,
-          conditionId: conditionId,
-          reason: `时间大于10小时(${totalHours}小时)且节点数大于1000个(${nodeCount}个)所以显示`
-        };
-      }
-    }
-    
-    // 不满足任何条件或所有满足的条件都已触发过
-    const satisfiedConditions = [];
-    if (totalHours > 23 && nodeCount > 5000) satisfiedConditions.push('23小时+5000节点');
-    if (totalHours > 20 && nodeCount > 2000) satisfiedConditions.push('20小时+2000节点');
-    if (totalHours > 10 && nodeCount > 1000) satisfiedConditions.push('10小时+1000节点');
-    
-    if (satisfiedConditions.length > 0) {
-      return {
-        shouldShow: false,
-        reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
-      };
+      
     } else {
-      return {
-        shouldShow: false,
-        reason: `当前${totalHours}小时${nodeCount}个节点，不满足显示条件(需要>10小时且>1000节点)`
-      };
+      // 🎯 正式模式：天级别，正常节点数
+      
+      // 条件1：7天 + 2000个节点 (最宽松条件)
+      if (totalHours > 7 * 24 && nodeCount > 2000) {
+        const conditionId = 'condition_10h_1000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于7天(${Math.round(totalHours/24)}天)且节点数大于2000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件2：21天 + 1000个节点 (中等条件)
+      if (totalHours > 21 * 24 && nodeCount > 1000) {
+        const conditionId = 'condition_20h_2000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于21天(${Math.round(totalHours/24)}天)且节点数大于1000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 条件3：50天 + 20000个节点 (最严格条件)
+      if (totalHours > 50 * 24 && nodeCount > 20000) {
+        const conditionId = 'condition_23h_5000n';
+        if (!triggeredConditions.includes(conditionId)) {
+          return {
+            shouldShow: true,
+            conditionId: conditionId,
+            reason: `时间大于50天(${Math.round(totalHours/24)}天)且节点数大于20000个(${nodeCount}个)所以显示`
+          };
+        }
+      }
+      
+      // 正式模式：不满足条件的情况
+      const satisfiedConditions = [];
+      if (totalHours > 7 * 24 && nodeCount > 2000) satisfiedConditions.push('7天+2000节点');
+      if (totalHours > 21 * 24 && nodeCount > 1000) satisfiedConditions.push('21天+1000节点');
+      if (totalHours > 50 * 24 && nodeCount > 20000) satisfiedConditions.push('50天+20000节点');
+      
+      if (satisfiedConditions.length > 0) {
+        return {
+          shouldShow: false,
+          reason: `满足条件(${satisfiedConditions.join(', ')})但已显示过，不再重复显示`
+        };
+      } else {
+        return {
+          shouldShow: false,
+          reason: `当前${Math.round(totalHours/24)}天${nodeCount}个节点，不满足显示条件(需要>7天且>2000节点)`
+        };
+      }
     }
   }
 
@@ -161,36 +278,61 @@ class ReviewLightTower {
     }
 
     // 将条件ID转换为可读的描述
+    // 根据 this.ReviewLightTowerTest 自动选择对应的描述文本
     const conditionDescriptions = triggeredConditions.map(conditionId => {
-      switch (conditionId) {
-        case 'condition_23h_5000n':
-          return '23小时+5000节点';
-        case 'condition_20h_2000n':
-          return '20小时+2000节点';
-        case 'condition_10h_1000n':
-          return '10小时+1000节点';
-        default:
-          return conditionId; // 如果是未知的条件ID，直接显示
+      if (this.ReviewLightTowerTest) {
+        // 🧪 测试模式描述
+        switch (conditionId) {
+          case 'condition_10h_1000n':
+            return '10分钟+100节点';
+          case 'condition_20h_2000n':
+            return '20分钟+500节点';
+          case 'condition_23h_5000n':
+            return '50分钟+1000节点';
+          default:
+            return conditionId;
+        }
+      } else {
+        // 🎯 正式模式描述
+        switch (conditionId) {
+          case 'condition_10h_1000n':
+            return '7天+2000节点';
+          case 'condition_20h_2000n':
+            return '21天+1000节点';
+          case 'condition_23h_5000n':
+            return '50天+20000节点';
+          default:
+            return conditionId;
+        }
       }
     });
 
-    console.log(`ReviewLightTower：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
+    const modeText = this.ReviewLightTowerTest ? '(测试模式)' : '(正式模式)';
+    console.log(`ReviewLightTower${modeText}：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
   }
 
   async show() {
     try {
-      // 24小时间隔检查
+      // 24小时间隔检查 - 根据模式决定是否启用
       const currentTime = Date.now();
-      if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
-        const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
-        const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
-        console.log(`ReviewLightTower：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
-        return;
+      
+      // 正式模式启用24小时检查，测试模式跳过24小时检查
+      if (!this.ReviewLightTowerTest) {
+        // 正式模式：执行24小时检查
+        if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
+          const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
+          const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
+          console.log(`ReviewLightTower(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
+          return;
+        }
+        console.log(`ReviewLightTower(正式模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()}`);
+      } else {
+        // 测试模式：跳过24小时检查
+        console.log(`ReviewLightTower(测试模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()} (测试模式已跳过24小时限制)`);
       }
       
       // 更新最后检查时间
       this.lastCheckTime = currentTime;
-      console.log(`ReviewLightTower：开始24小时检查，时间: ${new Date(currentTime).toLocaleString()}`);
       
       // 获取当前版本
       const currentVersion = await this.getCurrentVersion();
@@ -210,11 +352,13 @@ class ReviewLightTower {
       
       // 先检查剩余显示次数
       const remainingCount = Math.max(0, 3 - displayRecord.count);
+      console.log(`🔍 ReviewLightTower调试：显示次数检查 - 当前次数: ${displayRecord.count}, 剩余次数: ${remainingCount}`);
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
         // 即使已达到最大显示次数，也要保存lastCheckTime以确保24小时间隔生效
         await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
+        console.log(`🔍 ReviewLightTower调试：已达到最大次数，直接返回，不会调用notifyBackgroundShowBadge`);
         return;
       }
       
@@ -230,8 +374,13 @@ class ReviewLightTower {
       const nodeCount = await counter.getNodeCount();
       const pageCount = await counter.getPageCount();
       
-      // 获取总小时数
-      const totalHours = timerData ? (timerData.days * 24 + timerData.hours) : 0;
+      // 获取总小时数（包含分钟转换）
+      const totalHours = timerData ? (timerData.days * 24 + timerData.hours + timerData.minutes / 60) : 0;
+      
+      // 调试日志：显示时间计算过程
+      if (timerData) {
+        console.log(`ReviewLightTower：时间计算 - 天数:${timerData.days}, 小时:${timerData.hours}, 分钟:${timerData.minutes}, 总小时数:${totalHours.toFixed(2)}`);
+      }
       
       // 检查显示条件（宽松检测），传入已触发条件
       const conditionResult = this.checkDisplayConditions(totalHours, nodeCount, displayRecord.triggeredConditions);
@@ -245,7 +394,7 @@ class ReviewLightTower {
       
       console.log(`ReviewLightTower：满足显示条件，剩余${remainingCount}次，${conditionResult.reason}`);
       
-      // 通知background.js显示评价徽章，传入显示原因
+      // 创建评价提醒UI，传入显示原因
       this.notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount, conditionResult.reason);
       
       // 更新显示记录，记录新触发的条件
@@ -263,7 +412,7 @@ class ReviewLightTower {
         return;
       }
       
-      // 查询失败但仍有次数时通知显示徽章
+      // 查询失败但仍有次数时才显示
       this.notifyBackgroundShowBadge('查询失败', 0, 0, remainingCount, '查询失败时显示');
       
       // 更新显示记录
@@ -272,242 +421,24 @@ class ReviewLightTower {
     }
   }
 
-  // 通知background.js显示徽章
   notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
+    // 通知background.js显示灯塔，并传递评价提醒数据
     try {
-      // 发送消息给background.js显示徽章
+      console.log(`🔍 ReviewLightTower调试：准备通知background显示徽章，剩余次数: ${remainingCount}`);
       chrome.runtime.sendMessage({
-        action: 'showReviewBadge',
+        action: 'showReviewLightTower',
         data: {
           timerInfo,
           nodeCount,
           pageCount,
           remainingCount,
-          displayReason,
-          timestamp: Date.now()
-        }
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('ReviewLightTower：发送徽章显示消息失败:', chrome.runtime.lastError);
-        } else {
-          console.log('ReviewLightTower：已通知background.js显示评价徽章');
+          displayReason
         }
       });
+      console.log('已通知background显示评价徽章');
     } catch (error) {
-      console.error('ReviewLightTower：通知background.js显示徽章时出错:', error);
+      console.error('通知background显示徽章失败:', error);
     }
-  }
-
-  createReviewPrompt(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
-    // 如果已经存在提醒框，先移除
-    if (this.promptDiv && this.promptDiv.parentNode) {
-      this.promptDiv.remove();
-    }
-
-    // 获取i18n文本
-    const title = this.getI18nText('review.title', '你愿意向其他人推荐这个插件吗？');
-    const description = this.getI18nText('review.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。');
-    const reviewBtnText = this.getI18nText('review.goReview', '去评价');
-    const reasonBtnText = this.getI18nText('review.needReason', '我需要理由');
-    const reasonCollapseBtnText = this.getI18nText('review.reasonCollapse', '收起理由');
-    const neverBtnText = this.getI18nText('review.neverAsk', '不再提醒');
-
-    // 创建提醒框
-    this.promptDiv = document.createElement('div');
-    this.promptDiv.id = 'review-light-tower-prompt';
-    this.promptDiv.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      padding: 20px;
-      z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 450px;
-      min-width: 350px;
-      max-height: 80vh;
-      overflow-y: auto;
-    `;
-
-    // 设置HTML内容
-    this.promptDiv.innerHTML = `
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      ">
-        <h3 style="
-          margin: 0;
-          font-size: 16px;
-          font-weight: 600;
-          color: #333;
-          line-height: 1.4;
-        ">${title}</h3>
-        <button id="close-review-prompt" style="
-          background: none;
-          border: none;
-          font-size: 18px;
-          cursor: pointer;
-          color: #999;
-          padding: 0;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">×</button>
-      </div>
-
-      <!-- 数据显示区域 -->
-      <div style="
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 15px;
-        font-size: 12px;
-        color: #666;
-        border-left: 3px solid #007bff;
-      ">
-        <div style="margin-bottom: 5px;">
-          <strong>插件使用时间：</strong> ${timerInfo}
-        </div>
-        <div style="margin-bottom: 5px;">
-          <strong>处理节点数：</strong> ${nodeCount} 个 | <strong>页面数：</strong> ${pageCount} 个
-        </div>
-        <div style="color: #007bff; font-weight: 600; margin-bottom: 5px;">
-          <strong>剩余提醒次数：</strong> ${remainingCount} 次
-        </div>
-        ${displayReason ? `<div style="color: #28a745; font-weight: 600; font-size: 11px; background: #e8f5e8; padding: 6px; border-radius: 4px; border-left: 3px solid #28a745;">
-          <strong>显示原因：</strong> ${displayReason}
-        </div>` : ''}
-      </div>
-
-      <!-- 星星评分 -->
-      <div style="
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin: 20px 0;
-      ">
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-        <span class="star-rating" style="
-          font-size: 24px;
-          color: #ddd;
-          cursor: pointer;
-          transition: color 0.2s;
-        ">☆</span>
-      </div>
-
-      <!-- 我需要理由按钮 -->
-      <div style="text-align: center; margin: 15px 0;">
-        <button id="reason-toggle" style="
-          background: none;
-          border: none;
-          color: #007bff;
-          font-size: 12px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        ">${reasonBtnText}</button>
-      </div>
-
-      <!-- 理由内容（默认隐藏） -->
-      <div id="reason-content" style="
-        display: none;
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 12px;
-        margin: 10px 0;
-        font-size: 12px;
-        color: #666;
-        line-height: 1.4;
-        border-left: 3px solid #28a745;
-      ">
-        <div style="margin-bottom: 12px;">
-          <div style="margin-bottom: 8px; font-weight: 600; color: #333;">
-            ${this.getI18nText('review.reasonContent.title', '为什么需要您的评价？')}
-          </div>
-          <div style="margin: 8px 0; padding: 12px; background-color: #ffffff; border-radius: 6px; line-height: 1.5; color: #555;">
-            ${this.getI18nText('review.reasonContent.description', '你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。')}
-          </div>
-        </div>
-      </div>
-
-      <!-- 底部按钮 -->
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        margin-top: 20px;
-      ">
-        <button id="go-review-btn" style="
-          background: #007bff;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          padding: 8px 16px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        " onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">
-          ${reviewBtnText}
-        </button>
-        <button id="never-review-prompt" style="
-          background: none;
-          border: none;
-          color: #999;
-          font-size: 12px;
-          cursor: pointer;
-          text-decoration: underline;
-          padding: 4px 8px;
-        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'">
-          ${neverBtnText}
-        </button>
-      </div>
-    `;
-
-    // 添加到页面
-    document.body.appendChild(this.promptDiv);
-
-    // 确保DOM元素已经添加后再绑定事件
-    setTimeout(() => {
-      this.bindEvents();
-    }, 0);
-
-    // 3秒后自动淡化
-    setTimeout(() => {
-      if (this.promptDiv && this.promptDiv.parentNode) {
-        this.promptDiv.style.transition = 'opacity 0.5s';
-        this.promptDiv.style.opacity = '0.9';
-      }
-    }, 3000);
   }
 
   bindEvents() {

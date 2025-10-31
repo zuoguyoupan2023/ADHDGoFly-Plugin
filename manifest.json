@@ -19,6 +19,8 @@
         "content/vocabulary-counter.js",
         "content/text-segmenter.js",
         "content/page-processor.js",
+        "content/storage/node-level-cache-manager.js",
+        "content/debug/cache-performance-monitor.js",
         "content/streaming-page-processor.js",
         "content/storage/event-cache-manager.js",
         "content/storage/adhdgofly-counter.js",
@@ -31,8 +33,20 @@
     "css": ["styles.css"],
     "run_at": "document_end"
   }],
+  "icons": {
+    "16": "public/logo-300x300.png",
+    "32": "public/logo-300x300.png",
+    "48": "public/logo-300x300.png",
+    "128": "public/logo-300x300.png"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "public/logo-300x300.png",
+      "32": "public/logo-300x300.png",
+      "48": "public/logo-300x300.png",
+      "128": "public/logo-300x300.png"
+    }
   },
   "web_accessible_resources": [{
     "resources": [

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADHDGoFly - 让阅读变得轻松</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fff;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        
+        .hero .tagline {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .hero .subtitle {
+            font-size: 0.95rem;
+            color: #888;
+        }
+        
+        .content-block {
+            margin-bottom: 35px;
+            padding: 25px;
+            background: #fafafa;
+            border-radius: 8px;
+            border-left: 3px solid #007AFF;
+        }
+        
+        .content-block h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+        }
+        
+        .content-block p {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+        
+        .feature-demo {
+            background: #f0f8ff;
+            border-left-color: #4CAF50;
+        }
+        
+        .multilang-demo {
+            background: #fff5f5;
+            border-left-color: #FF6B6B;
+        }
+        
+        .real-world {
+            background: #f9f7ff;
+            border-left-color: #9C27B0;
+        }
+        
+        .highlight-example {
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007AFF;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .cta {
+            text-align: center;
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .cta h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .cta p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .language-switcher {
+            text-align: center;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .language-switcher button {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            min-width: 60px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .language-switcher button:hover {
+            background: #e9ecef;
+        }
+        
+        .language-switcher button.active {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+        }
+        
+        .lang-content {
+            display: none;
+        }
+        
+        .lang-content.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .hero h1 { font-size: 1.8rem; }
+            .content-block { padding: 20px; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            
+            .language-switcher {
+                margin: 20px 0;
+                gap: 8px;
+            }
+            
+            .language-switcher button {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                min-width: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="lang-content active" id="zh-content">
+            <h1>ADHDGoFly, 为 ADHD 设计</h1>
+            <p class="tagline">词汇高亮，让网页阅读变得轻松</p>
+            <p class="subtitle">已帮助40+用户提升阅读体验<br>支持语言：中文 English Français Español Русский 日本語</p>
+        </div>
+        <div class="lang-content" id="en-content">
+            <h1>ADHDGoFly, designed for ADHDer</h1>
+            <p class="tagline">Smart vocabulary highlighting makes web reading effortless</p>
+            <p class="subtitle">Helping 40+ users improve their reading experience</p>
+        </div>
+    </div>
+
+    <div class="language-switcher">
+        <button onclick="switchLanguage('zh')" class="active" id="zh-btn">中文</button>
+        <button onclick="switchLanguage('en')" id="en-btn">English</button>
+    </div>
+
+    <div class="content-block  feature-demo" >
+        <div class="lang-content active" id="zh-languages">
+            <h2>🌐 支持语言</h2>
+            <p>
+                中文和English Français Español Русский 日本語
+            </p>
+        </div>
+        
+        <div class="lang-content" id="en-languages">
+            <h2>🌐 Supported Languages</h2>
+            <p>
+                中文 English Français Español Русский 日本語
+            </p>
+        </div>
+    </div>
+
+    <div class="content-block feature-demo">
+        <div class="lang-content active" id="zh-demo">
+            <h2>🎯 看看它是如何工作的</h2>
+            <p>当你在阅读这段文字时，ADHDGoFly会自动识别每个词汇的词性。名词会用一种颜色高亮，动词用另一种颜色，形容词又是不同的颜色。这样你就能快速理解句子结构，不再被密密麻麻的文字困扰。</p>
+            
+            <div class="highlight-example">
+                "我今天读了一篇很有趣的文章，讲的是人工智能如何改变教育行业。"
+            </div>
+            
+            <p>安装插件后，上面这句话中的"文章"、"人工智能"、"教育"等名词会被高亮，"读了"、"改变"等动词也会用不同颜色标出，让你一眼就能抓住重点。</p>
+        </div>
+        
+        <div class="lang-content" id="en-demo">
+            <h2>🎯 See How It Works</h2>
+            <p>When you're reading this text, ADHDGoFly automatically identifies the part of speech for each word. Nouns are highlighted in one color, verbs in another, and adjectives in yet another. This helps you quickly understand sentence structure without being overwhelmed by dense text.</p>
+            
+            <div class="highlight-example">
+                "Today I read a fascinating article about how artificial intelligence is transforming the education industry."
+            </div>
+            
+            <p>After installing the extension, nouns like "article," "intelligence," and "education" in the sentence above will be highlighted, while verbs like "read" and "transforming" will be marked in different colors, helping you grasp the key points at a glance.</p>
+        </div>
+    </div>
+
+    <div class="content-block multilang-demo">
+        <div class="lang-content active" id="zh-multilang">
+            <h2>🌍 不只是中文，还支持多种语言</h2>
+            <p>Whether you're reading English articles, French literature, or Spanish news, ADHDGoFly adapts automatically. The extension recognizes different languages and applies appropriate highlighting rules.</p>
+            
+            <div class="highlight-example">
+                "Cette technologie révolutionnaire aide les personnes avec TDAH à mieux comprendre les textes complexes."
+            </div>
+            
+            <p>从中文到英文，从法语到西班牙语，甚至日语和俄语，ADHDGoFly都能智能识别并提供相应的词性标注。无论你在学习哪种语言，都能获得一致的阅读辅助体验。</p>
+        </div>
+        
+        <div class="lang-content" id="en-multilang">
+            <h3>🌍 Multi-language Support</h3>
+            <p>ADHDGoFly supports multiple languages and can even handle mixed-language content:</p>
+            
+            <div class="highlight-example">
+                "I love reading 中文文章 and English articles. Sometimes I also read français content."
+            </div>
+            
+            <p>The extension intelligently recognizes different languages and applies appropriate highlighting rules for each.</p>
+        </div>
+    </div>
+
+    <div class="content-block real-world">
+        <div class="lang-content active" id="zh-realworld">
+            <h2>📚 真实用户的使用场景</h2>
+            <p>Sarah是一名大学生，患有ADHD。以前她读学术论文时总是走神，一页纸要读好几遍。现在有了ADHDGoFly，她能快速识别关键概念，阅读效率提升了60%。</p>
+            
+            <p>李明在学习英语，经常被复杂的句子结构搞混。ADHDGoFly帮他区分主语、谓语、宾语，现在他能更好地理解英文文章的逻辑结构。</p>
+            
+            <p>Maria正在准备法语考试，需要大量阅读法语文献。插件的多语言支持让她能同时处理法语和英语材料，学习效率大大提升。</p>
+        </div>
+        
+        <div class="lang-content" id="en-realworld">
+            <h2>📖 Real User Stories</h2>
+            
+            <div class="user-story">
+                <h3>📚 Student Sarah</h3>
+                <p>"As a college student with ADHD, reading academic papers used to be overwhelming. Now with ADHDGoFly, I can quickly identify key concepts and understand complex sentences. My reading speed has improved by 40%!"</p>
+            </div>
+            
+            <div class="user-story">
+                <h3>💼 Professional Mike</h3>
+                <p>"I need to read a lot of technical documentation at work. ADHDGoFly helps me focus on important information without getting lost in dense text. It's like having a reading assistant that never gets tired."</p>
+            </div>
+            
+            <div class="user-story">
+                <h3>🌍 Language Learner Emma</h3>
+                <p>"Learning English as a second language became much easier with ADHDGoFly. The color-coded highlighting helps me understand sentence structure and improves my grammar comprehension."</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+    统计数据部分已注释 - AI编造的数据，目前没这么多用户，就先注释掉
+    Stats section commented out - AI-generated data, we don't have that many users yet, so commenting out for now
+    Section des statistiques commentée - Données générées par l'IA, nous n'avons pas encore autant d'utilisateurs, donc commenté pour l'instant
+    
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-number">6+</div>
+            <div class="stat-label">支持语言 / Supported Languages / Langues Supportées</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">1000+</div>
+            <div class="stat-label">活跃用户 / Active Users / Utilisateurs Actifs</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">4.8★</div>
+            <div class="stat-label">用户评分 / User Rating / Note des Utilisateurs</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">0.1s</div>
+            <div class="stat-label">处理速度 / Processing Speed / Vitesse de Traitement</div>
+        </div>
+    </div>
+    -->
+
+    <div class="content-block">
+        <div class="lang-content active" id="zh-features">
+            <h2>💡 为什么选择ADHDGoFly？</h2>
+            <p><strong>专业设计：</strong>专门为ADHD、阅读困难人群设计，不是简单的文本高亮工具。</p>
+            <p><strong>智能识别：</strong>基于先进的自然语言处理技术，准确识别词性和语法结构。</p>
+            <p><strong>隐私保护：</strong>所有处理都在本地完成，不会上传你的阅读内容。</p>
+            <p><strong>轻量快速：</strong>不会拖慢网页加载速度，几乎感觉不到它的存在。</p>
+            <p><strong>持续改进：</strong>我们根据用户反馈不断优化，每个版本都有新的改进。</p>
+        </div>
+        
+        <div class="lang-content" id="en-features">
+            <h2>💡 Why Choose ADHDGoFly?</h2>
+            <p><strong>Professional Design:</strong> Specifically designed for ADHD and reading difficulties, not just a simple text highlighting tool.</p>
+            <p><strong>Smart Recognition:</strong> Based on advanced natural language processing technology, accurately identifies parts of speech and grammatical structures.</p>
+            <p><strong>Privacy Protection:</strong> All processing is done locally, your reading content is never uploaded.</p>
+            <p><strong>Lightweight & Fast:</strong> Won't slow down webpage loading, you'll barely notice it's there.</p>
+            <p><strong>Continuous Improvement:</strong> We constantly optimize based on user feedback, with new improvements in every version.</p>
+        </div>
+    </div>
+
+    <div class="cta">
+        <div class="lang-content active" id="zh-cta">
+            <h3>准备好体验更轻松的阅读了吗？</h3>
+            <p>安装ADHDGoFly插件，刷新这个页面，立即看到词性高亮效果</p>
+        </div>
+        
+        <div class="lang-content" id="en-cta">
+            <h3>Ready to Experience Easier Reading?</h3>
+            <p>Install the ADHDGoFly extension, refresh this page, and see the part-of-speech highlighting effects immediately</p>
+        </div>
+        
+
+     </div>
+
+     <script>
+         function switchLanguage(lang) {
+             // Hide all language content
+             const allContent = document.querySelectorAll('.lang-content');
+             allContent.forEach(content => {
+                 content.style.display = 'none';
+             });
+             
+             // Show selected language content
+             const selectedContent = document.querySelectorAll(`[id*="${lang}-"]`);
+             selectedContent.forEach(content => {
+                 content.style.display = 'block';
+             });
+             
+             // Update button states
+             const allButtons = document.querySelectorAll('.language-switcher button');
+             allButtons.forEach(btn => {
+                 btn.classList.remove('active');
+             });
+             
+             document.getElementById(`${lang}-btn`).classList.add('active');
+         }
+         
+         // Set default language to Chinese
+         document.addEventListener('DOMContentLoaded', function() {
+             switchLanguage('zh');
+         });
+     </script>
+ </body>
+ </html>

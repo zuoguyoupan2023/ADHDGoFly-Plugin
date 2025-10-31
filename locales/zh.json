@@ -195,8 +195,8 @@
       "reset": "重置默认"
     },
     "ai": {
-      "title": "智能分析",
-      "description": "基于当前页面高亮内容的数据分析",
+      "title": "词汇统计",
+      "description": "基于当前页面词汇的统计分析",
       "stats": {
         "title": "📊 页面统计",
         "language": "语言分布",
@@ -204,8 +204,9 @@
         "vocabulary": "词汇统计"
       },
 
-      "refresh": "🔄 刷新分析",
       "analyzing": "分析中...",
+      "copy": "📋 复制",
+      "makeDictionary": "🔗 去制作词典",
 
       "noData": "暂无数据",
       "error": "分析失败，请重试"
@@ -399,6 +400,16 @@
      },
      "changelog": {
        "title": "更新日志",
+       "v015": {
+         "title": "缓存逻辑优化与自制词典功能完善",
+         "feature1": "优化缓存逻辑，提升页面加载性能",
+         "feature2": "增加词汇-词性复制功能，自制词典更方便",
+         "feature3": "使用正式logo",
+         "feature4": "增加问答页面",
+         "feature5": "增加评价提醒",
+         "feature6": "增加匿名信息收集，优化产品改进",
+         "feature7": "增加反馈信息功能"
+       },
        "v014": {
          "title": "词典功能与性能提升",
          "feature1": "增加自建词典功能",
@@ -449,10 +460,12 @@
       "buttons": {
         "review": "去评价",
         "reason": "我需要理由",
-        "reasonCollapse": "收起理由",
+        "reasonCollapse": "折叠",
+        "later": "再说",
         "never": "不再提醒"
       },
       "reasonContent": {
+        "description": "你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。",
         "title": "为什么推荐这个插件？",
         "points": [
           "🎯 专为ADHD和阅读困难人群设计，降低阅读门槛",

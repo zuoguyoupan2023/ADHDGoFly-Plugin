@@ -2062,121 +2062,179 @@
         }
       }
 
-      /* 评价提醒样式 */
+      /* ==================== 评价提醒样式 ==================== */
       .review-reminder {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
         padding: 16px;
         margin: 12px 0;
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.3s ease-out;
-      }
-
-      .review-reminder.show {
-        opacity: 1;
-        transform: translateY(0);
+        color: #333;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
       .review-content {
         display: flex;
         align-items: center;
-        gap: 12px;
         margin-bottom: 12px;
       }
 
-      .review-icon {
-        font-size: 24px;
-        flex-shrink: 0;
-      }
+
 
       .review-text {
         flex: 1;
       }
 
       .review-title {
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 13px;
+        font-weight: 400;
+        color: #666;
         margin-bottom: 4px;
       }
 
       .review-description {
-        font-size: 12px;
-        opacity: 0.9;
+        font-size: 14px;
+        color: #666;
         line-height: 1.4;
+      }
+
+      .review-stats {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 12px 0;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .stats-row {
+        margin-bottom: 6px;
+      }
+
+      .stats-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .remaining-count {
+        color: #e74c3c;
+        font-weight: 500;
+      }
+
+      .display-reason {
+        color: #2c3e50;
+        font-style: italic;
+      }
+
+      .review-stars {
+        text-align: center;
+        margin: 12px 0;
+        font-size: 20px;
+        letter-spacing: 4px;
+        color: #ddd;
+      }
+
+      .star-rating {
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+
+      .star-rating:hover,
+      .star-rating.active {
+        color: #ffa500;
+      }
+
+      .reason-toggle-section {
+        text-align: center;
+        margin: 12px 0;
+      }
+
+      .reason-toggle-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 11px;
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: underline;
+        transition: color 0.2s;
+      }
+
+      .reason-toggle-btn:hover {
+        color: #0056b3;
+        text-decoration: none;
+      }
+
+      .reason-content {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 8px;
+        margin: 10px 0;
+      }
+
+      /* 理由文本词性高亮样式 */
+      .reason-text .highlight-noun {
+        color: #0066cc;
+        font-weight: 500;
+      }
+
+      .reason-text .highlight-verb {
+        color: #cc0000;
+        font-weight: 500;
+      }
+
+      .reason-text .highlight-adj {
+        color: #009933;
+        font-weight: 500;
+      }
+
+      .reason-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .reason-text {
+        font-size: 11px;
+        color: #555;
+        line-height: 1.3;
       }
 
       .review-actions {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
+        margin-top: 16px;
+        justify-content: center;
       }
 
       .review-btn {
-        padding: 6px 12px;
+        padding: 6px 8px;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.2s ease;
-        flex: 1;
-        min-width: 0;
+        transition: all 0.2s;
+        white-space: nowrap;
       }
 
       .review-btn-primary {
-        background: rgba(255, 255, 255, 0.9);
-        color: #667eea;
+        background: #28a745;
+        color: white;
       }
 
       .review-btn-primary:hover {
-        background: white;
-        transform: translateY(-1px);
-      }
-
-      .review-btn-secondary {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-      }
-
-      .review-btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: #218838;
       }
 
       .review-btn-dismiss {
-        background: transparent;
-        color: rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-      }
-
-      .review-btn-dismiss:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: #6c757d;
         color: white;
       }
 
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* 响应式调整 */
-      @media (max-width: 350px) {
-        .review-actions {
-          flex-direction: column;
-        }
-        
-        .review-btn {
-          flex: none;
-        }
+      .review-btn-dismiss:hover {
+        background: #5a6268;
       }
     </style>
   </head>
@@ -2197,16 +2255,55 @@
           <!-- 评价提醒区域 -->
           <div class="review-reminder" id="reviewReminder" style="display: none;">
             <div class="review-content">
-              <div class="review-icon">⭐</div>
+              
               <div class="review-text">
-                <div class="review-title">喜欢ADHDGoFly吗？</div>
-                <div class="review-description">您的评价对我们很重要，帮助更多人发现这个插件</div>
+                <div class="review-title" data-i18n="review.prompt.main.title">你愿意向其他人推荐这个插件吗？</div>
               </div>
             </div>
+            
+            <!-- 调试信息数据显示区域 -->
+            <!--
+            <div class="review-stats">
+              <div class="stats-row">
+                <strong>插件使用时间：</strong> <span id="reviewTimerInfo">-</span>
+              </div>
+              <div class="stats-row">
+                <strong>处理节点数：</strong> <span id="reviewNodeCount">-</span> 个 | <strong>页面数：</strong> <span id="reviewPageCount">-</span> 个
+              </div>
+              <div class="stats-row remaining-count">
+                <strong>剩余提醒次数：</strong> <span id="reviewRemainingCount">-</span> 次
+              </div>
+              <div class="stats-row display-reason" id="reviewDisplayReason" style="display: none;">
+                <strong>显示原因：</strong> <span id="reviewReasonText">-</span>
+              </div>
+            </div>
+            -->
+
+            <!-- 星星评分 -->
+            <div class="review-stars">
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+              <span class="star-rating">☆</span>
+            </div>
+
+            <!-- 为什么按钮 -->
+            <div class="reason-toggle-section">
+              <button id="reasonToggleBtn" class="reason-toggle-btn" data-i18n="review.prompt.buttons.reason">为什么</button>
+            </div>
+
+            <!-- 理由内容（默认隐藏） -->
+            <div id="reasonContent" class="reason-content" style="display: none;">
+              <div class="reason-text" data-i18n="review.prompt.reasonContent.description">
+                你的评价能让更多人看到这个插件，无论他们是因为ADHD、阅读困难，还是因为大量阅读而感到疲倦的人，都有机会用这个插件降低阅读难度。
+              </div>
+            </div>
+
+            <!-- 底部按钮 -->
             <div class="review-actions">
-              <button class="review-btn review-btn-primary" id="goReviewBtn">去评价</button>
-              <button class="review-btn review-btn-secondary" id="remindLaterBtn">稍后提醒</button>
-              <button class="review-btn review-btn-dismiss" id="dismissBtn">不再提醒</button>
+              <button class="review-btn review-btn-primary" id="goReviewBtn" data-i18n="review.prompt.buttons.review">去评价</button>
+              <button class="review-btn review-btn-dismiss" id="laterReviewBtn" data-i18n="review.prompt.buttons.later">再说</button>
             </div>
           </div>
 
@@ -3220,38 +3317,13 @@
         </div>
 
         <div class="ai-content">
-          <div class="ai-info">
-            <p data-i18n="pages.ai.description">
-              基于当前页面高亮内容的数据分析
-            </p>
-          </div>
+           
 
           <!-- 页面统计信息 -->
           <div class="analysis-section">
             <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
 
-            <!-- 语言分布 -->
-            <div class="stat-group">
-              <div class="stat-title" data-i18n="pages.ai.stats.language">
-                语言分布
-              </div>
-              <div class="stat-content" id="languageStats">
-                <div class="loading">分析中...</div>
-              </div>
-            </div>
 
-            <!-- 词性分布 -->
-            <div class="stat-group">
-              <div
-                class="stat-title"
-                data-i18n="pages.ai.stats.posDistribution"
-              >
-                词性分布
-              </div>
-              <div class="stat-content" id="posStats">
-                <div class="loading">分析中...</div>
-              </div>
-            </div>
 
             <!-- 高亮统计UI已隐藏 - 逻辑代码保留但不显示UI -->
 
@@ -3259,17 +3331,14 @@
             <div class="stat-group">
               <div class="stat-title-with-actions">
                 <div class="stat-title" data-i18n="pages.ai.stats.vocabulary">
-                  词汇统计
                 </div>
-                <button class="copy-vocabulary-btn" id="copyVocabularyBtn" title="复制所有词汇">
-                  📋 复制词汇
+                <button class="copy-vocabulary-btn" id="copyVocabularyBtn" data-i18n="pages.ai.copy" title="复制所有词汇">
                 </button>
               </div>
               
               <!-- 词典工具链接（默认隐藏，复制成功后显示） -->
               <div class="vocabulary-tools-section" id="vocabularyToolsSection" style="display: none;">
-                <button class="dictionary-tool-btn" id="dictionaryToolBtn">
-                  🔗 去制作词典
+                <button class="dictionary-tool-btn" id="dictionaryToolBtn" data-i18n="pages.ai.makeDictionary">
                 </button>
               </div>
               
@@ -3281,15 +3350,7 @@
 
           <!-- 推荐功能已彻底删除 -->
 
-          <div class="ai-actions">
-            <button
-              class="refresh-btn"
-              id="refresh-analysis-btn"
-              data-i18n="pages.ai.refresh"
-            >
-              🔄 刷新分析
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -3589,6 +3650,44 @@
             </div>
             <div class="section-content">
               <div class="changelog">
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v015">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.5</span>
+                      <span class="version-date">2025-10-30</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v015">
+                    <h5 data-i18n="pages.settings.changelog.v015.title">
+                      缓存逻辑优化与自制词典功能完善
+                    </h5>
+                    <ul>
+                      <li data-i18n="pages.settings.changelog.v015.feature1">
+                        优化缓存逻辑，提升页面加载性能
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature2">
+                        增加词汇-词性复制功能，自制词典更方便
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature3">
+                        使用正式logo
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature4">
+                        增加问答页面
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature5">
+                        增加评价提醒
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature6">
+                        增加匿名信息收集，优化产品改进
+                      </li>
+                      <li data-i18n="pages.settings.changelog.v015.feature7">
+                        增加反馈信息功能
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
                 <div class="changelog-item">
                   <div class="changelog-header" data-toggle="v014">
                     <div class="changelog-version">
@@ -3901,7 +4000,7 @@
         title="AI"
         data-i18n-title="sidebar.ai"
       >
-        <span>🤖</span>
+        <span>📊</span>
       </button>
 
       <button

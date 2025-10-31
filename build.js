@@ -209,6 +209,7 @@ async function main() {
     // 需要包含的文件
     const includeFiles = [
         'background.js',
+        'privacy-settings-manager.js',
         'content.js',
         'popup.html', 
         'popup.js',
@@ -216,6 +217,8 @@ async function main() {
         'i18n.js',
         'settings.js',
         'settings.css',
+        'review-light-tower.js',
+        'public/logo-300x300.png',
         'content/',
         'dictionaries/',
         'locales/'
