@@ -198,6 +198,7 @@
 
       "analyzing": "Analyzing...",
       "copy": "📋 Copy",
+      "makeDictionary": "🔗 Create Dictionary",
 
       "noData": "No data available",
       "error": "Analysis failed, please try again"

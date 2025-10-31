@@ -427,6 +427,16 @@ class PopupController {
       const title = language === 'zh' ? 'Switch to English' : '切换到中文';
       languageToggle.setAttribute('title', title);
     }
+    
+    // 更新动态显示的词典工具按钮
+    const toolsSection = document.getElementById('vocabularyToolsSection');
+    const dictionaryBtn = document.getElementById('dictionaryToolBtn');
+    if (toolsSection && dictionaryBtn && toolsSection.style.display !== 'none') {
+      if (window.i18n) {
+        const translation = window.i18n.t('pages.ai.makeDictionary');
+        dictionaryBtn.textContent = translation;
+      }
+    }
   }
 
   bindSidebarEvents() {
@@ -2040,6 +2050,16 @@ class PopupController {
     const toolsSection = document.getElementById('vocabularyToolsSection');
     if (toolsSection) {
       toolsSection.style.display = 'block';
+      
+      // 立即应用i18n翻译到新显示的按钮
+      if (window.i18n) {
+        const dictionaryBtn = document.getElementById('dictionaryToolBtn');
+        if (dictionaryBtn) {
+          const translation = window.i18n.t('pages.ai.makeDictionary');
+          dictionaryBtn.textContent = translation;
+        }
+      }
+      
       console.log('✅ 词典工具链接已显示');
     } else {
       console.error('❌ 找不到词典工具链接元素');
