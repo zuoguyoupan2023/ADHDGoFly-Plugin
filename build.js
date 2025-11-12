@@ -736,8 +736,8 @@ async function main() {
 <body>
     <!-- Language Switcher -->
     <div class="language-switcher">
-        <a href="index.html">中文</a>
-        <a href="index-en.html" class="active">English</a>
+        <a href="./index.html" class="active">中文</a>
+        <a href="./index-en.html">English</a>
     </div>
 
     <div class="container">
@@ -1519,8 +1519,8 @@ async function main() {
 <body>
     <!-- Language Switcher -->
     <div class="language-switcher">
-        <a href="index.html" class="active">中文</a>
-        <a href="index-en.html">English</a>
+        <a href="./index.html">中文</a>
+        <a href="./index-en.html" class="active">English</a>
     </div>
 
     <div class="container">
