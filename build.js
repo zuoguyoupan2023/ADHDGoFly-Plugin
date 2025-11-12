@@ -1527,47 +1527,47 @@ async function main() {
         <header class="header">
             <div class="header-content">
                 <h1>ADHDGoFly</h1>
-                <p>关键词高亮阅读助手 - 让网页阅读更轻松，学习更高效</p>
+                <p>Keyword highlighting assistant — easier, more efficient web reading</p>
             </div>
         </header>
 
         <main class="main-content">
             <section class="features">
-                <h2>核心功能</h2>
+                <h2>Core Features</h2>
                 <div class="feature-grid">
                     <div class="feature-card">
-                        <h3>🎯 智能词性标注</h3>
-                        <p>自动识别网页文本中的词性，用不同颜色高亮名词、动词、形容词等，帮助理解句子结构</p>
+                        <h3>🎯 Intelligent POS Tagging</h3>
+                        <p>Automatically identifies parts of speech and highlights nouns, verbs, adjectives in distinct colors for better sentence understanding.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🌍 多语言支持</h3>
-                        <p>支持中文、英文、日文、法文、西班牙文、俄文等多种语言的智能识别和处理</p>
+                        <h3>🌍 Multi-language Support</h3>
+                        <p>Supports intelligent recognition and processing for Chinese, English, Japanese, French, Spanish, Russian, and more.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>⚡ 实时处理</h3>
-                        <p>页面加载时自动处理文本，无需手动操作，提供流畅的阅读体验</p>
+                        <h3>⚡ Real-time Processing</h3>
+                        <p>Processes text automatically on page load with no manual steps, delivering a smooth reading experience.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🎨 个性化设置</h3>
-                        <p>可根据个人喜好自定义颜色方案，开关特定功能，调节阅读辅助效果</p>
+                        <h3>🎨 Personalized Settings</h3>
+                        <p>Customize color schemes, toggle specific features, and tune assistance to personal preference.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🔄 自动更新</h3>
-                        <p>内置版本检测功能，自动提醒用户更新到最新版本，确保功能完整</p>
+                        <h3>🔄 Auto Updates</h3>
+                        <p>Built-in version checks remind you to update to the latest release to ensure complete functionality.</p>
                     </div>
                     <div class="feature-card">
-                        <h3>🚀 轻量高效</h3>
-                        <p>优化的算法设计，占用资源少，不影响网页正常浏览速度</p>
+                        <h3>🚀 Lightweight & Efficient</h3>
+                        <p>Optimized algorithms with low resource usage that won’t slow down browsing.</p>
                     </div>
                 </div>
             </section>
             
             <section class="download-section">
-                <h2>🎉 发现新版本！</h2>
-                <p>建议更新以获取最新功能和修复</p>
+                <h2>🎉 New Version Available!</h2>
+                <p>Update recommended to get the latest features and fixes.</p>
                 
                 <div class="download-grid">
-                    ${downloadLinksHtml}
+                    ${downloadLinksHtmlEn}
                 </div>
                 
                 <!-- 下载统计显示 -->
@@ -1575,23 +1575,23 @@ async function main() {
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-number">${downloadCount}</div>
-                            <div class="stat-label">总下载量</div>
+                            <div class="stat-label">Total Downloads</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number">${todayDownloads}</div>
-                            <div class="stat-label">今日下载</div>
+                            <div class="stat-label">Today's Downloads</div>
                         </div>
                     </div>
                     <div class="stats-update-info">
-                        <small>数据更新时间: ${lastUpdated || '获取中...'}</small>
+                        <small>Last Updated: ${lastUpdated || 'Fetching...'}</small>
                     </div>
                 </div>
             </section>
         </main>
 
         <footer class="footer">
-            <p>© 2024 ADHDGoFly Plugin. 专为提升阅读体验而设计。</p>
-            <p>当前版本: v${version} | 适用于 Chrome、Edge 等现代浏览器</p>
+            <p>© 2024 ADHDGoFly Plugin. Designed to improve the reading experience.</p>
+            <p>Current Version: v${version} | For modern browsers like Chrome and Edge</p>
         </footer>
     </div>
     
