@@ -418,7 +418,7 @@ class ADHDHighlighter {
       // 更新评价计数器
       await this.updateReviewCounter(eventData);
       
-      console.log('💾 高亮数据已缓存');
+      if (window.__LOG_DEV_MODE) console.log('💾 高亮数据已缓存');
     } catch (error) {
       console.warn('⚠️ 缓存高亮数据失败:', error);
     }

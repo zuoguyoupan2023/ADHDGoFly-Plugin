@@ -447,7 +447,7 @@ class StreamingPageProcessor extends EventTarget {
       this.currentRootMargin = newMargin;
       this.recreateIntersectionObserver();
       
-      console.log(`📊 动态调整视口参数: rootMargin=${newMargin}px (滚动速度: ${avgSpeed.toFixed(1)}px/100ms)`);
+      if (window.__LOG_DEV_MODE) console.log(`📊 动态调整视口参数: rootMargin=${newMargin}px (滚动速度: ${avgSpeed.toFixed(1)}px/100ms)`);
     }
   }
 
@@ -525,7 +525,7 @@ class StreamingPageProcessor extends EventTarget {
     
     // 只在有效处理时输出日志
     if (processedCount > 0) {
-      console.log(`✅ 空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
+      if (window.__LOG_DEV_MODE) console.log(`✅ 空闲处理完成: 处理了 ${processedCount} 个节点，耗时 ${processingTime.toFixed(2)}ms`);
     }
     
     // 如果还有未处理的可见节点，继续调度
@@ -596,7 +596,7 @@ class StreamingPageProcessor extends EventTarget {
         segmentedHtml = cachedResult.segmentedHtml;
         fromCache = true;
         
-        console.log('使用节点级缓存:', {
+        if (window.__LOG_DEV_MODE) console.log('使用节点级缓存:', {
           nodeId: this.generateNodeId(textNode),
           textLength: text.length,
           language: language
