@@ -2802,8 +2802,8 @@ class PopupController {
     const goReviewBtn = document.getElementById('goReviewBtn');
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了去评价按钮');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);
@@ -2811,10 +2811,18 @@ class PopupController {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
+          console.log('🔍 ReviewLightTower调试(Popup)：已设置review_has_reviewed与主版本', { major });
           const r = await window.reviewLightTower.getDisplayRecord();
           await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：已填满提醒次数为3/3');
         } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：准备隐藏评价提醒');
         this.hideReviewLightTower();
+        setTimeout(() => {
+          try {
+            window.open(storeUrl, '_blank');
+          } catch (e) {}
+        }, 50);
       });
     }
 
@@ -2832,8 +2840,8 @@ class PopupController {
     const stars = document.querySelectorAll('.star-rating');
     stars.forEach((star, index) => {
       star.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了星级评分');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);
@@ -2841,10 +2849,18 @@ class PopupController {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
+          console.log('🔍 ReviewLightTower调试(Popup)：星级评分后已设置review标记', { major });
           const r = await window.reviewLightTower.getDisplayRecord();
           await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：星级评分后已填满提醒次数');
         } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：星级评分后准备隐藏评价提醒');
         this.hideReviewLightTower();
+        setTimeout(() => {
+          try {
+            window.open(storeUrl, '_blank');
+          } catch (e) {}
+        }, 50);
       });
 
       // 星星悬停效果
@@ -2871,6 +2887,22 @@ class PopupController {
         });
       });
     }
+    // 不要提醒按钮
+    const neverReviewBtn = document.getElementById('neverReviewBtn');
+    if (neverReviewBtn) {
+      neverReviewBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了不要提醒');
+        try {
+          await chrome.storage.local.set({ review_dismissed_forever: true });
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(r.count, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：已记录dismissed_forever并更新显示记录');
+        } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：不要提醒后准备隐藏评价提醒');
+        this.hideReviewLightTower();
+      });
+    }
   }
 
   // 隐藏评价提醒
@@ -2884,7 +2916,10 @@ class PopupController {
     chrome.runtime.sendMessage({
       action: 'hideReviewLightTower'
     });
-
+    try {
+      chrome.storage.local.remove(['reviewLightTowerData', 'reviewLightTowerVisible']);
+      console.log('🔍 ReviewLightTower调试(Popup)：已清理本地存储的灯塔可见性与数据键');
+    } catch (e) {}
     console.log('评价提醒已隐藏');
   }
 }
@@ -3026,16 +3061,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLanguageGroupListeners();
   }, 100);
 });
-    // 不要提醒按钮
-    const neverReviewBtn = document.getElementById('neverReviewBtn');
-    if (neverReviewBtn) {
-      neverReviewBtn.addEventListener('click', async () => {
-        try {
-          await chrome.storage.local.set({ review_dismissed_forever: true });
-          const v = await window.reviewLightTower.getCurrentVersion();
-          const r = await window.reviewLightTower.getDisplayRecord();
-          await window.reviewLightTower.updateDisplayRecord(r.count, v, r.triggeredConditions);
-        } catch (e) {}
-        this.hideReviewLightTower();
-      });
-    }
