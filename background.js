@@ -462,6 +462,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       timestamp: Date.now()
     });
     sendResponse({ success: true, message: '启动事件已模拟' });
+  } else if (request.action === 'COLLECT_LOGS') {
+    try {
+      const logs = Array.isArray(request.logs) ? request.logs : [];
+      chrome.storage.local.set({ feedbackLogs: logs, feedbackLogsCollectedAt: Date.now() }, () => {
+        sendResponse({ success: true });
+      });
+      return true;
+    } catch (e) {
+      sendResponse({ success: false, error: String(e) });
+    }
+  } else if (request.action === 'GET_ENV') {
+    try {
+      chrome.management.getSelf((info) => {
+        const isDev = !!info && info.installType === 'development';
+        sendResponse({ success: true, isDev: isDev, installType: info ? info.installType : 'unknown' });
+      });
+      return true;
+    } catch (e) {
+      sendResponse({ success: true, isDev: false, installType: 'unknown' });
+    }
   } else if (request.action === 'showReviewLightTower') {
     // 显示评价灯塔
     showReviewLightTower(request.data);

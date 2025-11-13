@@ -139,7 +139,7 @@ class ReviewCounter {
                 [this.STORAGE_KEYS.NODE_COUNT]: newCount
             });
             
-            console.log(`ReviewCounter计数：节点计数更新: ${currentCount} → ${newCount} (+${count})`);
+            if (window.__ADHD_isDev) console.log(`ReviewCounter计数：节点计数更新: ${currentCount} → ${newCount} (+${count})`);
             return newCount;
         } catch (error) {
             console.error('ReviewCounter计数：节点计数更新失败:', error);
@@ -191,7 +191,7 @@ class ReviewCounter {
             } else {
                 const timeSinceLastVisit = Math.round((currentTime - lastVisit.timestamp) / (1000 * 60));
                 const currentPageCount = await this.getPageCount();
-                console.log(`ReviewCounter计数：页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟) - 当前累计页面数: ${currentPageCount}`);
+                if (window.__ADHD_isDev) console.log(`ReviewCounter计数：页面重复访问，跳过计数 (距离上次访问: ${timeSinceLastVisit}分钟) - 当前累计页面数: ${currentPageCount}`);
                 return currentPageCount;
             }
         } catch (error) {

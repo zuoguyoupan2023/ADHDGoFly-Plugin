@@ -391,7 +391,7 @@ class ADHDHighlighter {
    */
   async handleHighlightComplete(eventData) {
     try {
-      console.log('🎯 收到高亮完成事件:', eventData);
+      if (window.__ADHD_isDev) console.log('🎯 收到高亮完成事件:', eventData);
       
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);
@@ -428,7 +428,7 @@ class ADHDHighlighter {
       const nodeCount = eventData.elements.length;
       const newCount = await this.adhdGoFlyCounter.incrementNodeCount(nodeCount);
       
-      console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+      if (window.__ADHD_isDev) console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
     } catch (error) {
       console.error('❌ 更新ADHD专注飞行计数器失败:', error);
@@ -1774,3 +1774,43 @@ if (document.readyState === 'loading') {
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
+;(function(){
+  if (typeof window === 'undefined') return;
+  if (!window.__ADHD_logBuffer) {
+    Object.defineProperty(window, '__ADHD_logBuffer', { value: [], writable: false });
+  }
+  var __max = 2000;
+  var __origLog = console.log;
+  var __origInfo = console.info;
+  var __origWarn = console.warn;
+  var __origError = console.error;
+  function __sanitize(v) {
+    try {
+      var s = typeof v === 'string' ? v : JSON.stringify(v);
+      return s.replace(/https?:\/\/\S+/g, '[URL]');
+    } catch (e) {
+      return String(v);
+    }
+  }
+  function __push(level, args) {
+    var entry = { t: Date.now(), l: level, m: Array.from(args).map(__sanitize) };
+    window.__ADHD_logBuffer.push(entry);
+    if (window.__ADHD_logBuffer.length > __max) {
+      window.__ADHD_logBuffer.splice(0, window.__ADHD_logBuffer.length - __max);
+    }
+  }
+  console.log = function(){ __push('log', arguments); return __origLog.apply(console, arguments); };
+  console.info = function(){ __push('info', arguments); return __origInfo.apply(console, arguments); };
+  console.warn = function(){ __push('warn', arguments); return __origWarn.apply(console, arguments); };
+  console.error = function(){ __push('error', arguments); return __origError.apply(console, arguments); };
+  window.__ADHD_isDev = false;
+  try {
+    chrome.management.getSelf(function(info){ window.__ADHD_isDev = info && info.installType === 'development'; });
+  } catch (e) {}
+  try {
+    chrome.runtime.sendMessage({ action: 'GET_ENV' }, function(res){
+      if (res && typeof res.isDev === 'boolean') window.__ADHD_isDev = res.isDev;
+    });
+  } catch (e) {}
+  window.collectLogsForFeedback = function(){ return window.__ADHD_logBuffer.slice(); };
+})();
