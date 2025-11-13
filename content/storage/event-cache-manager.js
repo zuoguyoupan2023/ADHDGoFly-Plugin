@@ -78,7 +78,7 @@ class EventCacheManager {
       
       await this.putToStore(store, cacheRecord);
       
-      console.log('💾 高亮数据已缓存:', {
+      if (window.__LOG_DEV_MODE) console.log('💾 高亮数据已缓存:', {
         url: url,
         language: language,
         size: cacheRecord.size,

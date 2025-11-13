@@ -102,7 +102,7 @@ class VocabularyCounter {
     this.saveStats();
 
     // 调试输出
-    console.log(`📝 记录词汇: ${cleanWord} (${pos}) - 第${this.stats.stats[category][cleanWord]}次`);
+    if (window.__LOG_DEV_MODE) console.log(`📝 记录词汇: ${cleanWord} (${pos}) - 第${this.stats.stats[category][cleanWord]}次`);
   }
 
   /**

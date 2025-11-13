@@ -58,10 +58,10 @@ class ReviewLightTower {
       // 使用Chrome Storage API而不是localStorage，确保在插件的不同上下文中数据共享
       const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
       const record = result.reviewLightTowerDisplay;
-      console.log(`🔍 ReviewLightTower调试：读取Chrome Storage记录:`, record);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：读取Chrome Storage记录:`, record);
       
       if (record) {
-        console.log(`🔍 ReviewLightTower调试：找到存储的记录:`, record);
+        if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：找到存储的记录:`, record);
         
         // 确保有triggeredConditions字段
         if (!record.triggeredConditions) {
@@ -72,11 +72,11 @@ class ReviewLightTower {
           this.lastCheckTime = record.lastCheckTime;
         }
         
-        console.log(`🔍 ReviewLightTower调试：当前显示次数: ${record.count}/3`);
+        if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：当前显示次数: ${record.count}/3`);
         return record;
       }
       
-      console.log(`🔍 ReviewLightTower调试：没有找到记录，返回默认值`);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：没有找到记录，返回默认值`);
       return { count: 0, lastVersion: null, triggeredConditions: [], lastCheckTime: null };
     } catch (error) {
       console.error('获取显示记录失败:', error);
@@ -94,13 +94,13 @@ class ReviewLightTower {
         lastCheckTime: this.lastCheckTime
       };
       
-      console.log(`🔍 ReviewLightTower调试：准备更新记录:`, record);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：准备更新记录:`, record);
       await chrome.storage.local.set({ reviewLightTowerDisplay: record });
-      console.log(`🔍 ReviewLightTower调试：记录已保存到Chrome Storage`);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：记录已保存到Chrome Storage`);
       
       // 验证保存是否成功
       const result = await chrome.storage.local.get(['reviewLightTowerDisplay']);
-      console.log(`🔍 ReviewLightTower调试：验证保存结果:`, result.reviewLightTowerDisplay);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：验证保存结果:`, result.reviewLightTowerDisplay);
       
     } catch (error) {
       console.error('更新显示记录失败:', error);
@@ -124,7 +124,7 @@ class ReviewLightTower {
     try {
       const record = { count: 0, lastVersion: version, triggeredConditions: [] };
       await chrome.storage.local.set({ reviewLightTowerDisplay: record });
-      console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：已重置显示记录，版本: ${version}`);
     } catch (error) {
       console.error('重置显示记录失败:', error);
     }
@@ -333,7 +333,7 @@ class ReviewLightTower {
         if (this.lastCheckTime && (currentTime - this.lastCheckTime) < this.checkInterval) {
           const remainingTime = this.checkInterval - (currentTime - this.lastCheckTime);
           const remainingHours = Math.ceil(remainingTime / (60 * 60 * 1000));
-          console.log(`ReviewLightTower(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
+          if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
           return;
         }
         console.log(`ReviewLightTower(正式模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()}`);
@@ -375,13 +375,13 @@ class ReviewLightTower {
       
       // 先检查剩余显示次数
       const remainingCount = Math.max(0, 3 - displayRecord.count);
-      console.log(`🔍 ReviewLightTower调试：显示次数检查 - 当前次数: ${displayRecord.count}, 剩余次数: ${remainingCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：显示次数检查 - 当前次数: ${displayRecord.count}, 剩余次数: ${remainingCount}`);
       
       if (remainingCount <= 0) {
         console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
         // 即使已达到最大显示次数，也要保存lastCheckTime以确保24小时间隔生效
         await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
-        console.log(`🔍 ReviewLightTower调试：已达到最大次数，直接返回，不会调用notifyBackgroundShowBadge`);
+        if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：已达到最大次数，直接返回，不会调用notifyBackgroundShowBadge`);
         return;
       }
       
@@ -447,7 +447,7 @@ class ReviewLightTower {
   notifyBackgroundShowBadge(timerInfo, nodeCount, pageCount, remainingCount = 0, displayReason = '') {
     // 通知background.js显示灯塔，并传递评价提醒数据
     try {
-      console.log(`🔍 ReviewLightTower调试：准备通知background显示徽章，剩余次数: ${remainingCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：准备通知background显示徽章，剩余次数: ${remainingCount}`);
       chrome.runtime.sendMessage({
         action: 'showReviewLightTower',
         data: {
@@ -557,7 +557,7 @@ class ReviewLightTower {
       });
       
       star.addEventListener('click', async () => {
-        console.log('🔍 ReviewLightTower调试(Content)：点击了星级评分');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：点击了星级评分');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
         try {
@@ -567,12 +567,12 @@ class ReviewLightTower {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
-          console.log('🔍 ReviewLightTower调试(Content)：星级评分后已设置review标记', { major });
+          if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：星级评分后已设置review标记', { major });
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(3, v, r.triggeredConditions);
-          console.log('🔍 ReviewLightTower调试(Content)：星级评分后已填满提醒次数');
+          if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：星级评分后已填满提醒次数');
         } catch (_) {}
-        console.log('🔍 ReviewLightTower调试(Content)：星级评分后准备移除悬浮提醒');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：星级评分后准备移除悬浮提醒');
         removePrompt();
       });
     });
@@ -580,7 +580,7 @@ class ReviewLightTower {
     // "去评价"按钮事件
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
-        console.log('🔍 ReviewLightTower调试(Content)：点击了去评价按钮');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：点击了去评价按钮');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
         try {
@@ -590,12 +590,12 @@ class ReviewLightTower {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
-          console.log('🔍 ReviewLightTower调试(Content)：已设置review_has_reviewed与主版本', { major });
+          if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：已设置review_has_reviewed与主版本', { major });
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(3, v, r.triggeredConditions);
-          console.log('🔍 ReviewLightTower调试(Content)：已填满提醒次数为3/3');
+          if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：已填满提醒次数为3/3');
         } catch (_) {}
-        console.log('🔍 ReviewLightTower调试(Content)：准备移除悬浮提醒');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：准备移除悬浮提醒');
         removePrompt();
       });
     }
@@ -603,15 +603,15 @@ class ReviewLightTower {
     // "不再提醒"事件
     if (neverBtn) {
       neverBtn.addEventListener('click', async () => {
-        console.log('🔍 ReviewLightTower调试(Content)：点击了不再提醒');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：点击了不再提醒');
         try {
           await chrome.storage.local.set({ review_dismissed_forever: true });
           const v = await this.getCurrentVersion();
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(r.count, v, r.triggeredConditions);
-          console.log('🔍 ReviewLightTower调试(Content)：已记录dismissed_forever并更新显示记录');
+          if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：已记录dismissed_forever并更新显示记录');
         } catch (_) {}
-        console.log('🔍 ReviewLightTower调试(Content)：不再提醒后准备移除悬浮提醒');
+        if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：不再提醒后准备移除悬浮提醒');
         removePrompt();
       });
     }
