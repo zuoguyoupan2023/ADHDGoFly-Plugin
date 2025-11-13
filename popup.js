@@ -1,4 +1,6 @@
 // ADHD Text Highlighter - Popup Script
+//  * 正式版，需要把review-light-tower.js 第38行改为false;popup.js 3056行改为false：chrome.storage.local.set({ logfordevmode: false })
+
 class PopupController {
   constructor() {
     this.currentStatus = null;

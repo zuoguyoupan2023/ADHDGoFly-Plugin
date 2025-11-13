@@ -1,6 +1,6 @@
 /**
  * 评价提醒灯塔系统
- * 
+ * 正式版，需要把review-light-tower.js 第38行改为false;popup.js 3056行改为false：chrome.storage.local.set({ logfordevmode: false })
  * ========== 配置模式切换说明 ==========
  * 
  * 🔧 一键切换测试/正式模式：
@@ -308,7 +308,7 @@ class ReviewLightTower {
     });
 
     const modeText = this.ReviewLightTowerTest ? '(测试模式)' : '(正式模式)';
-    console.log(`ReviewLightTower${modeText}：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
+    if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower${modeText}：当前已经触发的显示条件为：${conditionDescriptions.join('、')}`);
   }
 
   async show() {
@@ -336,10 +336,10 @@ class ReviewLightTower {
           if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower(正式模式)：距离上次检查不足24小时，还需等待 ${remainingHours} 小时`);
           return;
         }
-        console.log(`ReviewLightTower(正式模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()}`);
+        if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower(正式模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()}`);
       } else {
         // 测试模式：跳过24小时检查
-        console.log(`ReviewLightTower(测试模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()} (测试模式已跳过24小时限制)`);
+        if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower(测试模式)：开始检查，时间: ${new Date(currentTime).toLocaleString()} (测试模式已跳过24小时限制)`);
       }
       
       // 更新最后检查时间
@@ -378,7 +378,7 @@ class ReviewLightTower {
       if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：显示次数检查 - 当前次数: ${displayRecord.count}, 剩余次数: ${remainingCount}`);
       
       if (remainingCount <= 0) {
-        console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
+        if (window.__LOG_DEV_MODE) console.log(`ReviewLightTower：已达到最大显示次数(3次)，不再显示`);
         // 即使已达到最大显示次数，也要保存lastCheckTime以确保24小时间隔生效
         await this.updateDisplayRecord(displayRecord.count, currentVersion, displayRecord.triggeredConditions);
         if (window.__LOG_DEV_MODE) console.log(`🔍 ReviewLightTower调试：已达到最大次数，直接返回，不会调用notifyBackgroundShowBadge`);
