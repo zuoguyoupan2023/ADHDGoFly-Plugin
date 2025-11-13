@@ -84,15 +84,6 @@ window.getStoreUrl = function() {
     
     const config = window.ADHD_INSTALL_CONFIG;
     
-    // Chrome商店智能回退处理
-    if (config.chromeStoreFallback && config.chromeStoreFallback.isPlaceholder) {
-        // 显示用户友好的提示
-        if (typeof alert !== 'undefined') {
-            alert('Chrome应用商店版本即将上线！\\n\\n' + 
-                  '当前请访问Chrome应用商店，搜索 "' + config.chromeStoreFallback.searchHint + '" 即可找到我们的插件。\\n\\n' +
-                  '点击确定将跳转到Chrome应用商店扩展页面。');
-        }
-    }
     
     return config.storeUrl;
 };
