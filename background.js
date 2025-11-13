@@ -410,26 +410,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     sendResponse({ success: true });
   } else if (request.action === 'checkVersion') {
-    const manifest = chrome.runtime.getManifest();
-    const disable = manifest && manifest.adhdgoflyBuild && manifest.adhdgoflyBuild.disableVersionCheck === true;
-    if (disable) {
-      const currentVersion = manifest.version;
-      sendResponse({
-        success: true,
-        currentVersion: currentVersion,
-        latestVersion: currentVersion,
-        hasUpdate: false,
-        releaseUrl: null,
-        alternativeDownloads: null,
-        contactInfo: 'WeChat: zuoguyoupan2023'
-      });
-      return;
-    }
+    // 检查版本
     const versionChecker = new SimpleVersionChecker();
     versionChecker.checkLatestVersion().then(result => {
       sendResponse(result);
     });
-    return true;
+    return true; // 保持消息通道开放以支持异步响应
   } else if (request.action === 'getStorage') {
     // 获取存储数据用于调试
     chrome.storage.local.get(null, (result) => {

@@ -239,14 +239,6 @@ async function main() {
         
         // 创建临时manifest
         const browserManifest = { ...baseManifest, ...config.manifestChanges };
-        if (isStoreVersion) {
-            if (browserManifest.host_permissions) {
-                browserManifest.host_permissions = [];
-            }
-            browserManifest.adhdgoflyBuild = { target: 'store', disableVersionCheck: true };
-        } else {
-            browserManifest.adhdgoflyBuild = { target: 'manual', disableVersionCheck: false };
-        }
         const tempManifestPath = path.join(outputDir, `manifest-${config.suffix}.json`);
         fs.writeFileSync(tempManifestPath, JSON.stringify(browserManifest, null, 2));
         
