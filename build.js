@@ -29,7 +29,7 @@ function getChromeStoreInfo(storeUrl) {
     // 检测是否包含占位符
     if (storeUrl.includes('CHROME_APP_ID')) {
         return {
-            url: 'https://chrome.google.com/webstore/category/extensions',
+            url: 'https://feedback.adhdgofly.online/',
             isPlaceholder: true,
             searchHint: 'ADHDGoFly'
         };
