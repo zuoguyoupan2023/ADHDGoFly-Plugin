@@ -2801,12 +2801,19 @@ class PopupController {
     // 去评价按钮
     const goReviewBtn = document.getElementById('goReviewBtn');
     if (goReviewBtn) {
-      goReviewBtn.addEventListener('click', () => {
-        // 打开评价页面
+      goReviewBtn.addEventListener('click', async () => {
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
-        
-        // 隐藏提醒并清除徽章
+        try {
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const major = parseInt(v.split('.')[0]);
+          await chrome.storage.local.set({
+            review_has_reviewed: true,
+            review_reviewed_version_major: major
+          });
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+        } catch (e) {}
         this.hideReviewLightTower();
       });
     }
@@ -2824,12 +2831,19 @@ class PopupController {
     // 星星点击事件
     const stars = document.querySelectorAll('.star-rating');
     stars.forEach((star, index) => {
-      star.addEventListener('click', () => {
-        // 点击星星时直接跳转到评价页面
+      star.addEventListener('click', async () => {
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
-        
-        // 隐藏提醒并清除徽章
+        try {
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const major = parseInt(v.split('.')[0]);
+          await chrome.storage.local.set({
+            review_has_reviewed: true,
+            review_reviewed_version_major: major
+          });
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+        } catch (e) {}
         this.hideReviewLightTower();
       });
 
@@ -3012,3 +3026,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLanguageGroupListeners();
   }, 100);
 });
+    // 不要提醒按钮
+    const neverReviewBtn = document.getElementById('neverReviewBtn');
+    if (neverReviewBtn) {
+      neverReviewBtn.addEventListener('click', async () => {
+        try {
+          await chrome.storage.local.set({ review_dismissed_forever: true });
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(r.count, v, r.triggeredConditions);
+        } catch (e) {}
+        this.hideReviewLightTower();
+      });
+    }
