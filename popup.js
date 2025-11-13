@@ -3050,6 +3050,13 @@ function initLanguageGroupListeners() {
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    chrome.storage.local.get(['logfordevmode'], function(res){
+      if (typeof res.logfordevmode === 'undefined') {
+        chrome.storage.local.set({ logfordevmode: false });
+      }
+    });
+  } catch (e) {}
   // 确保i18n先初始化
   await window.i18n.init();
   

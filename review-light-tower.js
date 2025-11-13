@@ -35,7 +35,7 @@ class ReviewLightTower {
     // 🔧 测试模式配置开关
     // true: 启用测试模式（分钟级别，较小节点数）
     // false: 正式版本模式（天级别，正常节点数）
-    this.ReviewLightTowerTest = true; // 正式版本设为 false，测试时改为 true
+    this.ReviewLightTowerTest = false; // 正式版本设为 false，测试时改为 true
   }
 
   async getCurrentVersion() {

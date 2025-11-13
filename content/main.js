@@ -72,6 +72,22 @@
   }
 })();
 
+;(function(){
+  if (typeof window === 'undefined') return;
+  if (typeof window.__LOG_DEV_MODE === 'undefined') window.__LOG_DEV_MODE = false;
+  try {
+    chrome.storage.local.get(['logfordevmode'], function(res){
+      var v = res && typeof res.logfordevmode !== 'undefined' ? !!res.logfordevmode : false;
+      window.__LOG_DEV_MODE = v;
+    });
+    chrome.storage.onChanged.addListener(function(changes, area){
+      if (area === 'local' && changes.logfordevmode) {
+        window.__LOG_DEV_MODE = !!changes.logfordevmode.newValue;
+      }
+    });
+  } catch (e) {}
+})();
+
 // 主控制器模块
 class ADHDHighlighter {
   constructor() {
@@ -391,7 +407,7 @@ class ADHDHighlighter {
    */
   async handleHighlightComplete(eventData) {
     try {
-      console.log('🎯 收到高亮完成事件:', eventData);
+      if (window.__LOG_DEV_MODE) console.log('🎯 收到高亮完成事件:', eventData);
       
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);
@@ -428,7 +444,7 @@ class ADHDHighlighter {
       const nodeCount = eventData.elements.length;
       const newCount = await this.adhdGoFlyCounter.incrementNodeCount(nodeCount);
       
-      console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
     } catch (error) {
       console.error('❌ 更新ADHD专注飞行计数器失败:', error);
@@ -456,7 +472,7 @@ class ADHDHighlighter {
       const nodeCount = eventData.elements.length;
       const newCount = await this.reviewCounter.incrementNodeCount(nodeCount);
       
-      console.log(`ReviewCounter计数：节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`ReviewCounter计数：节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
       // 增加页面计数（去重逻辑）
       await this.reviewCounter.incrementPageCount();

@@ -33,7 +33,7 @@ class ADHDGoFlyCounter {
             
             await this._setStorageData(this.STORAGE_KEYS.NODE_COUNT, newCount);
             
-            console.log(`ADHDGoFlyCounter日志：📊 节点计数更新: ${currentCount} → ${newCount} (+${count})`);
+            if (window.__LOG_DEV_MODE) console.log(`ADHDGoFlyCounter日志：📊 节点计数更新: ${currentCount} → ${newCount} (+${count})`);
             return newCount;
         } catch (error) {
             console.error('ADHDGoFlyCounter日志：❌ 节点计数更新失败:', error);
