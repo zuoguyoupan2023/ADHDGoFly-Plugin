@@ -557,6 +557,7 @@ class ReviewLightTower {
       });
       
       star.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Content)：点击了星级评分');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
         try {
@@ -566,9 +567,12 @@ class ReviewLightTower {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
+          console.log('🔍 ReviewLightTower调试(Content)：星级评分后已设置review标记', { major });
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Content)：星级评分后已填满提醒次数');
         } catch (_) {}
+        console.log('🔍 ReviewLightTower调试(Content)：星级评分后准备移除悬浮提醒');
         removePrompt();
       });
     });
@@ -576,6 +580,7 @@ class ReviewLightTower {
     // "去评价"按钮事件
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Content)：点击了去评价按钮');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
         window.open(storeUrl, '_blank');
         try {
@@ -585,9 +590,12 @@ class ReviewLightTower {
             review_has_reviewed: true,
             review_reviewed_version_major: major
           });
+          console.log('🔍 ReviewLightTower调试(Content)：已设置review_has_reviewed与主版本', { major });
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Content)：已填满提醒次数为3/3');
         } catch (_) {}
+        console.log('🔍 ReviewLightTower调试(Content)：准备移除悬浮提醒');
         removePrompt();
       });
     }
@@ -595,12 +603,15 @@ class ReviewLightTower {
     // "不再提醒"事件
     if (neverBtn) {
       neverBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Content)：点击了不再提醒');
         try {
           await chrome.storage.local.set({ review_dismissed_forever: true });
           const v = await this.getCurrentVersion();
           const r = await this.getDisplayRecord();
           await this.updateDisplayRecord(r.count, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Content)：已记录dismissed_forever并更新显示记录');
         } catch (_) {}
+        console.log('🔍 ReviewLightTower调试(Content)：不再提醒后准备移除悬浮提醒');
         removePrompt();
       });
     }
