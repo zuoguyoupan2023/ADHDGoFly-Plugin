@@ -1627,9 +1627,19 @@ class ADHDHighlighter {
       .agf-exam-title{font-size:14px;font-weight:600;color:#333}
       .agf-exam-controls{display:inline-flex;gap:8px}
       .agf-exam-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-tabs{display:inline-flex;gap:6px;margin-right:8px}
+      .agf-tab-btn{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-tab-btn.active{background:#333;color:#fff}
       .agf-exam-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
       .agf-exam-display{flex:0 0 80%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
       .agf-exam-input{flex:0 0 20%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
+      .agf-settings{flex:1;display:none;flex-direction:column;gap:10px}
+      .agf-settings h4{margin:0 0 4px 0;font-size:13px;color:#333}
+      .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:8px;background:#fff}
+      .agf-settings-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+      .agf-radio-list{display:flex;gap:10px}
+      .agf-radio-item{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e0;border-radius:4px;padding:6px;background:#fff}
+      .agf-input{border:1px solid #e0e0e0;border-radius:4px;padding:6px;font-size:12px;color:#333;width:100%}
       .agf-exam-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
@@ -1643,14 +1653,47 @@ class ADHDHighlighter {
       <div class="agf-exam-header">
         <div class="agf-exam-title">ExamPage</div>
         <div class="agf-exam-controls">
+          <div class="agf-tabs">
+            <button id="agfTabMain" class="agf-tab-btn active">📝</button>
+            <button id="agfTabSettings" class="agf-tab-btn">⚙️</button>
+          </div>
           <button id="agfExamMax">+</button>
           <button id="agfExamMin">-</button>
           <button id="agfExamClose">X</button>
         </div>
       </div>
       <div class="agf-exam-body">
-        <div class="agf-exam-display">这是显示区</div>
-        <div class="agf-exam-input">这是输入区</div>
+        <div id="agfExamMain">
+          <div class="agf-exam-display">这是显示区</div>
+          <div class="agf-exam-input">这是输入区</div>
+        </div>
+        <div id="agfExamSettings" class="agf-settings">
+          <div class="agf-settings-group">
+            <h4>AI设置</h4>
+            <div class="agf-settings-row">
+              <div style="min-width:56px;color:#333;font-size:12px;">服务商</div>
+              <div class="agf-radio-list">
+                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>deepseek</span></label>
+                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>moonshot</span></label>
+              </div>
+            </div>
+            <div class="agf-settings-row">
+              <div style="min-width:56px;color:#333;font-size:12px;">模型</div>
+              <div class="agf-radio-list">
+                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-chat</span></label>
+                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-reasoner</span></label>
+              </div>
+            </div>
+            <div class="agf-settings-row">
+              <div style="min-width:56px;color:#333;font-size:12px;">API Key</div>
+              <input type="password" class="agf-input" placeholder="••••••••••••••••••••••••••••••••"></input>
+            </div>
+            <div class="agf-settings-row">
+              <div style="min-width:56px;color:#333;font-size:12px;">temperature</div>
+              <input type="text" class="agf-input" value="0.7"></input>
+            </div>
+          </div>
+        </div>
       </div>
     `;
     document.documentElement.appendChild(overlay);
@@ -1978,3 +2021,22 @@ console.log('ADHD文本高亮器主控制器加载完成');
  * 影响范围:
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
+    const tabMain = document.getElementById('agfTabMain');
+    const tabSettings = document.getElementById('agfTabSettings');
+    const mainView = document.getElementById('agfExamMain');
+    const settingsView = document.getElementById('agfExamSettings');
+    const switchToMain = () => {
+      mainView.style.display = 'block';
+      settingsView.style.display = 'none';
+      tabMain.classList.add('active');
+      tabSettings.classList.remove('active');
+    };
+    const switchToSettings = () => {
+      mainView.style.display = 'none';
+      settingsView.style.display = 'flex';
+      tabSettings.classList.add('active');
+      tabMain.classList.remove('active');
+    };
+    if (tabMain) tabMain.addEventListener('click', switchToMain);
+    if (tabSettings) tabSettings.addEventListener('click', switchToSettings);
+    switchToMain();
