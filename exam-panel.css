@@ -1,0 +1,8 @@
+.exam-panel-overlay{position:fixed;inset:0;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:9999}
+.exam-panel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
+.exam-panel-title{font-size:14px;font-weight:600;color:#333}
+.exam-panel-controls{display:inline-flex;gap:8px}
+.exam-panel-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+.exam-panel-body{flex:1;padding:12px;overflow:auto}
+.exam-panel-content{font-size:14px;color:#333}
+.exam-panel-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:9999}

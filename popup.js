@@ -316,6 +316,10 @@ class PopupController {
     
     // 数据面板事件
     this.bindDataEvents();
+
+    if (window.initExamPanel) {
+      window.initExamPanel();
+    }
     
     // 复制词汇事件
     this.bindCopyVocabularyEvents();
@@ -478,7 +482,9 @@ class PopupController {
         this.loadDataAnalysis();
         break;
       case 'chat-btn':
-        this.showPage('exam');
+        if (window.examPanel && window.examPanel.show) {
+          window.examPanel.show();
+        }
         break;
       case 'faq-btn':
         this.showPage('faq');
