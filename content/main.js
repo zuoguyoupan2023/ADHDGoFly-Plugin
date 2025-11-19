@@ -1804,6 +1804,9 @@ class ADHDHighlighter {
     const tempInput = document.getElementById('agfTempInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
+    const chatList = overlay.querySelector('.agf-chat-list');
+    const composerInput = document.getElementById('agfComposerInput');
+    const composerSend = document.getElementById('agfComposerSend');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
@@ -1989,6 +1992,78 @@ class ADHDHighlighter {
         fillModelsForProv(prov);
       });
     };
+
+    let chatMessages = [];
+    const appendMessage = (role, text) => {
+      if (!chatList) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'agf-msg ' + (role === 'user' ? 'user' : 'assistant');
+      const bubble = document.createElement('div');
+      bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
+      bubble.textContent = text;
+      wrap.appendChild(bubble);
+      chatList.appendChild(wrap);
+      chatList.scrollTop = chatList.scrollHeight;
+    };
+
+    const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
+
+    const sendChat = async () => {
+      if (!composerInput || !sessionProviderSelect || !sessionModelSelect) return;
+      const prov = sessionProviderSelect.value;
+      const model = sessionModelSelect.value;
+      const prompt = composerInput.value.trim();
+      if (!prompt) return;
+      appendMessage('user', prompt);
+      chatMessages.push({ role: 'user', content: prompt });
+      composerInput.value = '';
+      let key = '';
+      let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
+      try {
+        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrl'], resolve));
+        const keys = res.aiKeys || {};
+        key = keys[prov] || '';
+        if (res.aiBaseUrl) base = res.aiBaseUrl;
+      } catch (_) {}
+      let url = base;
+      let headers = { 'Content-Type': 'application/json' };
+      let body = null;
+      if (prov === 'anthropic') {
+        headers['x-api-key'] = key;
+        headers['anthropic-version'] = '2023-06-01';
+        body = JSON.stringify({ model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] });
+      } else if (prov === 'gemini') {
+        url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+        body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+      } else {
+        headers['Authorization'] = 'Bearer ' + key;
+        body = JSON.stringify({ model, messages: toOpenAIStyle() });
+      }
+      let text = '';
+      try {
+        const respMsg = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url, method: 'POST', headers, body, timeout: 45000 }, resolve));
+        const data = respMsg && respMsg.data ? respMsg.data : null;
+        if (prov === 'anthropic') {
+          const c = data && data.content && data.content[0] && (data.content[0].text || (data.content[0].type === 'text' ? data.content[0].text : ''));
+          text = c || '';
+        } else if (prov === 'gemini') {
+          const cand = data && data.candidates && data.candidates[0];
+          const parts = cand && cand.content && cand.content.parts || [];
+          text = parts.map(p => p.text || '').join('');
+        } else {
+          const ch = data && data.choices && data.choices[0];
+          text = (ch && ch.message && ch.message.content) || '';
+        }
+      } catch (_) {
+        text = '';
+      }
+      if (!text) text = '...';
+      appendMessage('assistant', text);
+      chatMessages.push({ role: 'assistant', content: text });
+    };
+
+    if (composerSend) composerSend.addEventListener('click', sendChat);
+    if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };

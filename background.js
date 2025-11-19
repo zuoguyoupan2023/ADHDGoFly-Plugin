@@ -467,9 +467,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     showReviewLightTower(request.data);
     sendResponse({ success: true });
   } else if (request.action === 'hideReviewLightTower') {
-    hideReviewLightTower();
-      sendResponse({ success: true });
-    }
+      hideReviewLightTower();
+        sendResponse({ success: true });
+    } else if (request.action === 'aiChatRequest') {
+    (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), request.timeout || 30000);
+        const resp = await fetch(request.url, {
+          method: request.method || 'POST',
+          headers: request.headers || {},
+          body: request.body || null,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const contentType = resp.headers.get('content-type') || '';
+        let data = null;
+        if (contentType.includes('application/json')) {
+          data = await resp.json();
+        } else {
+          data = await resp.text();
+        }
+        sendResponse({ success: true, status: resp.status, data });
+      } catch (error) {
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  }
 });
 
 // ==================== 评价徽章管理 ====================
