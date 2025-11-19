@@ -474,7 +474,7 @@ class PopupController {
         this.showPage('text');
         break;
       case 'ai-btn':
-        this.showPage('data-panel');
+        this.showPage('ai');
         this.loadAIAnalysis();
         break;
       case 'faq-btn':
