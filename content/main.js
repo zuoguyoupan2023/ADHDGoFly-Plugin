@@ -1648,7 +1648,7 @@ class ADHDHighlighter {
       .agf-msg{display:flex}
       .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
-      .agf-bubble{max-width:70%;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
+      .agf-bubble{width:98%;max-width:98%;box-sizing:border-box;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
       .agf-bubble.user{background:#f0f0f0}
       .agf-bubble strong{font-weight:700}
       .agf-bubble em{font-style:italic}
@@ -2188,7 +2188,7 @@ class ADHDHighlighter {
       const bubble = document.createElement('div');
       bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
       if (role === 'user') qaCounter += 1;
-      const label = role === 'user' ? ('q' + qaCounter) : ('a' + (qaCounter || 1));
+      const label = role === 'user' ? ('Q' + qaCounter) : ('A' + (qaCounter || 1));
       bubble.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content">' + markdownToHtml(text) + '</span>';
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
@@ -2201,7 +2201,7 @@ class ADHDHighlighter {
       wrap.className = 'agf-msg assistant';
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
-      const label = 'a' + (qaCounter || 1);
+      const label = 'A' + (qaCounter || 1);
       bubbleEl.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
