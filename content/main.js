@@ -1642,13 +1642,13 @@ class ADHDHighlighter {
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:130px;height:130px}
-      .agf-chat{display:flex;flex-direction:column;height:100%;gap:8px}
+      .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
       .agf-chat-title{font-size:12px;color:#666}
-      .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
+      .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:0}
       .agf-msg{display:flex}
       .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
-      .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
+      .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:0;padding:8px 10px;font-size:13px;color:#333;background:#fff}
       .agf-bubble.user{background:#f7f7f7}
       .agf-msg.assistant .agf-bubble{background:#fffaf0}
       .agf-bubble strong{font-weight:700}
@@ -1658,6 +1658,8 @@ class ADHDHighlighter {
       .agf-bubble h1,.agf-bubble h2,.agf-bubble h3{margin:4px 0;font-weight:700}
       .agf-bubble ul,.agf-bubble ol{margin:4px 0 4px 18px}
       .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
+      .agf-chat-list .agf-msg:first-child .agf-bubble{border-top-left-radius:10px;border-top-right-radius:10px}
+      .agf-chat-list .agf-msg:last-child .agf-bubble{border-bottom-left-radius:10px;border-bottom-right-radius:10px}
       .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
       .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
