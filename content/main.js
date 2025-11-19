@@ -1629,11 +1629,11 @@ class ADHDHighlighter {
       .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
-      .agf-ai-content{flex:1;overflow:hidden}
-      .agf-ai-view-chat{display:grid;grid-template-rows:80% 20%;gap:8px;height:100%}
-      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
+      .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
+      .agf-ai-content{flex:1;overflow:hidden;min-height:0}
+      .agf-ai-view-chat{display:grid;grid-template-rows:80% 20%;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
+      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
