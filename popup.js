@@ -502,10 +502,7 @@ class PopupController {
     pages.forEach(page => page.classList.remove('active'));
     
     // 显示目标页面
-    let targetPage = document.getElementById(`${pageId}-page`);
-    if (!targetPage && pageId === 'ai') {
-      targetPage = document.getElementById('ai-page');
-    }
+    const targetPage = document.getElementById(`${pageId}-page`);
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
