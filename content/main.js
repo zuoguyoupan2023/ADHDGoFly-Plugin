@@ -1622,14 +1622,18 @@ class ADHDHighlighter {
     const style = document.createElement('style');
     style.id = 'agf-exam-style';
     style.textContent = `
-      .agf-exam-overlay{position:fixed;inset:0;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647}
+      .agf-exam-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;top:25vh;left:25vw;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
       .agf-exam-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
       .agf-exam-title{font-size:14px;font-weight:600;color:#333}
       .agf-exam-controls{display:inline-flex;gap:8px}
       .agf-exam-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-exam-body{flex:1;padding:12px;overflow:auto}
-      .agf-exam-content{font-size:14px;color:#333}
+      .agf-exam-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+      .agf-exam-display{flex:0 0 80%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
+      .agf-exam-input{flex:0 0 20%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
       .agf-exam-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+      .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
+      .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
+      .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -1639,12 +1643,14 @@ class ADHDHighlighter {
       <div class="agf-exam-header">
         <div class="agf-exam-title">ExamPage</div>
         <div class="agf-exam-controls">
+          <button id="agfExamMax">+</button>
           <button id="agfExamMin">-</button>
           <button id="agfExamClose">X</button>
         </div>
       </div>
       <div class="agf-exam-body">
-        <div class="agf-exam-content">ExamPage!!!</div>
+        <div class="agf-exam-display">这是显示区</div>
+        <div class="agf-exam-input">这是输入区</div>
       </div>
     `;
     document.documentElement.appendChild(overlay);
@@ -1653,17 +1659,62 @@ class ADHDHighlighter {
     bubble.className = 'agf-exam-bubble';
     bubble.textContent = 'E';
     document.documentElement.appendChild(bubble);
+    const resizeRight = document.createElement('div');
+    resizeRight.className = 'agf-resize-right';
+    const resizeBottom = document.createElement('div');
+    resizeBottom.className = 'agf-resize-bottom';
+    const resizeLeft = document.createElement('div');
+    resizeLeft.className = 'agf-resize-left';
+    overlay.appendChild(resizeRight);
+    overlay.appendChild(resizeBottom);
+    overlay.appendChild(resizeLeft);
     const header = overlay.querySelector('.agf-exam-header');
-    let dragging = false, startX = 0, startY = 0, offsetX = 0, offsetY = 0;
-    const onDown = (e) => { dragging = true; startX = e.clientX; startY = e.clientY; };
-    const onMove = (e) => { if (!dragging) return; offsetX += e.clientX - startX; offsetY += e.clientY - startY; startX = e.clientX; startY = e.clientY; overlay.style.transform = `translate(${offsetX}px, ${offsetY}px)`; };
+    let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    const onDown = (e) => { dragging = true; startX = e.clientX; startY = e.clientY; startLeft = parseInt(getComputedStyle(overlay).left, 10) || 0; startTop = parseInt(getComputedStyle(overlay).top, 10) || 0; };
+    const onMove = (e) => { if (!dragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; let newLeft = startLeft + dx; let newTop = startTop + dy; const maxLeft = window.innerWidth - overlay.offsetWidth; const maxTop = window.innerHeight - overlay.offsetHeight; if (newLeft < 0) newLeft = 0; if (newTop < 0) newTop = 0; if (newLeft > maxLeft) newLeft = maxLeft; if (newTop > maxTop) newTop = maxTop; overlay.style.left = newLeft + 'px'; overlay.style.top = newTop + 'px'; };
     const onUp = () => { dragging = false; };
     if (header) { header.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); }
     const minBtn = document.getElementById('agfExamMin');
     const closeBtn = document.getElementById('agfExamClose');
+    const maxBtn = document.getElementById('agfExamMax');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeExamPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideExamPanel());
+    if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeExamPanel());
     bubble.addEventListener('click', () => this.restoreExamPanel());
+    let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
+    const minW = 300, minH = 200;
+    const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
+    const onResizeDownBottom = (e) => { resizing = 'bottom'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
+    const onResizeDownLeft = (e) => { resizing = 'left'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; rStartL = parseInt(getComputedStyle(overlay).left, 10) || 0; };
+    const onResizeMove = (e) => {
+      if (!resizing) return;
+      const dx = e.clientX - rStartX;
+      const dy = e.clientY - rStartY;
+      if (resizing === 'right') {
+        let w = rStartW + dx;
+        if (w < minW) w = minW;
+        if (w > window.innerWidth) w = window.innerWidth;
+        overlay.style.width = w + 'px';
+      } else if (resizing === 'bottom') {
+        let h = rStartH + dy;
+        if (h < minH) h = minH;
+        if (h > window.innerHeight) h = window.innerHeight;
+        overlay.style.height = h + 'px';
+      } else if (resizing === 'left') {
+        let newLeft = rStartL + dx;
+        let w = rStartW - dx;
+        if (w < minW) { w = minW; newLeft = rStartL + (rStartW - minW); }
+        if (newLeft < 0) newLeft = 0;
+        overlay.style.left = newLeft + 'px';
+        overlay.style.width = w + 'px';
+      }
+    };
+    const onResizeUp = () => { resizing = null; };
+    resizeRight.addEventListener('mousedown', onResizeDownRight);
+    resizeBottom.addEventListener('mousedown', onResizeDownBottom);
+    resizeLeft.addEventListener('mousedown', onResizeDownLeft);
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
     this.__examPanelInitialized = true;
   }
 
@@ -1684,6 +1735,14 @@ class ADHDHighlighter {
   minimizeExamPanel() {
     const overlay = document.getElementById('agfExamOverlay');
     const bubble = document.getElementById('agfExamBubble');
+    if (overlay) {
+      this.__examGeom = {
+        left: parseInt(getComputedStyle(overlay).left, 10) || 0,
+        top: parseInt(getComputedStyle(overlay).top, 10) || 0,
+        width: overlay.offsetWidth,
+        height: overlay.offsetHeight
+      };
+    }
     if (overlay) overlay.style.display = 'none';
     if (bubble) bubble.style.display = 'flex';
   }
@@ -1693,6 +1752,27 @@ class ADHDHighlighter {
     const bubble = document.getElementById('agfExamBubble');
     if (overlay) overlay.style.display = 'flex';
     if (bubble) bubble.style.display = 'none';
+    if (overlay && this.__examGeom) {
+      overlay.style.left = this.__examGeom.left + 'px';
+      overlay.style.top = this.__examGeom.top + 'px';
+      overlay.style.width = this.__examGeom.width + 'px';
+      overlay.style.height = this.__examGeom.height + 'px';
+    }
+  }
+
+  maximizeExamPanel() {
+    const overlay = document.getElementById('agfExamOverlay');
+    if (!overlay) return;
+    this.__examGeom = {
+      left: parseInt(getComputedStyle(overlay).left, 10) || 0,
+      top: parseInt(getComputedStyle(overlay).top, 10) || 0,
+      width: overlay.offsetWidth,
+      height: overlay.offsetHeight
+    };
+    overlay.style.left = '0px';
+    overlay.style.top = '0px';
+    overlay.style.width = window.innerWidth + 'px';
+    overlay.style.height = window.innerHeight + 'px';
   }
 
   /**
