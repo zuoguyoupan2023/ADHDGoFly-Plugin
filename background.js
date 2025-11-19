@@ -810,3 +810,104 @@ chrome.runtime.onStartup.addListener(async () => {
     date: dateStr
   });
 });
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'ai-chat') return;
+  let controller = null;
+  port.onMessage.addListener(async (msg) => {
+    if (!msg) return;
+    if (msg.type === 'start') {
+      controller = new AbortController();
+      try {
+        const provider = msg.provider || 'deepseek';
+        const apiKey = msg.apiKey || '';
+        const model = msg.model || '';
+        const task = msg.task || 'translate';
+        const text = msg.text || '';
+        const targetLang = msg.targetLang || 'zh';
+        const params = msg.params || {};
+        if (!apiKey) {
+          port.postMessage({ type: 'error', message: '缺少API密钥' });
+          return;
+        }
+        const req = buildAIRequest({ provider, apiKey, model, task, text, targetLang, params });
+        const res = await fetch(req.url, { method: 'POST', headers: req.headers, body: JSON.stringify(req.body), signal: controller.signal });
+        if (!res.ok) {
+          const errText = await res.text();
+          port.postMessage({ type: 'error', message: errText || ('HTTP ' + res.status) });
+          return;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split(/\r?\n/);
+          for (const line of lines) {
+            if (!line) continue;
+            const delta = parseAIStreamLine(line);
+            if (delta) port.postMessage({ type: 'delta', delta });
+          }
+        }
+        port.postMessage({ type: 'done' });
+      } catch (e) {
+        if (e && e.name === 'AbortError') {
+          port.postMessage({ type: 'status', message: '已停止' });
+        } else {
+          port.postMessage({ type: 'error', message: e.message || '请求错误' });
+        }
+      }
+    } else if (msg.type === 'stop') {
+      if (controller) controller.abort();
+    }
+  });
+});
+
+function buildAIRequest({ provider, apiKey, model, task, text, targetLang, params }) {
+  const headers = { 'Content-Type': 'application/json' };
+  let url = '';
+  if (provider === 'deepseek') {
+    url = 'https://api.deepseek.com/v1/chat/completions';
+    headers.Authorization = 'Bearer ' + apiKey;
+  } else if (provider === 'moonshot') {
+    url = 'https://api.moonshot.cn/v1/chat/completions';
+    headers.Authorization = 'Bearer ' + apiKey;
+  } else {
+    url = 'https://api.deepseek.com/v1/chat/completions';
+    headers.Authorization = 'Bearer ' + apiKey;
+  }
+  const prompt = buildPrompt(task, text, targetLang);
+  const body = {
+    model: model || (provider === 'moonshot' ? 'moonshot-v1-8k' : 'deepseek-chat'),
+    messages: [{ role: 'user', content: prompt }],
+    stream: true,
+    temperature: params && params.temperature != null ? params.temperature : 0.7
+  };
+  return { url, headers, body };
+}
+
+function buildPrompt(task, text, targetLang) {
+  if (task === 'translate') return `请将以下文本翻译为${targetLang}，以直译为主并保留术语：\n\n${text}`;
+  if (task === 'summary') return `请分层要点总结以下文本，并在末尾提供TL;DR：\n\n${text}`;
+  if (task === 'polish') return `在不改变原意的前提下，提升以下文本的清晰度与结构：\n\n${text}`;
+  if (task === 'debate') return `围绕以下主题进行三轮交锋，给出各自观点与论据，最后提供综合结论：\n\n${text}`;
+  return text;
+}
+
+function parseAIStreamLine(line) {
+  const cleaned = line.replace(/^data:\s*/, '');
+  try {
+    const obj = JSON.parse(cleaned);
+    if (obj && obj.choices && obj.choices[0]) {
+      const d = obj.choices[0].delta && obj.choices[0].delta.content;
+      if (d) return d;
+      const m = obj.choices[0].message && obj.choices[0].message.content;
+      if (m) return m;
+    }
+    if (obj && obj.output_text) return obj.output_text;
+    if (obj && obj.content) return obj.content;
+  } catch (_) {}
+  if (!cleaned) return '';
+  return cleaned;
+}
