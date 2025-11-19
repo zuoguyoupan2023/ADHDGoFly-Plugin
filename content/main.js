@@ -1824,6 +1824,9 @@ class ADHDHighlighter {
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
     const composerSend = document.getElementById('agfComposerSend');
+    const recordsPanel = overlay.querySelector('#agfRecordsPanel');
+    const recordsList = overlay.querySelector('#agfRecordsList');
+    const recordsClose = overlay.querySelector('#agfRecordsClose');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
@@ -2491,6 +2494,3 @@ console.log('ADHD文本高亮器主控制器加载完成');
  * 影响范围:
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
-    const recordsPanel = document.getElementById('agfRecordsPanel');
-    const recordsList = document.getElementById('agfRecordsList');
-    const recordsClose = document.getElementById('agfRecordsClose');
