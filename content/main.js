@@ -2125,13 +2125,43 @@ class ADHDHighlighter {
       });
       showRecords();
     };
+    const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const markdownToHtml = (md) => {
+      let t = escapeHtml(md);
+      t = t.replace(/```([\s\S]*?)```/g, (m, p1) => '<pre><code>' + p1.replace(/\n/g, '<br>') + '</code></pre>');
+      const lines = t.split(/\r?\n/);
+      let out = '';
+      let inUl = false, inOl = false;
+      const inline = (x) => x.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/^\s*[-*]\s+/.test(line)) {
+          if (!inUl) { out += '<ul>'; inUl = true; }
+          out += '<li>' + inline(line.replace(/^\s*[-*]\s+/, '')) + '</li>';
+        } else if (/^\s*\d+\.\s+/.test(line)) {
+          if (!inOl) { out += '<ol>'; inOl = true; }
+          out += '<li>' + inline(line.replace(/^\s*\d+\.\s+/, '')) + '</li>';
+        } else {
+          if (inUl) { out += '</ul>'; inUl = false; }
+          if (inOl) { out += '</ol>'; inOl = false; }
+          if (line.trim().length) {
+            out += inline(line) + '<br>';
+          } else {
+            out += '<br>';
+          }
+        }
+      }
+      if (inUl) out += '</ul>';
+      if (inOl) out += '</ol>';
+      return out;
+    };
     const appendMessage = (role, text) => {
       if (!chatList) return;
       const wrap = document.createElement('div');
       wrap.className = 'agf-msg ' + (role === 'user' ? 'user' : 'assistant');
       const bubble = document.createElement('div');
       bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
-      bubble.textContent = text;
+      bubble.innerHTML = markdownToHtml(text);
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
       chatList.scrollTop = chatList.scrollHeight;
@@ -2218,7 +2248,7 @@ class ADHDHighlighter {
       if (typeof delta !== 'string' || !delta) return;
       streamingText += delta;
       if (streamingBubble) {
-        streamingBubble.textContent = streamingText;
+        streamingBubble.innerHTML = markdownToHtml(streamingText);
         if (chatList) chatList.scrollTop = chatList.scrollHeight;
       }
     };
