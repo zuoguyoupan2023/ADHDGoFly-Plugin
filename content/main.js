@@ -1631,9 +1631,29 @@ class ADHDHighlighter {
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0}
-      .agf-ai-view-chat{display:grid;grid-template-rows:80% 20%;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
+      .agf-ai-view-chat{display:grid;grid-template-rows:65% 35%;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
+      .agf-chat{display:flex;flex-direction:column;height:100%;gap:8px}
+      .agf-chat-title{font-size:12px;color:#666}
+      .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
+      .agf-msg{display:flex}
+      .agf-msg.user{justify-content:flex-end}
+      .agf-msg.assistant{justify-content:flex-start}
+      .agf-bubble{max-width:70%;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
+      .agf-bubble.user{background:#f0f0f0}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:8px;height:100%}
+      .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
+      .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
+      .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:6px}
+      .agf-mode-btn{height:24px;line-height:24px;padding:0 8px;border:1px solid #e0e0e0;border-radius:0;background:#fff;color:#333;font-size:12px}
+      .agf-mode-btn:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
+      .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
+      .agf-mode-btn + .agf-mode-btn{margin-left:-1px}
+      .agf-mode-btn.active{background:#333;color:#fff}
+      .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
+      .agf-actions{display:inline-flex;align-items:center;gap:8px}
+      .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
@@ -1672,8 +1692,45 @@ class ADHDHighlighter {
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
-            <div class="agf-ai-display">这是显示区</div>
-            <div class="agf-ai-input">这是输入区</div>
+            <div class="agf-ai-display">
+              <div class="agf-chat">
+                <div class="agf-chat-title">对话</div>
+                <div class="agf-chat-list">
+                  <div class="agf-msg assistant"><div class="agf-bubble">您好，我是AI助手。</div></div>
+                  <div class="agf-msg user"><div class="agf-bubble user">请总结这段文本。</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="agf-ai-input">
+              <div class="agf-composer">
+                <div class="agf-composer-header">
+                  <select class="agf-field" id="agfSessionProvider">
+                    <option>deepseek</option>
+                    <option>moonshot</option>
+                    <option>chatgpt</option>
+                    <option>claude</option>
+                    <option>qwen</option>
+                    <option>chatglm</option>
+                    <option>minimax</option>
+                    <option>gemini</option>
+                    <option>grok</option>
+                  </select>
+                  <select class="agf-field" id="agfSessionModel">
+                    <option>deepseek-chat</option>
+                    <option>deepseek-reasoner</option>
+                  </select>
+                  <div class="agf-mode-toggle">
+                    <button class="agf-mode-btn">T</button>
+                    <button class="agf-mode-btn active">M</button>
+                  </div>
+                </div>
+                <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                <div class="agf-actions">
+                  <button class="agf-send">发送</button>
+                  <button class="agf-send">停止</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
             <div class="agf-settings-group">
