@@ -1622,7 +1622,7 @@ class ADHDHighlighter {
     const style = document.createElement('style');
     style.id = 'agf-ai-setting-style';
     style.textContent = `
-      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;top:25vh;left:25vw;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:calc(100vw/3);min-height:calc(100vh/2)}
       .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
       .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
       .agf-ai-controls{display:inline-flex;gap:8px}
@@ -1631,9 +1631,9 @@ class ADHDHighlighter {
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0}
-      .agf-ai-view-chat{display:grid;grid-template-rows:65% 35%;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
+      .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:0}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:150px;height:150px}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:8px}
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
@@ -1765,6 +1765,9 @@ class ADHDHighlighter {
       </div>
     `;
     document.documentElement.appendChild(overlay);
+    overlay.style.top = '5px';
+    const initialLeft = Math.max(5, window.innerWidth - overlay.offsetWidth - 5);
+    overlay.style.left = initialLeft + 'px';
     const bubble = document.createElement('div');
     bubble.id = 'agfAiBubble';
     bubble.className = 'agf-ai-bubble';
@@ -1987,7 +1990,7 @@ class ADHDHighlighter {
       });
     };
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
-    const minW = 300, minH = 200;
+    const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight / 2);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
     const onResizeDownBottom = (e) => { resizing = 'bottom'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
     const onResizeDownLeft = (e) => { resizing = 'left'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; rStartL = parseInt(getComputedStyle(overlay).left, 10) || 0; };
