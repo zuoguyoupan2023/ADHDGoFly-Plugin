@@ -1642,7 +1642,8 @@ class ADHDHighlighter {
       .agf-msg.assistant{justify-content:flex-start}
       .agf-bubble{max-width:70%;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
       .agf-bubble.user{background:#f0f0f0}
-      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:8px;height:100%}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
+      .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
       .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:6px}
@@ -1724,10 +1725,9 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn active">M</button>
                   </div>
                 </div>
-                <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
-                <div class="agf-actions">
-                  <button class="agf-send">发送</button>
-                  <button class="agf-send">停止</button>
+                <div class="agf-composer-body">
+                  <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                  <button class="agf-send" id="agfComposerSend">发送</button>
                 </div>
               </div>
             </div>
@@ -1799,6 +1799,8 @@ class ADHDHighlighter {
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
     const keySavedBtn = document.getElementById('agfKeySavedBtn');
     const tempInput = document.getElementById('agfTempInput');
+    const sessionProviderSelect = document.getElementById('agfSessionProvider');
+    const sessionModelSelect = document.getElementById('agfSessionModel');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
@@ -1952,6 +1954,38 @@ class ADHDHighlighter {
     }
 
     initFromStorage();
+
+    const initComposerSelects = () => {
+      if (!sessionProviderSelect || !sessionModelSelect) return;
+      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]);
+      sessionProviderSelect.innerHTML = '';
+      providers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p === 'openai' ? 'chatgpt' : (p === 'anthropic' ? 'claude' : p);
+        sessionProviderSelect.appendChild(opt);
+      });
+      const selectedProv = providers.includes(currentProvider) ? currentProvider : (providers[0] || '');
+      if (selectedProv) sessionProviderSelect.value = selectedProv;
+      const fillModelsForProv = (prov) => {
+        sessionModelSelect.innerHTML = '';
+        const ms = PROVIDERS_CONFIG[prov]?.models || [];
+        ms.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          sessionModelSelect.appendChild(opt);
+        });
+        if (ms[0]) sessionModelSelect.value = ms[0];
+      };
+      if (selectedProv) fillModelsForProv(selectedProv);
+      sessionProviderSelect.addEventListener('change', () => {
+        const prov = sessionProviderSelect.value;
+        fillModelsForProv(prov);
+      });
+    };
+
+    initComposerSelects();
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = 300, minH = 200;
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
