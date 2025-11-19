@@ -1630,7 +1630,7 @@ class ADHDHighlighter {
       .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
-      .agf-ai-content{flex:1;overflow:hidden;min-height:0}
+      .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:130px;height:130px}
@@ -1652,6 +1652,12 @@ class ADHDHighlighter {
       .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
       .agf-mode-btn + .agf-mode-btn{margin-left:-1px}
       .agf-mode-btn.active{background:#333;color:#fff}
+      .agf-records-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
+      .agf-records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .agf-records-title{font-size:14px;color:#333;font-weight:600}
+      .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-records-list{display:flex;flex-direction:column;gap:8px}
+      .agf-record-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333}
       .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
@@ -1680,7 +1686,9 @@ class ADHDHighlighter {
         <div class="agf-ai-title"><span>ExamPage</span></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
+            <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabNote">📝</button>
+            <button id="agfAiTabDoc">📃</button>
             <button id="agfAiTabWrench">🔧</button>
           </div>
           <div class="agf-ai-controls">
@@ -1761,6 +1769,13 @@ class ADHDHighlighter {
               </div>
             </div>
           </div>
+          <div class="agf-records-panel" id="agfRecordsPanel">
+            <div class="agf-records-header">
+              <div class="agf-records-title">对话记录</div>
+              <button class="agf-records-close" id="agfRecordsClose">X</button>
+            </div>
+            <div class="agf-records-list" id="agfRecordsList"></div>
+          </div>
         </div>
       </div>
     `;
@@ -1791,7 +1806,9 @@ class ADHDHighlighter {
     const minBtn = document.getElementById('agfAiMin');
     const closeBtn = document.getElementById('agfAiClose');
     const maxBtn = document.getElementById('agfAiMax');
+    const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
+    const tabDoc = document.getElementById('agfAiTabDoc');
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
     const viewSettings = document.getElementById('agfAiViewSettings');
@@ -1818,6 +1835,9 @@ class ADHDHighlighter {
       tabWrench.addEventListener('click', showSettings);
       showChat();
     }
+    const showRecords = () => { if (recordsPanel) recordsPanel.style.display = 'block'; };
+    const hideRecords = () => { if (recordsPanel) recordsPanel.style.display = 'none'; };
+    if (recordsClose) recordsClose.addEventListener('click', hideRecords);
 
     const PROVIDERS_CONFIG = {
       deepseek: {
@@ -1994,6 +2014,104 @@ class ADHDHighlighter {
     };
 
     let chatMessages = [];
+    let currentConversationId = null;
+    const dbOpen = () => new Promise((resolve, reject) => {
+      const req = indexedDB.open('agf_ai_db', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('conversations')) {
+          const store = db.createObjectStore('conversations', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt');
+          store.createIndex('updatedAt', 'updatedAt');
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const dbPutConversation = async (obj) => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readwrite');
+        const store = tx.objectStore('conversations');
+        const req = store.put(obj);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const dbGetConversation = async (id) => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readonly');
+        const store = tx.objectStore('conversations');
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const dbListConversations = async () => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readonly');
+        const store = tx.objectStore('conversations');
+        const idx = store.index('createdAt');
+        const items = [];
+        const req = idx.openCursor(null, 'prev');
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) { items.push(cursor.value); cursor.continue(); } else { resolve(items); }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const newConversation = async () => {
+      currentConversationId = 'agf-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+      chatMessages = [];
+      if (chatList) chatList.innerHTML = '';
+      const prov = sessionProviderSelect && sessionProviderSelect.value || '';
+      const model = sessionModelSelect && sessionModelSelect.value || '';
+      const now = Date.now();
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: [] };
+      try { await dbPutConversation(convo); } catch (_) {}
+    };
+    const saveConversationSnapshot = async () => {
+      if (!currentConversationId) return;
+      const prov = sessionProviderSelect && sessionProviderSelect.value || '';
+      const model = sessionModelSelect && sessionModelSelect.value || '';
+      const now = Date.now();
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages };
+      try { await dbPutConversation(convo); } catch (_) {}
+    };
+    const openRecordsListPanel = async () => {
+      if (!recordsPanel || !recordsList) return;
+      recordsList.innerHTML = '';
+      let items = [];
+      try { items = await dbListConversations(); } catch (_) {}
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'agf-record-item';
+        const left = document.createElement('div');
+        left.textContent = new Date(item.createdAt).toLocaleString();
+        const right = document.createElement('button');
+        right.className = 'agf-records-close';
+        right.textContent = '打开';
+        right.addEventListener('click', async () => {
+          const data = await dbGetConversation(item.id);
+          if (data && data.messages) {
+            chatMessages = data.messages.slice();
+            if (chatList) {
+              chatList.innerHTML = '';
+              chatMessages.forEach(m => appendMessage(m.role, m.content));
+            }
+            currentConversationId = item.id;
+            hideRecords();
+          }
+        });
+        el.appendChild(left);
+        el.appendChild(right);
+        recordsList.appendChild(el);
+      });
+      showRecords();
+    };
     const appendMessage = (role, text) => {
       if (!chatList) return;
       const wrap = document.createElement('div');
@@ -2060,10 +2178,13 @@ class ADHDHighlighter {
       if (!text) text = '...';
       appendMessage('assistant', text);
       chatMessages.push({ role: 'assistant', content: text });
+      try { await saveConversationSnapshot(); } catch (_) {}
     };
 
     if (composerSend) composerSend.addEventListener('click', sendChat);
     if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+    if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
+    if (tabDoc) tabDoc.addEventListener('click', () => { openRecordsListPanel(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
@@ -2370,3 +2491,6 @@ console.log('ADHD文本高亮器主控制器加载完成');
  * 影响范围:
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
+    const recordsPanel = document.getElementById('agfRecordsPanel');
+    const recordsList = document.getElementById('agfRecordsList');
+    const recordsClose = document.getElementById('agfRecordsClose');
