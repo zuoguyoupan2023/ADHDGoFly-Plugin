@@ -3311,8 +3311,8 @@
         </div>
       </div>
 
-      <!-- 数据面板页面 -->
-      <div class="page" id="data-panel-page">
+      <!-- AI分析页面 -->
+      <div class="page" id="ai-page">
         <div class="header">
           <h3 data-i18n="pages.ai.title">智能分析</h3>
         </div>
@@ -3352,56 +3352,6 @@
           <!-- 推荐功能已彻底删除 -->
 
 
-        </div>
-      </div>
-
-      <!-- AI对话页面 -->
-      <div class="page" id="ai-page">
-        <div class="header">
-          <h3 data-i18n="pages.ai.chat.title">AI 对话</h3>
-        </div>
-        <div class="ai-assistant-content">
-          <div class="ai-config-section">
-            <div class="config-header">
-              <div class="config-title">任务与模式</div>
-              <div class="config-toggle">›</div>
-            </div>
-            <div class="config-content">
-              <div class="function-buttons">
-                <div class="mode-toggle">
-                  <button class="mode-btn" id="aiModeM">M</button>
-                  <button class="mode-btn" id="aiModeT">T</button>
-                </div>
-                <div class="mode-toggle" style="margin-top:8px">
-                  <button class="mode-btn" id="aiTaskTranslate">翻译</button>
-                  <button class="mode-btn" id="aiTaskSummary">总结</button>
-                  <button class="mode-btn" id="aiTaskPolish">润色</button>
-                  <button class="mode-btn" id="aiTaskDebate">论人与AI</button>
-                </div>
-                <div class="field" style="margin-top:8px">
-                  <label for="aiTargetLang">目标语言</label>
-                  <select id="aiTargetLang">
-                    <option value="zh">中文</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="ai-functions-container">
-            <div class="ai-function-panel">
-              <div class="panel-header"><h4>结果</h4></div>
-              <div class="panel-content">
-                <div id="aiResult" class="ai-result"></div>
-              </div>
-              <div class="ai-actions" style="padding:10px">
-                <button class="refresh-btn" id="aiRunBtn">执行</button>
-                <button class="refresh-btn" id="aiStopBtn" style="margin-top:8px">停止</button>
-                <button class="refresh-btn" id="aiCopyBtn" style="margin-top:8px">复制</button>
-                <div id="aiStatus" style="margin-top:8px;font-size:12px;color:#666"></div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -4047,20 +3997,11 @@
 
       <button
         class="sidebar-btn"
-        id="data-btn"
-        title="数据"
-        data-i18n-title="sidebar.data"
-      >
-        <span>📊</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
         id="ai-btn"
         title="AI"
         data-i18n-title="sidebar.ai"
       >
-        <span>🤖</span>
+        <span>📊</span>
       </button>
 
       <button

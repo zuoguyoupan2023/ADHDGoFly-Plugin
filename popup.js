@@ -111,14 +111,7 @@ class PopupController {
       adj: true,            // 形容词高亮开关
       comparative: true     // 比较级/最高级高亮开关
     };
-    this.aiDisplayMode = 'M';
-    this.aiTask = 'translate';
-    this.aiPort = null;
-    this.aiRunning = false;
-    this.aiResultMarkdown = '';
-    this.aiResultText = '';
-    this.aiPageInitialized = false;
-  
+
     // 词典meta信息
     this.dictMeta = {
       'zh-preset': {
@@ -480,13 +473,9 @@ class PopupController {
       case 'text-btn':
         this.showPage('text');
         break;
-      case 'data-btn':
-        this.showPage('data-panel');
-        this.loadAIAnalysis();
-        break;
       case 'ai-btn':
         this.showPage('ai');
-        this.initAIPage();
+        this.loadAIAnalysis();
         break;
       case 'faq-btn':
         this.showPage('faq');
@@ -1816,137 +1805,6 @@ class PopupController {
   // AI分析相关方法
   bindAIEvents() {
     // AI分析相关事件绑定（如果需要的话）
-  }
-
-  initAIPage() {
-    if (this.aiPageInitialized) return;
-    const modeM = document.getElementById('aiModeM');
-    const modeT = document.getElementById('aiModeT');
-    const taskTranslate = document.getElementById('aiTaskTranslate');
-    const taskSummary = document.getElementById('aiTaskSummary');
-    const taskPolish = document.getElementById('aiTaskPolish');
-    const taskDebate = document.getElementById('aiTaskDebate');
-    const runBtn = document.getElementById('aiRunBtn');
-    const stopBtn = document.getElementById('aiStopBtn');
-    const copyBtn = document.getElementById('aiCopyBtn');
-    if (modeM) modeM.addEventListener('click', () => { this.aiDisplayMode = 'M'; });
-    if (modeT) modeT.addEventListener('click', () => { this.aiDisplayMode = 'T'; });
-    if (taskTranslate) taskTranslate.addEventListener('click', () => { this.aiTask = 'translate'; });
-    if (taskSummary) taskSummary.addEventListener('click', () => { this.aiTask = 'summary'; });
-    if (taskPolish) taskPolish.addEventListener('click', () => { this.aiTask = 'polish'; });
-    if (taskDebate) taskDebate.addEventListener('click', () => { this.aiTask = 'debate'; });
-    if (runBtn) runBtn.addEventListener('click', () => { this.startAIChat(); });
-    if (stopBtn) stopBtn.addEventListener('click', () => { this.stopAIChat(); });
-    if (copyBtn) copyBtn.addEventListener('click', () => {
-      const text = this.aiDisplayMode === 'M' ? this.aiResultMarkdown : this.aiResultText;
-      if (!text) return;
-      navigator.clipboard.writeText(text);
-      this.updateAIStatus('已复制');
-    });
-    this.aiPageInitialized = true;
-  }
-
-  async startAIChat() {
-    if (this.aiRunning) return;
-    this.resetAIResult();
-    this.updateAIStatus('准备中');
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs[0]) { this.updateAIStatus('无活动标签页'); return; }
-    const text = await this.getAIInputText(tabs[0].id);
-    if (!text || !text.trim()) { this.updateAIStatus('未获取到文本'); return; }
-    const targetLangSel = document.getElementById('aiTargetLang');
-    const targetLang = targetLangSel ? targetLangSel.value : 'zh';
-    const cfg = await chrome.storage.local.get(['aiProvider','aiModel','aiApiKey','aiParams']);
-    this.aiPort = chrome.runtime.connect({ name: 'ai-chat' });
-    this.aiPort.onMessage.addListener((msg) => {
-      if (!msg) return;
-      if (msg.type === 'delta') {
-        this.appendAIResult(msg.delta || '');
-      } else if (msg.type === 'done') {
-        this.aiRunning = false;
-        this.updateAIStatus('完成');
-      } else if (msg.type === 'error') {
-        this.aiRunning = false;
-        this.updateAIStatus(msg.message || '错误');
-      } else if (msg.type === 'status') {
-        this.updateAIStatus(msg.message || '');
-      }
-    });
-    this.aiPort.onDisconnect.addListener(() => {
-      this.aiRunning = false;
-    });
-    this.aiRunning = true;
-    this.updateAIStatus('执行中');
-    this.aiPort.postMessage({
-      type: 'start',
-      task: this.aiTask,
-      text,
-      provider: cfg.aiProvider || 'deepseek',
-      model: cfg.aiModel || '',
-      apiKey: cfg.aiApiKey || '',
-      params: cfg.aiParams || {},
-      mode: this.aiDisplayMode,
-      targetLang
-    });
-  }
-
-  stopAIChat() {
-    if (this.aiPort) {
-      this.aiPort.postMessage({ type: 'stop' });
-    }
-    this.aiRunning = false;
-    this.updateAIStatus('已停止');
-  }
-
-  appendAIResult(delta) {
-    if (!delta) return;
-    this.aiResultMarkdown += delta;
-    const textDelta = this.stripMarkdown(delta);
-    this.aiResultText += textDelta;
-    const resultEl = document.getElementById('aiResult');
-    if (!resultEl) return;
-    const display = this.aiDisplayMode === 'M' ? this.aiResultMarkdown : this.aiResultText;
-    resultEl.textContent = display;
-  }
-
-  updateAIStatus(text) {
-    const el = document.getElementById('aiStatus');
-    if (el) el.textContent = text;
-  }
-
-  resetAIResult() {
-    this.aiResultMarkdown = '';
-    this.aiResultText = '';
-    const resultEl = document.getElementById('aiResult');
-    if (resultEl) resultEl.textContent = '';
-  }
-
-  stripMarkdown(md) {
-    if (!md) return '';
-    let s = md;
-    s = s.replace(/```[\s\S]*?```/g, '');
-    s = s.replace(/^>\s?/gm, '');
-    s = s.replace(/\*\*([^*]+)\*\*/g, '$1');
-    s = s.replace(/\*([^*]+)\*/g, '$1');
-    s = s.replace(/`([^`]+)`/g, '$1');
-    s = s.replace(/^#{1,6}\s+/gm, '');
-    s = s.replace(/!\[[^\]]*\]\([^\)]*\)/g, '');
-    s = s.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
-    s = s.replace(/[ \t]*\n{2,}/g, '\n');
-    return s;
-  }
-
-  async getAIInputText(tabId) {
-    try {
-      const selResp = await chrome.tabs.sendMessage(tabId, { action: 'getSelectedText' });
-      const sel = selResp && selResp.success ? selResp.text || '' : '';
-      if (sel && sel.trim()) return sel;
-      const mainResp = await chrome.tabs.sendMessage(tabId, { action: 'getMainText' });
-      const main = mainResp && mainResp.success ? mainResp.text || '' : '';
-      return main;
-    } catch (e) {
-      return '';
-    }
   }
 
   // 复制词汇相关方法

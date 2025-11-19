@@ -655,10 +655,6 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
-        case 'getMainText':
-          const mainText = this.getMainText();
-          sendResponse({ success: true, text: mainText });
-          break;
           
         case 'testDictionaryLoading':
           const testResult = await this.testDictionaryLoading();
@@ -1600,26 +1596,6 @@ class ADHDHighlighter {
       return '';
     } catch (error) {
       console.error('获取选中文本失败:', error);
-      return '';
-    }
-  }
-
-  getMainText() {
-    try {
-      const parts = [];
-      const article = document.querySelector('article');
-      const main = document.querySelector('main');
-      if (article) parts.push(article.innerText || '');
-      if (main) parts.push(main.innerText || '');
-      let text = parts.join('\n');
-      if (!text.trim()) {
-        const nodes = Array.from(document.querySelectorAll('h1,h2,p,li'));
-        text = nodes.map(el => el.innerText || '').join('\n');
-      }
-      text = text.replace(/[\t\x0B\f\r]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
-      if (text.length > 8000) text = text.slice(0, 8000);
-      return text;
-    } catch (e) {
       return '';
     }
   }
