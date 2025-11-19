@@ -1644,6 +1644,7 @@ class ADHDHighlighter {
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
+      .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
@@ -1694,7 +1695,7 @@ class ADHDHighlighter {
                 <div style="display:flex;align-items:center;gap:8px;">
                   <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
                   <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
-                  <span id="agfApiSavedHint" class="agf-hint" style="display:none;">已保存</span>
+                  <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                 </div>
               </div>
               <div class="agf-settings-row">
@@ -1739,7 +1740,7 @@ class ADHDHighlighter {
     const baseUrlInput = document.getElementById('agfBaseUrlInput');
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
-    const apiSavedHint = document.getElementById('agfApiSavedHint');
+    const keySavedBtn = document.getElementById('agfKeySavedBtn');
     const tempInput = document.getElementById('agfTempInput');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
@@ -1815,28 +1816,38 @@ class ADHDHighlighter {
       });
     };
 
+    let currentProvider = null;
+    let aiKeysState = {};
+
+    const renderProviderButtons = (activeProv) => {
+      const providerKeys = Object.keys(PROVIDERS_CONFIG);
+      const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok' };
+      const labelMap = {};
+      providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
+      renderButtons(providerList, providerKeys, activeProv, (val, btn) => {
+        Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentProvider = val;
+        fillModels(val);
+        const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
+        if (baseUrlInput) baseUrlInput.value = base;
+        save({ aiProvider: val, aiBaseUrl: base });
+        if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
+      }, labelMap);
+    };
+
     const initFromStorage = () => {
       try {
-        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiApiKey','aiTemperature'], (res) => {
-          const prov = res.aiProvider || 'deepseek';
-          const providerKeys = Object.keys(PROVIDERS_CONFIG);
-          const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok' };
-          renderButtons(providerList, providerKeys, prov, (val, btn) => {
-            Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            fillModels(val);
-            const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
-            if (baseUrlInput) baseUrlInput.value = base;
-            save({ aiProvider: val, aiBaseUrl: base });
-          }, PROVIDER_LABELS);
-          fillModels(prov, res.aiModel || (PROVIDERS_CONFIG[prov]?.models?.[0] || ''));
-          const base = res.aiBaseUrl || PROVIDERS_CONFIG[prov]?.baseUrl || '';
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiTemperature','aiKeys'], (res) => {
+          currentProvider = res.aiProvider || 'deepseek';
+          aiKeysState = res.aiKeys || {};
+          renderProviderButtons(currentProvider);
+          fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
+          const base = res.aiBaseUrl || PROVIDERS_CONFIG[currentProvider]?.baseUrl || '';
           if (baseUrlInput) baseUrlInput.value = base;
-          if (typeof res.aiApiKey === 'string' && res.aiApiKey.length > 0 && apiSavedHint) {
-            apiSavedHint.style.display = 'inline';
-          }
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
+          if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
         });
       } catch (_) {}
     };
@@ -1858,13 +1869,22 @@ class ADHDHighlighter {
       });
     }
 
-    if (saveKeyBtn && apiKeyInput && apiSavedHint) {
+    if (saveKeyBtn && apiKeyInput && keySavedBtn) {
       saveKeyBtn.addEventListener('click', () => {
         const v = apiKeyInput.value || '';
         if (v.length > 0) {
-          save({ aiApiKey: v });
-          apiKeyInput.value = '';
-          apiSavedHint.style.display = 'inline';
+          try {
+            chrome.storage.local.get(['aiKeys'], (res) => {
+              const keys = res.aiKeys || {};
+              if (currentProvider) keys[currentProvider] = v;
+              chrome.storage.local.set({ aiKeys: keys }, () => {
+                aiKeysState = keys;
+                if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
+                if (apiKeyInput) apiKeyInput.value = '';
+                renderProviderButtons(currentProvider);
+              });
+            });
+          } catch (_) {}
         }
       });
       apiKeyInput.addEventListener('keydown', (e) => {
