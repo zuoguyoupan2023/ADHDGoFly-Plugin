@@ -1638,8 +1638,9 @@ class ADHDHighlighter {
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
-      .agf-radio-list{display:flex;align-items:center;gap:16px}
-      .agf-radio-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#333}
+      .agf-button-list{display:flex;flex-wrap:wrap;gap:8px}
+      .agf-btn{height:28px;padding:0 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:13px;cursor:pointer}
+      .agf-btn.active{background:#333;color:#fff;border-color:#333}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
@@ -1678,21 +1679,11 @@ class ADHDHighlighter {
               <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
               <div class="agf-settings-row">
                 <div class="agf-label">服务商</div>
-                <select id="agfProviderSelect" class="agf-select">
-                  <option value="deepseek">deepseek</option>
-                  <option value="moonshot">moonshot</option>
-                  <option value="openai">chatgpt</option>
-                  <option value="anthropic">claude</option>
-                  <option value="qwen">qwen</option>
-                  <option value="chatglm">chatglm</option>
-                  <option value="minimax">minimax</option>
-                  <option value="gemini">gemini</option>
-                  <option value="grok">grok</option>
-                </select>
+                <div id="agfProviderList" class="agf-button-list"></div>
               </div>
               <div class="agf-settings-row">
                 <div class="agf-label">模型</div>
-                <select id="agfModelSelect" class="agf-select"></select>
+                <div id="agfModelList" class="agf-button-list"></div>
               </div>
               <div class="agf-settings-row">
                 <div class="agf-label">供应商URL</div>
@@ -1743,8 +1734,8 @@ class ADHDHighlighter {
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
     const viewSettings = document.getElementById('agfAiViewSettings');
-    const providerSelect = document.getElementById('agfProviderSelect');
-    const modelSelect = document.getElementById('agfModelSelect');
+    const providerList = document.getElementById('agfProviderList');
+    const modelList = document.getElementById('agfModelList');
     const baseUrlInput = document.getElementById('agfBaseUrlInput');
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
@@ -1769,15 +1760,15 @@ class ADHDHighlighter {
       },
       moonshot: {
         baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
-        models: ['kimi-k2-instruct', 'moonshot-v1-128k']
+        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k', 'kimi-k2-instruct']
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-4o', 'gpt-4.1', 'o3', 'o4-mini']
+        models: ['gpt-5', 'gpt-4o', 'gpt-4.1', 'o3', 'o4-mini']
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
-        models: ['claude-3.5-sonnet', 'claude-3-opus', 'claude-3.5-haiku']
+        models: ['claude-4-opus', 'claude-4-sonnet', 'claude-4.5-sonnet', 'claude-4.5-haiku', 'claude-3.5-sonnet']
       },
       qwen: {
         baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
@@ -1785,7 +1776,7 @@ class ADHDHighlighter {
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-4', 'glm-4v', 'glm-4-plus']
+        models: ['glm-4.5', 'glm-4.6', 'glm-4', 'glm-4v', 'glm-4-plus']
       },
       minimax: {
         baseUrl: 'https://api.minimax.io/v1/chat/completions',
@@ -1801,26 +1792,43 @@ class ADHDHighlighter {
       }
     };
 
+    const renderButtons = (container, items, activeValue, onClick, labelMap) => {
+      if (!container) return;
+      container.innerHTML = '';
+      items.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'agf-btn' + (val === activeValue ? ' active' : '');
+        btn.textContent = labelMap && labelMap[val] ? labelMap[val] : val;
+        btn.dataset.value = val;
+        btn.addEventListener('click', () => onClick(val, btn));
+        container.appendChild(btn);
+      });
+    };
+
     const fillModels = (prov, presetModel) => {
       const cfg = PROVIDERS_CONFIG[prov];
-      if (!modelSelect) return;
-      modelSelect.innerHTML = '';
-      (cfg?.models || []).forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        modelSelect.appendChild(opt);
+      const models = cfg?.models || [];
+      renderButtons(modelList, models, presetModel || models[0], (val, btn) => {
+        Array.from(modelList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        save({ aiModel: val });
       });
-      if (presetModel) {
-        modelSelect.value = presetModel;
-      }
     };
 
     const initFromStorage = () => {
       try {
         chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiApiKey','aiTemperature'], (res) => {
           const prov = res.aiProvider || 'deepseek';
-          if (providerSelect) providerSelect.value = prov;
+          const providerKeys = Object.keys(PROVIDERS_CONFIG);
+          const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok' };
+          renderButtons(providerList, providerKeys, prov, (val, btn) => {
+            Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fillModels(val);
+            const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
+            if (baseUrlInput) baseUrlInput.value = base;
+            save({ aiProvider: val, aiBaseUrl: base });
+          }, PROVIDER_LABELS);
           fillModels(prov, res.aiModel || (PROVIDERS_CONFIG[prov]?.models?.[0] || ''));
           const base = res.aiBaseUrl || PROVIDERS_CONFIG[prov]?.baseUrl || '';
           if (baseUrlInput) baseUrlInput.value = base;
@@ -1835,21 +1843,7 @@ class ADHDHighlighter {
 
     const save = (obj) => { try { chrome.storage.local.set(obj); } catch (_) {} };
 
-    if (providerSelect) {
-      providerSelect.addEventListener('change', (e) => {
-        const prov = providerSelect.value;
-        fillModels(prov);
-        const base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
-        if (baseUrlInput) baseUrlInput.value = base;
-        save({ aiProvider: prov, aiBaseUrl: base });
-      });
-    }
-
-    if (modelSelect) {
-      modelSelect.addEventListener('change', () => {
-        save({ aiModel: modelSelect.value });
-      });
-    }
+    // provider/model buttons are handled in initFromStorage via renderButtons
 
     if (baseUrlInput) {
       baseUrlInput.addEventListener('change', () => {
