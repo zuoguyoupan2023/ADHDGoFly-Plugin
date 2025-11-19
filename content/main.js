@@ -2149,7 +2149,7 @@ class ADHDHighlighter {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         if (/^\s*#{1,6}\s+/.test(line)) {
-          const level = (line.match(/^\s*(#{1,6})\s+/) || [,'']).[1].length;
+          const level = (line.match(/^\s*(#{1,6})\s+/) || ['',''])[1].length;
           const content = line.replace(/^\s*#{1,6}\s+/, '');
           out += `<h${level}>` + inline(content) + `</h${level}>`;
         } else if (/^\s*---\s*$/.test(line)) {
