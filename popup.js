@@ -477,6 +477,9 @@ class PopupController {
         this.showPage('data-panel');
         this.loadDataAnalysis();
         break;
+      case 'chat-btn':
+        this.showPage('exam');
+        break;
       case 'faq-btn':
         this.showPage('faq');
         break;
