@@ -1665,6 +1665,21 @@
         box-sizing: border-box;
       }
 
+      .chat { display: grid; grid-template-rows: 1fr auto; min-height: 240px; }
+      .chat-list { padding: 8px; overflow: auto; min-height: 0; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; }
+      .msg { display: grid; grid-template-columns: 1fr; gap: 10px; align-items: flex-start; }
+      .bubble { border-radius: 6px; padding: 10px; color: #333; position: relative; background: #fafafa; border: 1px solid #e0e0e0; }
+      .meta { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; opacity: 0.9; margin-bottom: 8px; color: #333; }
+      .name { line-height: 20px; font-weight: 600; }
+      .copy { position: absolute; top: 8px; right: 8px; height: 24px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; color: #333; padding: 0 8px; }
+      .content { white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+      .composer { display: grid; grid-template-rows: auto auto; gap: 8px; padding: 12px 0; }
+      .composer-header { display: inline-flex; align-items: center; gap: 8px; }
+      .composer-body { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+      .input { width: 100%; min-height: 48px; max-height: 160px; resize: vertical; border-radius: 8px; border: 1px solid #e0e0e0; padding: 10px 12px; color: #333; background: #fff; }
+      .send { height: 40px; min-width: 76px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #333; }
+      .actions { display: flex; flex-direction: column; gap: 8px; }
+
       /* AI配置区域样式 */
       .ai-config-section {
         margin-bottom: 12px;
@@ -2249,8 +2264,69 @@
             <div class="app-title">
               <h3 data-i18n="appName">ADHDGoFly</h3>
               <div class="status" id="status">状态检查中...</div>
+      </div>
+      </div>
+
+      <div class="page" id="ai-page">
+        <div class="header">
+          <h3>AI 对话</h3>
+        </div>
+        <div class="ai-assistant-content">
+          <div class="ai-functions-container">
+            <div class="ai-function-panel" style="flex: 2;">
+              <div class="panel-header"><h4>对话</h4></div>
+              <div class="panel-content">
+                <div class="chat">
+                  <div class="chat-list">
+                    <div class="msg user">
+                      <div class="bubble">
+                        <div class="meta"><span class="name">User</span></div>
+                        <button class="copy" title="复制">⧉</button>
+                        <div class="content">这里显示用户消息……</div>
+                      </div>
+                    </div>
+                    <div class="msg assistant">
+                      <div class="bubble">
+                        <div class="meta"><span class="name">AI</span></div>
+                        <button class="copy" title="复制">⧉</button>
+                        <div class="content">这里显示 AI 回复……</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ai-function-panel" style="flex: 1;">
+              <div class="panel-header"><h4>输入</h4></div>
+              <div class="panel-content">
+                <div class="composer">
+                  <div class="composer-header">
+                    <select class="field">
+                      <option>deepseek</option>
+                      <option>moonshot</option>
+                    </select>
+                    <select class="field">
+                      <option>deepseek-chat</option>
+                      <option>deepseek-reasoner</option>
+                    </select>
+                    <div class="mode-toggle">
+                      <button class="mode-btn">T</button>
+                      <button class="mode-btn">M</button>
+                    </div>
+                  </div>
+                  <div class="composer-body">
+                    <textarea class="input" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                    <div class="actions">
+                      <button class="send">发送</button>
+                      <button class="send">停止</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
           <!-- 评价提醒区域 -->
           <div class="review-reminder" id="reviewReminder" style="display: none;">
@@ -4002,6 +4078,15 @@
         data-i18n-title="sidebar.ai"
       >
         <span>📊</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="chat-btn"
+        title="AI 对话"
+        data-i18n-title="sidebar.aiChat"
+      >
+        <span>🤖</span>
       </button>
 
       <button
