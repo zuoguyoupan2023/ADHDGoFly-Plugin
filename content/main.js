@@ -1633,7 +1633,7 @@ class ADHDHighlighter {
       .agf-ai-content{flex:1;overflow:hidden;min-height:0}
       .agf-ai-view-chat{display:grid;grid-template-rows:65% 35%;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:0}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:8px}
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
@@ -1907,6 +1907,7 @@ class ADHDHighlighter {
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
           if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
+          initComposerSelects();
         });
       } catch (_) {}
     };
@@ -1941,6 +1942,7 @@ class ADHDHighlighter {
                 if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
                 if (apiKeyInput) apiKeyInput.value = '';
                 renderProviderButtons(currentProvider);
+                initComposerSelects();
               });
             });
           } catch (_) {}
@@ -1984,8 +1986,6 @@ class ADHDHighlighter {
         fillModelsForProv(prov);
       });
     };
-
-    initComposerSelects();
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = 300, minH = 200;
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
