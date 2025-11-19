@@ -1627,7 +1627,13 @@ class ADHDHighlighter {
       .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
       .agf-ai-controls{display:inline-flex;gap:8px}
       .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-ai-body{flex:1;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+      .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
+      .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+      .agf-ai-content{flex:1;overflow:hidden}
+      .agf-ai-view-chat{display:grid;grid-template-rows:80% 20%;gap:8px;height:100%}
+      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
@@ -1646,38 +1652,50 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span>🔧</span><span>ai-setting</span></div>
-        <div class="agf-ai-controls">
-          <button id="agfAiMax">+</button>
-          <button id="agfAiMin">-</button>
-          <button id="agfAiClose">X</button>
+        <div class="agf-ai-title"><span>ExamPage</span></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="agf-ai-tabs">
+            <button id="agfAiTabNote">📝</button>
+            <button id="agfAiTabWrench">🔧</button>
+          </div>
+          <div class="agf-ai-controls">
+            <button id="agfAiMax">+</button>
+            <button id="agfAiMin">-</button>
+            <button id="agfAiClose">X</button>
+          </div>
         </div>
       </div>
       <div class="agf-ai-body">
-        <div class="agf-settings">
-          <div class="agf-settings-group">
-            <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
-            <div class="agf-settings-row">
-              <div class="agf-label">服务商</div>
-              <div class="agf-radio-list">
-                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>deepseek</span></label>
-                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>moonshot</span></label>
+        <div class="agf-ai-content">
+          <div class="agf-ai-view-chat" id="agfAiViewChat">
+            <div class="agf-ai-display">这是显示区</div>
+            <div class="agf-ai-input">这是输入区</div>
+          </div>
+          <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
+            <div class="agf-settings-group">
+              <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
+              <div class="agf-settings-row">
+                <div class="agf-label">服务商</div>
+                <div class="agf-radio-list">
+                  <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>deepseek</span></label>
+                  <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>moonshot</span></label>
+                </div>
               </div>
-            </div>
-            <div class="agf-settings-row">
-              <div class="agf-label">模型</div>
-              <div class="agf-radio-list">
-                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-chat</span></label>
-                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-reasoner</span></label>
+              <div class="agf-settings-row">
+                <div class="agf-label">模型</div>
+                <div class="agf-radio-list">
+                  <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-chat</span></label>
+                  <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-reasoner</span></label>
+                </div>
               </div>
-            </div>
-            <div class="agf-settings-row">
-              <div class="agf-label">API Key</div>
-              <input class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
-            </div>
-            <div class="agf-settings-row">
-              <div class="agf-label">temperature</div>
-              <input class="agf-input" type="number" step="0.1" value="0.7" />
+              <div class="agf-settings-row">
+                <div class="agf-label">API Key</div>
+                <input class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">temperature</div>
+                <input class="agf-input" type="number" step="0.1" value="0.7" />
+              </div>
             </div>
           </div>
         </div>
@@ -1707,10 +1725,21 @@ class ADHDHighlighter {
     const minBtn = document.getElementById('agfAiMin');
     const closeBtn = document.getElementById('agfAiClose');
     const maxBtn = document.getElementById('agfAiMax');
+    const tabNote = document.getElementById('agfAiTabNote');
+    const tabWrench = document.getElementById('agfAiTabWrench');
+    const viewChat = document.getElementById('agfAiViewChat');
+    const viewSettings = document.getElementById('agfAiViewSettings');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     bubble.addEventListener('click', () => this.restoreAiSettingPanel());
+    if (tabNote && tabWrench && viewChat && viewSettings) {
+      const showChat = () => { viewChat.style.display = 'grid'; viewSettings.style.display = 'none'; };
+      const showSettings = () => { viewChat.style.display = 'none'; viewSettings.style.display = 'block'; };
+      tabNote.addEventListener('click', showChat);
+      tabWrench.addEventListener('click', showSettings);
+      showChat();
+    }
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = 300, minH = 200;
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
