@@ -1646,7 +1646,7 @@ class ADHDHighlighter {
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
       .agf-msg{display:flex}
-      .agf-msg.user{justify-content:flex-end}
+      .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
       .agf-bubble{max-width:70%;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
       .agf-bubble.user{background:#f0f0f0}
@@ -1657,6 +1657,7 @@ class ADHDHighlighter {
       .agf-bubble h1,.agf-bubble h2,.agf-bubble h3{margin:4px 0;font-weight:700}
       .agf-bubble ul,.agf-bubble ol{margin:4px 0 4px 18px}
       .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
+      .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
       .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
@@ -2035,6 +2036,8 @@ class ADHDHighlighter {
     let currentConversationId = null;
     let streamingText = '';
     let streamingBubble = null;
+    let streamingContentEl = null;
+    let qaCounter = 0;
     const dbOpen = () => new Promise((resolve, reject) => {
       const req = indexedDB.open('agf_ai_db', 1);
       req.onupgradeneeded = () => {
@@ -2087,6 +2090,7 @@ class ADHDHighlighter {
       currentConversationId = 'agf-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
       chatMessages = [];
       if (chatList) chatList.innerHTML = '';
+      qaCounter = 0;
       const prov = sessionProviderSelect && sessionProviderSelect.value || '';
       const model = sessionModelSelect && sessionModelSelect.value || '';
       const now = Date.now();
@@ -2120,6 +2124,7 @@ class ADHDHighlighter {
             chatMessages = data.messages.slice();
             if (chatList) {
               chatList.innerHTML = '';
+              qaCounter = 0;
               chatMessages.forEach(m => appendMessage(m.role, m.content));
             }
             currentConversationId = item.id;
@@ -2182,7 +2187,9 @@ class ADHDHighlighter {
       wrap.className = 'agf-msg ' + (role === 'user' ? 'user' : 'assistant');
       const bubble = document.createElement('div');
       bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
-      bubble.innerHTML = markdownToHtml(text);
+      if (role === 'user') qaCounter += 1;
+      const label = role === 'user' ? ('q' + qaCounter) : ('a' + (qaCounter || 1));
+      bubble.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content">' + markdownToHtml(text) + '</span>';
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
       chatList.scrollTop = chatList.scrollHeight;
@@ -2194,12 +2201,14 @@ class ADHDHighlighter {
       wrap.className = 'agf-msg assistant';
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
-      bubbleEl.textContent = '';
+      const label = 'a' + (qaCounter || 1);
+      bubbleEl.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
       chatList.scrollTop = chatList.scrollHeight;
       streamingBubble = bubbleEl;
       streamingText = '';
+      streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
     };
 
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
@@ -2269,7 +2278,8 @@ class ADHDHighlighter {
       if (typeof delta !== 'string' || !delta) return;
       streamingText += delta;
       if (streamingBubble) {
-        streamingBubble.innerHTML = markdownToHtml(streamingText);
+        const html = markdownToHtml(streamingText);
+        if (streamingContentEl) streamingContentEl.innerHTML = html; else streamingBubble.innerHTML = html;
         if (chatList) chatList.scrollTop = chatList.scrollHeight;
       }
     };
