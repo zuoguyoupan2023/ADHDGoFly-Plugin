@@ -672,6 +672,14 @@ class ADHDHighlighter {
           this.restoreAiSettingPanel();
           sendResponse({ success: true });
           break;
+        case 'aiChatStreamDelta':
+          if (this.__onAiStreamDelta && message && typeof message.delta === 'string') this.__onAiStreamDelta(message.delta);
+          sendResponse({ success: true });
+          break;
+        case 'aiChatStreamDone':
+          if (this.__onAiStreamDone) this.__onAiStreamDone();
+          sendResponse({ success: true });
+          break;
           
         case 'testDictionaryLoading':
           const testResult = await this.testDictionaryLoading();
@@ -2018,6 +2026,8 @@ class ADHDHighlighter {
 
     let chatMessages = [];
     let currentConversationId = null;
+    let streamingText = '';
+    let streamingBubble = null;
     const dbOpen = () => new Promise((resolve, reject) => {
       const req = indexedDB.open('agf_ai_db', 1);
       req.onupgradeneeded = () => {
@@ -2127,6 +2137,20 @@ class ADHDHighlighter {
       chatList.scrollTop = chatList.scrollHeight;
     };
 
+    const startAssistantStream = () => {
+      if (!chatList) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'agf-msg assistant';
+      const bubbleEl = document.createElement('div');
+      bubbleEl.className = 'agf-bubble';
+      bubbleEl.textContent = '';
+      wrap.appendChild(bubbleEl);
+      chatList.appendChild(wrap);
+      chatList.scrollTop = chatList.scrollHeight;
+      streamingBubble = bubbleEl;
+      streamingText = '';
+    };
+
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
 
     const sendChat = async () => {
@@ -2156,6 +2180,12 @@ class ADHDHighlighter {
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
         body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+      } else if (prov === 'deepseek') {
+        try {
+          startAssistantStream();
+          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle() });
+          return;
+        } catch (_) {}
       } else {
         headers['Authorization'] = 'Bearer ' + key;
         body = JSON.stringify({ model, messages: toOpenAIStyle() });
@@ -2182,6 +2212,23 @@ class ADHDHighlighter {
       appendMessage('assistant', text);
       chatMessages.push({ role: 'assistant', content: text });
       try { await saveConversationSnapshot(); } catch (_) {}
+    };
+
+    this.__onAiStreamDelta = (delta) => {
+      if (typeof delta !== 'string' || !delta) return;
+      streamingText += delta;
+      if (streamingBubble) {
+        streamingBubble.textContent = streamingText;
+        if (chatList) chatList.scrollTop = chatList.scrollHeight;
+      }
+    };
+    this.__onAiStreamDone = () => {
+      if (streamingText) {
+        chatMessages.push({ role: 'assistant', content: streamingText });
+        (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
+      }
+      streamingText = '';
+      streamingBubble = null;
     };
 
     if (composerSend) composerSend.addEventListener('click', sendChat);
