@@ -1648,8 +1648,9 @@ class ADHDHighlighter {
       .agf-msg{display:flex}
       .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
-      .agf-bubble{width:98%;max-width:98%;box-sizing:border-box;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
-      .agf-bubble.user{background:#f0f0f0}
+      .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
+      .agf-bubble.user{background:#f7f7f7}
+      .agf-msg.assistant .agf-bubble{background:#fffaf0}
       .agf-bubble strong{font-weight:700}
       .agf-bubble em{font-style:italic}
       .agf-bubble code{font-family:Menlo,Monaco,monospace;background:#f5f5f5;color:#333;padding:0 2px;border-radius:3px}
