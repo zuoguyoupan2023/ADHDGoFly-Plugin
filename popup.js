@@ -485,7 +485,7 @@ class PopupController {
         (async () => {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, { action: 'showExamPanel' });
+            chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
           }
         })();
         break;

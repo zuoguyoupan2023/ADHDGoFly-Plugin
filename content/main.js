@@ -655,21 +655,21 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
-        case 'showExamPanel':
-          this.ensureExamPanel();
-          this.showExamPanel();
+        case 'showAiSettingPanel':
+          this.ensureAiSettingPanel();
+          this.showAiSettingPanel();
           sendResponse({ success: true });
           break;
-        case 'hideExamPanel':
-          this.hideExamPanel();
+        case 'hideAiSettingPanel':
+          this.hideAiSettingPanel();
           sendResponse({ success: true });
           break;
-        case 'minimizeExamPanel':
-          this.minimizeExamPanel();
+        case 'minimizeAiSettingPanel':
+          this.minimizeAiSettingPanel();
           sendResponse({ success: true });
           break;
-        case 'restoreExamPanel':
-          this.restoreExamPanel();
+        case 'restoreAiSettingPanel':
+          this.restoreAiSettingPanel();
           sendResponse({ success: true });
           break;
           
@@ -1617,47 +1617,77 @@ class ADHDHighlighter {
     }
   }
 
-  ensureExamPanel() {
-    if (this.__examPanelInitialized) return;
+  ensureAiSettingPanel() {
+    if (this.__aiSettingPanelInitialized) return;
     const style = document.createElement('style');
-    style.id = 'agf-exam-style';
+    style.id = 'agf-ai-setting-style';
     style.textContent = `
-      .agf-exam-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;top:25vh;left:25vw;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
-      .agf-exam-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
-      .agf-exam-title{font-size:14px;font-weight:600;color:#333}
-      .agf-exam-controls{display:inline-flex;gap:8px}
-      .agf-exam-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-exam-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
-      .agf-exam-display{flex:0 0 80%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
-      .agf-exam-input{flex:0 0 20%;border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto}
-      .agf-exam-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;top:25vh;left:25vw;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+      .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
+      .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
+      .agf-ai-controls{display:inline-flex;gap:8px}
+      .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-ai-body{flex:1;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+      .agf-settings{display:flex;flex-direction:column;gap:12px}
+      .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
+      .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+      .agf-label{min-width:64px;font-size:12px;color:#333}
+      .agf-radio-list{display:flex;align-items:center;gap:16px}
+      .agf-radio-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#333}
+      .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
-    overlay.id = 'agfExamOverlay';
-    overlay.className = 'agf-exam-overlay';
+    overlay.id = 'agfAiSettingOverlay';
+    overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
-      <div class="agf-exam-header">
-        <div class="agf-exam-title">ExamPage</div>
-        <div class="agf-exam-controls">
-          <button id="agfExamMax">+</button>
-          <button id="agfExamMin">-</button>
-          <button id="agfExamClose">X</button>
+      <div class="agf-ai-header">
+        <div class="agf-ai-title"><span>🔧</span><span>ai-setting</span></div>
+        <div class="agf-ai-controls">
+          <button id="agfAiMax">+</button>
+          <button id="agfAiMin">-</button>
+          <button id="agfAiClose">X</button>
         </div>
       </div>
-      <div class="agf-exam-body">
-        <div class="agf-exam-display">这是显示区</div>
-        <div class="agf-exam-input">这是输入区</div>
+      <div class="agf-ai-body">
+        <div class="agf-settings">
+          <div class="agf-settings-group">
+            <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
+            <div class="agf-settings-row">
+              <div class="agf-label">服务商</div>
+              <div class="agf-radio-list">
+                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>deepseek</span></label>
+                <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>moonshot</span></label>
+              </div>
+            </div>
+            <div class="agf-settings-row">
+              <div class="agf-label">模型</div>
+              <div class="agf-radio-list">
+                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-chat</span></label>
+                <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-reasoner</span></label>
+              </div>
+            </div>
+            <div class="agf-settings-row">
+              <div class="agf-label">API Key</div>
+              <input class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+            </div>
+            <div class="agf-settings-row">
+              <div class="agf-label">temperature</div>
+              <input class="agf-input" type="number" step="0.1" value="0.7" />
+            </div>
+          </div>
+        </div>
       </div>
     `;
     document.documentElement.appendChild(overlay);
     const bubble = document.createElement('div');
-    bubble.id = 'agfExamBubble';
-    bubble.className = 'agf-exam-bubble';
-    bubble.textContent = 'E';
+    bubble.id = 'agfAiBubble';
+    bubble.className = 'agf-ai-bubble';
+    bubble.textContent = '🔧';
     document.documentElement.appendChild(bubble);
     const resizeRight = document.createElement('div');
     resizeRight.className = 'agf-resize-right';
@@ -1668,19 +1698,19 @@ class ADHDHighlighter {
     overlay.appendChild(resizeRight);
     overlay.appendChild(resizeBottom);
     overlay.appendChild(resizeLeft);
-    const header = overlay.querySelector('.agf-exam-header');
+    const header = overlay.querySelector('.agf-ai-header');
     let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
     const onDown = (e) => { dragging = true; startX = e.clientX; startY = e.clientY; startLeft = parseInt(getComputedStyle(overlay).left, 10) || 0; startTop = parseInt(getComputedStyle(overlay).top, 10) || 0; };
     const onMove = (e) => { if (!dragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; let newLeft = startLeft + dx; let newTop = startTop + dy; const maxLeft = window.innerWidth - overlay.offsetWidth; const maxTop = window.innerHeight - overlay.offsetHeight; if (newLeft < 0) newLeft = 0; if (newTop < 0) newTop = 0; if (newLeft > maxLeft) newLeft = maxLeft; if (newTop > maxTop) newTop = maxTop; overlay.style.left = newLeft + 'px'; overlay.style.top = newTop + 'px'; };
     const onUp = () => { dragging = false; };
     if (header) { header.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); }
-    const minBtn = document.getElementById('agfExamMin');
-    const closeBtn = document.getElementById('agfExamClose');
-    const maxBtn = document.getElementById('agfExamMax');
-    if (minBtn) minBtn.addEventListener('click', () => this.minimizeExamPanel());
-    if (closeBtn) closeBtn.addEventListener('click', () => this.hideExamPanel());
-    if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeExamPanel());
-    bubble.addEventListener('click', () => this.restoreExamPanel());
+    const minBtn = document.getElementById('agfAiMin');
+    const closeBtn = document.getElementById('agfAiClose');
+    const maxBtn = document.getElementById('agfAiMax');
+    if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
+    if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
+    bubble.addEventListener('click', () => this.restoreAiSettingPanel());
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = 300, minH = 200;
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
@@ -1715,28 +1745,28 @@ class ADHDHighlighter {
     resizeLeft.addEventListener('mousedown', onResizeDownLeft);
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
-    this.__examPanelInitialized = true;
+    this.__aiSettingPanelInitialized = true;
   }
 
-  showExamPanel() {
-    const overlay = document.getElementById('agfExamOverlay');
-    const bubble = document.getElementById('agfExamBubble');
+  showAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
     if (overlay) overlay.style.display = 'flex';
     if (bubble) bubble.style.display = 'none';
   }
 
-  hideExamPanel() {
-    const overlay = document.getElementById('agfExamOverlay');
-    const bubble = document.getElementById('agfExamBubble');
+  hideAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
     if (overlay) overlay.style.display = 'none';
     if (bubble) bubble.style.display = 'none';
   }
 
-  minimizeExamPanel() {
-    const overlay = document.getElementById('agfExamOverlay');
-    const bubble = document.getElementById('agfExamBubble');
+  minimizeAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
     if (overlay) {
-      this.__examGeom = {
+      this.__aiGeom = {
         left: parseInt(getComputedStyle(overlay).left, 10) || 0,
         top: parseInt(getComputedStyle(overlay).top, 10) || 0,
         width: overlay.offsetWidth,
@@ -1747,23 +1777,23 @@ class ADHDHighlighter {
     if (bubble) bubble.style.display = 'flex';
   }
 
-  restoreExamPanel() {
-    const overlay = document.getElementById('agfExamOverlay');
-    const bubble = document.getElementById('agfExamBubble');
+  restoreAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
     if (overlay) overlay.style.display = 'flex';
     if (bubble) bubble.style.display = 'none';
-    if (overlay && this.__examGeom) {
-      overlay.style.left = this.__examGeom.left + 'px';
-      overlay.style.top = this.__examGeom.top + 'px';
-      overlay.style.width = this.__examGeom.width + 'px';
-      overlay.style.height = this.__examGeom.height + 'px';
+    if (overlay && this.__aiGeom) {
+      overlay.style.left = this.__aiGeom.left + 'px';
+      overlay.style.top = this.__aiGeom.top + 'px';
+      overlay.style.width = this.__aiGeom.width + 'px';
+      overlay.style.height = this.__aiGeom.height + 'px';
     }
   }
 
-  maximizeExamPanel() {
-    const overlay = document.getElementById('agfExamOverlay');
+  maximizeAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
     if (!overlay) return;
-    this.__examGeom = {
+    this.__aiGeom = {
       left: parseInt(getComputedStyle(overlay).left, 10) || 0,
       top: parseInt(getComputedStyle(overlay).top, 10) || 0,
       width: overlay.offsetWidth,
