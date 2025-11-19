@@ -314,8 +314,8 @@ class PopupController {
     // 文本样式事件
     this.bindTextEvents();
     
-    // AI分析事件
-    this.bindAIEvents();
+    // 数据面板事件
+    this.bindDataEvents();
     
     // 复制词汇事件
     this.bindCopyVocabularyEvents();
@@ -403,10 +403,10 @@ class PopupController {
         this.updateVersionUI();
       }
       
-      // 如果当前显示的是AI分析页面，重新加载数据以应用新语言
+      // 如果当前显示的是数据面板页面，重新加载数据以应用新语言
       const currentPage = document.querySelector('.page.active');
-      if (currentPage && currentPage.id === 'aiPage') {
-        this.loadAIAnalysis();
+      if (currentPage && currentPage.id === 'data-panel-page') {
+        this.loadDataAnalysis();
       }
       
       // 如果当前显示的是FAQ页面，重新加载FAQ数据以应用新语言
@@ -475,7 +475,7 @@ class PopupController {
         break;
       case 'ai-btn':
         this.showPage('data-panel');
-        this.loadAIAnalysis();
+        this.loadDataAnalysis();
         break;
       case 'faq-btn':
         this.showPage('faq');
@@ -1802,9 +1802,9 @@ class PopupController {
     console.log('文本设置已重置');
   }
 
-  // AI分析相关方法
-  bindAIEvents() {
-    // AI分析相关事件绑定（如果需要的话）
+  // 数据面板相关方法
+  bindDataEvents() {
+    
   }
 
   // 复制词汇相关方法
@@ -1831,17 +1831,16 @@ class PopupController {
     try {
       console.log('🔍 开始获取词汇数据...');
       
-      // 检查是否在AI分析页面
-      const aiPage = document.getElementById('ai-page');
-      const isAIPageVisible = aiPage && aiPage.style.display !== 'none';
-      console.log('🔍 AI页面是否可见:', isAIPageVisible);
+      const dataPanelPage = document.getElementById('data-panel-page');
+      const isDataPanelVisible = !!(dataPanelPage && dataPanelPage.classList && dataPanelPage.classList.contains('active'));
+      console.log('🔍 数据面板是否可见:', isDataPanelVisible);
       
       // 检查词汇统计区域是否存在
       const vocabularyStats = document.getElementById('vocabularyStats');
       console.log('🔍 词汇统计区域是否存在:', !!vocabularyStats);
       
-      if (!isAIPageVisible) {
-        console.log('❌ 当前不在AI分析页面，无法获取词汇数据');
+      if (!isDataPanelVisible) {
+        console.log('❌ 当前不在数据面板页面，无法获取词汇数据');
         return [];
       }
 
@@ -2068,12 +2067,11 @@ class PopupController {
     }
   }
 
-  async loadAIAnalysis() {
-    console.log('开始加载AI分析数据...');
+  async loadDataAnalysis() {
+    console.log('开始加载数据面板分析数据...');
     
     try {
-      // 显示加载状态
-      this.showAILoadingState();
+      this.showDataLoadingState();
       
       // 获取当前标签页的分析数据
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -2084,20 +2082,20 @@ class PopupController {
         });
         
         if (response && response.success) {
-          this.displayAIAnalysis(response.data);
+          this.displayDataAnalysis(response.data);
         } else {
-          this.showAIError();
+          this.showDataError();
         }
       } else {
-        this.showAIError();
+        this.showDataError();
       }
     } catch (error) {
-      console.error('加载AI分析数据失败:', error);
-      this.showAIError();
+      console.error('加载数据面板分析失败:', error);
+      this.showDataError();
     }
   }
 
-  showAILoadingState() {
+  showDataLoadingState() {
     // 显示所有分析项为加载中状态
     const loadingText = window.i18n.t('pages.ai.analyzing');
     
@@ -2113,8 +2111,8 @@ class PopupController {
     // document.getElementById('textRecommendation').innerHTML = `<div class="loading">${loadingText}</div>`; // 推荐功能已禁用
   }
 
-  displayAIAnalysis(data) {
-    console.log('显示AI分析数据:', data);
+  displayDataAnalysis(data) {
+    console.log('显示数据面板分析数据:', data);
     
     // 显示高亮统计
     this.displayHighlightStats(data.highlights || {});
@@ -2328,7 +2326,7 @@ class PopupController {
    * 显示AI错误状态
    * 在AI分析页面显示错误信息
    */
-  showAIError() {
+  showDataError() {
     const errorText = window.i18n.t('pages.ai.error');
     
     document.getElementById('vocabularyStats').innerHTML = `<div class="error">${errorText}</div>`;
