@@ -1641,6 +1641,8 @@ class ADHDHighlighter {
       .agf-radio-list{display:flex;align-items:center;gap:16px}
       .agf-radio-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#333}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      .agf-hint{font-size:12px;color:#666;margin-left:8px}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
@@ -1676,25 +1678,37 @@ class ADHDHighlighter {
               <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
               <div class="agf-settings-row">
                 <div class="agf-label">服务商</div>
-                <div class="agf-radio-list">
-                  <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>deepseek</span></label>
-                  <label class="agf-radio-item"><input type="radio" name="agfProvider"> <span>moonshot</span></label>
-                </div>
+                <select id="agfProviderSelect" class="agf-select">
+                  <option value="deepseek">deepseek</option>
+                  <option value="moonshot">moonshot</option>
+                  <option value="openai">chatgpt</option>
+                  <option value="anthropic">claude</option>
+                  <option value="qwen">qwen</option>
+                  <option value="chatglm">chatglm</option>
+                  <option value="minimax">minimax</option>
+                  <option value="gemini">gemini</option>
+                  <option value="grok">grok</option>
+                </select>
               </div>
               <div class="agf-settings-row">
                 <div class="agf-label">模型</div>
-                <div class="agf-radio-list">
-                  <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-chat</span></label>
-                  <label class="agf-radio-item"><input type="radio" name="agfModel"> <span>deepseek-reasoner</span></label>
-                </div>
+                <select id="agfModelSelect" class="agf-select"></select>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">供应商URL</div>
+                <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
               </div>
               <div class="agf-settings-row">
                 <div class="agf-label">API Key</div>
-                <input class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+                  <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
+                  <span id="agfApiSavedHint" class="agf-hint" style="display:none;">已保存</span>
+                </div>
               </div>
               <div class="agf-settings-row">
                 <div class="agf-label">temperature</div>
-                <input class="agf-input" type="number" step="0.1" value="0.7" />
+                <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
               </div>
             </div>
           </div>
@@ -1729,6 +1743,13 @@ class ADHDHighlighter {
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
     const viewSettings = document.getElementById('agfAiViewSettings');
+    const providerSelect = document.getElementById('agfProviderSelect');
+    const modelSelect = document.getElementById('agfModelSelect');
+    const baseUrlInput = document.getElementById('agfBaseUrlInput');
+    const apiKeyInput = document.getElementById('agfApiKeyInput');
+    const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
+    const apiSavedHint = document.getElementById('agfApiSavedHint');
+    const tempInput = document.getElementById('agfTempInput');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
@@ -1740,6 +1761,126 @@ class ADHDHighlighter {
       tabWrench.addEventListener('click', showSettings);
       showChat();
     }
+
+    const PROVIDERS_CONFIG = {
+      deepseek: {
+        baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+        models: ['deepseek-chat', 'deepseek-reasoner']
+      },
+      moonshot: {
+        baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
+        models: ['kimi-k2-instruct', 'moonshot-v1-128k']
+      },
+      openai: {
+        baseUrl: 'https://api.openai.com/v1/chat/completions',
+        models: ['gpt-4o', 'gpt-4.1', 'o3', 'o4-mini']
+      },
+      anthropic: {
+        baseUrl: 'https://api.anthropic.com/v1/messages',
+        models: ['claude-3.5-sonnet', 'claude-3-opus', 'claude-3.5-haiku']
+      },
+      qwen: {
+        baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+        models: ['qwen-max-2025-01-25', 'qwen-plus', 'qwen2.5-coder-32b-instruct']
+      },
+      chatglm: {
+        baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        models: ['glm-4', 'glm-4v', 'glm-4-plus']
+      },
+      minimax: {
+        baseUrl: 'https://api.minimax.io/v1/chat/completions',
+        models: ['abab-6.5-chat', 'minimax-m2']
+      },
+      gemini: {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+        models: ['gemini-2.5-flash', 'gemini-2.5-pro']
+      },
+      grok: {
+        baseUrl: 'https://api.x.ai/v1/chat/completions',
+        models: ['grok-4.1', 'grok-4-fast']
+      }
+    };
+
+    const fillModels = (prov, presetModel) => {
+      const cfg = PROVIDERS_CONFIG[prov];
+      if (!modelSelect) return;
+      modelSelect.innerHTML = '';
+      (cfg?.models || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        modelSelect.appendChild(opt);
+      });
+      if (presetModel) {
+        modelSelect.value = presetModel;
+      }
+    };
+
+    const initFromStorage = () => {
+      try {
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiApiKey','aiTemperature'], (res) => {
+          const prov = res.aiProvider || 'deepseek';
+          if (providerSelect) providerSelect.value = prov;
+          fillModels(prov, res.aiModel || (PROVIDERS_CONFIG[prov]?.models?.[0] || ''));
+          const base = res.aiBaseUrl || PROVIDERS_CONFIG[prov]?.baseUrl || '';
+          if (baseUrlInput) baseUrlInput.value = base;
+          if (typeof res.aiApiKey === 'string' && res.aiApiKey.length > 0 && apiSavedHint) {
+            apiSavedHint.style.display = 'inline';
+          }
+          const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
+          if (tempInput) tempInput.value = t;
+        });
+      } catch (_) {}
+    };
+
+    const save = (obj) => { try { chrome.storage.local.set(obj); } catch (_) {} };
+
+    if (providerSelect) {
+      providerSelect.addEventListener('change', (e) => {
+        const prov = providerSelect.value;
+        fillModels(prov);
+        const base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
+        if (baseUrlInput) baseUrlInput.value = base;
+        save({ aiProvider: prov, aiBaseUrl: base });
+      });
+    }
+
+    if (modelSelect) {
+      modelSelect.addEventListener('change', () => {
+        save({ aiModel: modelSelect.value });
+      });
+    }
+
+    if (baseUrlInput) {
+      baseUrlInput.addEventListener('change', () => {
+        save({ aiBaseUrl: baseUrlInput.value });
+      });
+    }
+
+    if (tempInput) {
+      tempInput.addEventListener('change', () => {
+        const v = parseFloat(tempInput.value);
+        save({ aiTemperature: isNaN(v) ? 0.7 : v });
+      });
+    }
+
+    if (saveKeyBtn && apiKeyInput && apiSavedHint) {
+      saveKeyBtn.addEventListener('click', () => {
+        const v = apiKeyInput.value || '';
+        if (v.length > 0) {
+          save({ aiApiKey: v });
+          apiKeyInput.value = '';
+          apiSavedHint.style.display = 'inline';
+        }
+      });
+      apiKeyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          saveKeyBtn.click();
+        }
+      });
+    }
+
+    initFromStorage();
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = 300, minH = 200;
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
