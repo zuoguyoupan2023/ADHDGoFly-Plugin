@@ -29,7 +29,7 @@ function getChromeStoreInfo(storeUrl) {
     // 检测是否包含占位符
     if (storeUrl.includes('CHROME_APP_ID')) {
         return {
-            url: 'https://chrome.google.com/webstore/category/extensions',
+            url: 'https://feedback.adhdgofly.online/',
             isPlaceholder: true,
             searchHint: 'ADHDGoFly'
         };
@@ -51,12 +51,17 @@ function createInstallConfig(installType, browserName, version) {
         storeUrl = chromeStoreInfo.url;
     }
     
+    const autoResetOnMajor = process.env.REVIEW_AUTORESET_ON_MAJOR ? process.env.REVIEW_AUTORESET_ON_MAJOR === 'true' : true;
+    const autoClearReviewedOnMajor = process.env.REVIEW_AUTOCLEAR_REVIEWED_ON_MAJOR ? process.env.REVIEW_AUTOCLEAR_REVIEWED_ON_MAJOR === 'true' : true;
+
     const config = {
         installType: installType,
         targetBrowser: browserName,
         version: version,
         buildTime: new Date().toISOString(),
-        storeUrl: storeUrl
+        storeUrl: storeUrl,
+        reviewAutoResetOnMajor: autoResetOnMajor,
+        reviewAutoClearReviewedOnMajor: autoClearReviewedOnMajor
     };
     
     // 如果是Chrome占位符模式，添加额外信息
@@ -84,15 +89,6 @@ window.getStoreUrl = function() {
     
     const config = window.ADHD_INSTALL_CONFIG;
     
-    // Chrome商店智能回退处理
-    if (config.chromeStoreFallback && config.chromeStoreFallback.isPlaceholder) {
-        // 显示用户友好的提示
-        if (typeof alert !== 'undefined') {
-            alert('Chrome应用商店版本即将上线！\\n\\n' + 
-                  '当前请访问Chrome应用商店，搜索 "' + config.chromeStoreFallback.searchHint + '" 即可找到我们的插件。\\n\\n' +
-                  '点击确定将跳转到Chrome应用商店扩展页面。');
-        }
-    }
     
     return config.storeUrl;
 };
@@ -103,6 +99,18 @@ window.getChromeStoreHint = function() {
         return window.ADHD_INSTALL_CONFIG.chromeStoreFallback;
     }
     return null;
+};
+
+// 获取主版本重置开关
+window.getReviewAutoResetOnMajor = function() {
+    if (!window.ADHD_INSTALL_CONFIG) return true;
+    return !!window.ADHD_INSTALL_CONFIG.reviewAutoResetOnMajor;
+};
+
+// 获取主版本清除已评价开关
+window.getReviewAutoClearOnMajor = function() {
+    if (!window.ADHD_INSTALL_CONFIG) return true;
+    return !!window.ADHD_INSTALL_CONFIG.reviewAutoClearReviewedOnMajor;
 };`;
     
     return configContent;

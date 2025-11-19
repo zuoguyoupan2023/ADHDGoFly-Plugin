@@ -1,4 +1,6 @@
 // ADHD Text Highlighter - Popup Script
+//  * 正式版，需要把review-light-tower.js 第38行改为false;popup.js 3056行改为false：chrome.storage.local.set({ logfordevmode: false })
+
 class PopupController {
   constructor() {
     this.currentStatus = null;
@@ -2801,13 +2803,28 @@ class PopupController {
     // 去评价按钮
     const goReviewBtn = document.getElementById('goReviewBtn');
     if (goReviewBtn) {
-      goReviewBtn.addEventListener('click', () => {
-        // 打开评价页面
+      goReviewBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了去评价按钮');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        
-        // 隐藏提醒并清除徽章
+        try {
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const major = parseInt(v.split('.')[0]);
+          await chrome.storage.local.set({
+            review_has_reviewed: true,
+            review_reviewed_version_major: major
+          });
+          console.log('🔍 ReviewLightTower调试(Popup)：已设置review_has_reviewed与主版本', { major });
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：已填满提醒次数为3/3');
+        } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：准备隐藏评价提醒');
         this.hideReviewLightTower();
+        setTimeout(() => {
+          try {
+            window.open(storeUrl, '_blank');
+          } catch (e) {}
+        }, 50);
       });
     }
 
@@ -2824,13 +2841,28 @@ class PopupController {
     // 星星点击事件
     const stars = document.querySelectorAll('.star-rating');
     stars.forEach((star, index) => {
-      star.addEventListener('click', () => {
-        // 点击星星时直接跳转到评价页面
+      star.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了星级评分');
         const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
-        window.open(storeUrl, '_blank');
-        
-        // 隐藏提醒并清除徽章
+        try {
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const major = parseInt(v.split('.')[0]);
+          await chrome.storage.local.set({
+            review_has_reviewed: true,
+            review_reviewed_version_major: major
+          });
+          console.log('🔍 ReviewLightTower调试(Popup)：星级评分后已设置review标记', { major });
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(3, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：星级评分后已填满提醒次数');
+        } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：星级评分后准备隐藏评价提醒');
         this.hideReviewLightTower();
+        setTimeout(() => {
+          try {
+            window.open(storeUrl, '_blank');
+          } catch (e) {}
+        }, 50);
       });
 
       // 星星悬停效果
@@ -2857,6 +2889,22 @@ class PopupController {
         });
       });
     }
+    // 不要提醒按钮
+    const neverReviewBtn = document.getElementById('neverReviewBtn');
+    if (neverReviewBtn) {
+      neverReviewBtn.addEventListener('click', async () => {
+        console.log('🔍 ReviewLightTower调试(Popup)：点击了不要提醒');
+        try {
+          await chrome.storage.local.set({ review_dismissed_forever: true });
+          const v = await window.reviewLightTower.getCurrentVersion();
+          const r = await window.reviewLightTower.getDisplayRecord();
+          await window.reviewLightTower.updateDisplayRecord(r.count, v, r.triggeredConditions);
+          console.log('🔍 ReviewLightTower调试(Popup)：已记录dismissed_forever并更新显示记录');
+        } catch (e) {}
+        console.log('🔍 ReviewLightTower调试(Popup)：不要提醒后准备隐藏评价提醒');
+        this.hideReviewLightTower();
+      });
+    }
   }
 
   // 隐藏评价提醒
@@ -2870,7 +2918,10 @@ class PopupController {
     chrome.runtime.sendMessage({
       action: 'hideReviewLightTower'
     });
-
+    try {
+      chrome.storage.local.remove(['reviewLightTowerData', 'reviewLightTowerVisible']);
+      console.log('🔍 ReviewLightTower调试(Popup)：已清理本地存储的灯塔可见性与数据键');
+    } catch (e) {}
     console.log('评价提醒已隐藏');
   }
 }
@@ -3001,6 +3052,10 @@ function initLanguageGroupListeners() {
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
+    chrome.storage.local.set({ logfordevmode: !!window.__BUILD_TEST__ });
+  } catch (e) {}
   // 确保i18n先初始化
   await window.i18n.init();
   
@@ -3012,3 +3067,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLanguageGroupListeners();
   }, 100);
 });
+/**
+ * 日志模式切换说明（弹窗环境）
+ *
+ * 统一开关: window.__BUILD_TEST__  (true=测试版, false=正式版)
+ * 作用:
+ * - 弹窗加载时将 chrome.storage.local.logfordevmode 设置为 !!__BUILD_TEST__，与内容脚本保持一致
+ * 使用方式:
+ * - 在构建或运行前设置 window.__BUILD_TEST__ 为期望值（测试/正式）
+ * 代码位置:
+ * - 默认写入: popup.js:3056-3060
+ * 影响范围:
+ * - 保证弹窗环境与内容脚本环境的日志开关一致，避免两者不一致导致的调试困扰
+ */

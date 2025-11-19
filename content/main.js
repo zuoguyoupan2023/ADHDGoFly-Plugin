@@ -72,6 +72,20 @@
   }
 })();
 
+;(function(){
+  if (typeof window === 'undefined') return;
+  if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
+  window.__LOG_DEV_MODE = !!window.__BUILD_TEST__;
+  try { chrome.storage.local.set({ logfordevmode: window.__LOG_DEV_MODE }); } catch (_) {}
+  try {
+    chrome.storage.onChanged.addListener(function(changes, area){
+      if (area === 'local' && changes.logfordevmode) {
+        window.__LOG_DEV_MODE = !!changes.logfordevmode.newValue;
+      }
+    });
+  } catch (e) {}
+})();
+
 // 主控制器模块
 class ADHDHighlighter {
   constructor() {
@@ -391,7 +405,7 @@ class ADHDHighlighter {
    */
   async handleHighlightComplete(eventData) {
     try {
-      console.log('🎯 收到高亮完成事件:', eventData);
+      if (window.__LOG_DEV_MODE) console.log('🎯 收到高亮完成事件:', eventData);
       
       // 异步存储高亮数据
       await this.eventCacheManager.storeHighlightData(eventData);
@@ -402,7 +416,7 @@ class ADHDHighlighter {
       // 更新评价计数器
       await this.updateReviewCounter(eventData);
       
-      console.log('💾 高亮数据已缓存');
+      if (window.__LOG_DEV_MODE) console.log('💾 高亮数据已缓存');
     } catch (error) {
       console.warn('⚠️ 缓存高亮数据失败:', error);
     }
@@ -428,7 +442,7 @@ class ADHDHighlighter {
       const nodeCount = eventData.elements.length;
       const newCount = await this.adhdGoFlyCounter.incrementNodeCount(nodeCount);
       
-      console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`📊 节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
     } catch (error) {
       console.error('❌ 更新ADHD专注飞行计数器失败:', error);
@@ -456,7 +470,7 @@ class ADHDHighlighter {
       const nodeCount = eventData.elements.length;
       const newCount = await this.reviewCounter.incrementNodeCount(nodeCount);
       
-      console.log(`ReviewCounter计数：节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
+      if (window.__LOG_DEV_MODE) console.log(`ReviewCounter计数：节点计数已更新: +${nodeCount} → 总计 ${newCount}`);
 
       // 增加页面计数（去重逻辑）
       await this.reviewCounter.incrementPageCount();
@@ -1774,3 +1788,18 @@ if (document.readyState === 'loading') {
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
+/**
+ * 日志模式切换说明（统一开关）
+ *
+ * 统一开关: window.__BUILD_TEST__  (true=测试版, false=正式版)
+ * 作用:
+ * - 根据 __BUILD_TEST__ 初始化并强制覆盖 chrome.storage.local.logfordevmode
+ * - 设置 window.__LOG_DEV_MODE，用于控制所有受控调试日志是否显示
+ * 使用方式:
+ * - 在构建或运行前设置 window.__BUILD_TEST__ 为期望值（测试/正式）
+ * - 内容脚本启动时会写入 logfordevmode = !!__BUILD_TEST__ 并同步 __LOG_DEV_MODE
+ * 代码位置:
+ * - 初始化与覆盖: content/main.js:75-91
+ * 影响范围:
+ * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
+ */
