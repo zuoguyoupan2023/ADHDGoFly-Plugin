@@ -482,9 +482,12 @@ class PopupController {
         this.loadDataAnalysis();
         break;
       case 'chat-btn':
-        if (window.examPanel && window.examPanel.show) {
-          window.examPanel.show();
-        }
+        (async () => {
+          const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, { action: 'showExamPanel' });
+          }
+        })();
         break;
       case 'faq-btn':
         this.showPage('faq');

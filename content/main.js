@@ -655,6 +655,23 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'showExamPanel':
+          this.ensureExamPanel();
+          this.showExamPanel();
+          sendResponse({ success: true });
+          break;
+        case 'hideExamPanel':
+          this.hideExamPanel();
+          sendResponse({ success: true });
+          break;
+        case 'minimizeExamPanel':
+          this.minimizeExamPanel();
+          sendResponse({ success: true });
+          break;
+        case 'restoreExamPanel':
+          this.restoreExamPanel();
+          sendResponse({ success: true });
+          break;
           
         case 'testDictionaryLoading':
           const testResult = await this.testDictionaryLoading();
@@ -1598,6 +1615,84 @@ class ADHDHighlighter {
       console.error('获取选中文本失败:', error);
       return '';
     }
+  }
+
+  ensureExamPanel() {
+    if (this.__examPanelInitialized) return;
+    const style = document.createElement('style');
+    style.id = 'agf-exam-style';
+    style.textContent = `
+      .agf-exam-overlay{position:fixed;inset:0;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647}
+      .agf-exam-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
+      .agf-exam-title{font-size:14px;font-weight:600;color:#333}
+      .agf-exam-controls{display:inline-flex;gap:8px}
+      .agf-exam-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-exam-body{flex:1;padding:12px;overflow:auto}
+      .agf-exam-content{font-size:14px;color:#333}
+      .agf-exam-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+    `;
+    document.documentElement.appendChild(style);
+    const overlay = document.createElement('div');
+    overlay.id = 'agfExamOverlay';
+    overlay.className = 'agf-exam-overlay';
+    overlay.innerHTML = `
+      <div class="agf-exam-header">
+        <div class="agf-exam-title">ExamPage</div>
+        <div class="agf-exam-controls">
+          <button id="agfExamMin">-</button>
+          <button id="agfExamClose">X</button>
+        </div>
+      </div>
+      <div class="agf-exam-body">
+        <div class="agf-exam-content">ExamPage!!!</div>
+      </div>
+    `;
+    document.documentElement.appendChild(overlay);
+    const bubble = document.createElement('div');
+    bubble.id = 'agfExamBubble';
+    bubble.className = 'agf-exam-bubble';
+    bubble.textContent = 'E';
+    document.documentElement.appendChild(bubble);
+    const header = overlay.querySelector('.agf-exam-header');
+    let dragging = false, startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+    const onDown = (e) => { dragging = true; startX = e.clientX; startY = e.clientY; };
+    const onMove = (e) => { if (!dragging) return; offsetX += e.clientX - startX; offsetY += e.clientY - startY; startX = e.clientX; startY = e.clientY; overlay.style.transform = `translate(${offsetX}px, ${offsetY}px)`; };
+    const onUp = () => { dragging = false; };
+    if (header) { header.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); }
+    const minBtn = document.getElementById('agfExamMin');
+    const closeBtn = document.getElementById('agfExamClose');
+    if (minBtn) minBtn.addEventListener('click', () => this.minimizeExamPanel());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.hideExamPanel());
+    bubble.addEventListener('click', () => this.restoreExamPanel());
+    this.__examPanelInitialized = true;
+  }
+
+  showExamPanel() {
+    const overlay = document.getElementById('agfExamOverlay');
+    const bubble = document.getElementById('agfExamBubble');
+    if (overlay) overlay.style.display = 'flex';
+    if (bubble) bubble.style.display = 'none';
+  }
+
+  hideExamPanel() {
+    const overlay = document.getElementById('agfExamOverlay');
+    const bubble = document.getElementById('agfExamBubble');
+    if (overlay) overlay.style.display = 'none';
+    if (bubble) bubble.style.display = 'none';
+  }
+
+  minimizeExamPanel() {
+    const overlay = document.getElementById('agfExamOverlay');
+    const bubble = document.getElementById('agfExamBubble');
+    if (overlay) overlay.style.display = 'none';
+    if (bubble) bubble.style.display = 'flex';
+  }
+
+  restoreExamPanel() {
+    const overlay = document.getElementById('agfExamOverlay');
+    const bubble = document.getElementById('agfExamBubble');
+    if (overlay) overlay.style.display = 'flex';
+    if (bubble) bubble.style.display = 'none';
   }
 
   /**
