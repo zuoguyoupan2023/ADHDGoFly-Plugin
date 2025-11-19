@@ -74,7 +74,7 @@
 
 ;(function(){
   if (typeof window === 'undefined') return;
-  if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = true;
+  if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
   window.__LOG_DEV_MODE = !!window.__BUILD_TEST__;
   try { chrome.storage.local.set({ logfordevmode: window.__LOG_DEV_MODE }); } catch (_) {}
   try {
@@ -1788,3 +1788,18 @@ if (document.readyState === 'loading') {
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
+/**
+ * 日志模式切换说明（统一开关）
+ *
+ * 统一开关: window.__BUILD_TEST__  (true=测试版, false=正式版)
+ * 作用:
+ * - 根据 __BUILD_TEST__ 初始化并强制覆盖 chrome.storage.local.logfordevmode
+ * - 设置 window.__LOG_DEV_MODE，用于控制所有受控调试日志是否显示
+ * 使用方式:
+ * - 在构建或运行前设置 window.__BUILD_TEST__ 为期望值（测试/正式）
+ * - 内容脚本启动时会写入 logfordevmode = !!__BUILD_TEST__ 并同步 __LOG_DEV_MODE
+ * 代码位置:
+ * - 初始化与覆盖: content/main.js:75-91
+ * 影响范围:
+ * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
+ */

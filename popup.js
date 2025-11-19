@@ -3053,7 +3053,7 @@ function initLanguageGroupListeners() {
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = true;
+    if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
     chrome.storage.local.set({ logfordevmode: !!window.__BUILD_TEST__ });
   } catch (e) {}
   // 确保i18n先初始化
@@ -3067,3 +3067,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLanguageGroupListeners();
   }, 100);
 });
+/**
+ * 日志模式切换说明（弹窗环境）
+ *
+ * 统一开关: window.__BUILD_TEST__  (true=测试版, false=正式版)
+ * 作用:
+ * - 弹窗加载时将 chrome.storage.local.logfordevmode 设置为 !!__BUILD_TEST__，与内容脚本保持一致
+ * 使用方式:
+ * - 在构建或运行前设置 window.__BUILD_TEST__ 为期望值（测试/正式）
+ * 代码位置:
+ * - 默认写入: popup.js:3056-3060
+ * 影响范围:
+ * - 保证弹窗环境与内容脚本环境的日志开关一致，避免两者不一致导致的调试困扰
+ */

@@ -1,28 +1,33 @@
 /**
  * 评价提醒灯塔系统
- * 正式版，需要把review-light-tower.js 第38行改为false;popup.js 3056行改为false：chrome.storage.local.set({ logfordevmode: false })
+ *
+ * 日志模式切换说明（评价灯塔）
+ * 统一开关: window.__BUILD_TEST__  (true=测试版, false=正式版)
+ * 作用:
+ * - 构造函数根据 __BUILD_TEST__ 设置 this.ReviewLightTowerTest，自动切换测试/正式条件与描述；
+ * - 日志是否显示由 window.__LOG_DEV_MODE 控制（该值由 content/main.js 写入并同步）。
+ * 使用方式:
+ * - 在构建或运行前设置 window.__BUILD_TEST__ 为期望值（测试/正式）。
+ * 代码位置:
+ * - 模式开关: review-light-tower.js:38-39
+ * - 日志受控: 依赖 __LOG_DEV_MODE（content/main.js:75-91 初始化并覆盖存储）
+ * 影响范围:
+ * - 切换评价提醒触发条件（分钟级 vs 天级）与相关调试日志文案。
+ *
  * ========== 配置模式切换说明 ==========
- * 
- * 🔧 一键切换测试/正式模式：
- * 只需修改构造函数中的 this.ReviewLightTowerTest 值：
+ * 🔧 一键切换测试/正式模式：只需设置 window.__BUILD_TEST__ 即可
  * - false: 正式版本模式（默认）
  * - true:  测试模式
- * 
+ *
  * 🎯 正式版本配置（ReviewLightTowerTest = false）：
  * - 条件3：50天 + 20000个节点
  * - 条件2：21天 + 1000个节点  
  * - 条件1：7天 + 2000个节点
- * 
+ *
  * 🧪 测试模式配置（ReviewLightTowerTest = true）：
  * - 条件3：50分钟 + 1000个节点
  * - 条件2：20分钟 + 500个节点
  * - 条件1：10分钟 + 100个节点
- * 
- * ✅ 优势：
- * - 安全：无需手动修改多处代码
- * - 简单：只需改一个配置值
- * - 自动：条件判断和日志描述都会自动切换
- * - 清晰：控制台会显示当前模式
  */
 class ReviewLightTower {
   constructor() {
