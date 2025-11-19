@@ -35,7 +35,7 @@ class ReviewLightTower {
     // 🔧 测试模式配置开关
     // true: 启用测试模式（分钟级别，较小节点数）
     // false: 正式版本模式（天级别，正常节点数）
-    if (typeof window !== 'undefined' && typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = true;
+    if (typeof window !== 'undefined' && typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
     this.ReviewLightTowerTest = !!window.__BUILD_TEST__;
   }
 

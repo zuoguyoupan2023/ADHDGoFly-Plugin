@@ -3053,12 +3053,8 @@ function initLanguageGroupListeners() {
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
-    chrome.storage.local.get(['logfordevmode'], function(res){
-      if (typeof res.logfordevmode === 'undefined') {
-        chrome.storage.local.set({ logfordevmode: !!window.__BUILD_TEST__ });
-      }
-    });
+    if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = true;
+    chrome.storage.local.set({ logfordevmode: !!window.__BUILD_TEST__ });
   } catch (e) {}
   // 确保i18n先初始化
   await window.i18n.init();

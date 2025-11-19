@@ -74,14 +74,10 @@
 
 ;(function(){
   if (typeof window === 'undefined') return;
-  if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = false;
-  if (typeof window.__LOG_DEV_MODE === 'undefined') window.__LOG_DEV_MODE = !!window.__BUILD_TEST__;
+  if (typeof window.__BUILD_TEST__ === 'undefined') window.__BUILD_TEST__ = true;
+  window.__LOG_DEV_MODE = !!window.__BUILD_TEST__;
+  try { chrome.storage.local.set({ logfordevmode: window.__LOG_DEV_MODE }); } catch (_) {}
   try {
-    chrome.storage.local.get(['logfordevmode'], function(res){
-      var has = res && typeof res.logfordevmode !== 'undefined';
-      if (!has) { try { chrome.storage.local.set({ logfordevmode: !!window.__BUILD_TEST__ }); } catch (_) {} }
-      window.__LOG_DEV_MODE = has ? !!res.logfordevmode : !!window.__BUILD_TEST__;
-    });
     chrome.storage.onChanged.addListener(function(changes, area){
       if (area === 'local' && changes.logfordevmode) {
         window.__LOG_DEV_MODE = !!changes.logfordevmode.newValue;
