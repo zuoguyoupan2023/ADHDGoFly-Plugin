@@ -1650,6 +1650,13 @@ class ADHDHighlighter {
       .agf-msg.assistant{justify-content:flex-start}
       .agf-bubble{max-width:70%;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px;color:#333;background:#fff}
       .agf-bubble.user{background:#f0f0f0}
+      .agf-bubble strong{font-weight:700}
+      .agf-bubble em{font-style:italic}
+      .agf-bubble code{font-family:Menlo,Monaco,monospace;background:#f5f5f5;color:#333;padding:0 2px;border-radius:3px}
+      .agf-bubble pre{background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:8px;overflow:auto}
+      .agf-bubble h1,.agf-bubble h2,.agf-bubble h3{margin:4px 0;font-weight:700}
+      .agf-bubble ul,.agf-bubble ol{margin:4px 0 4px 18px}
+      .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
       .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
@@ -2127,15 +2134,29 @@ class ADHDHighlighter {
     };
     const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const markdownToHtml = (md) => {
-      let t = escapeHtml(md);
+      let t = md;
+      t = t.replace(/([。！？；;:])\s*[-*]\s+/g, (m, p1) => p1 + '\n- ');
+      t = escapeHtml(t);
       t = t.replace(/```([\s\S]*?)```/g, (m, p1) => '<pre><code>' + p1.replace(/\n/g, '<br>') + '</code></pre>');
       const lines = t.split(/\r?\n/);
       let out = '';
       let inUl = false, inOl = false;
-      const inline = (x) => x.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      const inline = (x) => x
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1<\/a>');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (/^\s*[-*]\s+/.test(line)) {
+        if (/^\s*#{1,6}\s+/.test(line)) {
+          const level = (line.match(/^\s*(#{1,6})\s+/) || [,'']).[1].length;
+          const content = line.replace(/^\s*#{1,6}\s+/, '');
+          out += `<h${level}>` + inline(content) + `</h${level}>`;
+        } else if (/^\s*---\s*$/.test(line)) {
+          if (inUl) { out += '</ul>'; inUl = false; }
+          if (inOl) { out += '</ol>'; inOl = false; }
+          out += '<hr>';
+        } else if (/^\s*[-*]\s+/.test(line)) {
           if (!inUl) { out += '<ul>'; inUl = true; }
           out += '<li>' + inline(line.replace(/^\s*[-*]\s+/, '')) + '</li>';
         } else if (/^\s*\d+\.\s+/.test(line)) {
