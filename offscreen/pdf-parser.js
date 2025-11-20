@@ -71,6 +71,47 @@
         }catch(err){ send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:String(err&&err.message||err) }); sendResponse && sendResponse({ ok:false }); }
       })();
       return true;
+    } else if (msg && msg.type === 'OFFSCREEN_PDF_PARSE_BUFFER') {
+      const buf = msg.buffer;
+      const tabId = msg.tabId;
+      (async()=>{
+        try{
+          let pdfjsLib = getPdfjsLib();
+          if (!pdfjsLib) {
+            await new Promise(r=>setTimeout(r,0));
+            pdfjsLib = getPdfjsLib();
+          }
+          if (!pdfjsLib) { send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:'pdfjs_missing' }); sendResponse && sendResponse({ ok:false }); return true; }
+          try {
+            if (pdfjsLib.GlobalWorkerOptions) {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdf.worker.min.js');
+            }
+          } catch(_){
+            try {
+              if (pdfjsLib.GlobalWorkerOptions) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdfjs/pdf.worker.min.js');
+              }
+            } catch(__){}
+          }
+          const u8 = new Uint8Array(buf);
+          const doc = await pdfjsLib.getDocument({ data: u8 }).promise;
+          const numPages = doc.numPages || 0;
+          const sections = [];
+          for (let i=1;i<=numPages;i++){
+            try{
+              const page = await doc.getPage(i);
+              const txt = await page.getTextContent();
+              const blocks = [];
+              let order = 0;
+              txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
+              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:'PDF Page '+i, headingPath:'pdf:'+i, blocks });
+            }catch(_){ }
+          }
+          send({ type:'OFFSCREEN_PDF_RESULT', tabId, sections });
+          sendResponse && sendResponse({ ok:true });
+        }catch(err){ send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:String(err&&err.message||err) }); sendResponse && sendResponse({ ok:false }); }
+      })();
+      return true;
     }
   });
 })();

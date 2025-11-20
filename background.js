@@ -571,6 +571,9 @@ let __pdfOffscreen = null;
 let __pdfOffscreenReady = false;
 let __pdfPendingQueue = [];
 const __pdfTriggered = new Set();
+const DEFAULT_PDF_BLOCKED_DOMAINS = [
+  'qidian.com','youdubook.com','webnovel.com','jjwxc.net','m.jjwxc.net','zongheng.com','17k.com','yunqi.qq.com','hongxiu.com','xxsy.net','faloo.com','ciweimao.com','weread.qq.com','zhangyue.com','shuqi.com','migu.cn','read.douban.com','read.amazon.com','kindlecloudreader.com'
+];
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === 'OFFSCREEN_PDF_READY') {
@@ -616,11 +619,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
           }
         }
-        const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url: msg.url, tabId };
-        if (__pdfOffscreenReady) {
-          try { await chrome.runtime.sendMessage(m); } catch (e) { sendResponse({ success: false, error: e && e.message || 'send_failed' }); return; }
-        } else {
-          __pdfPendingQueue.push(m);
+        let sent = false;
+        try {
+          const resp = await fetch(msg.url);
+          if (resp && resp.ok) {
+            const buf = await resp.arrayBuffer();
+            const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', buffer: buf, tabId };
+            if (__pdfOffscreenReady) {
+              await chrome.runtime.sendMessage(mbuf);
+            } else {
+              __pdfPendingQueue.push(mbuf);
+            }
+            sent = true;
+          }
+        } catch (_) {}
+        if (!sent) {
+          const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url: msg.url, tabId };
+          if (__pdfOffscreenReady) {
+            try { await chrome.runtime.sendMessage(m); } catch (e) { sendResponse({ success: false, error: e && e.message || 'send_failed' }); return; }
+          } else {
+            __pdfPendingQueue.push(m);
+          }
         }
         sendResponse({ success: true });
       } catch (error) {
@@ -648,24 +667,41 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         try {
           const settings = await chrome.storage.local.get(['pdfAutoCollectEnabled','pdfBlockedDomains']);
           enabled = settings.pdfAutoCollectEnabled !== undefined ? !!settings.pdfAutoCollectEnabled : true;
-          blocked = Array.isArray(settings.pdfBlockedDomains) ? settings.pdfBlockedDomains : [];
+          const customBlocked = Array.isArray(settings.pdfBlockedDomains) ? settings.pdfBlockedDomains : [];
+          blocked = Array.from(new Set([ ...DEFAULT_PDF_BLOCKED_DOMAINS, ...customBlocked ]));
         } catch (_) {}
         try {
           const host = new URL(url).hostname;
           if (blocked.includes(host)) return;
         } catch (_) {}
         if (!enabled) return;
-        __pdfTriggered.add(key);
         if (!__pdfOffscreen) {
           await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
           __pdfOffscreen = true;
         }
-        const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url, tabId };
-        if (__pdfOffscreenReady) {
-          await chrome.runtime.sendMessage(m);
-        } else {
-          __pdfPendingQueue.push(m);
+        let sent = false;
+        try {
+          const resp = await fetch(url);
+          if (resp && resp.ok) {
+            const buf = await resp.arrayBuffer();
+            const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', buffer: buf, tabId };
+            if (__pdfOffscreenReady) {
+              await chrome.runtime.sendMessage(mbuf);
+            } else {
+              __pdfPendingQueue.push(mbuf);
+            }
+            sent = true;
+          }
+        } catch (_) {}
+        if (!sent) {
+          const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url, tabId };
+          if (__pdfOffscreenReady) {
+            await chrome.runtime.sendMessage(m);
+          } else {
+            __pdfPendingQueue.push(m);
+          }
         }
+        __pdfTriggered.add(key);
       } catch (e) {}
     })();
   } catch (_) {}

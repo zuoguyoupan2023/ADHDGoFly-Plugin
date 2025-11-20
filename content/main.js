@@ -1666,13 +1666,20 @@ class ADHDHighlighter {
       let chunkBlocks = [];
       let idx = 0;
       for (const b of sec.blocks) {
+        const filterOn = await (async()=>{ try { const r = await chrome.storage.local.get(['privacySensitiveFilterEnabled']); return !!r.privacySensitiveFilterEnabled; } catch(_) { return false; } })();
+        if (filterOn) {
+          const t = String(b.text||'');
+          const isPII = /\b1[3-9]\d{9}\b/.test(t) || /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(t) || /\b\d{15,19}\b/.test(t) || /\b\d{17}[\dXx]\b/.test(t);
+          if (isPII) continue;
+        }
         const l = b.text.length;
         if (bufLen + l > maxLen && chunkBlocks.length) {
           const text = chunkBlocks.map(x => x.text).join('\n');
           const textLength = text.length;
           const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
           const textHash = await this.sha256Hex(text);
-          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+          const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
+          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
           await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
           results.push(rec);
           chunkBlocks = [];
@@ -1686,12 +1693,22 @@ class ADHDHighlighter {
         const textLength = text.length;
         const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
         const textHash = await this.sha256Hex(text);
-        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+        const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
+        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
         await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
         results.push(rec);
       }
     }
     console.log('💾 存储的文本:', { segmentsCount: results.length, segments: results.map(r => ({ id: r.id, sectionTitle: r.sectionTitle, textLength: r.textLength, approxTokens: r.approxTokens })) });
+    try {
+      const r = await chrome.storage.local.get(['pageSegmentsRetentionDays']);
+      const days = r.pageSegmentsRetentionDays !== undefined ? parseInt(r.pageSegmentsRetentionDays,10) : 7;
+      const cutoff = Date.now() - days*24*60*60*1000;
+      const tx = db.transaction('page_segments','readwrite');
+      const st = tx.objectStore('page_segments');
+      const req = st.openCursor();
+      req.onsuccess = (ev)=>{ const cursor = ev.target.result; if (cursor) { const val = cursor.value; if (val && val.timestamp && val.timestamp < cutoff) { cursor.delete(); cursor.continue(); } else { cursor.continue(); } } };
+    } catch(_) {}
     return { runId, segmentsCount: results.length };
   }
 
@@ -2077,6 +2094,17 @@ class ADHDHighlighter {
                 <div class="agf-label">temperature</div>
                 <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
               </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">PDF解析</div>
+                <div id="agfPdfParseToggle" class="agf-button-list"></div>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">敏感过滤</div>
+                <div id="agfSensitiveToggle" class="agf-button-list"></div>
+              </div>
+              <div class="agf-settings-row">
+                <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
+              </div>
             </div>
           </div>
           <div class="agf-records-panel" id="agfRecordsPanel">
@@ -2143,6 +2171,9 @@ class ADHDHighlighter {
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
     const keySavedBtn = document.getElementById('agfKeySavedBtn');
     const tempInput = document.getElementById('agfTempInput');
+    const pdfToggle = document.getElementById('agfPdfParseToggle');
+    const sensitiveToggle = document.getElementById('agfSensitiveToggle');
+    const manualParseBtn = document.getElementById('agfManualParseBtn');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const chatList = overlay.querySelector('.agf-chat-list');
@@ -2328,6 +2359,39 @@ class ADHDHighlighter {
     }
 
     initFromStorage();
+
+    const initParseToggles = async () => {
+      let auto = true;
+      let sensitive = true;
+      try {
+        const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled']);
+        auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
+        sensitive = s.privacySensitiveFilterEnabled !== undefined ? !!s.privacySensitiveFilterEnabled : true;
+      } catch (_) {}
+      const autoItems = ['自动','手动'];
+      const autoMap = { '自动':'自动', '手动':'手动' };
+      renderButtons(pdfToggle, autoItems, auto ? '自动' : '手动', async (val, btn) => {
+        Array.from(pdfToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const enabled = val === '自动';
+        await chrome.storage.local.set({ pdfAutoCollectEnabled: enabled });
+      }, autoMap);
+      const sensItems = ['开启','关闭'];
+      const sensMap = { '开启':'开启', '关闭':'关闭' };
+      renderButtons(sensitiveToggle, sensItems, sensitive ? '开启' : '关闭', async (val, btn) => {
+        Array.from(sensitiveToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const on = val === '开启';
+        await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
+      }, sensMap);
+      if (manualParseBtn) {
+        manualParseBtn.addEventListener('click', async () => {
+          const url = window.location.href;
+          try { await chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url }); } catch (_) {}
+        });
+      }
+    };
+    initParseToggles();
 
     const fillColorsInputs = () => {
       const cs = getComputedStyle(overlay);
