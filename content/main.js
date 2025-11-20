@@ -769,6 +769,7 @@ class ADHDHighlighter {
           try {
             const sections = Array.isArray(message.sections) ? message.sections : [];
             if (sections.length) {
+              console.log('📥 采集到的文本-PDF:', { sectionsCount: sections.length, sections });
               const stored = await this.storePageSegments(sections);
               sendResponse({ success: true, result: stored });
             } else {

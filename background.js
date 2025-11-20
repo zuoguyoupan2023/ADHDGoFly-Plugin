@@ -641,9 +641,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     const key = tabId + '|' + url;
     if (__pdfTriggered.has(key)) return;
     if (!done) return;
-    __pdfTriggered.add(key);
     (async () => {
       try {
+        let enabled = true;
+        let blocked = [];
+        try {
+          const settings = await chrome.storage.local.get(['pdfAutoCollectEnabled','pdfBlockedDomains']);
+          enabled = settings.pdfAutoCollectEnabled !== undefined ? !!settings.pdfAutoCollectEnabled : true;
+          blocked = Array.isArray(settings.pdfBlockedDomains) ? settings.pdfBlockedDomains : [];
+        } catch (_) {}
+        try {
+          const host = new URL(url).hostname;
+          if (blocked.includes(host)) return;
+        } catch (_) {}
+        if (!enabled) return;
+        __pdfTriggered.add(key);
         if (!__pdfOffscreen) {
           await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
           __pdfOffscreen = true;
