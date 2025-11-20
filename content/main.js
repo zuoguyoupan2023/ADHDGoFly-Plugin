@@ -2033,6 +2033,10 @@ class ADHDHighlighter {
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+      .agf-more-wrap{position:relative;display:inline-block;margin-left:8px}
+      .agf-more-btn{height:22px;min-width:56px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:3}
+      .agf-more-panel .agf-btn{display:block;width:180px;text-align:left;margin-bottom:6px}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
@@ -2043,7 +2047,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span>ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button></div></div>
+        <div class="agf-ai-title"><span>ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2228,6 +2232,12 @@ class ADHDHighlighter {
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const statusDot = document.getElementById('agfStorageStatusDot');
     const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
+    const moreBtn = document.getElementById('agfMoreBtn');
+    const morePanel = document.getElementById('agfMorePanel');
+    const btnStructured = document.getElementById('agfBtnStructured');
+    const btnExplain = document.getElementById('agfBtnExplain');
+    const btnOutline = document.getElementById('agfBtnOutline');
+    const btnKeywords = document.getElementById('agfBtnKeywords');
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
     const composerSend = document.getElementById('agfComposerSend');
@@ -2893,7 +2903,13 @@ class ADHDHighlighter {
       if (statusDot) {
         if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
       }
-      if (quickSummaryBtn) { quickSummaryBtn.disabled = segs.length === 0; }
+      const has = segs.length > 0;
+      if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
+      if (moreBtn) { moreBtn.disabled = !has; }
+      if (btnStructured) btnStructured.disabled = !has;
+      if (btnExplain) btnExplain.disabled = !has;
+      if (btnOutline) btnOutline.disabled = !has;
+      if (btnKeywords) btnKeywords.disabled = !has;
       return segs;
     };
 
@@ -2927,6 +2943,100 @@ class ADHDHighlighter {
       return lines.join('\n');
     };
 
+    const buildStructuredSummaryPrompt = (segs) => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const lines = [];
+      lines.push('请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。');
+      lines.push('页面: ' + canonicalUrl);
+      const MAX_CHARS = 12000;
+      let remain = MAX_CHARS;
+      const bodyTexts = [];
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i];
+        const h = r.sectionTitle || '';
+        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        if (!t) continue;
+        if (t.length > remain) t = t.slice(0, Math.max(0, remain));
+        if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
+        if (remain <= 0) break;
+      }
+      lines.push(bodyTexts.join('\n\n'));
+      lines.push('输出: 以清晰的分级标题呈现，每章 2-4 个要点，最后附 TL;DR。');
+      return lines.join('\n');
+    };
+
+    const buildExplainPrompt = (segs) => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const lines = [];
+      lines.push('请用更简单的语言解释以下内容，面向非技术读者。');
+      lines.push('页面: ' + canonicalUrl);
+      const MAX_CHARS = 9000;
+      let remain = MAX_CHARS;
+      const bodyTexts = [];
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i];
+        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        if (!t) continue;
+        if (t.length > remain) t = t.slice(0, Math.max(0, remain));
+        if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
+        if (remain <= 0) break;
+      }
+      lines.push(bodyTexts.join('\n\n'));
+      lines.push('输出: 用通俗语言分点说明，避免术语堆砌。');
+      return lines.join('\n');
+    };
+
+    const buildOutlinePrompt = (segs) => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const lines = [];
+      lines.push('请提取全文大纲，保留层级结构与章节标题。');
+      lines.push('页面: ' + canonicalUrl);
+      const MAX_CHARS = 9000;
+      let remain = MAX_CHARS;
+      const bodyTexts = [];
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i];
+        const h = r.sectionTitle || '';
+        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        if (!t) continue;
+        if (t.length > remain) t = t.slice(0, Math.max(0, remain));
+        if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
+        if (remain <= 0) break;
+      }
+      lines.push(bodyTexts.join('\n\n'));
+      lines.push('输出: 仅给出大纲，形如 H1/H2/H3 分层，必要处附一句描述。');
+      return lines.join('\n');
+    };
+
+    const buildKeywordsPrompt = (segs) => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const lines = [];
+      lines.push('请提取 Top-N 关键词与术语，并按类别分组。');
+      lines.push('页面: ' + canonicalUrl);
+      const MAX_CHARS = 8000;
+      let remain = MAX_CHARS;
+      const bodyTexts = [];
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i];
+        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        if (!t) continue;
+        if (t.length > remain) t = t.slice(0, Math.max(0, remain));
+        if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
+        if (remain <= 0) break;
+      }
+      lines.push(bodyTexts.join('\n\n'));
+      lines.push('输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。');
+      return lines.join('\n');
+    };
+
     this.__onAiStreamDelta = (delta) => {
       if (typeof delta !== 'string' || !delta) return;
       streamingText += delta;
@@ -2946,6 +3056,11 @@ class ADHDHighlighter {
     };
 
     if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } sendChat(); });
+    if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
     if (composerSend) composerSend.addEventListener('click', sendChat);
     if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
     if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
