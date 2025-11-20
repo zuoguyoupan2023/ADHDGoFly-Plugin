@@ -756,7 +756,16 @@ class ADHDHighlighter {
             });
           }
           break;
-          
+        case 'collectAndStorePageSegments':
+          try {
+            const result = await this.collectAndStorePageSegments();
+            sendResponse({ success: true, result });
+          } catch (error) {
+            console.error('采集与存储失败:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+        
         default:
           sendResponse({ 
             success: false, 
@@ -1476,6 +1485,139 @@ class ADHDHighlighter {
         summary: {}
       };
     }
+  }
+
+  async segmentsDbOpen() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('agf_segments_db', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('page_segments')) {
+          const store = db.createObjectStore('page_segments', { keyPath: 'id' });
+          store.createIndex('runId', 'runId');
+          store.createIndex('pageUrl', 'pageUrl');
+          store.createIndex('sectionId', 'sectionId');
+          store.createIndex('timestamp', 'timestamp');
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  normalizeText(t) {
+    return t.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[ \t\f\v]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+  }
+
+  isHiddenEl(el) {
+    const s = window.getComputedStyle(el);
+    if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return true;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return true;
+    return false;
+  }
+
+  isExcludedTag(el) {
+    const tag = el.tagName.toLowerCase();
+    if (['script','style','noscript','svg','canvas'].includes(tag)) return true;
+    if (['header','footer','nav','aside'].includes(tag)) return true;
+    return false;
+  }
+
+  hasExcludedClass(el) {
+    const cls = typeof el.className === 'string' ? el.className : (el.className ? String(el.className) : '');
+    return cls.includes('adhd-processed') || cls.includes('adhd-highlight');
+  }
+
+  elText(el) {
+    if (!el) return '';
+    if (el.matches('input,textarea') || el.isContentEditable) return '';
+    return this.normalizeText(el.innerText || el.textContent || '');
+  }
+
+  approxTokensPerChar(text) {
+    const cjk = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/.test(text);
+    return cjk ? 1.0 : 0.75;
+  }
+
+  collectPageSections() {
+    const nodes = document.body.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div');
+    const sections = [];
+    let current = null;
+    let order = 0;
+    nodes.forEach(el => {
+      if (this.isHiddenEl(el)) return;
+      if (this.isExcludedTag(el)) return;
+      if (this.hasExcludedClass(el)) return;
+      const tag = el.tagName.toLowerCase();
+      if (/^h[1-6]$/.test(tag)) {
+        if (current && current.blocks.length) sections.push(current);
+        const title = this.elText(el);
+        current = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title, headingPath: tag + ':' + title, blocks: [] };
+        order = 0;
+        return;
+      }
+      const text = this.elText(el);
+      if (!text || text.length < 2) return;
+      if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
+      current.blocks.push({ text, orderIndex: order++ });
+    });
+    if (current && current.blocks.length) sections.push(current);
+    console.log('📥 采集到的文本:', { sectionsCount: sections.length, sections });
+    return sections;
+  }
+
+  async sha256Hex(s) {
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.digest('SHA-256', enc.encode(s));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async storePageSegments(sections) {
+    const db = await this.segmentsDbOpen();
+    const pageUrl = window.location.href;
+    const domain = (new URL(pageUrl)).hostname;
+    const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    const maxLen = 10000;
+    const results = [];
+    for (const sec of sections) {
+      let bufLen = 0;
+      let chunkBlocks = [];
+      let idx = 0;
+      for (const b of sec.blocks) {
+        const l = b.text.length;
+        if (bufLen + l > maxLen && chunkBlocks.length) {
+          const text = chunkBlocks.map(x => x.text).join('\n');
+          const textLength = text.length;
+          const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
+          const textHash = await this.sha256Hex(text);
+          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+          await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
+          results.push(rec);
+          chunkBlocks = [];
+          bufLen = 0;
+        }
+        chunkBlocks.push(b);
+        bufLen += l;
+      }
+      if (chunkBlocks.length) {
+        const text = chunkBlocks.map(x => x.text).join('\n');
+        const textLength = text.length;
+        const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
+        const textHash = await this.sha256Hex(text);
+        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+        await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
+        results.push(rec);
+      }
+    }
+    console.log('💾 存储的文本:', { segmentsCount: results.length, segments: results.map(r => ({ id: r.id, sectionTitle: r.sectionTitle, textLength: r.textLength, approxTokens: r.approxTokens })) });
+    return { runId, segmentsCount: results.length };
+  }
+
+  async collectAndStorePageSegments() {
+    const sections = this.collectPageSections();
+    const stored = await this.storePageSegments(sections);
+    return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
   }
 
   /**
@@ -2257,6 +2399,8 @@ class ADHDHighlighter {
       if (inOl) out += '</ol>';
       return out;
     };
+
+    
     const appendMessage = (role, text) => {
       if (!chatList) return;
       const wrap = document.createElement('div');
