@@ -1713,7 +1713,7 @@ class ADHDHighlighter {
         results.push(rec);
       }
     }
-    console.log('💾 存储的文本:', { segmentsCount: results.length, segments: results.map(r => ({ id: r.id, sectionTitle: r.sectionTitle, textLength: r.textLength, approxTokens: r.approxTokens })) });
+    console.log('💾 存储的文本:', { segmentsCount: results.length, segments: results.map(r => ({ id: r.id, sectionTitle: r.sectionTitle, textLength: r.textLength, approxTokens: r.approxTokens, preview: (r.blocks && r.blocks.length ? r.blocks.map(b => b.text).join('\n').slice(0, 400) : '') })) });
     try {
       const r = await chrome.storage.local.get(['pageSegmentsRetentionDays']);
       const days = r.pageSegmentsRetentionDays !== undefined ? parseInt(r.pageSegmentsRetentionDays,10) : 7;
