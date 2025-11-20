@@ -1622,28 +1622,42 @@ class ADHDHighlighter {
   }
 
   collectPageSections() {
-    const nodes = document.body.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div');
-    const sections = [];
-    let current = null;
-    let order = 0;
-    nodes.forEach(el => {
-      if (this.isHiddenEl(el)) return;
-      if (this.isExcludedTag(el)) return;
-      if (this.hasExcludedClass(el)) return;
-      const tag = el.tagName.toLowerCase();
-      if (/^h[1-6]$/.test(tag)) {
-        if (current && current.blocks.length) sections.push(current);
-        const title = this.elText(el);
-        current = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title, headingPath: tag + ':' + title, blocks: [] };
-        order = 0;
-        return;
-      }
-      const text = this.elText(el);
-      if (!text || text.length < 2) return;
-      if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
-      current.blocks.push({ text, orderIndex: order++ });
+    const collectFromRoot = (root) => {
+      const arr = [];
+      let current = null;
+      let order = 0;
+      const nodes = root.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div');
+      nodes.forEach(el => {
+        if (this.isHiddenEl(el)) return;
+        if (this.isExcludedTag(el)) return;
+        if (this.hasExcludedClass(el)) return;
+        const tag = el.tagName.toLowerCase();
+        if (/^h[1-6]$/.test(tag)) {
+          if (current && current.blocks.length) arr.push(current);
+          const title = this.elText(el);
+          current = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title, headingPath: tag + ':' + title, blocks: [] };
+          order = 0;
+          return;
+        }
+        const text = this.elText(el);
+        if (!text || text.length < 2) return;
+        if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
+        current.blocks.push({ text, orderIndex: order++ });
+      });
+      if (current && current.blocks.length) arr.push(current);
+      return arr;
+    };
+    let sections = collectFromRoot(document);
+    const shadows = [];
+    document.querySelectorAll('*').forEach(el => { if (el.shadowRoot) shadows.push(el.shadowRoot); });
+    shadows.forEach(sr => { try { sections = sections.concat(collectFromRoot(sr)); } catch (_) {} });
+    const iframes = Array.from(document.querySelectorAll('iframe'));
+    iframes.forEach(fr => {
+      try {
+        const doc = fr.contentDocument;
+        if (doc) sections = sections.concat(collectFromRoot(doc));
+      } catch (_) {}
     });
-    if (current && current.blocks.length) sections.push(current);
     console.log('📥 采集到的文本:', { sectionsCount: sections.length, sections });
     return sections;
   }
@@ -1761,8 +1775,14 @@ class ADHDHighlighter {
       section.blocks.push({ text: text, orderIndex: section.blocks.length });
     };
     const scan = () => {
-      const els = document.querySelectorAll('article, section, [role="article"], [role="feed"], [data-testid], .post, .tweet, .update, .card, .entry, .item, .list-item, .feed-item');
-      els.forEach(el => { if (!this.isHiddenEl(el)) addBlock(el.innerText || el.textContent || ''); });
+      const selector = 'article,section,[role="article"],[role="feed"],[role="main"],[data-testid],.post,.tweet,.update,.card,.entry,.item,.list-item,.feed-item,.story,.message,.comment,.feed,.timeline';
+      const els = document.querySelectorAll(selector);
+      els.forEach(el => {
+        if (this.isHiddenEl(el)) return;
+        const txt = el.innerText || el.textContent || '';
+        if (!txt || txt.trim().length < 6) return;
+        addBlock(txt);
+      });
     };
     scan();
     const mo = new MutationObserver((muts) => {
@@ -1770,7 +1790,10 @@ class ADHDHighlighter {
         m.addedNodes && m.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
             const el = node;
-            if (!this.isHiddenEl(el)) addBlock(el.innerText || el.textContent || '');
+            if (this.isHiddenEl(el)) return;
+            const txt = el.innerText || el.textContent || '';
+            if (!txt || txt.trim().length < 6) return;
+            addBlock(txt);
           }
         });
       });
@@ -2105,6 +2128,19 @@ class ADHDHighlighter {
               <div class="agf-settings-row">
                 <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
               </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">黑名单域名</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <input id="agfBlockedDomainInput" class="agf-input" type="text" placeholder="example.com" />
+                  <button id="agfBlockedAddBtn" class="agf-input" style="height:28px;min-width:64px;">添加</button>
+                  <button id="agfBlockedClearBtn" class="agf-input" style="height:28px;min-width:64px;">清空</button>
+                </div>
+                <div id="agfBlockedList" class="agf-button-list"></div>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">保留天数</div>
+                <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
+              </div>
             </div>
           </div>
           <div class="agf-records-panel" id="agfRecordsPanel">
@@ -2174,6 +2210,11 @@ class ADHDHighlighter {
     const pdfToggle = document.getElementById('agfPdfParseToggle');
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
     const manualParseBtn = document.getElementById('agfManualParseBtn');
+    const blockedInput = document.getElementById('agfBlockedDomainInput');
+    const blockedAddBtn = document.getElementById('agfBlockedAddBtn');
+    const blockedClearBtn = document.getElementById('agfBlockedClearBtn');
+    const blockedList = document.getElementById('agfBlockedList');
+    const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const chatList = overlay.querySelector('.agf-chat-list');
@@ -3034,3 +3075,64 @@ console.log('ADHD文本高亮器主控制器加载完成');
  * 影响范围:
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
+    const renderBlockedList = (domains) => {
+      if (!blockedList) return;
+      blockedList.innerHTML = '';
+      domains.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'agf-btn';
+        btn.textContent = d;
+        btn.dataset.value = d;
+        const del = document.createElement('span');
+        del.textContent = ' ✕';
+        del.style.marginLeft = '6px';
+        btn.appendChild(del);
+        btn.addEventListener('click', async () => {
+          try {
+            const st = await chrome.storage.local.get(['pdfBlockedDomains']);
+            const arr = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
+            const next = arr.filter(x => x !== d);
+            await chrome.storage.local.set({ pdfBlockedDomains: next });
+            renderBlockedList(next);
+          } catch (_) {}
+        });
+        blockedList.appendChild(btn);
+      });
+    };
+
+    const initGovernanceControls = async () => {
+      try {
+        const st = await chrome.storage.local.get(['pdfBlockedDomains','pageSegmentsRetentionDays']);
+        const domains = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
+        renderBlockedList(domains);
+        const days = st.pageSegmentsRetentionDays !== undefined ? parseInt(st.pageSegmentsRetentionDays,10) : 7;
+        if (retentionDaysInput) retentionDaysInput.value = isNaN(days) ? 7 : days;
+      } catch (_) {}
+      if (blockedAddBtn && blockedInput) {
+        blockedAddBtn.addEventListener('click', async () => {
+          const v = (blockedInput.value || '').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+          if (!v) return;
+          try {
+            const st = await chrome.storage.local.get(['pdfBlockedDomains']);
+            const arr = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
+            const next = Array.from(new Set([...arr, v]));
+            await chrome.storage.local.set({ pdfBlockedDomains: next });
+            blockedInput.value = '';
+            renderBlockedList(next);
+          } catch (_) {}
+        });
+      }
+      if (blockedClearBtn) {
+        blockedClearBtn.addEventListener('click', async () => {
+          try { await chrome.storage.local.set({ pdfBlockedDomains: [] }); renderBlockedList([]); } catch (_) {}
+        });
+      }
+      if (retentionDaysInput) {
+        retentionDaysInput.addEventListener('change', async () => {
+          const v = parseInt(retentionDaysInput.value,10);
+          const n = isNaN(v) ? 7 : Math.max(1, v);
+          try { await chrome.storage.local.set({ pageSegmentsRetentionDays: n }); } catch (_) {}
+        });
+      }
+    };
+    initGovernanceControls();
