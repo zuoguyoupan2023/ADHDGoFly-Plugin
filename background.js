@@ -651,6 +651,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })();
     return true;
   }
+  else if (msg && msg.action === 'storeSegments') {
+    (async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs && tabs[0];
+        if (!tab || !tab.id) { sendResponse({ success: false, error: 'no_active_tab' }); return; }
+        const sections = Array.isArray(msg.sections) ? msg.sections : [];
+        await chrome.tabs.sendMessage(tab.id, { action: 'storeSegments', sections });
+        sendResponse({ success: true });
+      } catch (error) {
+        sendResponse({ success: false, error: error && error.message || 'unknown' });
+      }
+    })();
+    return true;
+  }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

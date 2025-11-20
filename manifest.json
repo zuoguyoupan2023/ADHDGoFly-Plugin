@@ -65,7 +65,8 @@
         "content/storage/adhdgofly-timer.js",
         "content/storage/review-counter.js",
         "review-light-tower.js",
-        "content/main.js"
+        "content/main.js",
+        "content/dynamic-collector.js"
       ],
     "css": ["styles.css"],
     "run_at": "document_end"
