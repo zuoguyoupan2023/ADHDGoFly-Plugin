@@ -2268,35 +2268,47 @@ class ADHDHighlighter {
       },
       moonshot: {
         baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
-        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k', 'kimi-k2-instruct']
+        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k']
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-5', 'gpt-4o', 'gpt-4.1', 'o3', 'o4-mini']
+        models: ['gpt-4o', 'gpt-5', 'gpt-4']
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
-        models: ['claude-4-opus', 'claude-4-sonnet', 'claude-4.5-sonnet', 'claude-4.5-haiku', 'claude-3.5-sonnet']
+        models: ['claude-4-sonnet', 'claude-4.5-sonnet']
       },
       qwen: {
-        baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-        models: ['qwen-max-2025-01-25', 'qwen-plus', 'qwen2.5-coder-32b-instruct']
+        baseUrl: 'https://dashscope.aliyuncs.com/api/v1/chat/completions',
+        models: ['qwen-plus', 'qwen-max', 'qwen-turbo', 'qwen-long']
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-4.5', 'glm-4.6', 'glm-4', 'glm-4v', 'glm-4-plus']
+        models: ['glm-4.6', 'glm-4.5']
       },
       minimax: {
         baseUrl: 'https://api.minimax.io/v1/chat/completions',
-        models: ['abab-6.5-chat', 'minimax-m2']
+        models: ['MiniMax-M2', 'MiniMax-M2-Stable']
       },
       gemini: {
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-        models: ['gemini-2.5-flash', 'gemini-2.5-pro']
+        models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-001', 'gemini-2.5-flash']
       },
       grok: {
         baseUrl: 'https://api.x.ai/v1/chat/completions',
-        models: ['grok-4.1', 'grok-4-fast']
+        models: ['grok-2', 'grok-2-mini']
+      },
+      openrouter: {
+        baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
+        models: ['openai/gpt-4o', 'openai/gpt-4o-mini', 'deepseek-ai/DeepSeek-R1']
+      },
+      groq: {
+        baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
+        models: ['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'gemma2-9b-it']
+      },
+      siliconflow: {
+        baseUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+        models: ['deepseek-ai/DeepSeek-R1', 'deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-7B-Instruct']
       }
     };
 
@@ -2328,7 +2340,7 @@ class ADHDHighlighter {
 
     const renderProviderButtons = (activeProv) => {
       const providerKeys = Object.keys(PROVIDERS_CONFIG);
-      const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok' };
+      const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok', openrouter: 'openrouter', groq: 'groq', siliconflow: 'siliconflow' };
       const labelMap = {};
       providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
       renderButtons(providerList, providerKeys, activeProv, (val, btn) => {

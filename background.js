@@ -526,9 +526,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const ks = res.aiKeys || {};
           key = ks[prov] || '';
         } catch (_) {}
+        const isWorker = !!base && /\/v1\/port\/forward(\b|$)/.test(base);
         const url = base || (prov === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : '');
-        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
-        const body = JSON.stringify({ model, messages: msgs, stream: true });
+        const headers = isWorker ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+        const body = isWorker ? JSON.stringify({ provider: prov, model, messages: msgs, stream: true, keys_mode: 'official' }) : JSON.stringify({ model, messages: msgs, stream: true });
         let resp;
         try { resp = await fetch(url, { method: 'POST', headers, body }); } catch (e) { return handleErr(t, { network: true, error: e }); }
         if (!resp.ok) {
