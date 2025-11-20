@@ -73,6 +73,7 @@
       return true;
     } else if (msg && msg.type === 'OFFSCREEN_PDF_PARSE_BUFFER') {
       const buf = msg.buffer;
+      const bytes = msg.bytes;
       const tabId = msg.tabId;
       (async()=>{
         try{
@@ -93,7 +94,14 @@
               }
             } catch(__){}
           }
-          const u8 = new Uint8Array(buf);
+          let u8 = null;
+          if (bytes && Array.isArray(bytes) && bytes.length > 0) {
+            u8 = new Uint8Array(bytes);
+          } else if (buf && buf.byteLength > 0) {
+            u8 = new Uint8Array(buf);
+          } else {
+            send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:'empty_buffer' }); sendResponse && sendResponse({ ok:false }); return true;
+          }
           const doc = await pdfjsLib.getDocument({ data: u8 }).promise;
           const numPages = doc.numPages || 0;
           const sections = [];

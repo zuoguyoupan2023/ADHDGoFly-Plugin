@@ -624,13 +624,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           const resp = await fetch(msg.url);
           if (resp && resp.ok) {
             const buf = await resp.arrayBuffer();
-            const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', buffer: buf, tabId };
-            if (__pdfOffscreenReady) {
-              await chrome.runtime.sendMessage(mbuf);
-            } else {
-              __pdfPendingQueue.push(mbuf);
+            if (buf && buf.byteLength > 0) {
+              const bytes = Array.from(new Uint8Array(buf));
+              const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', bytes, tabId };
+              if (__pdfOffscreenReady) {
+                await chrome.runtime.sendMessage(mbuf);
+              } else {
+                __pdfPendingQueue.push(mbuf);
+              }
+              sent = true;
             }
-            sent = true;
           }
         } catch (_) {}
         if (!sent) {
@@ -684,13 +687,16 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
           const resp = await fetch(url);
           if (resp && resp.ok) {
             const buf = await resp.arrayBuffer();
-            const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', buffer: buf, tabId };
-            if (__pdfOffscreenReady) {
-              await chrome.runtime.sendMessage(mbuf);
-            } else {
-              __pdfPendingQueue.push(mbuf);
+            if (buf && buf.byteLength > 0) {
+              const bytes = Array.from(new Uint8Array(buf));
+              const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', bytes, tabId };
+              if (__pdfOffscreenReady) {
+                await chrome.runtime.sendMessage(mbuf);
+              } else {
+                __pdfPendingQueue.push(mbuf);
+              }
+              sent = true;
             }
-            sent = true;
           }
         } catch (_) {}
         if (!sent) {
