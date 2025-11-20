@@ -469,19 +469,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'hideReviewLightTower') {
       hideReviewLightTower();
         sendResponse({ success: true });
-    } else if (request.action === 'collectAndStorePageSegments') {
-    (async () => {
-      try {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const tab = tabs && tabs[0];
-        if (!tab || !tab.id) { sendResponse({ success: false, error: 'no_active_tab' }); return; }
-        const resp = await chrome.tabs.sendMessage(tab.id, { action: 'collectAndStorePageSegments' });
-        sendResponse(resp || { success: true });
-      } catch (error) {
-        sendResponse({ success: false, error: error.message });
-      }
-    })();
-    return true;
     } else if (request.action === 'aiChatRequest') {
     (async () => {
       try {
