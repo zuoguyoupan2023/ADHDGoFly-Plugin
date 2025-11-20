@@ -1967,6 +1967,10 @@ class ADHDHighlighter {
       .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
       .agf-ai-controls{display:inline-flex;gap:8px}
       .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-status{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
+      .agf-status-dot{width:10px;height:10px;border-radius:50%;border:1px solid #e0e0e0;background:#bbb}
+      .agf-status-btn{height:20px;line-height:20px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
+      .agf-status-btn[disabled]{opacity:0.5;cursor:not-allowed}
       .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
@@ -2035,7 +2039,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span>ExamPage</span></div>
+        <div class="agf-ai-title"><span>ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2206,6 +2210,8 @@ class ADHDHighlighter {
     const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
+    const statusDot = document.getElementById('agfStorageStatusDot');
+    const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
     const composerSend = document.getElementById('agfComposerSend');
@@ -2736,6 +2742,45 @@ class ADHDHighlighter {
       try { await saveConversationSnapshot(); } catch (_) {}
     };
 
+    const getStoredSegmentsForPage = async () => {
+      const db = await this.segmentsDbOpen();
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      return new Promise((resolve) => {
+        const tx = db.transaction('page_segments','readonly');
+        const st = tx.objectStore('page_segments');
+        const req = st.openCursor();
+        const arr = [];
+        req.onsuccess = (ev) => { const cursor = ev.target.result; if (cursor) { const val = cursor.value; if (val && (val.pageUrl === pageUrl || val.canonicalUrl === canonicalUrl)) { arr.push(val); } cursor.continue(); } else { resolve(arr); } };
+        req.onerror = () => resolve(arr);
+      });
+    };
+
+    const updateStorageStatusUI = async () => {
+      const segs = await getStoredSegmentsForPage();
+      if (statusDot) {
+        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
+      }
+      if (quickSummaryBtn) { quickSummaryBtn.disabled = segs.length === 0; }
+      return segs;
+    };
+
+    const buildSummaryPrompt = (segs) => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const lines = [];
+      lines.push('帮我总结这篇文章: ' + canonicalUrl);
+      lines.push('存储的详情: ' + segs.length + ' 段');
+      const tops = segs.slice(0, 5);
+      tops.forEach((r, i) => {
+        const pv = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n').slice(0, 300) : '');
+        lines.push('章节' + (i+1) + ': ' + (r.sectionTitle || '') + ' 预览: ' + pv);
+      });
+      return lines.join('\n');
+    };
+
     this.__onAiStreamDelta = (delta) => {
       if (typeof delta !== 'string' || !delta) return;
       streamingText += delta;
@@ -2754,6 +2799,7 @@ class ADHDHighlighter {
       streamingBubble = null;
     };
 
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } sendChat(); });
     if (composerSend) composerSend.addEventListener('click', sendChat);
     if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
     if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
@@ -2792,6 +2838,7 @@ class ADHDHighlighter {
     resizeLeft.addEventListener('mousedown', onResizeDownLeft);
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
+    (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
     this.__aiSettingPanelInitialized = true;
   }
 
