@@ -540,7 +540,6 @@ class ADHDHighlighter {
     try {
       this.setupMessageListener();
       this.setupPageBridge();
-      this.injectCollectHelper();
       
       // 初始化词典
       await this.dictionaryManager.initialize();
@@ -787,6 +786,14 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error.message });
           }
           break;
+        case 'notifyOffscreenPdfLibStatus':
+          try {
+            console.log('OFFSCREEN_PDF_LIB_STATUS:', message.present ? 'present' : 'missing');
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         
         default:
           sendResponse({ 
@@ -847,7 +854,9 @@ class ADHDHighlighter {
         }
       } else if (d.__agf && d.type === 'COLLECT_SEGMENTS_PDF_URL') {
         try {
-          const url = d.url;
+          let url = d.url;
+          if (typeof url !== 'string') url = String(url || '');
+          url = url.replace(/`/g, '').trim().replace(/^\s+|\s+$/g, '').replace(/^['"]+|['"]+$/g, '');
           if (url) {
             await chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url });
             window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL_ACCEPTED' }, '*');

@@ -570,6 +570,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 let __pdfOffscreen = null;
 let __pdfOffscreenReady = false;
 let __pdfPendingQueue = [];
+const __pdfTriggered = new Set();
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === 'OFFSCREEN_PDF_READY') {
@@ -592,13 +593,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     sendResponse && sendResponse({ ok: false, error: msg.error || 'unknown' });
     return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_LIB_STATUS') {
+    const tabsQuery = { active: true, currentWindow: true };
+    chrome.tabs.query(tabsQuery).then(tabs => {
+      const tab = tabs && tabs[0];
+      if (tab && tab.id) {
+        try { chrome.tabs.sendMessage(tab.id, { action: 'notifyOffscreenPdfLibStatus', present: !!msg.present }); } catch (_) {}
+      }
+    }).catch(()=>{});
+    sendResponse && sendResponse({ ok: true });
+    return true;
   } else if (msg && msg.action === 'collectPdfFromUrl') {
     (async () => {
       try {
         const tabId = sender && sender.tab && sender.tab.id;
         if (!__pdfOffscreen) {
           try {
-            await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['BLOBS'], justification: 'Parse PDF text' });
+            await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
             __pdfOffscreen = true;
           } catch (e) {
             sendResponse({ success: false, error: e && e.message || 'offscreen_failed' });
@@ -618,6 +629,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })();
     return true;
   }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  try {
+    const url = changeInfo.url || tab.url || '';
+    const done = changeInfo.status === 'complete';
+    if (!url) return;
+    const isPdf = /\.pdf($|\?|#)/i.test(url) || /\/pdf\//i.test(url);
+    if (!isPdf) return;
+    const key = tabId + '|' + url;
+    if (__pdfTriggered.has(key)) return;
+    if (!done) return;
+    __pdfTriggered.add(key);
+    (async () => {
+      try {
+        if (!__pdfOffscreen) {
+          await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
+          __pdfOffscreen = true;
+        }
+        const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url, tabId };
+        if (__pdfOffscreenReady) {
+          await chrome.runtime.sendMessage(m);
+        } else {
+          __pdfPendingQueue.push(m);
+        }
+      } catch (e) {}
+    })();
+  } catch (_) {}
 });
 
 // ==================== 评价徽章管理 ====================
