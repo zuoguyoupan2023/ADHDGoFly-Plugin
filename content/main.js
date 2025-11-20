@@ -2129,15 +2129,6 @@ class ADHDHighlighter {
                 <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
               </div>
               <div class="agf-settings-row">
-                <div class="agf-label">黑名单域名</div>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                  <input id="agfBlockedDomainInput" class="agf-input" type="text" placeholder="example.com" />
-                  <button id="agfBlockedAddBtn" class="agf-input" style="height:28px;min-width:64px;">添加</button>
-                  <button id="agfBlockedClearBtn" class="agf-input" style="height:28px;min-width:64px;">清空</button>
-                </div>
-                <div id="agfBlockedList" class="agf-button-list"></div>
-              </div>
-              <div class="agf-settings-row">
                 <div class="agf-label">保留天数</div>
                 <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
               </div>
@@ -2210,10 +2201,6 @@ class ADHDHighlighter {
     const pdfToggle = document.getElementById('agfPdfParseToggle');
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
     const manualParseBtn = document.getElementById('agfManualParseBtn');
-    const blockedInput = document.getElementById('agfBlockedDomainInput');
-    const blockedAddBtn = document.getElementById('agfBlockedAddBtn');
-    const blockedClearBtn = document.getElementById('agfBlockedClearBtn');
-    const blockedList = document.getElementById('agfBlockedList');
     const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
@@ -3075,58 +3062,12 @@ console.log('ADHD文本高亮器主控制器加载完成');
  * 影响范围:
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
-    const renderBlockedList = (domains) => {
-      if (!blockedList) return;
-      blockedList.innerHTML = '';
-      domains.forEach(d => {
-        const btn = document.createElement('button');
-        btn.className = 'agf-btn';
-        btn.textContent = d;
-        btn.dataset.value = d;
-        const del = document.createElement('span');
-        del.textContent = ' ✕';
-        del.style.marginLeft = '6px';
-        btn.appendChild(del);
-        btn.addEventListener('click', async () => {
-          try {
-            const st = await chrome.storage.local.get(['pdfBlockedDomains']);
-            const arr = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
-            const next = arr.filter(x => x !== d);
-            await chrome.storage.local.set({ pdfBlockedDomains: next });
-            renderBlockedList(next);
-          } catch (_) {}
-        });
-        blockedList.appendChild(btn);
-      });
-    };
-
     const initGovernanceControls = async () => {
       try {
-        const st = await chrome.storage.local.get(['pdfBlockedDomains','pageSegmentsRetentionDays']);
-        const domains = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
-        renderBlockedList(domains);
+        const st = await chrome.storage.local.get(['pageSegmentsRetentionDays']);
         const days = st.pageSegmentsRetentionDays !== undefined ? parseInt(st.pageSegmentsRetentionDays,10) : 7;
         if (retentionDaysInput) retentionDaysInput.value = isNaN(days) ? 7 : days;
       } catch (_) {}
-      if (blockedAddBtn && blockedInput) {
-        blockedAddBtn.addEventListener('click', async () => {
-          const v = (blockedInput.value || '').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
-          if (!v) return;
-          try {
-            const st = await chrome.storage.local.get(['pdfBlockedDomains']);
-            const arr = Array.isArray(st.pdfBlockedDomains) ? st.pdfBlockedDomains : [];
-            const next = Array.from(new Set([...arr, v]));
-            await chrome.storage.local.set({ pdfBlockedDomains: next });
-            blockedInput.value = '';
-            renderBlockedList(next);
-          } catch (_) {}
-        });
-      }
-      if (blockedClearBtn) {
-        blockedClearBtn.addEventListener('click', async () => {
-          try { await chrome.storage.local.set({ pdfBlockedDomains: [] }); renderBlockedList([]); } catch (_) {}
-        });
-      }
       if (retentionDaysInput) {
         retentionDaysInput.addEventListener('change', async () => {
           const v = parseInt(retentionDaysInput.value,10);
