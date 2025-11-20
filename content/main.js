@@ -538,8 +538,9 @@ class ADHDHighlighter {
     console.log('初始化ADHD文本高亮器...');
     
     try {
-      // 设置消息监听器
       this.setupMessageListener();
+      this.setupPageBridge();
+      this.injectCollectHelper();
       
       // 初始化词典
       await this.dictionaryManager.initialize();
@@ -794,6 +795,28 @@ class ADHDHighlighter {
     } catch (error) {
       console.error('加载存储状态失败:', error);
     }
+  }
+
+  setupPageBridge() {
+    window.addEventListener('message', async (e) => {
+      const d = e && e.data ? e.data : null;
+      if (!d) return;
+      if (e.source !== window) return;
+      if (d.__agf && d.type === 'COLLECT_SEGMENTS') {
+        try {
+          const r = await this.collectAndStorePageSegments();
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DONE', result: r }, '*');
+        } catch (error) {
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_ERROR', error: String(error && error.message || error) }, '*');
+        }
+      }
+    });
+  }
+
+  injectCollectHelper() {
+    const s = document.createElement('script');
+    s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } })();";
+    (document.documentElement || document.head || document.body).appendChild(s);
   }
 
   /**
