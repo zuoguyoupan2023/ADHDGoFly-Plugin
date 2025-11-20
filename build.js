@@ -188,6 +188,9 @@ async function main() {
         process.exit(1);
     }
     
+    // 准备 pdfjs 资源（若已安装）
+    ensurePdfjsResources();
+
     // 读取基础manifest
     let baseManifest;
     try {
@@ -2037,4 +2040,30 @@ function createZipFile(zipName, includeFiles, browserName, tempManifestPath, tem
 
         archive.finalize();
     });
+}
+function ensurePdfjsResources() {
+    try {
+        const srcDir = path.join('node_modules', 'pdfjs-dist', 'build');
+        const destDir = path.join('offscreen', 'pdfjs');
+        if (!fs.existsSync(srcDir)) {
+            console.log('⚠️ 未找到 pdfjs-dist，请执行: npm i pdfjs-dist');
+            return;
+        }
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+        }
+        const files = ['pdf.min.js', 'pdf.worker.min.js'];
+        files.forEach(file => {
+            const src = path.join(srcDir, file);
+            const dest = path.join(destDir, file);
+            if (fs.existsSync(src)) {
+                fs.copyFileSync(src, dest);
+                console.log(`📦 已复制 ${file} 到 offscreen/pdfjs/`);
+            } else {
+                console.log(`⚠️ 缺少 ${file}，请安装并检查 pdfjs-dist`);
+            }
+        });
+    } catch (error) {
+        console.log('⚠️ 复制 pdfjs 资源失败:', error.message);
+    }
 }
