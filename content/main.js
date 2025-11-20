@@ -809,13 +809,28 @@ class ADHDHighlighter {
         } catch (error) {
           window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_ERROR', error: String(error && error.message || error) }, '*');
         }
+      } else if (d.__agf && d.type === 'COLLECT_SEGMENTS_PDF') {
+        try {
+          const r = await this.collectPdfSegments();
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_DONE', result: r }, '*');
+        } catch (error) {
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_ERROR', error: String(error && error.message || error) }, '*');
+        }
+      } else if (d.__agf && d.type === 'COLLECT_SEGMENTS_DYNAMIC') {
+        try {
+          const dur = typeof d.durationMs === 'number' ? d.durationMs : 5000;
+          const r = await this.collectDynamicSegments(dur);
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC_DONE', result: r }, '*');
+        } catch (error) {
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC_ERROR', error: String(error && error.message || error) }, '*');
+        }
       }
     });
   }
 
   injectCollectHelper() {
     const s = document.createElement('script');
-    s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } })();";
+    s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_SEGMENTS__) { window.__AGF_COLLECT_PDF_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_DYNAMIC_SEGMENTS__) { window.__AGF_COLLECT_DYNAMIC_SEGMENTS__ = function(dur){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC', durationMs: dur }, '*'); } catch(e){} }; } })();";
     (document.documentElement || document.head || document.body).appendChild(s);
   }
 
@@ -1639,6 +1654,73 @@ class ADHDHighlighter {
 
   async collectAndStorePageSegments() {
     const sections = this.collectPageSections();
+    const stored = await this.storePageSegments(sections);
+    return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
+  }
+
+  async collectPdfSegments() {
+    const sections = [];
+    const textLayers = Array.from(document.querySelectorAll('.textLayer'));
+    if (textLayers.length > 0) {
+      let order = 0;
+      textLayers.forEach((layer, idx) => {
+        const spans = Array.from(layer.querySelectorAll('span'));
+        const blocks = [];
+        let localOrder = 0;
+        spans.forEach(sp => {
+          const t = this.normalizeText(sp.textContent || '');
+          if (t && t.length > 1) blocks.push({ text: t, orderIndex: localOrder++ });
+        });
+        if (blocks.length) {
+          const pageEl = layer.closest('.page');
+          const pageNo = pageEl && pageEl.getAttribute('data-page-number') ? pageEl.getAttribute('data-page-number') : String(idx + 1);
+          sections.push({ sectionId: 'pdf-' + pageNo, sectionTitle: 'PDF Page ' + pageNo, headingPath: 'pdf:' + pageNo, blocks });
+          order += blocks.length;
+        }
+      });
+    }
+    if (sections.length === 0) {
+      const embeds = document.querySelectorAll('embed[type="application/pdf"], object[type="application/pdf"], iframe[src*=".pdf"], a[href$=".pdf"]');
+      console.log('📥 采集到的文本-PDF占位:', { candidates: embeds.length });
+      return { collectedSections: 0, storedSegments: 0, runId: null };
+    }
+    console.log('📥 采集到的文本-PDF:', { sectionsCount: sections.length, sections });
+    const stored = await this.storePageSegments(sections);
+    return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
+  }
+
+  async collectDynamicSegments(durationMs = 5000) {
+    const section = { sectionId: 'dynamic-' + Date.now(), sectionTitle: 'DYNAMIC', headingPath: 'dynamic', blocks: [] };
+    const seen = new Set();
+    const addBlock = (t) => {
+      const text = this.normalizeText(t || '');
+      if (!text || text.length < 2) return;
+      const key = text.slice(0, 200);
+      if (seen.has(key)) return;
+      seen.add(key);
+      section.blocks.push({ text: text, orderIndex: section.blocks.length });
+    };
+    const scan = () => {
+      const els = document.querySelectorAll('article, section, [role="article"], [role="feed"], [data-testid], .post, .tweet, .update, .card, .entry, .item, .list-item, .feed-item');
+      els.forEach(el => { if (!this.isHiddenEl(el)) addBlock(el.innerText || el.textContent || ''); });
+    };
+    scan();
+    const mo = new MutationObserver((muts) => {
+      muts.forEach(m => {
+        m.addedNodes && m.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            const el = node;
+            if (!this.isHiddenEl(el)) addBlock(el.innerText || el.textContent || '');
+          }
+        });
+      });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    await new Promise(r => setTimeout(r, durationMs));
+    try { mo.disconnect(); } catch (_) {}
+    const sections = section.blocks.length ? [section] : [];
+    console.log('📥 采集到的文本-动态页面:', { sectionsCount: sections.length, sections });
+    if (!sections.length) return { collectedSections: 0, storedSegments: 0, runId: null };
     const stored = await this.storePageSegments(sections);
     return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
   }
