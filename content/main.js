@@ -1999,7 +1999,7 @@ class ADHDHighlighter {
       .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
       .agf-collapse{margin-top:6px;border-top:1px solid #e0e0e0;padding-top:6px}
       .agf-collapse-content{max-height:none;overflow:auto}
-      .agf-collapse-content.collapsed{max-height:160px;overflow:auto}
+      .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
       .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
@@ -2100,50 +2100,60 @@ class ADHDHighlighter {
               </div>
             </div>
           </div>
-          <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
-            <div class="agf-settings-group">
-              <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
-              <div class="agf-settings-row">
-                <div class="agf-label">服务商</div>
-                <div id="agfProviderList" class="agf-button-list"></div>
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">模型</div>
-                <div id="agfModelList" class="agf-button-list"></div>
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">供应商URL</div>
-                <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">API Key</div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
-                  <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
-                  <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
+            <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
+              <div class="agf-settings-group">
+                <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">服务商</div>
+                  <div id="agfProviderList" class="agf-button-list"></div>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">模型</div>
+                  <div id="agfModelList" class="agf-button-list"></div>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">供应商URL</div>
+                  <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">API Key</div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+                    <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
+                    <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
+                  </div>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">temperature</div>
+                  <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">PDF解析</div>
+                  <div id="agfPdfParseToggle" class="agf-button-list"></div>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">敏感过滤</div>
+                  <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                </div>
+                <div class="agf-settings-row">
+                  <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">保留天数</div>
+                  <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">折叠阈值</div>
+                  <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
+                  <span class="agf-hint">超出则折叠</span>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">折叠高度</div>
+                  <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
+                  <span class="agf-hint">折叠区最大高度(px)</span>
                 </div>
               </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">temperature</div>
-                <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">PDF解析</div>
-                <div id="agfPdfParseToggle" class="agf-button-list"></div>
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">敏感过滤</div>
-                <div id="agfSensitiveToggle" class="agf-button-list"></div>
-              </div>
-              <div class="agf-settings-row">
-                <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
-              </div>
-              <div class="agf-settings-row">
-                <div class="agf-label">保留天数</div>
-                <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
-              </div>
             </div>
-          </div>
           <div class="agf-records-panel" id="agfRecordsPanel">
             <div class="agf-records-header">
               <div class="agf-records-title">对话记录</div>
@@ -2212,6 +2222,8 @@ class ADHDHighlighter {
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
     const manualParseBtn = document.getElementById('agfManualParseBtn');
     const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
+    const foldThresholdInput = document.getElementById('agfFoldThresholdInput');
+    const foldHeightInput = document.getElementById('agfFoldHeightInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const statusDot = document.getElementById('agfStorageStatusDot');
@@ -2432,6 +2444,22 @@ class ADHDHighlighter {
       }
     };
     initParseToggles();
+
+    let foldThresholdChars = 2000;
+    let foldCollapsedMaxHeight = 160;
+    const initFoldSettings = async () => {
+      try {
+        const s = await chrome.storage.local.get(['foldThresholdChars','foldCollapsedMaxHeight']);
+        foldThresholdChars = typeof s.foldThresholdChars === 'number' ? s.foldThresholdChars : 2000;
+        foldCollapsedMaxHeight = typeof s.foldCollapsedMaxHeight === 'number' ? s.foldCollapsedMaxHeight : 160;
+      } catch (_) {}
+      if (foldThresholdInput) foldThresholdInput.value = foldThresholdChars;
+      if (foldHeightInput) foldHeightInput.value = foldCollapsedMaxHeight;
+      overlay.style.setProperty('--agf-collapse-height', (foldCollapsedMaxHeight || 160) + 'px');
+    };
+    initFoldSettings();
+    if (foldThresholdInput) foldThresholdInput.addEventListener('change', async () => { const v = parseInt(foldThresholdInput.value,10); const n = isNaN(v) ? 2000 : Math.max(0, v); foldThresholdChars = n; try { await chrome.storage.local.set({ foldThresholdChars: n }); } catch(_) {} });
+    if (foldHeightInput) foldHeightInput.addEventListener('change', async () => { const v = parseInt(foldHeightInput.value,10); const n = isNaN(v) ? 160 : Math.max(80, v); foldCollapsedMaxHeight = n; overlay.style.setProperty('--agf-collapse-height', n + 'px'); try { await chrome.storage.local.set({ foldCollapsedMaxHeight: n }); } catch(_) {} });
 
     const fillColorsInputs = () => {
       const cs = getComputedStyle(overlay);
@@ -2691,7 +2719,7 @@ class ADHDHighlighter {
         contentEl.appendChild(headDiv);
         contentEl.appendChild(col);
       } else {
-        const LONG = 2000;
+        const LONG = foldThresholdChars || 2000;
         if (text.length > LONG) {
           const head = text.slice(0, 800);
           const body = text.slice(800);
