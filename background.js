@@ -567,6 +567,59 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+let __pdfOffscreen = null;
+let __pdfOffscreenReady = false;
+let __pdfPendingQueue = [];
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.type === 'OFFSCREEN_PDF_READY') {
+    __pdfOffscreenReady = true;
+    __pdfPendingQueue.splice(0).forEach(m => { try { chrome.runtime.sendMessage(m); } catch (_) {} });
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_RESULT') {
+    const tabId = msg.tabId;
+    const sections = msg.sections || [];
+    if (tabId) {
+      try { chrome.tabs.sendMessage(tabId, { action: 'storeSegments', sections }); } catch (_) {}
+    }
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_ERROR') {
+    const tabId = msg.tabId;
+    if (tabId) {
+      try { chrome.tabs.sendMessage(tabId, { action: 'notifyOffscreenPdfError', error: msg.error || 'unknown' }); } catch (_) {}
+    }
+    sendResponse && sendResponse({ ok: false, error: msg.error || 'unknown' });
+    return true;
+  } else if (msg && msg.action === 'collectPdfFromUrl') {
+    (async () => {
+      try {
+        const tabId = sender && sender.tab && sender.tab.id;
+        if (!__pdfOffscreen) {
+          try {
+            await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['BLOBS'], justification: 'Parse PDF text' });
+            __pdfOffscreen = true;
+          } catch (e) {
+            sendResponse({ success: false, error: e && e.message || 'offscreen_failed' });
+            return;
+          }
+        }
+        const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url: msg.url, tabId };
+        if (__pdfOffscreenReady) {
+          try { await chrome.runtime.sendMessage(m); } catch (e) { sendResponse({ success: false, error: e && e.message || 'send_failed' }); return; }
+        } else {
+          __pdfPendingQueue.push(m);
+        }
+        sendResponse({ success: true });
+      } catch (error) {
+        sendResponse({ success: false, error: error && error.message || 'unknown' });
+      }
+    })();
+    return true;
+  }
+});
+
 // ==================== 评价徽章管理 ====================
 
 // 显示评价灯塔

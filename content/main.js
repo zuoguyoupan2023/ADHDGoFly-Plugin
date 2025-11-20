@@ -766,6 +766,27 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error.message });
           }
           break;
+        case 'storeSegments':
+          try {
+            const sections = Array.isArray(message.sections) ? message.sections : [];
+            if (sections.length) {
+              const stored = await this.storePageSegments(sections);
+              sendResponse({ success: true, result: stored });
+            } else {
+              sendResponse({ success: false, error: 'no_sections' });
+            }
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+        case 'notifyOffscreenPdfError':
+          try {
+            console.error('OFFSCREEN_PDF_ERROR:', message.error);
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         
         default:
           sendResponse({ 
@@ -824,13 +845,25 @@ class ADHDHighlighter {
         } catch (error) {
           window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC_ERROR', error: String(error && error.message || error) }, '*');
         }
+      } else if (d.__agf && d.type === 'COLLECT_SEGMENTS_PDF_URL') {
+        try {
+          const url = d.url;
+          if (url) {
+            await chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url });
+            window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL_ACCEPTED' }, '*');
+          } else {
+            window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL_ERROR', error: 'no_url' }, '*');
+          }
+        } catch (error) {
+          window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL_ERROR', error: String(error && error.message || error) }, '*');
+        }
       }
     });
   }
 
   injectCollectHelper() {
     const s = document.createElement('script');
-    s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_SEGMENTS__) { window.__AGF_COLLECT_PDF_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_DYNAMIC_SEGMENTS__) { window.__AGF_COLLECT_DYNAMIC_SEGMENTS__ = function(dur){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC', durationMs: dur }, '*'); } catch(e){} }; } })();";
+    s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_SEGMENTS__) { window.__AGF_COLLECT_PDF_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_DYNAMIC_SEGMENTS__) { window.__AGF_COLLECT_DYNAMIC_SEGMENTS__ = function(dur){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC', durationMs: dur }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_URL_SEGMENTS__) { window.__AGF_COLLECT_PDF_URL_SEGMENTS__ = function(url){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL', url: url }, '*'); } catch(e){} }; } })();";
     (document.documentElement || document.head || document.body).appendChild(s);
   }
 

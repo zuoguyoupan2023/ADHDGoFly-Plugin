@@ -229,7 +229,8 @@ async function main() {
         'public/logo-300x300.png',
         'content/',
         'dictionaries/',
-        'locales/'
+        'locales/',
+        'offscreen/'
     ];
      
     // 检查必要文件
