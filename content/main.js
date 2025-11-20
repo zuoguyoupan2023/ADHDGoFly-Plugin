@@ -1997,6 +1997,10 @@ class ADHDHighlighter {
       .agf-chat-list .agf-msg:first-child .agf-bubble{border-top-left-radius:10px;border-top-right-radius:10px}
       .agf-chat-list .agf-msg:last-child .agf-bubble{border-bottom-left-radius:10px;border-bottom-right-radius:10px}
       .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
+      .agf-collapse{margin-top:6px;border-top:1px solid #e0e0e0;padding-top:6px}
+      .agf-collapse-content{max-height:none;overflow:auto}
+      .agf-collapse-content.collapsed{max-height:160px;overflow:auto}
+      .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
       .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
@@ -2657,7 +2661,66 @@ class ADHDHighlighter {
       bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
       if (role === 'user') qaCounter += 1;
       const label = role === 'user' ? ('Q' + qaCounter) : ('A' + (qaCounter || 1));
-      bubble.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content">' + markdownToHtml(text) + '</span>';
+      const labelEl = document.createElement('span');
+      labelEl.className = 'agf-qa-label';
+      labelEl.textContent = label;
+      const contentEl = document.createElement('span');
+      contentEl.className = 'agf-qa-content';
+      const idx = text.indexOf('\n正文:');
+      if (idx >= 0) {
+        const head = text.slice(0, idx);
+        const body = text.slice(idx + 4).replace(/^\s*:\s*/,'');
+        const headHtml = markdownToHtml(head);
+        const bodyHtml = markdownToHtml(body);
+        const headDiv = document.createElement('div');
+        headDiv.innerHTML = headHtml;
+        const col = document.createElement('div');
+        col.className = 'agf-collapse';
+        const colContent = document.createElement('div');
+        colContent.className = 'agf-collapse-content collapsed';
+        colContent.innerHTML = bodyHtml;
+        const colToggle = document.createElement('button');
+        colToggle.className = 'agf-collapse-toggle';
+        colToggle.textContent = '展开全文';
+        colToggle.addEventListener('click', () => {
+          if (colContent.classList.contains('collapsed')) { colContent.classList.remove('collapsed'); colToggle.textContent = '收起'; }
+          else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
+        });
+        col.appendChild(colContent);
+        col.appendChild(colToggle);
+        contentEl.appendChild(headDiv);
+        contentEl.appendChild(col);
+      } else {
+        const LONG = 2000;
+        if (text.length > LONG) {
+          const head = text.slice(0, 800);
+          const body = text.slice(800);
+          const headHtml = markdownToHtml(head);
+          const bodyHtml = markdownToHtml(body);
+          const headDiv = document.createElement('div');
+          headDiv.innerHTML = headHtml;
+          const col = document.createElement('div');
+          col.className = 'agf-collapse';
+          const colContent = document.createElement('div');
+          colContent.className = 'agf-collapse-content collapsed';
+          colContent.innerHTML = bodyHtml;
+          const colToggle = document.createElement('button');
+          colToggle.className = 'agf-collapse-toggle';
+          colToggle.textContent = '展开全文';
+          colToggle.addEventListener('click', () => {
+            if (colContent.classList.contains('collapsed')) { colContent.classList.remove('collapsed'); colToggle.textContent = '收起'; }
+            else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
+          });
+          col.appendChild(colContent);
+          col.appendChild(colToggle);
+          contentEl.appendChild(headDiv);
+          contentEl.appendChild(col);
+        } else {
+          contentEl.innerHTML = markdownToHtml(text);
+        }
+      }
+      bubble.appendChild(labelEl);
+      bubble.appendChild(contentEl);
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
       chatList.scrollTop = chatList.scrollHeight;
