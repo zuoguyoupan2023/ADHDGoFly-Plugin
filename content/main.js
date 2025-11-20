@@ -1672,6 +1672,8 @@ class ADHDHighlighter {
     const db = await this.segmentsDbOpen();
     const pageUrl = window.location.href;
     const domain = (new URL(pageUrl)).hostname;
+    let canonicalUrl = pageUrl;
+    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
     const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
     const maxLen = 10000;
     const results = [];
@@ -1693,7 +1695,7 @@ class ADHDHighlighter {
           const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
           const textHash = await this.sha256Hex(text);
           const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
-          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
           await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
           results.push(rec);
           chunkBlocks = [];
@@ -1708,7 +1710,7 @@ class ADHDHighlighter {
         const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
         const textHash = await this.sha256Hex(text);
         const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
-        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
         await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
         results.push(rec);
       }
