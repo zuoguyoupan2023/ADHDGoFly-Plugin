@@ -56,6 +56,30 @@
           const doc = await pdfjsLib.getDocument({ url }).promise;
           const numPages = doc.numPages || 0;
           const sections = [];
+          const outlineTitleByPage = {};
+          try {
+            const outline = await doc.getOutline();
+            const mapItem = async (item) => {
+              try {
+                let dest = item.dest || item.url || null;
+                if (typeof dest === 'string' && doc.getDestination) {
+                  try { dest = await doc.getDestination(dest); } catch(_){}
+                }
+                let pageNum = null;
+                if (Array.isArray(dest) && dest[0] && doc.getPageIndex) {
+                  try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){}
+                }
+                if (pageNum && item.title) {
+                  const t = String(item.title||'').trim();
+                  if (t) { if (!outlineTitleByPage[pageNum]) outlineTitleByPage[pageNum] = t; }
+                }
+                if (Array.isArray(item.items)) {
+                  for (const it of item.items) { await mapItem(it); }
+                }
+              } catch(_){}
+            };
+            if (Array.isArray(outline)) { for (const it of outline) { await mapItem(it); } }
+          } catch(_){}
           for (let i=1;i<=numPages;i++){
             try{
               const page = await doc.getPage(i);
@@ -63,7 +87,8 @@
               const blocks = [];
               let order = 0;
               txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
-              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:'PDF Page '+i, headingPath:'pdf:'+i, blocks });
+              const title = outlineTitleByPage[i] ? outlineTitleByPage[i] : ('PDF Page '+i);
+              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, blocks });
             }catch(_){ }
           }
           send({ type:'OFFSCREEN_PDF_RESULT', tabId, sections });
@@ -105,6 +130,30 @@
           const doc = await pdfjsLib.getDocument({ data: u8 }).promise;
           const numPages = doc.numPages || 0;
           const sections = [];
+          const outlineTitleByPage = {};
+          try {
+            const outline = await doc.getOutline();
+            const mapItem = async (item) => {
+              try {
+                let dest = item.dest || item.url || null;
+                if (typeof dest === 'string' && doc.getDestination) {
+                  try { dest = await doc.getDestination(dest); } catch(_){}
+                }
+                let pageNum = null;
+                if (Array.isArray(dest) && dest[0] && doc.getPageIndex) {
+                  try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){}
+                }
+                if (pageNum && item.title) {
+                  const t = String(item.title||'').trim();
+                  if (t) { if (!outlineTitleByPage[pageNum]) outlineTitleByPage[pageNum] = t; }
+                }
+                if (Array.isArray(item.items)) {
+                  for (const it of item.items) { await mapItem(it); }
+                }
+              } catch(_){}
+            };
+            if (Array.isArray(outline)) { for (const it of outline) { await mapItem(it); } }
+          } catch(_){}
           for (let i=1;i<=numPages;i++){
             try{
               const page = await doc.getPage(i);
@@ -112,7 +161,8 @@
               const blocks = [];
               let order = 0;
               txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
-              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:'PDF Page '+i, headingPath:'pdf:'+i, blocks });
+              const title = outlineTitleByPage[i] ? outlineTitleByPage[i] : ('PDF Page '+i);
+              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, blocks });
             }catch(_){ }
           }
           send({ type:'OFFSCREEN_PDF_RESULT', tabId, sections });

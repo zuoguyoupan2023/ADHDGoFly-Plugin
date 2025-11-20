@@ -15,40 +15,60 @@
   const inExcludedRegion = (el) => {
     try { return !!el.closest('header,nav,footer,aside'); } catch (_) { return false; }
   };
-  const selectEls = () => document.querySelectorAll('main, main .markdown, main .theme-doc-markdown, .theme-doc-markdown, .markdown, article, section, [role="main"], [data-testid], .docItemContainer, .content');
+  const selectRoots = () => Array.from(document.querySelectorAll('main, .theme-doc-markdown, .markdown, .docItemContainer, [role="main"], .content'));
   const textFromEl = (el) => {
     const tag = (el.tagName || '').toLowerCase();
     if (tag === 'pre' || tag === 'code') return normalize(el.textContent || '');
     if (tag === 'td' || tag === 'th') return normalize(el.textContent || '');
     return normalize(el.innerText || el.textContent || '');
   };
+  const roleForEl = (el) => {
+    const tag = (el.tagName || '').toLowerCase();
+    if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'pre' || tag === 'code') return 'code';
+    if (tag === 'td' || tag === 'th') return 'table-cell';
+    if (tag === 'li') return 'list-item';
+    return 'paragraph';
+  };
+  const collectSectionsFromRoot = (root) => {
+    const sections = [];
+    let current = null;
+    let order = 0;
+    const nodes = root.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div,pre,code,table,td,th');
+    nodes.forEach(el => {
+      if (isHidden(el)) return;
+      if (isExcluded(el)) return;
+      if (inExcludedRegion(el)) return;
+      const tag = (el.tagName || '').toLowerCase();
+      if (/^h[1-6]$/.test(tag)) {
+        if (current && current.blocks.length) sections.push(current);
+        const title = textFromEl(el);
+        current = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || ('H' + tag.slice(1)), headingPath: tag + ':' + (title || ''), blocks: [] };
+        order = 0;
+        return;
+      }
+      const t = textFromEl(el);
+      if (!t || t.length < 2) return;
+      if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
+      current.blocks.push({ text: t, orderIndex: order++, role: roleForEl(el), tag: (el.tagName || '').toLowerCase() });
+    });
+    if (current && current.blocks.length) sections.push(current);
+    return sections;
+  };
   const collectWindow = async (durationMs) => {
-    const section = { sectionId: 'dynamic-' + Date.now(), sectionTitle: 'DYNAMIC', headingPath: 'dynamic', blocks: [] };
-    const seen = new Set();
-    const addBlock = (t) => {
-      const text = normalize(t || '');
-      if (!text || text.length < 2) return;
-      const key = text.slice(0, 200);
-      if (seen.has(key)) return;
-      seen.add(key);
-      section.blocks.push({ text, orderIndex: section.blocks.length });
-    };
-    const scan = () => {
-      const els = selectEls();
-      els.forEach(el => { if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; addBlock(t); });
-    };
-    scan();
+    let sections = [];
+    const roots = selectRoots();
+    roots.forEach(root => { const secs = collectSectionsFromRoot(root); if (secs && secs.length) sections = sections.concat(secs); });
     const mo = new MutationObserver((muts) => {
-      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; addBlock(t); } }); });
+      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; const h = el.closest('h1,h2,h3,h4,h5,h6'); if (h) { const title = textFromEl(h); let target = sections.find(s => s.sectionTitle === title); if (!target) { target = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || 'HEADING', headingPath: (h.tagName||'').toLowerCase() + ':' + (title || ''), blocks: [] }; sections.push(target); } target.blocks.push({ text: t, orderIndex: target.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } else { let rootSec = sections.find(s => s.sectionId === 'root'); if (!rootSec) { rootSec = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] }; sections.push(rootSec); } rootSec.blocks.push({ text: t, orderIndex: rootSec.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } } }); });
     });
     try { mo.observe(document.body, { childList: true, subtree: true }); } catch (_) {}
     await new Promise(r => setTimeout(r, durationMs || 6000));
     try { mo.disconnect(); } catch (_) {}
-    let sections = section.blocks.length ? [section] : [];
     if (!sections.length) {
       const snapshot = normalize(document.body ? document.body.innerText || '' : '');
       if (snapshot && snapshot.length > 200) {
-        sections = [{ sectionId: 'dynamic-snapshot-' + Date.now(), sectionTitle: 'DYNAMIC_SNAPSHOT', headingPath: 'dynamic:snapshot', blocks: [{ text: snapshot, orderIndex: 0 }] }];
+        sections = [{ sectionId: 'dynamic-snapshot-' + Date.now(), sectionTitle: 'DYNAMIC_SNAPSHOT', headingPath: 'dynamic:snapshot', blocks: [{ text: snapshot, orderIndex: 0, role: 'paragraph', tag: 'div' }] }];
       }
     }
     if (sections.length) {
