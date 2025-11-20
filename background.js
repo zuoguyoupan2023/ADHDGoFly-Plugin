@@ -508,12 +508,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
     return true;
   } else if (request.action === 'aiChatStream') {
-    (async () => {
-      try {
-        const tabId = sender && sender.tab && sender.tab.id;
-        const prov = request.provider;
-        const model = request.model;
-        const msgs = request.messages || [];
+    (function(){
+      function g(){ return { deepseek: { perMinute: 10, concurrency: 1 } }; }
+      const S = '__aiProviderState';
+      if (!self[S]) self[S] = {};
+      function st(p){ if (!self[S][p]) { const d = g()[p] || { perMinute: 5, concurrency: 1 }; self[S][p] = { queue: [], running: 0, used: 0, resetAt: Date.now()+60000, perMinute: d.perMinute, concurrency: d.concurrency }; } return self[S][p]; }
+      async function run(t){
+        const tabId = t.tabId;
+        const prov = t.prov;
+        const model = t.model;
+        const msgs = t.msgs || [];
         let base = '';
         let key = '';
         try {
@@ -525,11 +529,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const url = base || (prov === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : '');
         const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
         const body = JSON.stringify({ model, messages: msgs, stream: true });
-        const resp = await fetch(url, { method: 'POST', headers, body });
+        let resp;
+        try { resp = await fetch(url, { method: 'POST', headers, body }); } catch (e) { return handleErr(t, { network: true, error: e }); }
+        if (!resp.ok) {
+          let text = '';
+          try { text = await resp.text(); } catch(_){}
+          return handleErr(t, { status: resp.status, body: text });
+        }
         const reader = resp.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' });
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' }); } catch(_){ }
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -550,18 +560,52 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             } catch (e) {
               delta = payload;
             }
-            if (delta && tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta });
+            if (delta && tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta }); } catch(_){ }
           }
         }
-        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' });
-        sendResponse({ success: true, started: true });
-      } catch (error) {
-        try {
-          const tabId = sender && sender.tab && sender.tab.id;
-          if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: error.message });
-        } catch (_) {}
-        sendResponse({ success: false, error: error.message });
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' }); } catch(_){ }
       }
+      function handleErr(t, info){
+        const tabId = t.tabId;
+        const prov = t.prov;
+        const s = st(prov);
+        const rc = t.retryCount || 0;
+        const mr = t.maxRetries || 3;
+        const status = info && info.status ? info.status : 0;
+        const is429 = status === 429;
+        const is5xx = status >= 500 && status < 600;
+        const isNet = !!info && !!info.network;
+        const can = is429 || is5xx || isNet;
+        if (can && rc < mr) {
+          const delay = is429 ? 60000 : Math.min(15000, Math.pow(2, rc) * 1000);
+          setTimeout(()=>{ t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); }, delay);
+          return;
+        }
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
+      }
+      function dispatch(prov){
+        const s = st(prov);
+        const now = Date.now();
+        if (now >= s.resetAt) { s.resetAt = now + 60000; s.used = 0; }
+        while (s.running < s.concurrency && s.queue.length > 0 && s.used < s.perMinute) {
+          const t = s.queue.shift();
+          s.running += 1;
+          s.used += 1;
+          run(t).then(()=>{}).catch(e=>{ handleErr(t,{ error:e }); }).finally(()=>{ s.running -= 1; dispatch(prov); });
+        }
+        if (s.queue.length > 0 && s.used >= s.perMinute) {
+          const d = Math.max(0, s.resetAt - now) + 10;
+          setTimeout(()=>dispatch(prov), d);
+        }
+      }
+      const tabId = sender && sender.tab && sender.tab.id;
+      const prov = request.provider;
+      const model = request.model;
+      const msgs = request.messages || [];
+      const s = st(prov);
+      s.queue.push({ tabId, prov, model, msgs, retryCount: 0, maxRetries: 3 });
+      dispatch(prov);
+      sendResponse({ success: true, queued: true });
     })();
     return true;
   }
