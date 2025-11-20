@@ -2778,6 +2778,21 @@ class ADHDHighlighter {
         const pv = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n').slice(0, 300) : '');
         lines.push('章节' + (i+1) + ': ' + (r.sectionTitle || '') + ' 预览: ' + pv);
       });
+      const MAX_CHARS = 12000;
+      let remain = MAX_CHARS;
+      const bodyTexts = [];
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i];
+        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        if (!t) continue;
+        if (t.length > remain) t = t.slice(0, Math.max(0, remain));
+        if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
+        if (remain <= 0) break;
+      }
+      if (bodyTexts.length) {
+        lines.push('正文:');
+        lines.push(bodyTexts.join('\n\n'));
+      }
       return lines.join('\n');
     };
 
