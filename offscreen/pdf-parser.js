@@ -56,30 +56,31 @@
           const doc = await pdfjsLib.getDocument({ url }).promise;
           const numPages = doc.numPages || 0;
           const sections = [];
-          const outlineTitleByPage = {};
+          const outlineNodes = [];
+          const bestByPage = {};
           try {
             const outline = await doc.getOutline();
-            const mapItem = async (item) => {
-              try {
-                let dest = item.dest || item.url || null;
-                if (typeof dest === 'string' && doc.getDestination) {
-                  try { dest = await doc.getDestination(dest); } catch(_){}
-                }
-                let pageNum = null;
-                if (Array.isArray(dest) && dest[0] && doc.getPageIndex) {
-                  try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){}
-                }
-                if (pageNum && item.title) {
-                  const t = String(item.title||'').trim();
-                  if (t) { if (!outlineTitleByPage[pageNum]) outlineTitleByPage[pageNum] = t; }
-                }
-                if (Array.isArray(item.items)) {
-                  for (const it of item.items) { await mapItem(it); }
-                }
-              } catch(_){}
+            const walk = async (item, pathArr) => {
+              let dest = item.dest || item.url || null;
+              if (typeof dest === 'string' && doc.getDestination) { try { dest = await doc.getDestination(dest); } catch(_){} }
+              let pageNum = null;
+              if (Array.isArray(dest) && dest[0] && doc.getPageIndex) { try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){} }
+              const t = String(item.title||'').trim();
+              const nextArr = t ? pathArr.concat([t]) : pathArr;
+              if (pageNum && t) { outlineNodes.push({ start: pageNum, title: t, level: nextArr.length, path: nextArr.join(' > ') }); }
+              if (Array.isArray(item.items)) { for (const it of item.items) { await walk(it, nextArr); } }
             };
-            if (Array.isArray(outline)) { for (const it of outline) { await mapItem(it); } }
+            if (Array.isArray(outline)) { for (const it of outline) { await walk(it, []); } }
           } catch(_){}
+          outlineNodes.sort((a,b)=>a.start-b.start||a.level-b.level);
+          if (outlineNodes.length) {
+            let k = 0;
+            for (let p=1;p<=numPages;p++) {
+              while (k+1<outlineNodes.length && outlineNodes[k+1].start<=p) k++;
+              const n = outlineNodes[k];
+              if (n && n.start<=p) bestByPage[p]=n;
+            }
+          }
           for (let i=1;i<=numPages;i++){
             try{
               const page = await doc.getPage(i);
@@ -87,8 +88,9 @@
               const blocks = [];
               let order = 0;
               txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
-              const title = outlineTitleByPage[i] ? outlineTitleByPage[i] : ('PDF Page '+i);
-              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, blocks });
+              const node = bestByPage[i];
+              const title = node ? node.title : ('PDF Page '+i);
+              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, outlinePath: node ? node.path : null, outlineLevel: node ? node.level : 0, blocks });
             }catch(_){ }
           }
           send({ type:'OFFSCREEN_PDF_RESULT', tabId, sections });
@@ -130,30 +132,31 @@
           const doc = await pdfjsLib.getDocument({ data: u8 }).promise;
           const numPages = doc.numPages || 0;
           const sections = [];
-          const outlineTitleByPage = {};
+          const outlineNodes = [];
+          const bestByPage = {};
           try {
             const outline = await doc.getOutline();
-            const mapItem = async (item) => {
-              try {
-                let dest = item.dest || item.url || null;
-                if (typeof dest === 'string' && doc.getDestination) {
-                  try { dest = await doc.getDestination(dest); } catch(_){}
-                }
-                let pageNum = null;
-                if (Array.isArray(dest) && dest[0] && doc.getPageIndex) {
-                  try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){}
-                }
-                if (pageNum && item.title) {
-                  const t = String(item.title||'').trim();
-                  if (t) { if (!outlineTitleByPage[pageNum]) outlineTitleByPage[pageNum] = t; }
-                }
-                if (Array.isArray(item.items)) {
-                  for (const it of item.items) { await mapItem(it); }
-                }
-              } catch(_){}
+            const walk = async (item, pathArr) => {
+              let dest = item.dest || item.url || null;
+              if (typeof dest === 'string' && doc.getDestination) { try { dest = await doc.getDestination(dest); } catch(_){} }
+              let pageNum = null;
+              if (Array.isArray(dest) && dest[0] && doc.getPageIndex) { try { const idx = await doc.getPageIndex(dest[0]); pageNum = (idx|0)+1; } catch(_){} }
+              const t = String(item.title||'').trim();
+              const nextArr = t ? pathArr.concat([t]) : pathArr;
+              if (pageNum && t) { outlineNodes.push({ start: pageNum, title: t, level: nextArr.length, path: nextArr.join(' > ') }); }
+              if (Array.isArray(item.items)) { for (const it of item.items) { await walk(it, nextArr); } }
             };
-            if (Array.isArray(outline)) { for (const it of outline) { await mapItem(it); } }
+            if (Array.isArray(outline)) { for (const it of outline) { await walk(it, []); } }
           } catch(_){}
+          outlineNodes.sort((a,b)=>a.start-b.start||a.level-b.level);
+          if (outlineNodes.length) {
+            let k = 0;
+            for (let p=1;p<=numPages;p++) {
+              while (k+1<outlineNodes.length && outlineNodes[k+1].start<=p) k++;
+              const n = outlineNodes[k];
+              if (n && n.start<=p) bestByPage[p]=n;
+            }
+          }
           for (let i=1;i<=numPages;i++){
             try{
               const page = await doc.getPage(i);
@@ -161,8 +164,9 @@
               const blocks = [];
               let order = 0;
               txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
-              const title = outlineTitleByPage[i] ? outlineTitleByPage[i] : ('PDF Page '+i);
-              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, blocks });
+              const node = bestByPage[i];
+              const title = node ? node.title : ('PDF Page '+i);
+              if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, outlinePath: node ? node.path : null, outlineLevel: node ? node.level : 0, blocks });
             }catch(_){ }
           }
           send({ type:'OFFSCREEN_PDF_RESULT', tabId, sections });
