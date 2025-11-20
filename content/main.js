@@ -2850,12 +2850,40 @@ class ADHDHighlighter {
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const origin = (()=>{ try { return (new URL(pageUrl)).origin; } catch(_) { return ''; } })();
+      const candidates = new Set([pageUrl, canonicalUrl]);
+      try {
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        for (const fr of iframes) {
+          try {
+            const src = fr.getAttribute('src') || '';
+            if (src) { const u = new URL(src, pageUrl); candidates.add(u.href); }
+            const href = fr.contentWindow && fr.contentWindow.location ? fr.contentWindow.location.href : '';
+            if (href) candidates.add(href);
+          } catch (_) {}
+        }
+      } catch (_) {}
+      const recentCutoff = Date.now() - 30*60*1000;
       return new Promise((resolve) => {
         const tx = db.transaction('page_segments','readonly');
         const st = tx.objectStore('page_segments');
         const req = st.openCursor();
         const arr = [];
-        req.onsuccess = (ev) => { const cursor = ev.target.result; if (cursor) { const val = cursor.value; if (val && (val.pageUrl === pageUrl || val.canonicalUrl === canonicalUrl)) { arr.push(val); } cursor.continue(); } else { resolve(arr); } };
+        req.onsuccess = (ev) => {
+          const cursor = ev.target.result;
+          if (cursor) {
+            const val = cursor.value;
+            let ok = false;
+            if (val) {
+              if (candidates.has(val.pageUrl) || candidates.has(val.canonicalUrl)) ok = true;
+              if (!ok && origin) {
+                try { const u = new URL(val.pageUrl); if (u.origin === origin && val.timestamp >= recentCutoff) ok = true; } catch(_) {}
+              }
+            }
+            if (ok) arr.push(val);
+            cursor.continue();
+          } else { resolve(arr); }
+        };
         req.onerror = () => resolve(arr);
       });
     };
