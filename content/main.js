@@ -655,6 +655,31 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'showAiSettingPanel':
+          this.ensureAiSettingPanel();
+          this.showAiSettingPanel();
+          sendResponse({ success: true });
+          break;
+        case 'hideAiSettingPanel':
+          this.hideAiSettingPanel();
+          sendResponse({ success: true });
+          break;
+        case 'minimizeAiSettingPanel':
+          this.minimizeAiSettingPanel();
+          sendResponse({ success: true });
+          break;
+        case 'restoreAiSettingPanel':
+          this.restoreAiSettingPanel();
+          sendResponse({ success: true });
+          break;
+        case 'aiChatStreamDelta':
+          if (this.__onAiStreamDelta && message && typeof message.delta === 'string') this.__onAiStreamDelta(message.delta);
+          sendResponse({ success: true });
+          break;
+        case 'aiChatStreamDone':
+          if (this.__onAiStreamDone) this.__onAiStreamDone();
+          sendResponse({ success: true });
+          break;
           
         case 'testDictionaryLoading':
           const testResult = await this.testDictionaryLoading();
@@ -1598,6 +1623,856 @@ class ADHDHighlighter {
       console.error('获取选中文本失败:', error);
       return '';
     }
+  }
+
+  ensureAiSettingPanel() {
+    if (this.__aiSettingPanelInitialized) return;
+    const style = document.createElement('style');
+    style.id = 'agf-ai-setting-style';
+    style.textContent = `
+      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:calc(100vw/3);min-height:calc(100vh * 2/3)}
+      .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
+      .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
+      .agf-ai-controls{display:inline-flex;gap:8px}
+      .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
+      .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
+      .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
+      .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
+      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff)}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:130px;height:130px}
+      .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
+      .agf-chat-title{font-size:12px;color:#666}
+      .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:0}
+      .agf-msg{display:flex}
+      .agf-msg.user{justify-content:flex-start}
+      .agf-msg.assistant{justify-content:flex-start}
+      .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:0;padding:8px 10px;font-size:13px;background:#fff}
+      .agf-bubble.user{background:var(--agf-q-bg,#f7f7f7);color:var(--agf-q-text,#333)}
+      .agf-msg.assistant .agf-bubble{background:var(--agf-a-bg,#fffaf0);color:var(--agf-a-text,#333)}
+      .agf-bubble strong{font-weight:700}
+      .agf-bubble em{font-style:italic}
+      .agf-bubble code{font-family:Menlo,Monaco,monospace;background:#f5f5f5;color:#333;padding:0 2px;border-radius:3px}
+      .agf-bubble pre{background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:8px;overflow:auto}
+      .agf-bubble h1,.agf-bubble h2,.agf-bubble h3{margin:4px 0;font-weight:700}
+      .agf-bubble ul,.agf-bubble ol{margin:4px 0 4px 18px}
+      .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
+      .agf-chat-list .agf-msg:first-child .agf-bubble{border-top-left-radius:10px;border-top-right-radius:10px}
+      .agf-chat-list .agf-msg:last-child .agf-bubble{border-bottom-left-radius:10px;border-bottom-right-radius:10px}
+      .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
+      .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
+      .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
+      .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
+      .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:6px}
+      .agf-mode-btn{height:24px;line-height:24px;padding:0 8px;border:1px solid #e0e0e0;border-radius:0;background:#fff;color:#333;font-size:12px}
+      .agf-mode-btn:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
+      .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
+      .agf-mode-btn + .agf-mode-btn{margin-left:-1px}
+      .agf-mode-btn.active{background:#333;color:#fff}
+      .agf-records-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
+      .agf-colors-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
+      .agf-records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .agf-records-title{font-size:14px;color:#333;font-weight:600}
+      .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-records-list{display:flex;flex-direction:column;gap:8px}
+      .agf-record-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333}
+      .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
+      .agf-actions{display:inline-flex;align-items:center;gap:8px}
+      .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
+      .agf-settings{display:flex;flex-direction:column;gap:12px}
+      .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
+      .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+      .agf-label{min-width:64px;font-size:12px;color:#333}
+      .agf-button-list{display:flex;flex-wrap:wrap;gap:8px}
+      .agf-btn{height:28px;padding:0 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:13px;cursor:pointer}
+      .agf-btn.active{background:#333;color:#fff;border-color:#333}
+      .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      .agf-hint{font-size:12px;color:#666;margin-left:8px}
+      .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
+      .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+      .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
+      .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
+      .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
+    `;
+    document.documentElement.appendChild(style);
+    const overlay = document.createElement('div');
+    overlay.id = 'agfAiSettingOverlay';
+    overlay.className = 'agf-ai-overlay';
+    overlay.innerHTML = `
+      <div class="agf-ai-header">
+        <div class="agf-ai-title"><span>ExamPage</span></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="agf-ai-tabs">
+            <button id="agfAiTabPencil">✏️</button>
+            <button id="agfAiTabNote">📝</button>
+            <button id="agfAiTabDoc">📃</button>
+            <button id="agfAiTabPalette">🎨</button>
+            <button id="agfAiTabWrench">🔧</button>
+          </div>
+          <div class="agf-ai-controls">
+            <button id="agfAiMax">+</button>
+            <button id="agfAiMin">-</button>
+            <button id="agfAiClose">X</button>
+          </div>
+        </div>
+      </div>
+      <div class="agf-ai-body">
+        <div class="agf-ai-content">
+          <div class="agf-ai-view-chat" id="agfAiViewChat">
+            <div class="agf-ai-display">
+              <div class="agf-chat">
+                <div class="agf-chat-list">
+                  <div class="agf-msg assistant"><div class="agf-bubble">您好，我是AI助手。</div></div>
+                  <div class="agf-msg user"><div class="agf-bubble user">请总结这段文本。</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="agf-ai-input">
+              <div class="agf-composer">
+                <div class="agf-composer-header">
+                  <select class="agf-field" id="agfSessionProvider">
+                    <option>deepseek</option>
+                    <option>moonshot</option>
+                    <option>chatgpt</option>
+                    <option>claude</option>
+                    <option>qwen</option>
+                    <option>chatglm</option>
+                    <option>minimax</option>
+                    <option>gemini</option>
+                    <option>grok</option>
+                  </select>
+                  <select class="agf-field" id="agfSessionModel">
+                    <option>deepseek-chat</option>
+                    <option>deepseek-reasoner</option>
+                  </select>
+                  <div class="agf-mode-toggle">
+                    <button class="agf-mode-btn">T</button>
+                    <button class="agf-mode-btn active">M</button>
+                  </div>
+                </div>
+                <div class="agf-composer-body">
+                  <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                  <button class="agf-send" id="agfComposerSend">发送</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
+            <div class="agf-settings-group">
+              <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
+              <div class="agf-settings-row">
+                <div class="agf-label">服务商</div>
+                <div id="agfProviderList" class="agf-button-list"></div>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">模型</div>
+                <div id="agfModelList" class="agf-button-list"></div>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">供应商URL</div>
+                <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">API Key</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+                  <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
+                  <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
+                </div>
+              </div>
+              <div class="agf-settings-row">
+                <div class="agf-label">temperature</div>
+                <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
+              </div>
+            </div>
+          </div>
+          <div class="agf-records-panel" id="agfRecordsPanel">
+            <div class="agf-records-header">
+              <div class="agf-records-title">对话记录</div>
+              <button class="agf-records-close" id="agfRecordsClose">X</button>
+            </div>
+            <div class="agf-records-list" id="agfRecordsList"></div>
+          </div>
+          <div class="agf-colors-panel" id="agfColorsPanel">
+            <div class="agf-records-header">
+              <div class="agf-records-title">颜色管理</div>
+              <button class="agf-records-close" id="agfColorsClose">X</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="agf-settings-row"><div class="agf-label">Q背景</div><input id="agfColorQBg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label">A背景</div><input id="agfColorABg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label">Q文本</div><input id="agfColorQText" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label">A文本</div><input id="agfColorAText" type="color" /></div>
+              <div class="agf-settings-row"><button id="agfColorsApply" class="agf-input" style="height:28px;min-width:64px">应用</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.documentElement.appendChild(overlay);
+    overlay.style.top = '5px';
+    const initialLeft = Math.max(5, window.innerWidth - overlay.offsetWidth - 5);
+    overlay.style.left = initialLeft + 'px';
+    const bubble = document.createElement('div');
+    bubble.id = 'agfAiBubble';
+    bubble.className = 'agf-ai-bubble';
+    bubble.textContent = '🔧';
+    document.documentElement.appendChild(bubble);
+    const resizeRight = document.createElement('div');
+    resizeRight.className = 'agf-resize-right';
+    const resizeBottom = document.createElement('div');
+    resizeBottom.className = 'agf-resize-bottom';
+    const resizeLeft = document.createElement('div');
+    resizeLeft.className = 'agf-resize-left';
+    overlay.appendChild(resizeRight);
+    overlay.appendChild(resizeBottom);
+    overlay.appendChild(resizeLeft);
+    const header = overlay.querySelector('.agf-ai-header');
+    let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+    const onDown = (e) => { dragging = true; startX = e.clientX; startY = e.clientY; startLeft = parseInt(getComputedStyle(overlay).left, 10) || 0; startTop = parseInt(getComputedStyle(overlay).top, 10) || 0; };
+    const onMove = (e) => { if (!dragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; let newLeft = startLeft + dx; let newTop = startTop + dy; const maxLeft = window.innerWidth - overlay.offsetWidth; const maxTop = window.innerHeight - overlay.offsetHeight; if (newLeft < 0) newLeft = 0; if (newTop < 0) newTop = 0; if (newLeft > maxLeft) newLeft = maxLeft; if (newTop > maxTop) newTop = maxTop; overlay.style.left = newLeft + 'px'; overlay.style.top = newTop + 'px'; };
+    const onUp = () => { dragging = false; };
+    if (header) { header.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); }
+    const minBtn = document.getElementById('agfAiMin');
+    const closeBtn = document.getElementById('agfAiClose');
+    const maxBtn = document.getElementById('agfAiMax');
+    const tabPencil = document.getElementById('agfAiTabPencil');
+    const tabNote = document.getElementById('agfAiTabNote');
+    const tabDoc = document.getElementById('agfAiTabDoc');
+    const tabWrench = document.getElementById('agfAiTabWrench');
+    const viewChat = document.getElementById('agfAiViewChat');
+    const viewSettings = document.getElementById('agfAiViewSettings');
+    const providerList = document.getElementById('agfProviderList');
+    const modelList = document.getElementById('agfModelList');
+    const baseUrlInput = document.getElementById('agfBaseUrlInput');
+    const apiKeyInput = document.getElementById('agfApiKeyInput');
+    const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
+    const keySavedBtn = document.getElementById('agfKeySavedBtn');
+    const tempInput = document.getElementById('agfTempInput');
+    const sessionProviderSelect = document.getElementById('agfSessionProvider');
+    const sessionModelSelect = document.getElementById('agfSessionModel');
+    const chatList = overlay.querySelector('.agf-chat-list');
+    const composerInput = document.getElementById('agfComposerInput');
+    const composerSend = document.getElementById('agfComposerSend');
+    const recordsPanel = overlay.querySelector('#agfRecordsPanel');
+    const recordsList = overlay.querySelector('#agfRecordsList');
+    const recordsClose = overlay.querySelector('#agfRecordsClose');
+    const tabPalette = document.getElementById('agfAiTabPalette');
+    const colorsPanel = overlay.querySelector('#agfColorsPanel');
+    const colorsClose = overlay.querySelector('#agfColorsClose');
+    const colorQBg = document.getElementById('agfColorQBg');
+    const colorABg = document.getElementById('agfColorABg');
+    const colorDisplayBg = document.getElementById('agfColorDisplayBg');
+    const colorQText = document.getElementById('agfColorQText');
+    const colorAText = document.getElementById('agfColorAText');
+    const colorsApply = document.getElementById('agfColorsApply');
+    if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
+    if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
+    bubble.addEventListener('click', () => this.restoreAiSettingPanel());
+    if (tabNote && tabWrench && viewChat && viewSettings) {
+      const showChat = () => { viewChat.style.display = 'grid'; viewSettings.style.display = 'none'; };
+      const showSettings = () => { viewChat.style.display = 'none'; viewSettings.style.display = 'block'; };
+      tabNote.addEventListener('click', showChat);
+      tabWrench.addEventListener('click', showSettings);
+      showChat();
+    }
+    const showRecords = () => { if (recordsPanel) recordsPanel.style.display = 'block'; };
+    const hideRecords = () => { if (recordsPanel) recordsPanel.style.display = 'none'; };
+    if (recordsClose) recordsClose.addEventListener('click', hideRecords);
+    const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
+    const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
+    if (colorsClose) colorsClose.addEventListener('click', hideColors);
+
+    const PROVIDERS_CONFIG = {
+      deepseek: {
+        baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+        models: ['deepseek-chat', 'deepseek-reasoner']
+      },
+      moonshot: {
+        baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
+        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k', 'kimi-k2-instruct']
+      },
+      openai: {
+        baseUrl: 'https://api.openai.com/v1/chat/completions',
+        models: ['gpt-5', 'gpt-4o', 'gpt-4.1', 'o3', 'o4-mini']
+      },
+      anthropic: {
+        baseUrl: 'https://api.anthropic.com/v1/messages',
+        models: ['claude-4-opus', 'claude-4-sonnet', 'claude-4.5-sonnet', 'claude-4.5-haiku', 'claude-3.5-sonnet']
+      },
+      qwen: {
+        baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+        models: ['qwen-max-2025-01-25', 'qwen-plus', 'qwen2.5-coder-32b-instruct']
+      },
+      chatglm: {
+        baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        models: ['glm-4.5', 'glm-4.6', 'glm-4', 'glm-4v', 'glm-4-plus']
+      },
+      minimax: {
+        baseUrl: 'https://api.minimax.io/v1/chat/completions',
+        models: ['abab-6.5-chat', 'minimax-m2']
+      },
+      gemini: {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+        models: ['gemini-2.5-flash', 'gemini-2.5-pro']
+      },
+      grok: {
+        baseUrl: 'https://api.x.ai/v1/chat/completions',
+        models: ['grok-4.1', 'grok-4-fast']
+      }
+    };
+
+    const renderButtons = (container, items, activeValue, onClick, labelMap) => {
+      if (!container) return;
+      container.innerHTML = '';
+      items.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'agf-btn' + (val === activeValue ? ' active' : '');
+        btn.textContent = labelMap && labelMap[val] ? labelMap[val] : val;
+        btn.dataset.value = val;
+        btn.addEventListener('click', () => onClick(val, btn));
+        container.appendChild(btn);
+      });
+    };
+
+    const fillModels = (prov, presetModel) => {
+      const cfg = PROVIDERS_CONFIG[prov];
+      const models = cfg?.models || [];
+      renderButtons(modelList, models, presetModel || models[0], (val, btn) => {
+        Array.from(modelList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        save({ aiModel: val });
+      });
+    };
+
+    let currentProvider = null;
+    let aiKeysState = {};
+
+    const renderProviderButtons = (activeProv) => {
+      const providerKeys = Object.keys(PROVIDERS_CONFIG);
+      const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok' };
+      const labelMap = {};
+      providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
+      renderButtons(providerList, providerKeys, activeProv, (val, btn) => {
+        Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentProvider = val;
+        fillModels(val);
+        const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
+        if (baseUrlInput) baseUrlInput.value = base;
+        save({ aiProvider: val, aiBaseUrl: base });
+        if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
+      }, labelMap);
+    };
+
+    const initFromStorage = () => {
+      try {
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
+          currentProvider = res.aiProvider || 'deepseek';
+          aiKeysState = res.aiKeys || {};
+          renderProviderButtons(currentProvider);
+          fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
+          const base = res.aiBaseUrl || PROVIDERS_CONFIG[currentProvider]?.baseUrl || '';
+          if (baseUrlInput) baseUrlInput.value = base;
+          const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
+          if (tempInput) tempInput.value = t;
+          if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
+          const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+          const c = res.chatColors || defaults;
+          overlay.style.setProperty('--agf-q-bg', c.qBg || defaults.qBg);
+          overlay.style.setProperty('--agf-a-bg', c.aBg || defaults.aBg);
+          overlay.style.setProperty('--agf-display-bg', c.displayBg || defaults.displayBg);
+          overlay.style.setProperty('--agf-q-text', c.qText || defaults.qText);
+          overlay.style.setProperty('--agf-a-text', c.aText || defaults.aText);
+          initComposerSelects();
+        });
+      } catch (_) {}
+    };
+
+    const save = (obj) => { try { chrome.storage.local.set(obj); } catch (_) {} };
+
+    // provider/model buttons are handled in initFromStorage via renderButtons
+
+    if (baseUrlInput) {
+      baseUrlInput.addEventListener('change', () => {
+        save({ aiBaseUrl: baseUrlInput.value });
+      });
+    }
+
+    if (tempInput) {
+      tempInput.addEventListener('change', () => {
+        const v = parseFloat(tempInput.value);
+        save({ aiTemperature: isNaN(v) ? 0.7 : v });
+      });
+    }
+
+    if (saveKeyBtn && apiKeyInput && keySavedBtn) {
+      saveKeyBtn.addEventListener('click', () => {
+        const v = apiKeyInput.value || '';
+        if (v.length > 0) {
+          try {
+            chrome.storage.local.get(['aiKeys'], (res) => {
+              const keys = res.aiKeys || {};
+              if (currentProvider) keys[currentProvider] = v;
+              chrome.storage.local.set({ aiKeys: keys }, () => {
+                aiKeysState = keys;
+                if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
+                if (apiKeyInput) apiKeyInput.value = '';
+                renderProviderButtons(currentProvider);
+                initComposerSelects();
+              });
+            });
+          } catch (_) {}
+        }
+      });
+      apiKeyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          saveKeyBtn.click();
+        }
+      });
+    }
+
+    initFromStorage();
+
+    const fillColorsInputs = () => {
+      const cs = getComputedStyle(overlay);
+      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const qbg = cs.getPropertyValue('--agf-q-bg').trim() || d.qBg;
+      const abg = cs.getPropertyValue('--agf-a-bg').trim() || d.aBg;
+      const dbg = cs.getPropertyValue('--agf-display-bg').trim() || d.displayBg;
+      const qtx = cs.getPropertyValue('--agf-q-text').trim() || d.qText;
+      const atx = cs.getPropertyValue('--agf-a-text').trim() || d.aText;
+      if (colorQBg) colorQBg.value = toColorInput(qbg);
+      if (colorABg) colorABg.value = toColorInput(abg);
+      if (colorDisplayBg) colorDisplayBg.value = toColorInput(dbg);
+      if (colorQText) colorQText.value = toColorInput(qtx);
+      if (colorAText) colorAText.value = toColorInput(atx);
+    };
+    const toColorInput = (v) => {
+      const hex = v.toLowerCase();
+      if (/^#[0-9a-f]{6}$/.test(hex)) return hex;
+      return '#ffffff';
+    };
+    const openColorsPanel = () => { fillColorsInputs(); showColors(); };
+    if (tabPalette) tabPalette.addEventListener('click', openColorsPanel);
+    if (colorsApply) colorsApply.addEventListener('click', () => {
+      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const cfg = {
+        qBg: (colorQBg && colorQBg.value) || d.qBg,
+        aBg: (colorABg && colorABg.value) || d.aBg,
+        displayBg: (colorDisplayBg && colorDisplayBg.value) || d.displayBg,
+        qText: (colorQText && colorQText.value) || d.qText,
+        aText: (colorAText && colorAText.value) || d.aText
+      };
+      overlay.style.setProperty('--agf-q-bg', cfg.qBg);
+      overlay.style.setProperty('--agf-a-bg', cfg.aBg);
+      overlay.style.setProperty('--agf-display-bg', cfg.displayBg);
+      overlay.style.setProperty('--agf-q-text', cfg.qText);
+      overlay.style.setProperty('--agf-a-text', cfg.aText);
+      try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
+      hideColors();
+    });
+
+    const initComposerSelects = () => {
+      if (!sessionProviderSelect || !sessionModelSelect) return;
+      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]);
+      sessionProviderSelect.innerHTML = '';
+      providers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p === 'openai' ? 'chatgpt' : (p === 'anthropic' ? 'claude' : p);
+        sessionProviderSelect.appendChild(opt);
+      });
+      const selectedProv = providers.includes(currentProvider) ? currentProvider : (providers[0] || '');
+      if (selectedProv) sessionProviderSelect.value = selectedProv;
+      const fillModelsForProv = (prov) => {
+        sessionModelSelect.innerHTML = '';
+        const ms = PROVIDERS_CONFIG[prov]?.models || [];
+        ms.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          sessionModelSelect.appendChild(opt);
+        });
+        if (ms[0]) sessionModelSelect.value = ms[0];
+      };
+      if (selectedProv) fillModelsForProv(selectedProv);
+      sessionProviderSelect.addEventListener('change', () => {
+        const prov = sessionProviderSelect.value;
+        fillModelsForProv(prov);
+      });
+    };
+
+    let chatMessages = [];
+    let currentConversationId = null;
+    let streamingText = '';
+    let streamingBubble = null;
+    let streamingContentEl = null;
+    let qaCounter = 0;
+    const dbOpen = () => new Promise((resolve, reject) => {
+      const req = indexedDB.open('agf_ai_db', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('conversations')) {
+          const store = db.createObjectStore('conversations', { keyPath: 'id' });
+          store.createIndex('createdAt', 'createdAt');
+          store.createIndex('updatedAt', 'updatedAt');
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const dbPutConversation = async (obj) => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readwrite');
+        const store = tx.objectStore('conversations');
+        const req = store.put(obj);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const dbGetConversation = async (id) => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readonly');
+        const store = tx.objectStore('conversations');
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const dbListConversations = async () => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readonly');
+        const store = tx.objectStore('conversations');
+        const idx = store.index('createdAt');
+        const items = [];
+        const req = idx.openCursor(null, 'prev');
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) { items.push(cursor.value); cursor.continue(); } else { resolve(items); }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const newConversation = async () => {
+      currentConversationId = 'agf-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+      chatMessages = [];
+      if (chatList) chatList.innerHTML = '';
+      qaCounter = 0;
+      const prov = sessionProviderSelect && sessionProviderSelect.value || '';
+      const model = sessionModelSelect && sessionModelSelect.value || '';
+      const now = Date.now();
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: [] };
+      try { await dbPutConversation(convo); } catch (_) {}
+    };
+    const saveConversationSnapshot = async () => {
+      if (!currentConversationId) return;
+      const prov = sessionProviderSelect && sessionProviderSelect.value || '';
+      const model = sessionModelSelect && sessionModelSelect.value || '';
+      const now = Date.now();
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages };
+      try { await dbPutConversation(convo); } catch (_) {}
+    };
+    const openRecordsListPanel = async () => {
+      if (!recordsPanel || !recordsList) return;
+      recordsList.innerHTML = '';
+      let items = [];
+      try { items = await dbListConversations(); } catch (_) {}
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'agf-record-item';
+        const left = document.createElement('div');
+        left.textContent = new Date(item.createdAt).toLocaleString();
+        const right = document.createElement('button');
+        right.className = 'agf-records-close';
+        right.textContent = '打开';
+        right.addEventListener('click', async () => {
+          const data = await dbGetConversation(item.id);
+          if (data && data.messages) {
+            chatMessages = data.messages.slice();
+            if (chatList) {
+              chatList.innerHTML = '';
+              qaCounter = 0;
+              chatMessages.forEach(m => appendMessage(m.role, m.content));
+            }
+            currentConversationId = item.id;
+            hideRecords();
+          }
+        });
+        el.appendChild(left);
+        el.appendChild(right);
+        recordsList.appendChild(el);
+      });
+      showRecords();
+    };
+    const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const markdownToHtml = (md) => {
+      let t = md;
+      t = t.replace(/([。！？；;:])\s*[-*]\s+/g, (m, p1) => p1 + '\n- ');
+      t = escapeHtml(t);
+      t = t.replace(/```([\s\S]*?)```/g, (m, p1) => '<pre><code>' + p1.replace(/\n/g, '<br>') + '</code></pre>');
+      const lines = t.split(/\r?\n/);
+      let out = '';
+      let inUl = false, inOl = false;
+      const inline = (x) => x
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1<\/a>');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/^\s*#{1,6}\s+/.test(line)) {
+          const level = (line.match(/^\s*(#{1,6})\s+/) || ['',''])[1].length;
+          const content = line.replace(/^\s*#{1,6}\s+/, '');
+          out += `<h${level}>` + inline(content) + `</h${level}>`;
+        } else if (/^\s*---\s*$/.test(line)) {
+          if (inUl) { out += '</ul>'; inUl = false; }
+          if (inOl) { out += '</ol>'; inOl = false; }
+          out += '<hr>';
+        } else if (/^\s*[-*]\s+/.test(line)) {
+          if (!inUl) { out += '<ul>'; inUl = true; }
+          out += '<li>' + inline(line.replace(/^\s*[-*]\s+/, '')) + '</li>';
+        } else if (/^\s*\d+\.\s+/.test(line)) {
+          if (!inOl) { out += '<ol>'; inOl = true; }
+          out += '<li>' + inline(line.replace(/^\s*\d+\.\s+/, '')) + '</li>';
+        } else {
+          if (inUl) { out += '</ul>'; inUl = false; }
+          if (inOl) { out += '</ol>'; inOl = false; }
+          if (line.trim().length) {
+            out += inline(line) + '<br>';
+          } else {
+            out += '<br>';
+          }
+        }
+      }
+      if (inUl) out += '</ul>';
+      if (inOl) out += '</ol>';
+      return out;
+    };
+    const appendMessage = (role, text) => {
+      if (!chatList) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'agf-msg ' + (role === 'user' ? 'user' : 'assistant');
+      const bubble = document.createElement('div');
+      bubble.className = 'agf-bubble' + (role === 'user' ? ' user' : '');
+      if (role === 'user') qaCounter += 1;
+      const label = role === 'user' ? ('Q' + qaCounter) : ('A' + (qaCounter || 1));
+      bubble.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content">' + markdownToHtml(text) + '</span>';
+      wrap.appendChild(bubble);
+      chatList.appendChild(wrap);
+      chatList.scrollTop = chatList.scrollHeight;
+    };
+
+    const startAssistantStream = () => {
+      if (!chatList) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'agf-msg assistant';
+      const bubbleEl = document.createElement('div');
+      bubbleEl.className = 'agf-bubble';
+      const label = 'A' + (qaCounter || 1);
+      bubbleEl.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
+      wrap.appendChild(bubbleEl);
+      chatList.appendChild(wrap);
+      chatList.scrollTop = chatList.scrollHeight;
+      streamingBubble = bubbleEl;
+      streamingText = '';
+      streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
+    };
+
+    const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
+
+    const sendChat = async () => {
+      if (!composerInput || !sessionProviderSelect || !sessionModelSelect) return;
+      const prov = sessionProviderSelect.value;
+      const model = sessionModelSelect.value;
+      const prompt = composerInput.value.trim();
+      if (!prompt) return;
+      appendMessage('user', prompt);
+      chatMessages.push({ role: 'user', content: prompt });
+      composerInput.value = '';
+      let key = '';
+      let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
+      try {
+        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrl'], resolve));
+        const keys = res.aiKeys || {};
+        key = keys[prov] || '';
+        if (res.aiBaseUrl) base = res.aiBaseUrl;
+      } catch (_) {}
+      let url = base;
+      let headers = { 'Content-Type': 'application/json' };
+      let body = null;
+      if (prov === 'anthropic') {
+        headers['x-api-key'] = key;
+        headers['anthropic-version'] = '2023-06-01';
+        body = JSON.stringify({ model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] });
+      } else if (prov === 'gemini') {
+        url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+        body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+      } else if (prov === 'deepseek') {
+        try {
+          startAssistantStream();
+          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle() });
+          return;
+        } catch (_) {}
+      } else {
+        headers['Authorization'] = 'Bearer ' + key;
+        body = JSON.stringify({ model, messages: toOpenAIStyle() });
+      }
+      let text = '';
+      try {
+        const respMsg = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url, method: 'POST', headers, body, timeout: 45000 }, resolve));
+        const data = respMsg && respMsg.data ? respMsg.data : null;
+        if (prov === 'anthropic') {
+          const c = data && data.content && data.content[0] && (data.content[0].text || (data.content[0].type === 'text' ? data.content[0].text : ''));
+          text = c || '';
+        } else if (prov === 'gemini') {
+          const cand = data && data.candidates && data.candidates[0];
+          const parts = cand && cand.content && cand.content.parts || [];
+          text = parts.map(p => p.text || '').join('');
+        } else {
+          const ch = data && data.choices && data.choices[0];
+          text = (ch && ch.message && ch.message.content) || '';
+        }
+      } catch (_) {
+        text = '';
+      }
+      if (!text) text = '...';
+      appendMessage('assistant', text);
+      chatMessages.push({ role: 'assistant', content: text });
+      try { await saveConversationSnapshot(); } catch (_) {}
+    };
+
+    this.__onAiStreamDelta = (delta) => {
+      if (typeof delta !== 'string' || !delta) return;
+      streamingText += delta;
+      if (streamingBubble) {
+        const html = markdownToHtml(streamingText);
+        if (streamingContentEl) streamingContentEl.innerHTML = html; else streamingBubble.innerHTML = html;
+        if (chatList) chatList.scrollTop = chatList.scrollHeight;
+      }
+    };
+    this.__onAiStreamDone = () => {
+      if (streamingText) {
+        chatMessages.push({ role: 'assistant', content: streamingText });
+        (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
+      }
+      streamingText = '';
+      streamingBubble = null;
+    };
+
+    if (composerSend) composerSend.addEventListener('click', sendChat);
+    if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+    if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
+    if (tabDoc) tabDoc.addEventListener('click', () => { openRecordsListPanel(); });
+    let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
+    const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
+    const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
+    const onResizeDownBottom = (e) => { resizing = 'bottom'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
+    const onResizeDownLeft = (e) => { resizing = 'left'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; rStartL = parseInt(getComputedStyle(overlay).left, 10) || 0; };
+    const onResizeMove = (e) => {
+      if (!resizing) return;
+      const dx = e.clientX - rStartX;
+      const dy = e.clientY - rStartY;
+      if (resizing === 'right') {
+        let w = rStartW + dx;
+        if (w < minW) w = minW;
+        if (w > window.innerWidth) w = window.innerWidth;
+        overlay.style.width = w + 'px';
+      } else if (resizing === 'bottom') {
+        let h = rStartH + dy;
+        if (h < minH) h = minH;
+        if (h > window.innerHeight) h = window.innerHeight;
+        overlay.style.height = h + 'px';
+      } else if (resizing === 'left') {
+        let newLeft = rStartL + dx;
+        let w = rStartW - dx;
+        if (w < minW) { w = minW; newLeft = rStartL + (rStartW - minW); }
+        if (newLeft < 0) newLeft = 0;
+        overlay.style.left = newLeft + 'px';
+        overlay.style.width = w + 'px';
+      }
+    };
+    const onResizeUp = () => { resizing = null; };
+    resizeRight.addEventListener('mousedown', onResizeDownRight);
+    resizeBottom.addEventListener('mousedown', onResizeDownBottom);
+    resizeLeft.addEventListener('mousedown', onResizeDownLeft);
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
+    this.__aiSettingPanelInitialized = true;
+  }
+
+  showAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
+    if (overlay) {
+      overlay.style.display = 'flex';
+      if (!this.__aiPlaced) {
+        const w = overlay.offsetWidth || Math.floor(window.innerWidth * 0.5);
+        const left = Math.max(5, window.innerWidth - w - 5);
+        overlay.style.top = '5px';
+        overlay.style.left = left + 'px';
+        this.__aiPlaced = true;
+      }
+    }
+    if (bubble) bubble.style.display = 'none';
+  }
+
+  hideAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
+    if (overlay) overlay.style.display = 'none';
+    if (bubble) bubble.style.display = 'none';
+  }
+
+  minimizeAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
+    if (overlay) {
+      this.__aiGeom = {
+        left: parseInt(getComputedStyle(overlay).left, 10) || 0,
+        top: parseInt(getComputedStyle(overlay).top, 10) || 0,
+        width: overlay.offsetWidth,
+        height: overlay.offsetHeight
+      };
+    }
+    if (overlay) overlay.style.display = 'none';
+    if (bubble) bubble.style.display = 'flex';
+  }
+
+  restoreAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    const bubble = document.getElementById('agfAiBubble');
+    if (overlay) overlay.style.display = 'flex';
+    if (bubble) bubble.style.display = 'none';
+    if (overlay && this.__aiGeom) {
+      overlay.style.left = this.__aiGeom.left + 'px';
+      overlay.style.top = this.__aiGeom.top + 'px';
+      overlay.style.width = this.__aiGeom.width + 'px';
+      overlay.style.height = this.__aiGeom.height + 'px';
+    }
+  }
+
+  maximizeAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    if (!overlay) return;
+    this.__aiGeom = {
+      left: parseInt(getComputedStyle(overlay).left, 10) || 0,
+      top: parseInt(getComputedStyle(overlay).top, 10) || 0,
+      width: overlay.offsetWidth,
+      height: overlay.offsetHeight
+    };
+    overlay.style.left = '0px';
+    overlay.style.top = '0px';
+    overlay.style.width = window.innerWidth + 'px';
+    overlay.style.height = window.innerHeight + 'px';
   }
 
   /**

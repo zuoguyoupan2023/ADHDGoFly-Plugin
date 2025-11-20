@@ -467,9 +467,91 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     showReviewLightTower(request.data);
     sendResponse({ success: true });
   } else if (request.action === 'hideReviewLightTower') {
-    hideReviewLightTower();
-      sendResponse({ success: true });
-    }
+      hideReviewLightTower();
+        sendResponse({ success: true });
+    } else if (request.action === 'aiChatRequest') {
+    (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), request.timeout || 30000);
+        const resp = await fetch(request.url, {
+          method: request.method || 'POST',
+          headers: request.headers || {},
+          body: request.body || null,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const contentType = resp.headers.get('content-type') || '';
+        let data = null;
+        if (contentType.includes('application/json')) {
+          data = await resp.json();
+        } else {
+          data = await resp.text();
+        }
+        sendResponse({ success: true, status: resp.status, data });
+      } catch (error) {
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  } else if (request.action === 'aiChatStream') {
+    (async () => {
+      try {
+        const tabId = sender && sender.tab && sender.tab.id;
+        const prov = request.provider;
+        const model = request.model;
+        const msgs = request.messages || [];
+        let base = '';
+        let key = '';
+        try {
+          const res = await new Promise(r => chrome.storage.local.get(['aiBaseUrl','aiKeys'], r));
+          base = res.aiBaseUrl || '';
+          const ks = res.aiKeys || {};
+          key = ks[prov] || '';
+        } catch (_) {}
+        const url = base || (prov === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : '');
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+        const body = JSON.stringify({ model, messages: msgs, stream: true });
+        const resp = await fetch(url, { method: 'POST', headers, body });
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' });
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n');
+          buffer = parts.pop() || '';
+          for (let i = 0; i < parts.length; i++) {
+            const line = parts[i].trim();
+            if (!line) continue;
+            const payload = line.startsWith('data:') ? line.slice(5).trim() : line;
+            if (!payload || payload === '[DONE]') continue;
+            let delta = '';
+            try {
+              const j = JSON.parse(payload);
+              delta = (j && j.choices && j.choices[0] && (j.choices[0].delta && j.choices[0].delta.content)) ||
+                      (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) ||
+                      j.output_text || j.content || '';
+            } catch (e) {
+              delta = payload;
+            }
+            if (delta && tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta });
+          }
+        }
+        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' });
+        sendResponse({ success: true, started: true });
+      } catch (error) {
+        try {
+          const tabId = sender && sender.tab && sender.tab.id;
+          if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: error.message });
+        } catch (_) {}
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  }
 });
 
 // ==================== 评价徽章管理 ====================

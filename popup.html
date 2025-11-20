@@ -2237,6 +2237,7 @@
         background: #5a6268;
       }
     </style>
+    
   </head>
   <body>
     <!-- 主内容区域 -->
@@ -3312,7 +3313,7 @@
       </div>
 
       <!-- AI分析页面 -->
-      <div class="page" id="ai-page">
+      <div class="page" id="data-panel-page">
         <div class="header">
           <h3 data-i18n="pages.ai.title">智能分析</h3>
         </div>
@@ -3353,6 +3354,14 @@
 
 
         </div>
+      </div>
+
+      <!-- Exam 简版页面（仅显示占位文本） -->
+      <div class="page" id="exam-page">
+        <div class="header">
+          <h3>ExamPage!!!</h3>
+        </div>
+        <div style="padding:12px; font-size:14px; color:#333;">ExamPage!!!</div>
       </div>
 
       <!-- FAQ页面 -->
@@ -4002,6 +4011,15 @@
         data-i18n-title="sidebar.ai"
       >
         <span>📊</span>
+      </button>
+
+      <button
+        class="sidebar-btn"
+        id="chat-btn"
+        title="AI 对话"
+        data-i18n-title="sidebar.aiChat"
+      >
+        <span>🤖</span>
       </button>
 
       <button
