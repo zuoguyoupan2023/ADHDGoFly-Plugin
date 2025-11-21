@@ -2042,8 +2042,7 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
-      .agf-color-labels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 4px}
-      .agf-color-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+      
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
@@ -2191,20 +2190,11 @@ class ADHDHighlighter {
                   <div id="agfSettingsContentColors" style="display:none;">
                     <div class="agf-settings-group">
                       <div style="font-size:13px;color:#333;font-weight:600;">颜色管理</div>
-                      <div class="agf-color-labels">
-                        <div class="agf-label">问题背景</div>
-                        <div class="agf-label">回答背景</div>
-                        <div class="agf-label">显示区背景</div>
-                        <div class="agf-label">问题文本</div>
-                        <div class="agf-label">回答文本</div>
-                      </div>
-                      <div class="agf-color-inputs">
-                        <input id="agfColorQBg2" type="color" />
-                        <input id="agfColorABg2" type="color" />
-                        <input id="agfColorDisplayBg2" type="color" />
-                        <input id="agfColorQText2" type="color" />
-                        <input id="agfColorAText2" type="color" />
-                      </div>
+                      <div class="agf-settings-row"><div class="agf-label">问题背景</div><input id="agfColorQBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">回答背景</div><input id="agfColorABg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">问题文本</div><input id="agfColorQText2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">回答文本</div><input id="agfColorAText2" type="color" /></div>
                       <div class="agf-settings-row">
                         <div class="agf-label">预设组合</div>
                         <div class="agf-button-list">
