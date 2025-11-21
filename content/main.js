@@ -565,7 +565,6 @@ class ADHDHighlighter {
           this.ensureAiSettingPanel();
           this.showAiSettingPanel();
           try { await this.collectAndStorePageSegments(); } catch (_) {}
-          try { await this.updateAiPanelStorageStatusUI(); } catch (_) {}
         }
       } catch (_) {}
       
@@ -1594,76 +1593,6 @@ class ADHDHighlighter {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
-  }
-
-  async getStoredSegmentsForCurrentPage() {
-    const db = await this.segmentsDbOpen();
-    const pageUrl = window.location.href;
-    let canonicalUrl = pageUrl;
-    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
-    const candidates = new Set([pageUrl, canonicalUrl]);
-    try {
-      const iframes = Array.from(document.querySelectorAll('iframe'));
-      for (const fr of iframes) {
-        try {
-          const src = fr.getAttribute('src') || '';
-          if (src) { const u = new URL(src, pageUrl); candidates.add(u.href); }
-          const href = fr.contentWindow && fr.contentWindow.location ? fr.contentWindow.location.href : '';
-          if (href) candidates.add(href);
-        } catch (_) {}
-      }
-    } catch (_) {}
-    return new Promise((resolve) => {
-      const tx = db.transaction('page_segments','readonly');
-      const st = tx.objectStore('page_segments');
-      const req = st.openCursor();
-      const arr = [];
-      req.onsuccess = (ev) => {
-        const cursor = ev.target.result;
-        if (cursor) {
-          const val = cursor.value;
-          let ok = false;
-          if (val) {
-            if (candidates.has(val.pageUrl) || candidates.has(val.canonicalUrl)) ok = true;
-          }
-          if (ok) arr.push(val);
-          cursor.continue();
-        } else { resolve(arr); }
-      };
-      req.onerror = () => resolve(arr);
-    });
-  }
-
-  async updateAiPanelStorageStatusUI() {
-    const segs = await this.getStoredSegmentsForCurrentPage();
-    const statusDot = document.getElementById('agfStorageStatusDot');
-    const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
-    const moreBtn = document.getElementById('agfMoreBtn');
-    const btnStructured = document.getElementById('agfBtnStructured');
-    const btnExplain = document.getElementById('agfBtnExplain');
-    const btnOutline = document.getElementById('agfBtnOutline');
-    const btnKeywords = document.getElementById('agfBtnKeywords');
-    if (statusDot) {
-      if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
-    }
-    const has = segs.length > 0;
-    if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
-    if (moreBtn) { moreBtn.disabled = !has; }
-    if (btnStructured) btnStructured.disabled = !has;
-    if (btnExplain) btnExplain.disabled = !has;
-    if (btnOutline) btnOutline.disabled = !has;
-    if (btnKeywords) btnKeywords.disabled = !has;
-    return segs;
-  }
-
-  async ensureSegmentsAndUpdate() {
-    let segs = [];
-    try { segs = await this.getStoredSegmentsForCurrentPage(); } catch (_) {}
-    if (!segs || segs.length === 0) {
-      try { await this.collectAndStorePageSegments(); } catch (_) {}
-      try { segs = await this.getStoredSegmentsForCurrentPage(); } catch (_) {}
-    }
-    try { await this.updateAiPanelStorageStatusUI(); } catch (_) {}
   }
 
   normalizeText(t) {
@@ -3403,17 +3332,6 @@ class ADHDHighlighter {
     document.addEventListener('mouseup', onResizeUp);
     (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
     (async ()=>{ try { const s = await chrome.storage.local.get(['aiPanelMode']); if ((s.aiPanelMode || 'manual') === 'persistent') { try { await newConversation(); } catch (_) {} } } catch (_) {} })();
-    let lastSeenUrl = window.location.href;
-    const onUrlMaybeChanged = () => {
-      const href = window.location.href;
-      const changed = href !== lastSeenUrl;
-      lastSeenUrl = href;
-      if (changed) { try { newConversation(); } catch (_) {} }
-      try { this.ensureSegmentsAndUpdate(); } catch (_) {}
-    };
-    window.addEventListener('hashchange', onUrlMaybeChanged);
-    window.addEventListener('popstate', onUrlMaybeChanged);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) onUrlMaybeChanged(); });
     this.__aiSettingPanelInitialized = true;
   }
 
@@ -3429,7 +3347,6 @@ class ADHDHighlighter {
         overlay.style.left = left + 'px';
         this.__aiPlaced = true;
       }
-      (async ()=>{ try { await this.ensureSegmentsAndUpdate(); } catch (_) {} })();
     }
     if (bubble) bubble.style.display = 'none';
   }
