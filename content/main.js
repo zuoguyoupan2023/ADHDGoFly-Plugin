@@ -774,6 +774,16 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error.message });
           }
           break;
+        case 'clearPageSegments':
+          try {
+            const scope = typeof message.scope === 'string' ? message.scope : 'page';
+            await this.clearPageSegments(scope);
+            sendResponse({ success: true });
+          } catch (error) {
+            console.error('清理页面段失败:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'storeSegments':
           try {
             const sections = Array.isArray(message.sections) ? message.sections : [];
@@ -1595,6 +1605,34 @@ class ADHDHighlighter {
     });
   }
 
+  async clearPageSegments(scope = 'page') {
+    const db = await this.segmentsDbOpen();
+    const pageUrl = window.location.href;
+    let canonicalUrl = pageUrl;
+    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+    const domain = (new URL(pageUrl)).hostname;
+    await new Promise((resolve) => {
+      const tx = db.transaction('page_segments', 'readwrite');
+      const st = tx.objectStore('page_segments');
+      const req = st.openCursor();
+      req.onsuccess = (ev) => {
+        const cursor = ev.target.result;
+        if (cursor) {
+          const val = cursor.value;
+          let match = false;
+          if (scope === 'page') match = val && (val.pageUrl === pageUrl || val.canonicalUrl === canonicalUrl);
+          else if (scope === 'domain') match = val && val.domain === domain;
+          else match = true;
+          if (match) { cursor.delete(); cursor.continue(); } else { cursor.continue(); }
+        } else {
+          resolve(true);
+        }
+      };
+      req.onerror = () => resolve(false);
+    });
+    return true;
+  }
+
   normalizeText(t) {
     return t.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[ \t\f\v]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
   }
@@ -1619,6 +1657,19 @@ class ADHDHighlighter {
     return cls.includes('adhd-processed') || cls.includes('adhd-highlight');
   }
 
+  isExtensionUi(el) {
+    if (!el) return false;
+    if (el.closest && el.closest('[class*="agf-"]')) return true;
+    const id = typeof el.id === 'string' ? el.id : '';
+    if (id && id.startsWith('agf')) return true;
+    try {
+      const s = window.getComputedStyle(el);
+      const zi = parseInt(s.zIndex || '0', 10);
+      if (s.position === 'fixed' && zi >= 2147483000) return true;
+    } catch (_) {}
+    return false;
+  }
+
   elText(el) {
     if (!el) return '';
     if (el.matches('input,textarea') || el.isContentEditable) return '';
@@ -1631,6 +1682,7 @@ class ADHDHighlighter {
   }
 
   collectPageSections() {
+    const globalSeen = new Set();
     const collectFromRoot = (root) => {
       const arr = [];
       let current = null;
@@ -1640,6 +1692,7 @@ class ADHDHighlighter {
         if (this.isHiddenEl(el)) return;
         if (this.isExcludedTag(el)) return;
         if (this.hasExcludedClass(el)) return;
+        if (this.isExtensionUi(el)) return;
         const tag = el.tagName.toLowerCase();
         if (/^h[1-6]$/.test(tag)) {
           if (current && current.blocks.length) arr.push(current);
@@ -1650,6 +1703,9 @@ class ADHDHighlighter {
         }
         const text = this.elText(el);
         if (!text || text.length < 2) return;
+        const key = text.length + ':' + text.slice(0, 300);
+        if (globalSeen.has(key)) return;
+        globalSeen.add(key);
         if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
         current.blocks.push({ text, orderIndex: order++ });
       });
@@ -1686,6 +1742,8 @@ class ADHDHighlighter {
     const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
     const maxLen = 10000;
     const results = [];
+    const seenBlocks = new Set();
+    const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
     for (const sec of sections) {
       let bufLen = 0;
       let chunkBlocks = [];
@@ -1697,9 +1755,14 @@ class ADHDHighlighter {
           const isPII = /\b1[3-9]\d{9}\b/.test(t) || /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(t) || /\b\d{15,19}\b/.test(t) || /\b\d{17}[\dXx]\b/.test(t);
           if (isPII) continue;
         }
-        const l = b.text.length;
+        const tnorm = this.normalizeText(String(b.text||''));
+        if (uiTokens.has(tnorm)) continue;
+        const bk = tnorm.length + ':' + tnorm.slice(0,300);
+        if (seenBlocks.has(bk)) continue;
+        seenBlocks.add(bk);
+        const l = tnorm.length;
         if (bufLen + l > maxLen && chunkBlocks.length) {
-          const text = chunkBlocks.map(x => x.text).join('\n');
+          const text = chunkBlocks.map(x => this.normalizeText(String(x.text||''))).join('\n');
           const textLength = text.length;
           const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
           const textHash = await this.sha256Hex(text);
@@ -1710,11 +1773,11 @@ class ADHDHighlighter {
           chunkBlocks = [];
           bufLen = 0;
         }
-        chunkBlocks.push(b);
+        chunkBlocks.push({ text: tnorm, orderIndex: b.orderIndex });
         bufLen += l;
       }
       if (chunkBlocks.length) {
-        const text = chunkBlocks.map(x => x.text).join('\n');
+        const text = chunkBlocks.map(x => this.normalizeText(String(x.text||''))).join('\n');
         const textLength = text.length;
         const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
         const textHash = await this.sha256Hex(text);
@@ -1790,6 +1853,7 @@ class ADHDHighlighter {
       const els = document.querySelectorAll(selector);
       els.forEach(el => {
         if (this.isHiddenEl(el)) return;
+        if (this.isExtensionUi(el)) return;
         const txt = el.innerText || el.textContent || '';
         if (!txt || txt.trim().length < 6) return;
         addBlock(txt);
@@ -1802,6 +1866,7 @@ class ADHDHighlighter {
           if (node.nodeType === 1) {
             const el = node;
             if (this.isHiddenEl(el)) return;
+            if (this.isExtensionUi(el)) return;
             const txt = el.innerText || el.textContent || '';
             if (!txt || txt.trim().length < 6) return;
             addBlock(txt);
