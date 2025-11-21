@@ -2938,7 +2938,7 @@ class ADHDHighlighter {
           if (linkUrl) {
             const a = document.createElement('a');
             a.className = 'agf-record-link';
-            try { a.textContent = new URL(linkUrl, window.location.href).hostname; } catch (_) { a.textContent = linkUrl; }
+            a.textContent = linkUrl;
             a.href = linkUrl;
             a.target = '_blank';
             a.rel = 'noopener';
@@ -3479,7 +3479,7 @@ class ADHDHighlighter {
         else { sendChat(); }
       }
     });
-    if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
+    if (tabPencil) tabPencil.addEventListener('click', () => { showChat(); });
     if (tabDoc) tabDoc.addEventListener('click', () => { showRecords(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
@@ -3516,7 +3516,6 @@ class ADHDHighlighter {
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
     (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
-    (async ()=>{ try { const s = await chrome.storage.local.get(['aiPanelMode']); if ((s.aiPanelMode || 'manual') === 'persistent') { try { await newConversation(); } catch (_) {} } } catch (_) {} })();
     this.__aiSettingPanelInitialized = true;
   }
 
