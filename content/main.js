@@ -2023,11 +2023,12 @@ class ADHDHighlighter {
       .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
       .agf-mode-btn + .agf-mode-btn{margin-left:-1px}
       .agf-mode-btn.active{background:#333;color:#fff}
-      .agf-records-panel{position:absolute;inset:0;background:#fff;border:1px solid #e0e0e0;border-radius:0;box-shadow:none;display:none;z-index:2;padding:12px;overflow:auto}
+      .agf-records-panel{position:relative;height:100%;background:#fff;border:1px solid #e0e0e0;border-radius:4px;box-shadow:none;display:none;padding:12px;overflow:auto}
       .agf-colors-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
       .agf-records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
       .agf-records-title{font-size:14px;color:#333;font-weight:600}
       .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-records-open{height:24px;min-width:48px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
       .agf-records-list{display:flex;flex-direction:column;gap:8px}
       .agf-record-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333}
       .agf-record-subject{font-size:12px;color:#666}
@@ -2230,7 +2231,6 @@ class ADHDHighlighter {
                 <button id="agfRecordsTabAll" class="agf-record-scope-btn">所有记录</button>
               </div>
               <input id="agfRecordsSearch" class="agf-records-search" placeholder="搜索主题或链接" />
-              <button class="agf-records-close" id="agfRecordsClose">X</button>
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
           </div>
@@ -2316,7 +2316,6 @@ class ADHDHighlighter {
     const composerSend = document.getElementById('agfComposerSend');
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
-    const recordsClose = overlay.querySelector('#agfRecordsClose');
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
     const recordsTabAll = document.getElementById('agfRecordsTabAll');
     const recordsSearchInput = document.getElementById('agfRecordsSearch');
@@ -2375,8 +2374,6 @@ class ADHDHighlighter {
     if (recordsTabAll) recordsTabAll.addEventListener('click', () => setRecordsScope('all'));
     if (recordsSearchInput) recordsSearchInput.addEventListener('input', (e) => { recordsSearch = String(e.target.value||'').trim().toLowerCase(); if (currentView === 'records') openRecordsListPanel(); });
     const showRecords = () => { setView('records'); setRecordsScope(recordsScope); };
-    const hideRecords = () => { setView('chat'); };
-    if (recordsClose) recordsClose.addEventListener('click', hideRecords);
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
     const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
     if (colorsClose) colorsClose.addEventListener('click', hideColors);
@@ -2931,7 +2928,7 @@ class ADHDHighlighter {
         const actions = document.createElement('div');
         actions.className = 'agf-record-actions';
         const openBtn = document.createElement('button');
-        openBtn.className = 'agf-records-close';
+        openBtn.className = 'agf-records-open';
         openBtn.textContent = '打开';
         openBtn.addEventListener('click', async () => {
           const data = await dbGetConversation(item.id);
@@ -2943,7 +2940,7 @@ class ADHDHighlighter {
               chatMessages.forEach(m => appendMessage(m.role, m.content, { highlight: false }));
             }
             currentConversationId = item.id;
-            hideRecords();
+            showChat();
           }
         });
         const delBtn = document.createElement('button');
@@ -3658,15 +3655,16 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     const onComposerSendClick = (e) => {
       if (!composerSend) return;
       if (composerSend.dataset.mode === 'refresh') { e.preventDefault(); try { window.location.reload(); } catch (_) {} return; }
+      showChat();
       sendChat();
     };
     if (composerSend) composerSend.addEventListener('click', onComposerSendClick);
@@ -3674,7 +3672,7 @@ class ADHDHighlighter {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (composerSend && composerSend.dataset.mode === 'refresh') { try { window.location.reload(); } catch (_) {} }
-        else { sendChat(); }
+        else { showChat(); sendChat(); }
       }
     });
     if (tabPencil) tabPencil.addEventListener('click', () => { showChat(); });
