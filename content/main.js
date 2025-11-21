@@ -2698,6 +2698,7 @@ class ADHDHighlighter {
     let lastMouseY = 0;
     let upwardAccum = 0;
     const stopAutoScrollDistance = 120;
+    let lastScrollTop = 0;
     if (chatList) {
       chatList.addEventListener('mousemove', (e) => {
         const y = e.clientY || 0;
@@ -2711,9 +2712,13 @@ class ADHDHighlighter {
       });
       chatList.addEventListener('mouseleave', () => { lastMouseY = 0; upwardAccum = 0; });
       chatList.addEventListener('scroll', () => {
+        const st = chatList.scrollTop;
+        if (st < lastScrollTop) autoScrollEnabled = false;
+        lastScrollTop = st;
         const nearBottom = (chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight) < 40;
         if (nearBottom) autoScrollEnabled = true;
       });
+      chatList.addEventListener('wheel', (e) => { if (e.deltaY < 0) autoScrollEnabled = false; });
     }
 
     let chatMessages = [];
@@ -2888,20 +2893,20 @@ class ADHDHighlighter {
         const head = text.slice(0, idx);
         const body = text.slice(idx + 4).replace(/^\s*:\s*/,'');
         const headHtml = markdownToHtml(head);
-        const bodyHtml = markdownToHtml(body);
         const headDiv = document.createElement('div');
         headDiv.innerHTML = headHtml;
         const col = document.createElement('div');
         col.className = 'agf-collapse';
         const colContent = document.createElement('div');
         colContent.className = 'agf-collapse-content collapsed';
-        colContent.innerHTML = bodyHtml;
         const colToggle = document.createElement('button');
         colToggle.className = 'agf-collapse-toggle';
         colToggle.textContent = '展开全文';
         colToggle.addEventListener('click', () => {
-          if (colContent.classList.contains('collapsed')) { colContent.classList.remove('collapsed'); colToggle.textContent = '收起'; }
-          else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
+          if (colContent.classList.contains('collapsed')) {
+            if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
+            colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
+          } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
         });
         col.appendChild(colContent);
         col.appendChild(colToggle);
@@ -2913,20 +2918,20 @@ class ADHDHighlighter {
           const head = text.slice(0, 800);
           const body = text.slice(800);
           const headHtml = markdownToHtml(head);
-          const bodyHtml = markdownToHtml(body);
           const headDiv = document.createElement('div');
           headDiv.innerHTML = headHtml;
           const col = document.createElement('div');
           col.className = 'agf-collapse';
           const colContent = document.createElement('div');
           colContent.className = 'agf-collapse-content collapsed';
-          colContent.innerHTML = bodyHtml;
           const colToggle = document.createElement('button');
           colToggle.className = 'agf-collapse-toggle';
           colToggle.textContent = '展开全文';
           colToggle.addEventListener('click', () => {
-            if (colContent.classList.contains('collapsed')) { colContent.classList.remove('collapsed'); colToggle.textContent = '收起'; }
-            else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
+            if (colContent.classList.contains('collapsed')) {
+              if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
+              colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
+            } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
           });
           col.appendChild(colContent);
           col.appendChild(colToggle);
@@ -2965,7 +2970,8 @@ class ADHDHighlighter {
           try { this.pageProcessor.processTextNode(node); } catch (_) {}
         });
       };
-      if (opts.highlight !== false) highlightBubbleContent(contentEl);
+      const shouldHighlight = opts.highlight !== false && !(role === 'user' && idx >= 0);
+      if (shouldHighlight) highlightBubbleContent(contentEl);
     };
 
     const startAssistantStream = () => {
@@ -2993,7 +2999,8 @@ class ADHDHighlighter {
       const prompt = composerInput.value.trim();
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
-      appendMessage('user', prompt, { highlight: true });
+      const isGeneratedPrompt = prompt.indexOf('\n正文:') >= 0;
+      appendMessage('user', prompt, { highlight: !isGeneratedPrompt });
       chatMessages.push({ role: 'user', content: prompt });
       composerInput.value = '';
       let key = '';
