@@ -558,6 +558,15 @@ class ADHDHighlighter {
       
       // 检查存储的状态（在初始化完成后）
       await this.loadStoredState();
+      try {
+        const s = await chrome.storage.local.get(['aiPanelMode']);
+        const mode = s.aiPanelMode || 'manual';
+        if (mode === 'persistent') {
+          this.ensureAiSettingPanel();
+          this.showAiSettingPanel();
+          try { await this.collectAndStorePageSegments(); } catch (_) {}
+        }
+      } catch (_) {}
       
       console.log('ADHD文本高亮器初始化完成');
       
@@ -2510,6 +2519,24 @@ class ADHDHighlighter {
 
     initFromStorage();
 
+    let panelMode = 'manual';
+    const modeBtns = overlay.querySelectorAll('.agf-mode-btn');
+    if (modeBtns && modeBtns.length >= 2) {
+      modeBtns[0].textContent = '常驻';
+      modeBtns[1].textContent = '手动';
+      try {
+        const r = await chrome.storage.local.get(['aiPanelMode']);
+        panelMode = r.aiPanelMode || 'manual';
+      } catch (_) {}
+      const setActiveMode = (m) => {
+        modeBtns[0].classList.toggle('active', m === 'persistent');
+        modeBtns[1].classList.toggle('active', m !== 'persistent');
+      };
+      setActiveMode(panelMode === 'persistent' ? 'persistent' : 'manual');
+      modeBtns[0].addEventListener('click', async () => { setActiveMode('persistent'); panelMode = 'persistent'; try { await chrome.storage.local.set({ aiPanelMode: 'persistent' }); } catch (_) {} });
+      modeBtns[1].addEventListener('click', async () => { setActiveMode('manual'); panelMode = 'manual'; try { await chrome.storage.local.set({ aiPanelMode: 'manual' }); } catch (_) {} });
+    }
+
     const initParseToggles = async () => {
       let auto = true;
       let sensitive = true;
@@ -2657,6 +2684,28 @@ class ADHDHighlighter {
         fillModelsForProv(prov);
       });
     };
+    
+    let autoScrollEnabled = true;
+    let lastMouseY = 0;
+    let upwardAccum = 0;
+    const stopAutoScrollDistance = 120;
+    if (chatList) {
+      chatList.addEventListener('mousemove', (e) => {
+        const y = e.clientY || 0;
+        if (lastMouseY && y < lastMouseY) {
+          upwardAccum += (lastMouseY - y);
+          if (upwardAccum >= stopAutoScrollDistance) autoScrollEnabled = false;
+        } else {
+          upwardAccum = 0;
+        }
+        lastMouseY = y;
+      });
+      chatList.addEventListener('mouseleave', () => { lastMouseY = 0; upwardAccum = 0; });
+      chatList.addEventListener('scroll', () => {
+        const nearBottom = (chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight) < 40;
+        if (nearBottom) autoScrollEnabled = true;
+      });
+    }
 
     let chatMessages = [];
     let currentConversationId = null;
@@ -2882,7 +2931,7 @@ class ADHDHighlighter {
       bubble.appendChild(contentEl);
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
-      chatList.scrollTop = chatList.scrollHeight;
+      if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       const highlightBubbleContent = (root) => {
         if (!root || !this.pageProcessor) return;
         const walker = document.createTreeWalker(
@@ -2920,7 +2969,7 @@ class ADHDHighlighter {
       bubbleEl.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
-      chatList.scrollTop = chatList.scrollHeight;
+      if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       streamingBubble = bubbleEl;
       streamingText = '';
       streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
@@ -3199,7 +3248,7 @@ class ADHDHighlighter {
           } catch (_) {}
           this.__streamHighlightTimer = null;
         }, 200);
-        if (chatList) chatList.scrollTop = chatList.scrollHeight;
+        if (chatList && autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       }
     };
     this.__onAiStreamDone = () => {
@@ -3280,6 +3329,7 @@ class ADHDHighlighter {
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
     (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
+    (async ()=>{ if (panelMode === 'persistent') { try { await newConversation(); } catch (_) {} } })();
     this.__aiSettingPanelInitialized = true;
   }
 
