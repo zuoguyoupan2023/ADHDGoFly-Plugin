@@ -2325,13 +2325,21 @@ class ADHDHighlighter {
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
     bubble.addEventListener('click', () => this.restoreAiSettingPanel());
-    const showChat = () => { if (viewChat) viewChat.style.display = 'grid'; if (viewSettings) viewSettings.style.display = 'none'; };
-    const showSettings = () => { if (viewChat) viewChat.style.display = 'none'; if (viewSettings) viewSettings.style.display = 'block'; setActiveSettingsTab('api'); };
+    let currentView = 'chat';
+    const setView = (which) => {
+      currentView = which;
+      if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
+      if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
+      if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
+      if (colorsPanel) colorsPanel.style.display = 'none';
+    };
+    const showChat = () => setView('chat');
+    const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
     if (tabWrench) tabWrench.addEventListener('click', showSettings);
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
-    const showRecords = () => { if (recordsPanel) recordsPanel.style.display = 'block'; };
-    const hideRecords = () => { if (recordsPanel) recordsPanel.style.display = 'none'; };
+    const showRecords = () => { setView('records'); };
+    const hideRecords = () => { setView('chat'); };
     if (recordsClose) recordsClose.addEventListener('click', hideRecords);
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
     const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
