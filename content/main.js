@@ -2042,6 +2042,9 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
+      .agf-color-labels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 4px}
+      .agf-color-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+      .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2186,13 +2189,22 @@ class ADHDHighlighter {
                     </div>
                   </div>
                   <div id="agfSettingsContentColors" style="display:none;">
-                  <div class="agf-settings-group">
+                    <div class="agf-settings-group">
                       <div style="font-size:13px;color:#333;font-weight:600;">颜色管理</div>
-                      <div class="agf-settings-row"><div class="agf-label">问题背景</div><input id="agfColorQBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">回答背景</div><input id="agfColorABg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">问题文本</div><input id="agfColorQText2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">回答文本</div><input id="agfColorAText2" type="color" /></div>
+                      <div class="agf-color-labels">
+                        <div class="agf-label">问题背景</div>
+                        <div class="agf-label">回答背景</div>
+                        <div class="agf-label">显示区背景</div>
+                        <div class="agf-label">问题文本</div>
+                        <div class="agf-label">回答文本</div>
+                      </div>
+                      <div class="agf-color-inputs">
+                        <input id="agfColorQBg2" type="color" />
+                        <input id="agfColorABg2" type="color" />
+                        <input id="agfColorDisplayBg2" type="color" />
+                        <input id="agfColorQText2" type="color" />
+                        <input id="agfColorAText2" type="color" />
+                      </div>
                       <div class="agf-settings-row">
                         <div class="agf-label">预设组合</div>
                         <div class="agf-button-list">
@@ -2200,10 +2212,11 @@ class ADHDHighlighter {
                           <button id="agfPreset2Btn" class="agf-btn">护眼微绿</button>
                           <button id="agfPreset3Btn" class="agf-btn">柔黄纸感</button>
                           <button id="agfPreset4Btn" class="agf-btn">轻灰纸张</button>
-                          <button id="agfPresetResetBtn" class="agf-btn">重置默认</button>
                         </div>
                       </div>
-                      <div class="agf-settings-row"><button id="agfColorsApply2" class="agf-input" style="height:28px;min-width:64px">应用</button></div>
+                      <div class="agf-settings-row">
+                        <button id="agfPresetResetBtn" class="agf-btn">重置默认</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2231,6 +2244,7 @@ class ADHDHighlighter {
             </div>
           </div>
         </div>
+        <div id="agfToast" class="agf-toast" style="display:none"></div>
       </div>
     `;
     document.documentElement.appendChild(overlay);
@@ -2321,6 +2335,9 @@ class ADHDHighlighter {
     const preset3Btn = document.getElementById('agfPreset3Btn');
     const preset4Btn = document.getElementById('agfPreset4Btn');
     const presetResetBtn = document.getElementById('agfPresetResetBtn');
+    const toastEl = document.getElementById('agfToast');
+    let toastTimer = null;
+    const showToast = (msg) => { if (!toastEl) return; toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
@@ -2361,15 +2378,30 @@ class ADHDHighlighter {
       p4:    { qBg: '#fcfcfc', aBg: '#f3f3f3', displayBg: '#ffffff', qText: '#1a1a1a', aText: '#1a1a1a' }
     };
 
-    const applyPreset = (cfg) => {
+    const applyPreset = (cfg, name) => { applyColorConfig(cfg); fillColorsInputs2(); if (name) showToast(name + '预设已应用'); };
+    if (preset1Btn) preset1Btn.addEventListener('click', () => applyPreset(presets.p1, '柔和米色'));
+    if (preset2Btn) preset2Btn.addEventListener('click', () => applyPreset(presets.p2, '护眼微绿'));
+    if (preset3Btn) preset3Btn.addEventListener('click', () => applyPreset(presets.p3, '柔黄纸感'));
+    if (preset4Btn) preset4Btn.addEventListener('click', () => applyPreset(presets.p4, '轻灰纸张'));
+    if (presetResetBtn) presetResetBtn.addEventListener('click', () => applyPreset(presets.reset, '已重置默认'));
+
+    const applyColorsFromInputs2 = (label) => {
+      const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
+      const cfg = {
+        qBg: (colorQBg2 && colorQBg2.value) || d.qBg,
+        aBg: (colorABg2 && colorABg2.value) || d.aBg,
+        displayBg: (colorDisplayBg2 && colorDisplayBg2.value) || d.displayBg,
+        qText: (colorQText2 && colorQText2.value) || d.qText,
+        aText: (colorAText2 && colorAText2.value) || d.aText
+      };
       applyColorConfig(cfg);
-      fillColorsInputs2();
+      if (label) showToast(label + '颜色已应用');
     };
-    if (preset1Btn) preset1Btn.addEventListener('click', () => applyPreset(presets.p1));
-    if (preset2Btn) preset2Btn.addEventListener('click', () => applyPreset(presets.p2));
-    if (preset3Btn) preset3Btn.addEventListener('click', () => applyPreset(presets.p3));
-    if (preset4Btn) preset4Btn.addEventListener('click', () => applyPreset(presets.p4));
-    if (presetResetBtn) presetResetBtn.addEventListener('click', () => applyPreset(presets.reset));
+    if (colorQBg2) colorQBg2.addEventListener('input', () => applyColorsFromInputs2('问题背景'));
+    if (colorABg2) colorABg2.addEventListener('input', () => applyColorsFromInputs2('回答背景'));
+    if (colorDisplayBg2) colorDisplayBg2.addEventListener('input', () => applyColorsFromInputs2('显示区背景'));
+    if (colorQText2) colorQText2.addEventListener('input', () => applyColorsFromInputs2('问题文本'));
+    if (colorAText2) colorAText2.addEventListener('input', () => applyColorsFromInputs2('回答文本'));
 
     const PROVIDERS_CONFIG = {
       deepseek: {
