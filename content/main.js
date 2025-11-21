@@ -2774,6 +2774,31 @@ class ADHDHighlighter {
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
       chatList.scrollTop = chatList.scrollHeight;
+      const highlightBubbleContent = (root) => {
+        if (!root || !this.pageProcessor) return;
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              try {
+                return this.pageProcessor.shouldProcessNode(node)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_REJECT;
+              } catch (_) {
+                return NodeFilter.FILTER_REJECT;
+              }
+            }
+          }
+        );
+        const nodes = [];
+        let n;
+        while ((n = walker.nextNode())) nodes.push(n);
+        nodes.forEach(node => {
+          try { this.pageProcessor.processTextNode(node); } catch (_) {}
+        });
+      };
+      highlightBubbleContent(contentEl);
     };
 
     const startAssistantStream = () => {
@@ -3043,6 +3068,32 @@ class ADHDHighlighter {
       if (streamingBubble) {
         const html = markdownToHtml(streamingText);
         if (streamingContentEl) streamingContentEl.innerHTML = html; else streamingBubble.innerHTML = html;
+        if (!this.__streamHighlightTimer) this.__streamHighlightTimer = null;
+        if (this.__streamHighlightTimer) clearTimeout(this.__streamHighlightTimer);
+        this.__streamHighlightTimer = setTimeout(() => {
+          try {
+            const walker = document.createTreeWalker(
+              streamingContentEl || streamingBubble,
+              NodeFilter.SHOW_TEXT,
+              {
+                acceptNode: (node) => {
+                  try {
+                    return this.pageProcessor.shouldProcessNode(node)
+                      ? NodeFilter.FILTER_ACCEPT
+                      : NodeFilter.FILTER_REJECT;
+                  } catch (_) {
+                    return NodeFilter.FILTER_REJECT;
+                  }
+                }
+              }
+            );
+            const nodes = [];
+            let n;
+            while ((n = walker.nextNode())) nodes.push(n);
+            nodes.forEach(node => { try { this.pageProcessor.processTextNode(node); } catch (_) {} });
+          } catch (_) {}
+          this.__streamHighlightTimer = null;
+        }, 200);
         if (chatList) chatList.scrollTop = chatList.scrollHeight;
       }
     };
@@ -3053,6 +3104,30 @@ class ADHDHighlighter {
       }
       streamingText = '';
       streamingBubble = null;
+      try {
+        const target = streamingContentEl;
+        if (target) {
+          const walker = document.createTreeWalker(
+            target,
+            NodeFilter.SHOW_TEXT,
+            {
+              acceptNode: (node) => {
+                try {
+                  return this.pageProcessor.shouldProcessNode(node)
+                    ? NodeFilter.FILTER_ACCEPT
+                    : NodeFilter.FILTER_REJECT;
+                } catch (_) {
+                  return NodeFilter.FILTER_REJECT;
+                }
+              }
+            }
+          );
+          const nodes = [];
+          let n;
+          while ((n = walker.nextNode())) nodes.push(n);
+          nodes.forEach(node => { try { this.pageProcessor.processTextNode(node); } catch (_) {} });
+        }
+      } catch (_) {}
     };
 
     if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } sendChat(); });
