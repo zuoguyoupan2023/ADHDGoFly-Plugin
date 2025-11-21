@@ -15,6 +15,14 @@
   const inExcludedRegion = (el) => {
     try { return !!el.closest('header,nav,footer,aside'); } catch (_) { return false; }
   };
+  const isExtensionUi = (el) => {
+    if (!el) return false;
+    try { if (el.closest('[class*="agf-"]')) return true; } catch (_) {}
+    const id = typeof el.id === 'string' ? el.id : '';
+    if (id && id.startsWith('agf')) return true;
+    try { const s = (el.ownerDocument ? el.ownerDocument.defaultView : window).getComputedStyle(el); const zi = parseInt(s.zIndex || '0', 10); if (s.position === 'fixed' && zi >= 2147483000) return true; } catch (_) {}
+    return false;
+  };
   const selectRoots = () => Array.from(document.querySelectorAll('main, .theme-doc-markdown, .markdown, .docItemContainer, [role="main"], .content'));
   const textFromEl = (el) => {
     const tag = (el.tagName || '').toLowerCase();
@@ -39,6 +47,7 @@
       if (isHidden(el)) return;
       if (isExcluded(el)) return;
       if (inExcludedRegion(el)) return;
+      if (isExtensionUi(el)) return;
       const tag = (el.tagName || '').toLowerCase();
       if (/^h[1-6]$/.test(tag)) {
         if (current && current.blocks.length) sections.push(current);
@@ -60,13 +69,15 @@
     const roots = selectRoots();
     roots.forEach(root => { const secs = collectSectionsFromRoot(root); if (secs && secs.length) sections = sections.concat(secs); });
     const mo = new MutationObserver((muts) => {
-      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; const h = el.closest('h1,h2,h3,h4,h5,h6'); if (h) { const title = textFromEl(h); let target = sections.find(s => s.sectionTitle === title); if (!target) { target = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || 'HEADING', headingPath: (h.tagName||'').toLowerCase() + ':' + (title || ''), blocks: [] }; sections.push(target); } target.blocks.push({ text: t, orderIndex: target.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } else { let rootSec = sections.find(s => s.sectionId === 'root'); if (!rootSec) { rootSec = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] }; sections.push(rootSec); } rootSec.blocks.push({ text: t, orderIndex: rootSec.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } } }); });
+      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; if (isExtensionUi(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; const h = el.closest('h1,h2,h3,h4,h5,h6'); if (h) { const title = textFromEl(h); let target = sections.find(s => s.sectionTitle === title); if (!target) { target = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || 'HEADING', headingPath: (h.tagName||'').toLowerCase() + ':' + (title || ''), blocks: [] }; sections.push(target); } target.blocks.push({ text: t, orderIndex: target.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } else { let rootSec = sections.find(s => s.sectionId === 'root'); if (!rootSec) { rootSec = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] }; sections.push(rootSec); } rootSec.blocks.push({ text: t, orderIndex: rootSec.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } } }); });
     });
     try { mo.observe(document.body, { childList: true, subtree: true }); } catch (_) {}
     await new Promise(r => setTimeout(r, durationMs || 6000));
     try { mo.disconnect(); } catch (_) {}
     if (!sections.length) {
-      const snapshot = normalize(document.body ? document.body.innerText || '' : '');
+      const roots = selectRoots();
+      const parts = roots.map(r => normalize(r ? r.innerText || '' : '')).filter(t => t && t.length > 2);
+      const snapshot = parts.join('\n');
       if (snapshot && snapshot.length > 200) {
         sections = [{ sectionId: 'dynamic-snapshot-' + Date.now(), sectionTitle: 'DYNAMIC_SNAPSHOT', headingPath: 'dynamic:snapshot', blocks: [{ text: snapshot, orderIndex: 0, role: 'paragraph', tag: 'div' }] }];
       }

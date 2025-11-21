@@ -3627,6 +3627,13 @@ class ADHDHighlighter {
     };
 
     const buildSummaryPrompt = (segs) => {
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
+      const filterUiText = (s) => {
+        const arr = String(s||'').split('\n');
+        const out = [];
+        for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line)) out.push(arr[i]); }
+        return out.join('\n');
+      };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
@@ -3635,7 +3642,7 @@ class ADHDHighlighter {
       lines.push('存储的详情: ' + segs.length + ' 段');
       const tops = segs.slice(0, 5);
       tops.forEach((r, i) => {
-        const pv = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n').slice(0, 300) : '');
+        const pv = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')).slice(0, 300) : '');
         lines.push('章节' + (i+1) + ': ' + (r.sectionTitle || '') + ' 预览: ' + pv);
       });
       const MAX_CHARS = 12000;
@@ -3643,7 +3650,7 @@ class ADHDHighlighter {
       const bodyTexts = [];
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
-        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
         if (t.length > remain) t = t.slice(0, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
@@ -3657,6 +3664,8 @@ class ADHDHighlighter {
     };
 
     const buildStructuredSummaryPrompt = (segs) => {
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
+      const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
@@ -3669,7 +3678,7 @@ class ADHDHighlighter {
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         const h = r.sectionTitle || '';
-        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
         if (t.length > remain) t = t.slice(0, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
@@ -3681,6 +3690,8 @@ class ADHDHighlighter {
     };
 
     const buildExplainPrompt = (segs) => {
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
+      const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
@@ -3692,7 +3703,7 @@ class ADHDHighlighter {
       const bodyTexts = [];
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
-        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
         if (t.length > remain) t = t.slice(0, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
@@ -3704,6 +3715,8 @@ class ADHDHighlighter {
     };
 
     const buildOutlinePrompt = (segs) => {
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
+      const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
@@ -3716,7 +3729,7 @@ class ADHDHighlighter {
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         const h = r.sectionTitle || '';
-        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
         if (t.length > remain) t = t.slice(0, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
@@ -3728,6 +3741,8 @@ class ADHDHighlighter {
     };
 
     const buildKeywordsPrompt = (segs) => {
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送']);
+      const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
@@ -3739,7 +3754,7 @@ class ADHDHighlighter {
       const bodyTexts = [];
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
-        let t = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
+        let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
         if (t.length > remain) t = t.slice(0, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
