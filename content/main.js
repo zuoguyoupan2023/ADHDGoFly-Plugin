@@ -2024,11 +2024,12 @@ class ADHDHighlighter {
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
+      .agf-settings-layout{height:100%;min-height:0}
       .agf-settings-sidebar{display:flex;flex-direction:column;gap:6px}
       .agf-settings-tab{height:28px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;text-align:left}
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
-      #agfSettingsContentApi{min-height:0}
+      #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2062,9 +2063,9 @@ class ADHDHighlighter {
             <button id="agfAiTabWrench">🔧</button>
           </div>
           <div class="agf-ai-controls">
-            <button id="agfAiMax">+</button>
-            <button id="agfAiMin">-</button>
-            <button id="agfAiClose">X</button>
+            <button id="agfAiFull">●</button>
+            <button id="agfAiHalf">◑</button>
+            <button id="agfAiMini">○</button>
           </div>
         </div>
       </div>
@@ -2242,9 +2243,9 @@ class ADHDHighlighter {
     const onMove = (e) => { if (!dragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; let newLeft = startLeft + dx; let newTop = startTop + dy; const maxLeft = window.innerWidth - overlay.offsetWidth; const maxTop = window.innerHeight - overlay.offsetHeight; if (newLeft < 0) newLeft = 0; if (newTop < 0) newTop = 0; if (newLeft > maxLeft) newLeft = maxLeft; if (newTop > maxTop) newTop = maxTop; overlay.style.left = newLeft + 'px'; overlay.style.top = newTop + 'px'; };
     const onUp = () => { dragging = false; };
     if (header) { header.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); }
-    const minBtn = document.getElementById('agfAiMin');
-    const closeBtn = document.getElementById('agfAiClose');
-    const maxBtn = document.getElementById('agfAiMax');
+    const fullBtn = document.getElementById('agfAiFull');
+    const halfBtn = document.getElementById('agfAiHalf');
+    const miniBtn = document.getElementById('agfAiMini');
     const titleLabel = document.getElementById('agfTitleLabel');
     const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
@@ -2304,9 +2305,9 @@ class ADHDHighlighter {
     const preset3Btn = document.getElementById('agfPreset3Btn');
     const preset4Btn = document.getElementById('agfPreset4Btn');
     const presetResetBtn = document.getElementById('agfPresetResetBtn');
-    if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
-    if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
-    if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
+    if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
+    if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
+    if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
     bubble.addEventListener('click', () => this.restoreAiSettingPanel());
     const showChat = () => { if (viewChat) viewChat.style.display = 'grid'; if (viewSettings) viewSettings.style.display = 'none'; };
     const showSettings = () => { if (viewChat) viewChat.style.display = 'none'; if (viewSettings) viewSettings.style.display = 'block'; setActiveSettingsTab('api'); };
@@ -2330,10 +2331,10 @@ class ADHDHighlighter {
 
     const presets = {
       reset: { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' },
-      p1:    { qBg: '#ffffff', aBg: '#f9f5e8', displayBg: '#ffffff', qText: '#222222', aText: '#222222' },
-      p2:    { qBg: '#f6fbf6', aBg: '#fffdf5', displayBg: '#ffffff', qText: '#1f2d3d', aText: '#1f2d3d' },
-      p3:    { qBg: '#ffffff', aBg: '#fff7e6', displayBg: '#ffffff', qText: '#2d2d2d', aText: '#2d2d2d' },
-      p4:    { qBg: '#fcfcfc', aBg: '#f3f3f3', displayBg: '#ffffff', qText: '#2a2a2a', aText: '#2a2a2a' }
+      p1:    { qBg: '#ffffff', aBg: '#f9f5e8', displayBg: '#ffffff', qText: '#3e3a2f', aText: '#3e3a2f' },
+      p2:    { qBg: '#f6fbf6', aBg: '#fffdf5', displayBg: '#ffffff', qText: '#0f3d2e', aText: '#0f3d2e' },
+      p3:    { qBg: '#ffffff', aBg: '#fff7e6', displayBg: '#ffffff', qText: '#3a2f0b', aText: '#3a2f0b' },
+      p4:    { qBg: '#fcfcfc', aBg: '#f3f3f3', displayBg: '#ffffff', qText: '#1a1a1a', aText: '#1a1a1a' }
     };
 
     const applyPreset = (cfg) => {
@@ -3347,6 +3348,25 @@ class ADHDHighlighter {
     overlay.style.top = '0px';
     overlay.style.width = window.innerWidth + 'px';
     overlay.style.height = window.innerHeight + 'px';
+  }
+
+  halfAiSettingPanel() {
+    const overlay = document.getElementById('agfAiSettingOverlay');
+    if (!overlay) return;
+    this.__aiGeom = {
+      left: parseInt(getComputedStyle(overlay).left, 10) || 0,
+      top: parseInt(getComputedStyle(overlay).top, 10) || 0,
+      width: overlay.offsetWidth,
+      height: overlay.offsetHeight
+    };
+    const w = Math.floor(window.innerWidth * 0.5);
+    const h = Math.floor(window.innerHeight * 0.66);
+    const left = Math.max(0, Math.floor((window.innerWidth - w) / 2));
+    const top = Math.max(0, Math.floor((window.innerHeight - h) / 2));
+    overlay.style.left = left + 'px';
+    overlay.style.top = top + 'px';
+    overlay.style.width = w + 'px';
+    overlay.style.height = h + 'px';
   }
 
   /**
