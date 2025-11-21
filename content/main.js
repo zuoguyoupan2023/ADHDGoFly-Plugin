@@ -2030,6 +2030,9 @@ class ADHDHighlighter {
       .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-records-list{display:flex;flex-direction:column;gap:8px}
       .agf-record-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333}
+      .agf-record-subject{font-size:12px;color:#666}
+      .agf-record-actions{display:inline-flex;gap:8px}
+      .agf-record-delete{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
@@ -2758,6 +2761,32 @@ class ADHDHighlighter {
     let streamingContentEl = null;
     let qaCounter = 0;
     let nextPromptIsGenerated = false;
+    let currentSubject = '';
+    let currentPrefix = '';
+    let currentPageTitle = '';
+    let currentPageUrl = '';
+    let currentCanonicalUrl = '';
+    const getMetaTitle = () => {
+      try {
+        const og = document.querySelector('meta[property="og:title"]');
+        if (og && og.content) return og.content.trim();
+      } catch (_) {}
+      try {
+        const tw = document.querySelector('meta[name="twitter:title"]');
+        if (tw && tw.content) return tw.content.trim();
+      } catch (_) {}
+      try {
+        const h1 = document.querySelector('h1');
+        if (h1 && h1.textContent) return h1.textContent.trim();
+      } catch (_) {}
+      return (document.title || '').trim();
+    };
+    const getCanonicalUrl = () => {
+      const pageUrl = window.location.href;
+      let canonicalUrl = pageUrl;
+      try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+      return { pageUrl, canonicalUrl };
+    };
     const dbOpen = () => new Promise((resolve, reject) => {
       const req = indexedDB.open('agf_ai_db', 1);
       req.onupgradeneeded = () => {
@@ -2809,6 +2838,16 @@ class ADHDHighlighter {
         req.onerror = () => reject(req.error);
       });
     };
+    const dbDeleteConversation = async (id) => {
+      const db = await dbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('conversations', 'readwrite');
+        const store = tx.objectStore('conversations');
+        const req = store.delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    };
     const newConversation = async () => {
       currentConversationId = 'agf-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
       chatMessages = [];
@@ -2817,7 +2856,9 @@ class ADHDHighlighter {
       const prov = sessionProviderSelect && sessionProviderSelect.value || '';
       const model = sessionModelSelect && sessionModelSelect.value || '';
       const now = Date.now();
-      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: [] };
+      if (!currentPageTitle) currentPageTitle = getMetaTitle();
+      if (!currentPageUrl || !currentCanonicalUrl) { const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; }
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: [], subject: currentSubject || '', prefix: currentPrefix || '', pageTitle: currentPageTitle || '', pageUrl: currentPageUrl || '', canonicalUrl: currentCanonicalUrl || '' };
       try { await dbPutConversation(convo); } catch (_) {}
     };
     const saveConversationSnapshot = async () => {
@@ -2825,7 +2866,7 @@ class ADHDHighlighter {
       const prov = sessionProviderSelect && sessionProviderSelect.value || '';
       const model = sessionModelSelect && sessionModelSelect.value || '';
       const now = Date.now();
-      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages };
+      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || '', prefix: currentPrefix || '', pageTitle: currentPageTitle || '', pageUrl: currentPageUrl || '', canonicalUrl: currentCanonicalUrl || '' };
       try { await dbPutConversation(convo); } catch (_) {}
     };
     const openRecordsListPanel = async () => {
@@ -2833,15 +2874,49 @@ class ADHDHighlighter {
       recordsList.innerHTML = '';
       let items = [];
       try { items = await dbListConversations(50); } catch (_) {}
+      const deriveSubject = (item) => {
+        let prefix = item.prefix || '';
+        const msgs = item.messages || [];
+        if (!prefix) {
+          const u = msgs.find(m => m.role === 'user');
+          const c = (u && u.content) || '';
+          if (/总结/.test(c)) prefix = '总结';
+          else if (/结构化摘要/.test(c)) prefix = '结构化摘要';
+          else if (/简明解释/.test(c)) prefix = '简明解释';
+          else if (/大纲/.test(c)) prefix = '提取大纲';
+          else if (/关键词|术语/.test(c)) prefix = '提取关键词与术语';
+        }
+        let title = item.pageTitle || '';
+        if (!title) {
+          const u = msgs.find(m => m.role === 'user');
+          const c = (u && u.content) || '';
+          let urlStr = '';
+          const m = c.match(/页面:\s*(https?:\/\/\S+)/) || c.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
+          if (m) urlStr = m[1]; else urlStr = item.canonicalUrl || item.pageUrl || '';
+          try { if (urlStr) { const u2 = new URL(urlStr, window.location.href); title = u2.hostname; } } catch (_) { title = urlStr || ''; }
+        }
+        return (prefix ? (prefix + ' · ') : '') + (title || '未命名');
+      };
       items.forEach(item => {
         const el = document.createElement('div');
         el.className = 'agf-record-item';
-        const left = document.createElement('div');
-        left.textContent = new Date(item.createdAt).toLocaleString();
-        const right = document.createElement('button');
-        right.className = 'agf-records-close';
-        right.textContent = '打开';
-        right.addEventListener('click', async () => {
+        const leftBox = document.createElement('div');
+        leftBox.style.display = 'flex';
+        leftBox.style.flexDirection = 'column';
+        leftBox.style.alignItems = 'flex-start';
+        const dateEl = document.createElement('div');
+        dateEl.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
+        const subjEl = document.createElement('div');
+        subjEl.className = 'agf-record-subject';
+        subjEl.textContent = item.subject || deriveSubject(item);
+        leftBox.appendChild(dateEl);
+        leftBox.appendChild(subjEl);
+        const actions = document.createElement('div');
+        actions.className = 'agf-record-actions';
+        const openBtn = document.createElement('button');
+        openBtn.className = 'agf-records-close';
+        openBtn.textContent = '打开';
+        openBtn.addEventListener('click', async () => {
           const data = await dbGetConversation(item.id);
           if (data && data.messages) {
             chatMessages = data.messages.slice();
@@ -2854,8 +2929,18 @@ class ADHDHighlighter {
             hideRecords();
           }
         });
-        el.appendChild(left);
-        el.appendChild(right);
+        const delBtn = document.createElement('button');
+        delBtn.className = 'agf-record-delete';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', async () => {
+          const ok = window.confirm('确定删除该记录？');
+          if (!ok) return;
+          try { await dbDeleteConversation(item.id); el.remove(); if (toastEl) { toastEl.textContent = '记录已删除'; toastEl.style.display = 'block'; setTimeout(() => { toastEl.style.display = 'none'; }, 2000); } } catch (_) {}
+        });
+        actions.appendChild(openBtn);
+        actions.appendChild(delBtn);
+        el.appendChild(leftBox);
+        el.appendChild(actions);
         recordsList.appendChild(el);
       });
       showRecords();
@@ -3339,12 +3424,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); sendChat(); });
     const onComposerSendClick = (e) => {
       if (!composerSend) return;
       if (composerSend.dataset.mode === 'refresh') { e.preventDefault(); try { window.location.reload(); } catch (_) {} return; }
