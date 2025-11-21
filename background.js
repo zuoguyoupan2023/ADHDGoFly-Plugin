@@ -608,6 +608,106 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true, queued: true });
     })();
     return true;
+  } else if (request.action === 'agfConvPut') {
+    const obj = request.data || {};
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readwrite');
+        const st = tx.objectStore('conversations');
+        const reqPut = st.put(obj);
+        reqPut.onsuccess = () => sendResponse({ success: true });
+        reqPut.onerror = () => sendResponse({ success: false, error: String(reqPut.error||'put_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvGet') {
+    const id = request.id;
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readonly');
+        const st = tx.objectStore('conversations');
+        const reqGet = st.get(id);
+        reqGet.onsuccess = () => sendResponse({ success: true, item: reqGet.result || null });
+        reqGet.onerror = () => sendResponse({ success: false, error: String(reqGet.error||'get_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvList') {
+    const limit = Math.max(1, Math.min(1000, Number(request.limit||500)));
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readonly');
+        const st = tx.objectStore('conversations');
+        const idx = st.index('createdAt');
+        const items = [];
+        const reqCur = idx.openCursor(null, 'prev');
+        reqCur.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) { sendResponse({ success: true, items }); return; }
+          items.push(cursor.value);
+          if (items.length >= limit) { sendResponse({ success: true, items }); return; }
+          cursor.continue();
+        };
+        reqCur.onerror = () => sendResponse({ success: false, error: String(reqCur.error||'cursor_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvDelete') {
+    const id = request.id;
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readwrite');
+        const st = tx.objectStore('conversations');
+        const reqDel = st.delete(id);
+        reqDel.onsuccess = () => sendResponse({ success: true });
+        reqDel.onerror = () => sendResponse({ success: false, error: String(reqDel.error||'delete_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
   }
 });
 

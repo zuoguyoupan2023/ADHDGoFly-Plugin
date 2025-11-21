@@ -2804,67 +2804,38 @@ class ADHDHighlighter {
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
       return { pageUrl, canonicalUrl };
     };
-    const dbOpen = () => new Promise((resolve, reject) => {
-      const req = indexedDB.open('agf_ai_db', 1);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('conversations')) {
-          const store = db.createObjectStore('conversations', { keyPath: 'id' });
-          store.createIndex('createdAt', 'createdAt');
-          store.createIndex('updatedAt', 'updatedAt');
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+    const dbPutConversation = async (obj) => new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'agfConvPut', data: obj }, (res) => {
+          if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
+          if (res && res.success) resolve(true); else reject((res && res.error) || 'put_failed');
+        });
+      } catch (e) { reject(e); }
     });
-    const dbPutConversation = async (obj) => {
-      const db = await dbOpen();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('conversations', 'readwrite');
-        const store = tx.objectStore('conversations');
-        const req = store.put(obj);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => reject(req.error);
-      });
-    };
-    const dbGetConversation = async (id) => {
-      const db = await dbOpen();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('conversations', 'readonly');
-        const store = tx.objectStore('conversations');
-        const req = store.get(id);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => reject(req.error);
-      });
-    };
-    const dbListConversations = async (limit = 50) => {
-      const db = await dbOpen();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('conversations', 'readonly');
-        const store = tx.objectStore('conversations');
-        const idx = store.index('createdAt');
-        const items = [];
-        const req = idx.openCursor(null, 'prev');
-        req.onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (!cursor) { resolve(items); return; }
-          items.push(cursor.value);
-          if (items.length >= limit) { resolve(items); return; }
-          cursor.continue();
-        };
-        req.onerror = () => reject(req.error);
-      });
-    };
-    const dbDeleteConversation = async (id) => {
-      const db = await dbOpen();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('conversations', 'readwrite');
-        const store = tx.objectStore('conversations');
-        const req = store.delete(id);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => reject(req.error);
-      });
-    };
+    const dbGetConversation = async (id) => new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'agfConvGet', id }, (res) => {
+          if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
+          if (res && res.success) resolve(res.item || null); else reject((res && res.error) || 'get_failed');
+        });
+      } catch (e) { reject(e); }
+    });
+    const dbListConversations = async (limit = 50) => new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'agfConvList', limit }, (res) => {
+          if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
+          if (res && res.success) resolve(res.items || []); else reject((res && res.error) || 'list_failed');
+        });
+      } catch (e) { reject(e); }
+    });
+    const dbDeleteConversation = async (id) => new Promise((resolve, reject) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'agfConvDelete', id }, (res) => {
+          if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
+          if (res && res.success) resolve(true); else reject((res && res.error) || 'delete_failed');
+        });
+      } catch (e) { reject(e); }
+    });
     const newConversation = async () => {
       currentConversationId = 'agf-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
       chatMessages = [];
