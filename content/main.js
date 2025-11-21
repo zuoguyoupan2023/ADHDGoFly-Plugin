@@ -2047,13 +2047,11 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span>ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
-            <button id="agfAiTabNote">📝</button>
             <button id="agfAiTabDoc">📃</button>
-            <button id="agfAiTabPalette">🎨</button>
             <button id="agfAiTabWrench">🔧</button>
           </div>
           <div class="agf-ai-controls">
@@ -2106,7 +2104,7 @@ class ADHDHighlighter {
           </div>
             <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
               <div class="agf-settings-group">
-                <div style="font-size:13px;color:#333;font-weight:600;">AI设置</div>
+                <div style="font-size:13px;color:#333;font-weight:600;">综合设置</div>
                 <div class="agf-settings-row">
                   <div class="agf-label">服务商</div>
                   <div id="agfProviderList" class="agf-button-list"></div>
@@ -2138,6 +2136,10 @@ class ADHDHighlighter {
                 <div class="agf-settings-row">
                   <div class="agf-label">敏感过滤</div>
                   <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                </div>
+                <div class="agf-settings-row">
+                  <div class="agf-label">外观设置</div>
+                  <button id="agfOpenColorsBtn" class="agf-input" style="height:28px;min-width:64px;">颜色管理</button>
                 </div>
                 <div class="agf-settings-row">
                   <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
@@ -2209,6 +2211,7 @@ class ADHDHighlighter {
     const minBtn = document.getElementById('agfAiMin');
     const closeBtn = document.getElementById('agfAiClose');
     const maxBtn = document.getElementById('agfAiMax');
+    const titleLabel = document.getElementById('agfTitleLabel');
     const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
     const tabDoc = document.getElementById('agfAiTabDoc');
@@ -2244,7 +2247,6 @@ class ADHDHighlighter {
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
     const recordsClose = overlay.querySelector('#agfRecordsClose');
-    const tabPalette = document.getElementById('agfAiTabPalette');
     const colorsPanel = overlay.querySelector('#agfColorsPanel');
     const colorsClose = overlay.querySelector('#agfColorsClose');
     const colorQBg = document.getElementById('agfColorQBg');
@@ -2257,13 +2259,11 @@ class ADHDHighlighter {
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     bubble.addEventListener('click', () => this.restoreAiSettingPanel());
-    if (tabNote && tabWrench && viewChat && viewSettings) {
-      const showChat = () => { viewChat.style.display = 'grid'; viewSettings.style.display = 'none'; };
-      const showSettings = () => { viewChat.style.display = 'none'; viewSettings.style.display = 'block'; };
-      tabNote.addEventListener('click', showChat);
-      tabWrench.addEventListener('click', showSettings);
-      showChat();
-    }
+    const showChat = () => { if (viewChat) viewChat.style.display = 'grid'; if (viewSettings) viewSettings.style.display = 'none'; };
+    const showSettings = () => { if (viewChat) viewChat.style.display = 'none'; if (viewSettings) viewSettings.style.display = 'block'; };
+    if (tabWrench) tabWrench.addEventListener('click', showSettings);
+    if (titleLabel) titleLabel.addEventListener('click', showChat);
+    showChat();
     const showRecords = () => { if (recordsPanel) recordsPanel.style.display = 'block'; };
     const hideRecords = () => { if (recordsPanel) recordsPanel.style.display = 'none'; };
     if (recordsClose) recordsClose.addEventListener('click', hideRecords);
@@ -2503,7 +2503,8 @@ class ADHDHighlighter {
       return '#ffffff';
     };
     const openColorsPanel = () => { fillColorsInputs(); showColors(); };
-    if (tabPalette) tabPalette.addEventListener('click', openColorsPanel);
+    const openColorsBtn = document.getElementById('agfOpenColorsBtn');
+    if (openColorsBtn) openColorsBtn.addEventListener('click', openColorsPanel);
     if (colorsApply) colorsApply.addEventListener('click', () => {
       const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
       const cfg = {
