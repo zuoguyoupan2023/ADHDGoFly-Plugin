@@ -2013,7 +2013,7 @@ class ADHDHighlighter {
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
-      .agf-composer{display:grid;grid-template-rows:auto 1fr;gap:8px;height:100%}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:8px;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
@@ -2051,6 +2051,7 @@ class ADHDHighlighter {
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
+      .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-more-wrap{position:relative;display:inline-block;margin-left:8px}
@@ -2119,6 +2120,7 @@ class ADHDHighlighter {
                   <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
                   <button class="agf-send" id="agfComposerSend">发送</button>
                 </div>
+                <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none">刷新以采取全文</div>
               </div>
             </div>
           </div>
@@ -2289,6 +2291,7 @@ class ADHDHighlighter {
     const btnExplain = document.getElementById('agfBtnExplain');
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
+    const refreshHint = document.getElementById('agfRefreshHint');
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
     const composerSend = document.getElementById('agfComposerSend');
@@ -3089,7 +3092,12 @@ class ADHDHighlighter {
         if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
       }
       const has = segs.length > 0;
-      if (refreshBtn) refreshBtn.classList.toggle('breathing', !has);
+      if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
+      if (refreshHint) refreshHint.style.display = has ? 'none' : 'block';
+      if (composerSend) {
+        composerSend.dataset.mode = has ? 'send' : 'refresh';
+        composerSend.textContent = has ? '发送' : '⟳';
+      }
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (moreBtn) { moreBtn.disabled = !has; }
       if (btnStructured) btnStructured.disabled = !has;
@@ -3298,8 +3306,19 @@ class ADHDHighlighter {
     if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
     if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
     if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
-    if (composerSend) composerSend.addEventListener('click', sendChat);
-    if (composerInput) composerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+    const onComposerSendClick = (e) => {
+      if (!composerSend) return;
+      if (composerSend.dataset.mode === 'refresh') { e.preventDefault(); try { window.location.reload(); } catch (_) {} return; }
+      sendChat();
+    };
+    if (composerSend) composerSend.addEventListener('click', onComposerSendClick);
+    if (composerInput) composerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (composerSend && composerSend.dataset.mode === 'refresh') { try { window.location.reload(); } catch (_) {} }
+        else { sendChat(); }
+      }
+    });
     if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
     if (tabDoc) tabDoc.addEventListener('click', () => { openRecordsListPanel(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
