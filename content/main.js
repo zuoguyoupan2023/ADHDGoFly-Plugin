@@ -2226,7 +2226,7 @@ class ADHDHighlighter {
     const bubble = document.createElement('div');
     bubble.id = 'agfAiBubble';
     bubble.className = 'agf-ai-bubble';
-    bubble.textContent = '🔧';
+    bubble.textContent = 'A';
     document.documentElement.appendChild(bubble);
     const resizeRight = document.createElement('div');
     resizeRight.className = 'agf-resize-right';
@@ -2931,6 +2931,7 @@ class ADHDHighlighter {
       const model = sessionModelSelect.value;
       const prompt = composerInput.value.trim();
       if (!prompt) return;
+      if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
       appendMessage('user', prompt);
       chatMessages.push({ role: 'user', content: prompt });
       composerInput.value = '';
@@ -3319,7 +3320,13 @@ class ADHDHighlighter {
       };
     }
     if (overlay) overlay.style.display = 'none';
-    if (bubble) bubble.style.display = 'flex';
+    if (bubble) {
+      bubble.style.display = 'flex';
+      bubble.style.right = '12px';
+      bubble.style.bottom = 'auto';
+      bubble.style.top = '12px';
+      bubble.style.left = 'auto';
+    }
   }
 
   restoreAiSettingPanel() {
