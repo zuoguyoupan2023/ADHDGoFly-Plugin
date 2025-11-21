@@ -2356,7 +2356,7 @@ class ADHDHighlighter {
     if (tabWrench) tabWrench.addEventListener('click', showSettings);
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
-    let recordsScope = 'current';
+    let recordsScope = 'all';
     const setRecordsScope = (scope) => {
       recordsScope = scope;
       if (recordsTabCurrent) recordsTabCurrent.classList.toggle('active', scope === 'current');
@@ -2890,7 +2890,7 @@ class ADHDHighlighter {
       if (!recordsPanel || !recordsList) return;
       recordsList.innerHTML = '';
       let items = [];
-      try { items = await dbListConversations(50); } catch (_) {}
+      try { items = await dbListConversations(500); } catch (_) {}
       try {
         if (recordsScope === 'current') {
           const u = getCanonicalUrl();
@@ -2915,7 +2915,7 @@ class ADHDHighlighter {
           const c = (u && u.content) || '';
           let urlStr = '';
           const m = c.match(/页面:\s*(https?:\/\/\S+)/) || c.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
-          if (m) urlStr = m[1]; else urlStr = item.canonicalUrl || item.pageUrl || '';
+          if (m) urlStr = m[1]; else urlStr = item.pageUrl || item.canonicalUrl || '';
           try { if (urlStr) { const u2 = new URL(urlStr, window.location.href); title = u2.hostname; } } catch (_) { title = urlStr || ''; }
         }
         return (prefix ? (prefix + ' · ') : '') + (title || '未命名');
@@ -2934,7 +2934,7 @@ class ADHDHighlighter {
         const subjectText = item.subject || deriveSubject(item);
         subjEl.textContent = subjectText;
         if (recordsScope === 'all') {
-          const linkUrl = item.canonicalUrl || item.pageUrl || '';
+          const linkUrl = item.pageUrl || item.canonicalUrl || '';
           if (linkUrl) {
             const a = document.createElement('a');
             a.className = 'agf-record-link';
