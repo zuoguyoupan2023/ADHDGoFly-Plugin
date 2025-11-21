@@ -2129,6 +2129,10 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn">T</button>
                     <button class="agf-mode-btn active">M</button>
                   </div>
+                  <div class="agf-highlight-toggle">
+                    <button class="agf-mode-btn active" id="agfHighlightOn">高亮</button>
+                    <button class="agf-mode-btn" id="agfHighlightOff">不亮</button>
+                  </div>
                 </div>
                 <div class="agf-composer-body">
                   <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
@@ -2601,6 +2605,18 @@ class ADHDHighlighter {
       modeBtns[0].addEventListener('click', async () => { setActiveMode('persistent'); panelMode = 'persistent'; try { await chrome.storage.local.set({ aiPanelMode: 'persistent' }); } catch (_) {} });
       modeBtns[1].addEventListener('click', async () => { setActiveMode('manual'); panelMode = 'manual'; try { await chrome.storage.local.set({ aiPanelMode: 'manual' }); } catch (_) {} });
     }
+
+    const highlightOnBtn = overlay.querySelector('#agfHighlightOn');
+    const highlightOffBtn = overlay.querySelector('#agfHighlightOff');
+    let highlightEnabled = true;
+    const setHighlightEnabled = (on) => {
+      highlightEnabled = !!on;
+      if (highlightOnBtn) highlightOnBtn.classList.toggle('active', !!on);
+      if (highlightOffBtn) highlightOffBtn.classList.toggle('active', !on);
+    };
+    setHighlightEnabled(true);
+    if (highlightOnBtn) highlightOnBtn.addEventListener('click', () => setHighlightEnabled(true));
+    if (highlightOffBtn) highlightOffBtn.addEventListener('click', () => setHighlightEnabled(false));
 
     const initParseToggles = async () => {
       let auto = true;
@@ -3317,7 +3333,7 @@ class ADHDHighlighter {
           try { this.pageProcessor.processTextNode(node); } catch (_) {}
         });
       };
-      const shouldHighlight = opts.highlight !== false && !(role === 'user' && idx >= 0);
+      const shouldHighlight = highlightEnabled && opts.highlight === true && role !== 'user';
       if (shouldHighlight) highlightBubbleContent(contentEl);
     };
 
@@ -3592,32 +3608,7 @@ class ADHDHighlighter {
       if (streamingBubble) {
         const html = markdownToHtml(streamingText);
         if (streamingContentEl) streamingContentEl.innerHTML = html; else streamingBubble.innerHTML = html;
-        if (!this.__streamHighlightTimer) this.__streamHighlightTimer = null;
-        if (this.__streamHighlightTimer) clearTimeout(this.__streamHighlightTimer);
-        this.__streamHighlightTimer = setTimeout(() => {
-          try {
-            const walker = document.createTreeWalker(
-              streamingContentEl || streamingBubble,
-              NodeFilter.SHOW_TEXT,
-              {
-                acceptNode: (node) => {
-                  try {
-                    return this.pageProcessor.shouldProcessNode(node)
-                      ? NodeFilter.FILTER_ACCEPT
-                      : NodeFilter.FILTER_REJECT;
-                  } catch (_) {
-                    return NodeFilter.FILTER_REJECT;
-                  }
-                }
-              }
-            );
-            const nodes = [];
-            let n;
-            while ((n = walker.nextNode())) nodes.push(n);
-            nodes.forEach(node => { try { this.pageProcessor.processTextNode(node); } catch (_) {} });
-          } catch (_) {}
-          this.__streamHighlightTimer = null;
-        }, 200);
+        this.__streamHighlightTimer = null;
         if (chatList && autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       }
     };
@@ -3630,7 +3621,7 @@ class ADHDHighlighter {
       streamingBubble = null;
       try {
         const target = streamingContentEl;
-        if (target) {
+        if (target && highlightEnabled) {
           const walker = document.createTreeWalker(
             target,
             NodeFilter.SHOW_TEXT,
