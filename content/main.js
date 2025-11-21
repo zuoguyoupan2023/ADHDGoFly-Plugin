@@ -1985,8 +1985,8 @@ class ADHDHighlighter {
       .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
       .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:0;padding:8px 10px;font-size:13px;background:#fff}
-      .agf-bubble.user{background:var(--agf-q-bg,#f7f7f7);color:var(--agf-q-text,#333)}
-      .agf-msg.assistant .agf-bubble{background:var(--agf-a-bg,#fffaf0);color:var(--agf-a-text,#333)}
+      .agf-bubble.user{background:var(--agf-q-bg,#ffffff);color:var(--agf-q-text,#000000)}
+      .agf-msg.assistant .agf-bubble{background:var(--agf-a-bg,#ffffff);color:var(--agf-a-text,#000000)}
       .agf-bubble strong{font-weight:700}
       .agf-bubble em{font-style:italic}
       .agf-bubble code{font-family:Menlo,Monaco,monospace;background:#f5f5f5;color:#333;padding:0 2px;border-radius:3px}
@@ -2022,11 +2022,13 @@ class ADHDHighlighter {
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
+      .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
       .agf-settings-sidebar{display:flex;flex-direction:column;gap:6px}
       .agf-settings-tab{height:28px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;text-align:left}
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
-      .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff}
+      .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
+      #agfSettingsContentApi{min-height:0}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2169,13 +2171,23 @@ class ADHDHighlighter {
                     </div>
                   </div>
                   <div id="agfSettingsContentColors" style="display:none;">
-                    <div class="agf-settings-group">
+                  <div class="agf-settings-group">
                       <div style="font-size:13px;color:#333;font-weight:600;">颜色管理</div>
-                      <div class="agf-settings-row"><div class="agf-label">Q背景</div><input id="agfColorQBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">A背景</div><input id="agfColorABg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">问题背景</div><input id="agfColorQBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">回答背景</div><input id="agfColorABg2" type="color" /></div>
                       <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">Q文本</div><input id="agfColorQText2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">A文本</div><input id="agfColorAText2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">问题文本</div><input id="agfColorQText2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">回答文本</div><input id="agfColorAText2" type="color" /></div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">预设组合</div>
+                        <div class="agf-button-list">
+                          <button id="agfPreset1Btn" class="agf-btn">柔和米色</button>
+                          <button id="agfPreset2Btn" class="agf-btn">护眼微绿</button>
+                          <button id="agfPreset3Btn" class="agf-btn">柔黄纸感</button>
+                          <button id="agfPreset4Btn" class="agf-btn">轻灰纸张</button>
+                          <button id="agfPresetResetBtn" class="agf-btn">重置默认</button>
+                        </div>
+                      </div>
                       <div class="agf-settings-row"><button id="agfColorsApply2" class="agf-input" style="height:28px;min-width:64px">应用</button></div>
                     </div>
                   </div>
@@ -2287,6 +2299,11 @@ class ADHDHighlighter {
     const colorQText2 = document.getElementById('agfColorQText2');
     const colorAText2 = document.getElementById('agfColorAText2');
     const colorsApply2 = document.getElementById('agfColorsApply2');
+    const preset1Btn = document.getElementById('agfPreset1Btn');
+    const preset2Btn = document.getElementById('agfPreset2Btn');
+    const preset3Btn = document.getElementById('agfPreset3Btn');
+    const preset4Btn = document.getElementById('agfPreset4Btn');
+    const presetResetBtn = document.getElementById('agfPresetResetBtn');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
@@ -2310,6 +2327,24 @@ class ADHDHighlighter {
       if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
       if (which === 'colors') fillColorsInputs2();
     };
+
+    const presets = {
+      reset: { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' },
+      p1:    { qBg: '#ffffff', aBg: '#f9f5e8', displayBg: '#ffffff', qText: '#222222', aText: '#222222' },
+      p2:    { qBg: '#f6fbf6', aBg: '#fffdf5', displayBg: '#ffffff', qText: '#1f2d3d', aText: '#1f2d3d' },
+      p3:    { qBg: '#ffffff', aBg: '#fff7e6', displayBg: '#ffffff', qText: '#2d2d2d', aText: '#2d2d2d' },
+      p4:    { qBg: '#fcfcfc', aBg: '#f3f3f3', displayBg: '#ffffff', qText: '#2a2a2a', aText: '#2a2a2a' }
+    };
+
+    const applyPreset = (cfg) => {
+      applyColorConfig(cfg);
+      fillColorsInputs2();
+    };
+    if (preset1Btn) preset1Btn.addEventListener('click', () => applyPreset(presets.p1));
+    if (preset2Btn) preset2Btn.addEventListener('click', () => applyPreset(presets.p2));
+    if (preset3Btn) preset3Btn.addEventListener('click', () => applyPreset(presets.p3));
+    if (preset4Btn) preset4Btn.addEventListener('click', () => applyPreset(presets.p4));
+    if (presetResetBtn) presetResetBtn.addEventListener('click', () => applyPreset(presets.reset));
 
     const PROVIDERS_CONFIG = {
       deepseek: {
@@ -2525,7 +2560,7 @@ class ADHDHighlighter {
 
     const fillColorsInputs = () => {
       const cs = getComputedStyle(overlay);
-      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
       const qbg = cs.getPropertyValue('--agf-q-bg').trim() || d.qBg;
       const abg = cs.getPropertyValue('--agf-a-bg').trim() || d.aBg;
       const dbg = cs.getPropertyValue('--agf-display-bg').trim() || d.displayBg;
@@ -2539,7 +2574,7 @@ class ADHDHighlighter {
     };
     const fillColorsInputs2 = () => {
       const cs = getComputedStyle(overlay);
-      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
       const qbg = cs.getPropertyValue('--agf-q-bg').trim() || d.qBg;
       const abg = cs.getPropertyValue('--agf-a-bg').trim() || d.aBg;
       const dbg = cs.getPropertyValue('--agf-display-bg').trim() || d.displayBg;
@@ -2557,8 +2592,16 @@ class ADHDHighlighter {
       return '#ffffff';
     };
     const openColorsPanel = () => { fillColorsInputs(); showColors(); };
+    const applyColorConfig = (cfg) => {
+      overlay.style.setProperty('--agf-q-bg', cfg.qBg);
+      overlay.style.setProperty('--agf-a-bg', cfg.aBg);
+      overlay.style.setProperty('--agf-display-bg', cfg.displayBg);
+      overlay.style.setProperty('--agf-q-text', cfg.qText);
+      overlay.style.setProperty('--agf-a-text', cfg.aText);
+      try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
+    };
     if (colorsApply) colorsApply.addEventListener('click', () => {
-      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
       const cfg = {
         qBg: (colorQBg && colorQBg.value) || d.qBg,
         aBg: (colorABg && colorABg.value) || d.aBg,
@@ -2566,16 +2609,11 @@ class ADHDHighlighter {
         qText: (colorQText && colorQText.value) || d.qText,
         aText: (colorAText && colorAText.value) || d.aText
       };
-      overlay.style.setProperty('--agf-q-bg', cfg.qBg);
-      overlay.style.setProperty('--agf-a-bg', cfg.aBg);
-      overlay.style.setProperty('--agf-display-bg', cfg.displayBg);
-      overlay.style.setProperty('--agf-q-text', cfg.qText);
-      overlay.style.setProperty('--agf-a-text', cfg.aText);
-      try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
+      applyColorConfig(cfg);
       hideColors();
     });
     if (colorsApply2) colorsApply2.addEventListener('click', () => {
-      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
       const cfg = {
         qBg: (colorQBg2 && colorQBg2.value) || d.qBg,
         aBg: (colorABg2 && colorABg2.value) || d.aBg,
@@ -2583,12 +2621,7 @@ class ADHDHighlighter {
         qText: (colorQText2 && colorQText2.value) || d.qText,
         aText: (colorAText2 && colorAText2.value) || d.aText
       };
-      overlay.style.setProperty('--agf-q-bg', cfg.qBg);
-      overlay.style.setProperty('--agf-a-bg', cfg.aBg);
-      overlay.style.setProperty('--agf-display-bg', cfg.displayBg);
-      overlay.style.setProperty('--agf-q-text', cfg.qText);
-      overlay.style.setProperty('--agf-a-text', cfg.aText);
-      try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
+      applyColorConfig(cfg);
     });
 
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
