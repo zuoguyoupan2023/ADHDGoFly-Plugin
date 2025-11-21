@@ -23,6 +23,14 @@
     try { const s = (el.ownerDocument ? el.ownerDocument.defaultView : window).getComputedStyle(el); const zi = parseInt(s.zIndex || '0', 10); if (s.position === 'fixed' && zi >= 2147483000) return true; } catch (_) {}
     return false;
   };
+  const isNavigationText = (s) => {
+    const t = String(s || '').trim();
+    if (!t) return false;
+    const nav = new Set(['Product','Use Cases','Pricing','Blog','Resources','Download','Docs','Changelog','Experience liftoff','About Google','Google Products','Privacy','Terms']);
+    if (nav.has(t)) return true;
+    if (t.length <= 20 && /^(Product|Pricing|Blog|Docs|Download|Terms|Privacy)$/i.test(t)) return true;
+    return false;
+  };
   const selectRoots = () => Array.from(document.querySelectorAll('main, .theme-doc-markdown, .markdown, .docItemContainer, [role="main"], .content'));
   const textFromEl = (el) => {
     const tag = (el.tagName || '').toLowerCase();
@@ -58,6 +66,7 @@
       }
       const t = textFromEl(el);
       if (!t || t.length < 2) return;
+      if (isNavigationText(t)) return;
       if (!current) current = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] };
       current.blocks.push({ text: t, orderIndex: order++, role: roleForEl(el), tag: (el.tagName || '').toLowerCase() });
     });
@@ -69,7 +78,7 @@
     const roots = selectRoots();
     roots.forEach(root => { const secs = collectSectionsFromRoot(root); if (secs && secs.length) sections = sections.concat(secs); });
     const mo = new MutationObserver((muts) => {
-      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; if (isExtensionUi(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; const h = el.closest('h1,h2,h3,h4,h5,h6'); if (h) { const title = textFromEl(h); let target = sections.find(s => s.sectionTitle === title); if (!target) { target = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || 'HEADING', headingPath: (h.tagName||'').toLowerCase() + ':' + (title || ''), blocks: [] }; sections.push(target); } target.blocks.push({ text: t, orderIndex: target.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } else { let rootSec = sections.find(s => s.sectionId === 'root'); if (!rootSec) { rootSec = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] }; sections.push(rootSec); } rootSec.blocks.push({ text: t, orderIndex: rootSec.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } } }); });
+      muts.forEach(m => { (m.addedNodes || []).forEach(node => { if (node && node.nodeType === 1) { const el = node; if (isHidden(el)) return; if (isExcluded(el)) return; if (inExcludedRegion(el)) return; if (isExtensionUi(el)) return; const t = textFromEl(el); if (!t || t.length < 2) return; if (isNavigationText(t)) return; const h = el.closest('h1,h2,h3,h4,h5,h6'); if (h) { const title = textFromEl(h); let target = sections.find(s => s.sectionTitle === title); if (!target) { target = { sectionId: 'sec-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), sectionTitle: title || 'HEADING', headingPath: (h.tagName||'').toLowerCase() + ':' + (title || ''), blocks: [] }; sections.push(target); } target.blocks.push({ text: t, orderIndex: target.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } else { let rootSec = sections.find(s => s.sectionId === 'root'); if (!rootSec) { rootSec = { sectionId: 'root', sectionTitle: 'ROOT', headingPath: 'root', blocks: [] }; sections.push(rootSec); } rootSec.blocks.push({ text: t, orderIndex: rootSec.blocks.length, role: roleForEl(el), tag: (el.tagName||'').toLowerCase() }); } } }); });
     });
     try { mo.observe(document.body, { childList: true, subtree: true }); } catch (_) {}
     await new Promise(r => setTimeout(r, durationMs || 6000));
