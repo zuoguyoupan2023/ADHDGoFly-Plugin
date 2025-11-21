@@ -1980,6 +1980,9 @@ class ADHDHighlighter {
       .agf-status-dot{width:10px;height:10px;border-radius:50%;border:1px solid #e0e0e0;background:#bbb}
       .agf-status-btn{height:20px;line-height:20px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
       .agf-status-btn[disabled]{opacity:0.5;cursor:not-allowed}
+      .agf-refresh-btn{height:20px;width:20px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;color:#333;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+      .agf-refresh-btn.breathing{color:#b58900;border-color:#ffd24d;box-shadow:0 0 0 0 rgba(255,210,77,0.25);animation:agf-breath 2s ease-in-out infinite}
+      @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
       .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:12px;min-height:0}
@@ -2064,7 +2067,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2278,6 +2281,7 @@ class ADHDHighlighter {
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const statusDot = document.getElementById('agfStorageStatusDot');
+    const refreshBtn = document.getElementById('agfRefreshBtn');
     const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
     const moreBtn = document.getElementById('agfMoreBtn');
     const morePanel = document.getElementById('agfMorePanel');
@@ -3085,6 +3089,7 @@ class ADHDHighlighter {
         if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
       }
       const has = segs.length > 0;
+      if (refreshBtn) refreshBtn.classList.toggle('breathing', !has);
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (moreBtn) { moreBtn.disabled = !has; }
       if (btnStructured) btnStructured.disabled = !has;
@@ -3286,6 +3291,7 @@ class ADHDHighlighter {
       } catch (_) {}
     };
 
+    if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
     if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
     if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
