@@ -2022,6 +2022,11 @@ class ADHDHighlighter {
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
+      .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
+      .agf-settings-sidebar{display:flex;flex-direction:column;gap:6px}
+      .agf-settings-tab{height:28px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;text-align:left}
+      .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
+      .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2103,60 +2108,77 @@ class ADHDHighlighter {
             </div>
           </div>
             <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
-              <div class="agf-settings-group">
-                <div style="font-size:13px;color:#333;font-weight:600;">综合设置</div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">服务商</div>
-                  <div id="agfProviderList" class="agf-button-list"></div>
+              <div class="agf-settings-layout">
+                <div class="agf-settings-sidebar">
+                  <button id="agfSettingsTabApi" class="agf-settings-tab active">API Key</button>
+                  <button id="agfSettingsTabColors" class="agf-settings-tab">颜色管理</button>
                 </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">模型</div>
-                  <div id="agfModelList" class="agf-button-list"></div>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">供应商URL</div>
-                  <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">API Key</div>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
-                    <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
-                    <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
+                <div class="agf-settings-content">
+                  <div id="agfSettingsContentApi">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;">综合设置</div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">服务商</div>
+                        <div id="agfProviderList" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">模型</div>
+                        <div id="agfModelList" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">供应商URL</div>
+                        <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">API Key</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
+                          <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
+                          <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
+                        </div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">temperature</div>
+                        <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">PDF解析</div>
+                        <div id="agfPdfParseToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">敏感过滤</div>
+                        <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">保留天数</div>
+                        <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">折叠阈值</div>
+                        <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
+                        <span class="agf-hint">超出则折叠</span>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">折叠高度</div>
+                        <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
+                        <span class="agf-hint">折叠区最大高度(px)</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">temperature</div>
-                  <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">PDF解析</div>
-                  <div id="agfPdfParseToggle" class="agf-button-list"></div>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">敏感过滤</div>
-                  <div id="agfSensitiveToggle" class="agf-button-list"></div>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">外观设置</div>
-                  <button id="agfOpenColorsBtn" class="agf-input" style="height:28px;min-width:64px;">颜色管理</button>
-                </div>
-                <div class="agf-settings-row">
-                  <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">保留天数</div>
-                  <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">折叠阈值</div>
-                  <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
-                  <span class="agf-hint">超出则折叠</span>
-                </div>
-                <div class="agf-settings-row">
-                  <div class="agf-label">折叠高度</div>
-                  <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
-                  <span class="agf-hint">折叠区最大高度(px)</span>
+                  <div id="agfSettingsContentColors" style="display:none;">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;">颜色管理</div>
+                      <div class="agf-settings-row"><div class="agf-label">Q背景</div><input id="agfColorQBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">A背景</div><input id="agfColorABg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">Q文本</div><input id="agfColorQText2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label">A文本</div><input id="agfColorAText2" type="color" /></div>
+                      <div class="agf-settings-row"><button id="agfColorsApply2" class="agf-input" style="height:28px;min-width:64px">应用</button></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2255,12 +2277,22 @@ class ADHDHighlighter {
     const colorQText = document.getElementById('agfColorQText');
     const colorAText = document.getElementById('agfColorAText');
     const colorsApply = document.getElementById('agfColorsApply');
+    const settingsTabApi = document.getElementById('agfSettingsTabApi');
+    const settingsTabColors = document.getElementById('agfSettingsTabColors');
+    const settingsContentApi = document.getElementById('agfSettingsContentApi');
+    const settingsContentColors = document.getElementById('agfSettingsContentColors');
+    const colorQBg2 = document.getElementById('agfColorQBg2');
+    const colorABg2 = document.getElementById('agfColorABg2');
+    const colorDisplayBg2 = document.getElementById('agfColorDisplayBg2');
+    const colorQText2 = document.getElementById('agfColorQText2');
+    const colorAText2 = document.getElementById('agfColorAText2');
+    const colorsApply2 = document.getElementById('agfColorsApply2');
     if (minBtn) minBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (maxBtn) maxBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     bubble.addEventListener('click', () => this.restoreAiSettingPanel());
     const showChat = () => { if (viewChat) viewChat.style.display = 'grid'; if (viewSettings) viewSettings.style.display = 'none'; };
-    const showSettings = () => { if (viewChat) viewChat.style.display = 'none'; if (viewSettings) viewSettings.style.display = 'block'; };
+    const showSettings = () => { if (viewChat) viewChat.style.display = 'none'; if (viewSettings) viewSettings.style.display = 'block'; setActiveSettingsTab('api'); };
     if (tabWrench) tabWrench.addEventListener('click', showSettings);
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
@@ -2270,6 +2302,14 @@ class ADHDHighlighter {
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
     const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
     if (colorsClose) colorsClose.addEventListener('click', hideColors);
+
+    const setActiveSettingsTab = (which) => {
+      if (settingsTabApi) settingsTabApi.classList.toggle('active', which === 'api');
+      if (settingsTabColors) settingsTabColors.classList.toggle('active', which === 'colors');
+      if (settingsContentApi) settingsContentApi.style.display = which === 'api' ? 'block' : 'none';
+      if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
+      if (which === 'colors') fillColorsInputs2();
+    };
 
     const PROVIDERS_CONFIG = {
       deepseek: {
@@ -2497,14 +2537,26 @@ class ADHDHighlighter {
       if (colorQText) colorQText.value = toColorInput(qtx);
       if (colorAText) colorAText.value = toColorInput(atx);
     };
+    const fillColorsInputs2 = () => {
+      const cs = getComputedStyle(overlay);
+      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const qbg = cs.getPropertyValue('--agf-q-bg').trim() || d.qBg;
+      const abg = cs.getPropertyValue('--agf-a-bg').trim() || d.aBg;
+      const dbg = cs.getPropertyValue('--agf-display-bg').trim() || d.displayBg;
+      const qtx = cs.getPropertyValue('--agf-q-text').trim() || d.qText;
+      const atx = cs.getPropertyValue('--agf-a-text').trim() || d.aText;
+      if (colorQBg2) colorQBg2.value = toColorInput(qbg);
+      if (colorABg2) colorABg2.value = toColorInput(abg);
+      if (colorDisplayBg2) colorDisplayBg2.value = toColorInput(dbg);
+      if (colorQText2) colorQText2.value = toColorInput(qtx);
+      if (colorAText2) colorAText2.value = toColorInput(atx);
+    };
     const toColorInput = (v) => {
       const hex = v.toLowerCase();
       if (/^#[0-9a-f]{6}$/.test(hex)) return hex;
       return '#ffffff';
     };
     const openColorsPanel = () => { fillColorsInputs(); showColors(); };
-    const openColorsBtn = document.getElementById('agfOpenColorsBtn');
-    if (openColorsBtn) openColorsBtn.addEventListener('click', openColorsPanel);
     if (colorsApply) colorsApply.addEventListener('click', () => {
       const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
       const cfg = {
@@ -2522,6 +2574,25 @@ class ADHDHighlighter {
       try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
       hideColors();
     });
+    if (colorsApply2) colorsApply2.addEventListener('click', () => {
+      const d = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
+      const cfg = {
+        qBg: (colorQBg2 && colorQBg2.value) || d.qBg,
+        aBg: (colorABg2 && colorABg2.value) || d.aBg,
+        displayBg: (colorDisplayBg2 && colorDisplayBg2.value) || d.displayBg,
+        qText: (colorQText2 && colorQText2.value) || d.qText,
+        aText: (colorAText2 && colorAText2.value) || d.aText
+      };
+      overlay.style.setProperty('--agf-q-bg', cfg.qBg);
+      overlay.style.setProperty('--agf-a-bg', cfg.aBg);
+      overlay.style.setProperty('--agf-display-bg', cfg.displayBg);
+      overlay.style.setProperty('--agf-q-text', cfg.qText);
+      overlay.style.setProperty('--agf-a-text', cfg.aText);
+      try { chrome.storage.local.set({ chatColors: cfg }); } catch (_) {}
+    });
+
+    if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
+    if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
 
     const initComposerSelects = () => {
       if (!sessionProviderSelect || !sessionModelSelect) return;
