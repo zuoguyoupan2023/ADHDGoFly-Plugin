@@ -2727,6 +2727,7 @@ class ADHDHighlighter {
     let streamingBubble = null;
     let streamingContentEl = null;
     let qaCounter = 0;
+    let nextPromptIsGenerated = false;
     const dbOpen = () => new Promise((resolve, reject) => {
       const req = indexedDB.open('agf_ai_db', 1);
       req.onupgradeneeded = () => {
@@ -2999,8 +3000,9 @@ class ADHDHighlighter {
       const prompt = composerInput.value.trim();
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
-      const isGeneratedPrompt = prompt.indexOf('\n正文:') >= 0;
+      const isGeneratedPrompt = nextPromptIsGenerated || prompt.indexOf('\n正文:') >= 0;
       appendMessage('user', prompt, { highlight: !isGeneratedPrompt });
+      nextPromptIsGenerated = false;
       chatMessages.push({ role: 'user', content: prompt });
       composerInput.value = '';
       let key = '';
@@ -3307,12 +3309,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; sendChat(); });
     const onComposerSendClick = (e) => {
       if (!composerSend) return;
       if (composerSend.dataset.mode === 'refresh') { e.preventDefault(); try { window.location.reload(); } catch (_) {} return; }
@@ -3449,9 +3451,9 @@ class ADHDHighlighter {
       height: overlay.offsetHeight
     };
     const w = Math.floor(window.innerWidth * 0.5);
-    const h = Math.floor(window.innerHeight * 0.66);
-    const left = Math.max(0, Math.floor((window.innerWidth - w) / 2));
-    const top = Math.max(0, Math.floor((window.innerHeight - h) / 2));
+    const h = window.innerHeight;
+    const left = Math.max(0, window.innerWidth - w);
+    const top = 0;
     overlay.style.left = left + 'px';
     overlay.style.top = top + 'px';
     overlay.style.width = w + 'px';
