@@ -2954,6 +2954,10 @@ class ADHDHighlighter {
               chatList.innerHTML = '';
               qaCounter = 0;
               chatMessages.forEach(m => appendMessage(m.role, m.content, { highlight: false }));
+              if (highlightEnabled) {
+                const bubbles = overlay.querySelectorAll('.agf-msg .agf-qa-content');
+                bubbles.forEach(el => scheduleIncrementalHighlight(el));
+              }
             }
             currentConversationId = item.id;
             showChat();
@@ -3237,6 +3241,41 @@ class ADHDHighlighter {
       return out;
     };
 
+    let lastUserContentEl = null;
+    const scheduleIncrementalHighlight = (root) => {
+      if (!root || !this.pageProcessor || !highlightEnabled) return null;
+      let canceled = false;
+      const nodes = [];
+      try {
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              try {
+                return this.pageProcessor.shouldProcessNode(node)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_REJECT;
+              } catch (_) {
+                return NodeFilter.FILTER_REJECT;
+              }
+            }
+          }
+        );
+        let n;
+        while ((n = walker.nextNode())) nodes.push(n);
+      } catch (_) {}
+      let i = 0;
+      const run = () => {
+        if (canceled || !highlightEnabled) return;
+        const end = Math.min(nodes.length, i + 80);
+        for (; i < end; i++) { try { this.pageProcessor.processTextNode(nodes[i]); } catch (_) {} }
+        if (i < nodes.length) { setTimeout(run, 16); }
+      };
+      setTimeout(run, 0);
+      return { cancel: () => { canceled = true; } };
+    };
+
     
     const appendMessage = (role, text, opts = {}) => {
       if (!chatList) return;
@@ -3309,30 +3348,8 @@ class ADHDHighlighter {
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
-      const highlightBubbleContent = (root) => {
-        if (!root || !this.pageProcessor) return;
-        const walker = document.createTreeWalker(
-          root,
-          NodeFilter.SHOW_TEXT,
-          {
-            acceptNode: (node) => {
-              try {
-                return this.pageProcessor.shouldProcessNode(node)
-                  ? NodeFilter.FILTER_ACCEPT
-                  : NodeFilter.FILTER_REJECT;
-              } catch (_) {
-                return NodeFilter.FILTER_REJECT;
-              }
-            }
-          }
-        );
-        const nodes = [];
-        let n;
-        while ((n = walker.nextNode())) nodes.push(n);
-        nodes.forEach(node => {
-          try { this.pageProcessor.processTextNode(node); } catch (_) {}
-        });
-      };
+      const highlightBubbleContent = (root) => { scheduleIncrementalHighlight(root); };
+      if (role === 'user') { lastUserContentEl = contentEl; }
       const shouldHighlight = highlightEnabled && opts.highlight === true && role !== 'user';
       if (shouldHighlight) highlightBubbleContent(contentEl);
     };
@@ -3351,6 +3368,7 @@ class ADHDHighlighter {
       streamingBubble = bubbleEl;
       streamingText = '';
       streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
+      if (highlightEnabled && lastUserContentEl) scheduleIncrementalHighlight(lastUserContentEl);
     };
 
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
@@ -3621,27 +3639,7 @@ class ADHDHighlighter {
       streamingBubble = null;
       try {
         const target = streamingContentEl;
-        if (target && highlightEnabled) {
-          const walker = document.createTreeWalker(
-            target,
-            NodeFilter.SHOW_TEXT,
-            {
-              acceptNode: (node) => {
-                try {
-                  return this.pageProcessor.shouldProcessNode(node)
-                    ? NodeFilter.FILTER_ACCEPT
-                    : NodeFilter.FILTER_REJECT;
-                } catch (_) {
-                  return NodeFilter.FILTER_REJECT;
-                }
-              }
-            }
-          );
-          const nodes = [];
-          let n;
-          while ((n = walker.nextNode())) nodes.push(n);
-          nodes.forEach(node => { try { this.pageProcessor.processTextNode(node); } catch (_) {} });
-        }
+        if (target && highlightEnabled) scheduleIncrementalHighlight(target);
       } catch (_) {}
     };
 
