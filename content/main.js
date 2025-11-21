@@ -2524,15 +2524,17 @@ class ADHDHighlighter {
     if (modeBtns && modeBtns.length >= 2) {
       modeBtns[0].textContent = '常驻';
       modeBtns[1].textContent = '手动';
-      try {
-        const r = await chrome.storage.local.get(['aiPanelMode']);
-        panelMode = r.aiPanelMode || 'manual';
-      } catch (_) {}
       const setActiveMode = (m) => {
         modeBtns[0].classList.toggle('active', m === 'persistent');
         modeBtns[1].classList.toggle('active', m !== 'persistent');
       };
       setActiveMode(panelMode === 'persistent' ? 'persistent' : 'manual');
+      try {
+        chrome.storage.local.get(['aiPanelMode'], (r) => {
+          panelMode = (r && r.aiPanelMode) || 'manual';
+          setActiveMode(panelMode === 'persistent' ? 'persistent' : 'manual');
+        });
+      } catch (_) {}
       modeBtns[0].addEventListener('click', async () => { setActiveMode('persistent'); panelMode = 'persistent'; try { await chrome.storage.local.set({ aiPanelMode: 'persistent' }); } catch (_) {} });
       modeBtns[1].addEventListener('click', async () => { setActiveMode('manual'); panelMode = 'manual'; try { await chrome.storage.local.set({ aiPanelMode: 'manual' }); } catch (_) {} });
     }
@@ -3329,7 +3331,7 @@ class ADHDHighlighter {
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
     (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
-    (async ()=>{ if (panelMode === 'persistent') { try { await newConversation(); } catch (_) {} } })();
+    (async ()=>{ try { const s = await chrome.storage.local.get(['aiPanelMode']); if ((s.aiPanelMode || 'manual') === 'persistent') { try { await newConversation(); } catch (_) {} } } catch (_) {} })();
     this.__aiSettingPanelInitialized = true;
   }
 
