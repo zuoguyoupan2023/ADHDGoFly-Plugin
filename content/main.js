@@ -2616,7 +2616,8 @@ class ADHDHighlighter {
       if (highlightOffBtn) highlightOffBtn.classList.toggle('active', !on);
       if (persist) { try { chrome.storage.local.set({ chatHighlightEnabled: !!on }); } catch (_) {} }
       if (!highlightInitPhase) {
-        if (on) { rehighlightAllBubbles(); } else { cancelAllHighlightJobs(); clearAllHighlights(); }
+        if (on) { rehighlightAllBubbles(); }
+        else { cancelAllHighlightJobs(); clearAllHighlights(); renderPlainAllBubbles(); }
       }
     };
     setHighlightEnabled(true, false);
@@ -2964,11 +2965,7 @@ class ADHDHighlighter {
             if (chatList) {
               chatList.innerHTML = '';
               qaCounter = 0;
-              chatMessages.forEach(m => appendMessage(m.role, m.content, { highlight: false }));
-              if (highlightEnabled) {
-                const bubbles = overlay.querySelectorAll('.agf-msg .agf-qa-content');
-                bubbles.forEach(el => scheduleIncrementalHighlight(el));
-              }
+              chatMessages.forEach((m,i) => appendMessage(m.role, m.content, { highlight: highlightEnabled && !m.highlightHtml, highlightHtml: highlightEnabled ? m.highlightHtml : null, msgIndex: i }));
             }
             currentConversationId = item.id;
             showChat();
@@ -3291,16 +3288,35 @@ class ADHDHighlighter {
       if (!highlightEnabled) return;
       try {
         const bubbles = overlay.querySelectorAll('.agf-msg .agf-qa-content');
-        bubbles.forEach(el => scheduleIncrementalHighlight(el));
+        bubbles.forEach(el => {
+          const i = Number(el.dataset.msgIndex || '-1');
+          if (i >= 0) {
+            const cached = chatMessages[i] && chatMessages[i].highlightHtml;
+            if (cached) { el.innerHTML = cached; }
+            else { scheduleIncrementalHighlight(el); setTimeout(() => { try { const html = el.innerHTML; if (html && html.indexOf('adhd-processed') >= 0) { chatMessages[i].highlightHtml = html; saveConversationSnapshot(); } } catch (_) {} }, 600); }
+          } else { scheduleIncrementalHighlight(el); }
+        });
       } catch (_) {}
     };
     const clearAllHighlights = () => {
       try {
-        const spans = overlay.querySelectorAll('.agf-msg .agf-qa-content span.adhd-n, .agf-msg .agf-qa-content span.adhd-v, .agf-msg .agf-qa-content span.adhd-a, .agf-msg .agf-qa-content span.adhd-comp');
-        spans.forEach(s => { try { s.replaceWith(document.createTextNode(s.textContent)); } catch (_) {} });
+        const wrappers = overlay.querySelectorAll('.agf-msg .agf-qa-content .adhd-processed');
+        wrappers.forEach(element => {
+          try {
+            const originalText = element.getAttribute('data-original-text') || element.textContent;
+            const textNode = document.createTextNode(originalText);
+            element.parentNode.replaceChild(textNode, element);
+          } catch (_) {}
+        });
       } catch (_) {}
     };
     const cancelAllHighlightJobs = () => {};
+    const renderPlainAllBubbles = () => {
+      try {
+        const els = overlay.querySelectorAll('.agf-msg .agf-qa-content');
+        els.forEach(el => { const i = Number(el.dataset.msgIndex || '-1'); if (i >= 0) el.innerHTML = markdownToHtml(chatMessages[i].content || ''); });
+      } catch (_) {}
+    };
 
     highlightInitPhase = false;
 
@@ -3318,6 +3334,7 @@ class ADHDHighlighter {
       labelEl.textContent = label;
       const contentEl = document.createElement('span');
       contentEl.className = 'agf-qa-content';
+      if (typeof opts.msgIndex === 'number') contentEl.dataset.msgIndex = String(opts.msgIndex);
       const idx = text.indexOf('\n正文:');
       if (idx >= 0) {
         const head = text.slice(0, idx);
@@ -3368,7 +3385,8 @@ class ADHDHighlighter {
           contentEl.appendChild(headDiv);
           contentEl.appendChild(col);
         } else {
-          contentEl.innerHTML = markdownToHtml(text);
+          if (opts.highlightHtml && highlightEnabled && role !== 'user') { contentEl.innerHTML = opts.highlightHtml; }
+          else { contentEl.innerHTML = markdownToHtml(text); }
         }
       }
       bubble.appendChild(labelEl);
@@ -3378,8 +3396,9 @@ class ADHDHighlighter {
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       const highlightBubbleContent = (root) => { scheduleIncrementalHighlight(root); };
       if (role === 'user') { lastUserContentEl = contentEl; }
-      const shouldHighlight = highlightEnabled && opts.highlight === true && role !== 'user';
+      const shouldHighlight = highlightEnabled && opts.highlight === true && role !== 'user' && !opts.highlightHtml;
       if (shouldHighlight) highlightBubbleContent(contentEl);
+      if (shouldHighlight && typeof opts.msgIndex === 'number') { setTimeout(() => { try { const html = contentEl.innerHTML; if (html && html.indexOf('adhd-processed') >= 0) { chatMessages[opts.msgIndex].highlightHtml = html; saveConversationSnapshot(); } } catch (_) {} }, 600); }
     };
 
     const startAssistantStream = () => {
@@ -3396,7 +3415,21 @@ class ADHDHighlighter {
       streamingBubble = bubbleEl;
       streamingText = '';
       streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
-      if (highlightEnabled && lastUserContentEl) scheduleIncrementalHighlight(lastUserContentEl);
+      if (highlightEnabled && lastUserContentEl) {
+        scheduleIncrementalHighlight(lastUserContentEl);
+        setTimeout(() => {
+          try {
+            const i = Number(lastUserContentEl.dataset.msgIndex || '-1');
+            if (i >= 0) {
+              const html = lastUserContentEl.innerHTML;
+              if (html && html.indexOf('adhd-processed') >= 0) {
+                chatMessages[i].highlightHtml = html;
+                saveConversationSnapshot();
+              }
+            }
+          } catch (_) {}
+        }, 600);
+      }
     };
 
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
@@ -3409,9 +3442,10 @@ class ADHDHighlighter {
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
       const isGeneratedPrompt = nextPromptIsGenerated || prompt.indexOf('\n正文:') >= 0;
-      appendMessage('user', prompt, { highlight: !isGeneratedPrompt });
-      nextPromptIsGenerated = false;
+      const userIndex = chatMessages.length;
       chatMessages.push({ role: 'user', content: prompt });
+      appendMessage('user', prompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
+      nextPromptIsGenerated = false;
       composerInput.value = '';
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
@@ -3460,8 +3494,9 @@ class ADHDHighlighter {
         text = '';
       }
       if (!text) text = '...';
-      appendMessage('assistant', text, { highlight: true });
+      const aIndex = chatMessages.length;
       chatMessages.push({ role: 'assistant', content: text });
+      appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
 
@@ -3660,14 +3695,19 @@ class ADHDHighlighter {
     };
     this.__onAiStreamDone = () => {
       if (streamingText) {
+        const idx = chatMessages.length;
         chatMessages.push({ role: 'assistant', content: streamingText });
+        if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
       }
       streamingText = '';
       streamingBubble = null;
       try {
         const target = streamingContentEl;
-        if (target && highlightEnabled) scheduleIncrementalHighlight(target);
+        if (target && highlightEnabled) {
+          scheduleIncrementalHighlight(target);
+          setTimeout(() => { try { const i = Number(target.dataset.msgIndex || '-1'); if (i >= 0) { const html = target.innerHTML; if (html && html.indexOf('adhd-processed') >= 0) { chatMessages[i].highlightHtml = html; saveConversationSnapshot(); } } } catch (_) {} }, 800);
+        }
       } catch (_) {}
     };
 
