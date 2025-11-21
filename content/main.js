@@ -3668,17 +3668,21 @@ class ADHDHighlighter {
       const MAX_CHARS = 12000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
+      const globalSeen = new Set();
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
+        const k = t.length + ':' + t.slice(0, 300);
+        if (globalSeen.has(k)) continue;
+        globalSeen.add(k);
         if (t.length > remain) t = this.smartTruncate(t, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
         if (remain <= 0) break;
       }
       if (bodyTexts.length) {
         lines.push('正文:');
-        lines.push(bodyTexts.join('\n\n'));
+        lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       }
       return lines.join('\n');
     };
@@ -3695,16 +3699,20 @@ class ADHDHighlighter {
       const MAX_CHARS = 12000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
+      const globalSeen = new Set();
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         const h = r.sectionTitle || '';
         let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
+        const k = t.length + ':' + t.slice(0, 300);
+        if (globalSeen.has(k)) continue;
+        globalSeen.add(k);
         if (t.length > remain) t = this.smartTruncate(t, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
         if (remain <= 0) break;
       }
-      lines.push(bodyTexts.join('\n\n'));
+      lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       lines.push('输出: 以清晰的分级标题呈现，每章 2-4 个要点，最后附 TL;DR。');
       return lines.join('\n');
     };
@@ -3721,15 +3729,19 @@ class ADHDHighlighter {
       const MAX_CHARS = 9000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
+      const globalSeen = new Set();
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
+        const k = t.length + ':' + t.slice(0, 300);
+        if (globalSeen.has(k)) continue;
+        globalSeen.add(k);
         if (t.length > remain) t = this.smartTruncate(t, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
         if (remain <= 0) break;
       }
-      lines.push(bodyTexts.join('\n\n'));
+      lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       lines.push('输出: 用通俗语言分点说明，避免术语堆砌。');
       return lines.join('\n');
     };
@@ -3746,16 +3758,20 @@ class ADHDHighlighter {
       const MAX_CHARS = 9000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
+      const globalSeen = new Set();
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         const h = r.sectionTitle || '';
         let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
+        const k = t.length + ':' + t.slice(0, 300);
+        if (globalSeen.has(k)) continue;
+        globalSeen.add(k);
         if (t.length > remain) t = this.smartTruncate(t, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push((h ? ('['+h+']\n') : '') + t); remain -= t.length; }
         if (remain <= 0) break;
       }
-      lines.push(bodyTexts.join('\n\n'));
+      lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       lines.push('输出: 仅给出大纲，形如 H1/H2/H3 分层，必要处附一句描述。');
       return lines.join('\n');
     };
@@ -3772,15 +3788,19 @@ class ADHDHighlighter {
       const MAX_CHARS = 8000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
+      const globalSeen = new Set();
       for (let i = 0; i < segs.length; i++) {
         const r = segs[i];
         let t = (r.blocks && r.blocks.length ? filterUiText(r.blocks.map(b => String(b.text||'')).join('\n')) : '');
         if (!t) continue;
+        const k = t.length + ':' + t.slice(0, 300);
+        if (globalSeen.has(k)) continue;
+        globalSeen.add(k);
         if (t.length > remain) t = this.smartTruncate(t, Math.max(0, remain));
         if (t.length > 0) { bodyTexts.push(t); remain -= t.length; }
         if (remain <= 0) break;
       }
-      lines.push(bodyTexts.join('\n\n'));
+      lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       lines.push('输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。');
       return lines.join('\n');
     };
