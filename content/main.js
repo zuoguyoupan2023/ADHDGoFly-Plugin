@@ -2609,14 +2609,25 @@ class ADHDHighlighter {
     const highlightOnBtn = overlay.querySelector('#agfHighlightOn');
     const highlightOffBtn = overlay.querySelector('#agfHighlightOff');
     let highlightEnabled = true;
-    const setHighlightEnabled = (on) => {
+    let highlightInitPhase = true;
+    const setHighlightEnabled = (on, persist) => {
       highlightEnabled = !!on;
       if (highlightOnBtn) highlightOnBtn.classList.toggle('active', !!on);
       if (highlightOffBtn) highlightOffBtn.classList.toggle('active', !on);
+      if (persist) { try { chrome.storage.local.set({ chatHighlightEnabled: !!on }); } catch (_) {} }
+      if (!highlightInitPhase) {
+        if (on) { rehighlightAllBubbles(); } else { cancelAllHighlightJobs(); clearAllHighlights(); }
+      }
     };
-    setHighlightEnabled(true);
-    if (highlightOnBtn) highlightOnBtn.addEventListener('click', () => setHighlightEnabled(true));
-    if (highlightOffBtn) highlightOffBtn.addEventListener('click', () => setHighlightEnabled(false));
+    setHighlightEnabled(true, false);
+    try {
+      chrome.storage.local.get(['chatHighlightEnabled'], (r) => {
+        const v = r && r.chatHighlightEnabled;
+        setHighlightEnabled(v === undefined ? true : !!v, false);
+      });
+    } catch (_) {}
+    if (highlightOnBtn) highlightOnBtn.addEventListener('click', () => setHighlightEnabled(true, true));
+    if (highlightOffBtn) highlightOffBtn.addEventListener('click', () => setHighlightEnabled(false, true));
 
     const initParseToggles = async () => {
       let auto = true;
@@ -2736,7 +2747,7 @@ class ADHDHighlighter {
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
     if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
 
-    const initComposerSelects = () => {
+    function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
       const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]);
       sessionProviderSelect.innerHTML = '';
@@ -2764,7 +2775,7 @@ class ADHDHighlighter {
         const prov = sessionProviderSelect.value;
         fillModelsForProv(prov);
       });
-    };
+    }
     
     let autoScrollEnabled = true;
     let lastMouseY = 0;
@@ -3275,6 +3286,23 @@ class ADHDHighlighter {
       setTimeout(run, 0);
       return { cancel: () => { canceled = true; } };
     };
+
+    const rehighlightAllBubbles = () => {
+      if (!highlightEnabled) return;
+      try {
+        const bubbles = overlay.querySelectorAll('.agf-msg .agf-qa-content');
+        bubbles.forEach(el => scheduleIncrementalHighlight(el));
+      } catch (_) {}
+    };
+    const clearAllHighlights = () => {
+      try {
+        const spans = overlay.querySelectorAll('.agf-msg .agf-qa-content span.adhd-n, .agf-msg .agf-qa-content span.adhd-v, .agf-msg .agf-qa-content span.adhd-a, .agf-msg .agf-qa-content span.adhd-comp');
+        spans.forEach(s => { try { s.replaceWith(document.createTextNode(s.textContent)); } catch (_) {} });
+      } catch (_) {}
+    };
+    const cancelAllHighlightJobs = () => {};
+
+    highlightInitPhase = false;
 
     
     const appendMessage = (role, text, opts = {}) => {
