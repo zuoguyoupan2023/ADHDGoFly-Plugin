@@ -2023,7 +2023,7 @@ class ADHDHighlighter {
       .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
       .agf-mode-btn + .agf-mode-btn{margin-left:-1px}
       .agf-mode-btn.active{background:#333;color:#fff}
-      .agf-records-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
+      .agf-records-panel{position:absolute;inset:0;background:#fff;border:1px solid #e0e0e0;border-radius:0;box-shadow:none;display:none;z-index:2;padding:12px;overflow:auto}
       .agf-colors-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
       .agf-records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
       .agf-records-title{font-size:14px;color:#333;font-weight:600}
@@ -2033,6 +2033,9 @@ class ADHDHighlighter {
       .agf-record-subject{font-size:12px;color:#666}
       .agf-record-actions{display:inline-flex;gap:8px}
       .agf-record-delete{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-record-link{max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a73e8}
+      .agf-record-scope-btn{height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:8px}
+      .agf-record-scope-btn.active{background:#333;color:#fff;border-color:#333}
       .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
@@ -2217,7 +2220,10 @@ class ADHDHighlighter {
             </div>
           <div class="agf-records-panel" id="agfRecordsPanel">
             <div class="agf-records-header">
-              <div class="agf-records-title">对话记录</div>
+              <div class="agf-records-title">
+                <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active">当前记录</button>
+                <button id="agfRecordsTabAll" class="agf-record-scope-btn">所有记录</button>
+              </div>
               <button class="agf-records-close" id="agfRecordsClose">X</button>
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
@@ -2305,6 +2311,8 @@ class ADHDHighlighter {
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
     const recordsClose = overlay.querySelector('#agfRecordsClose');
+    const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
+    const recordsTabAll = document.getElementById('agfRecordsTabAll');
     const colorsPanel = overlay.querySelector('#agfColorsPanel');
     const colorsClose = overlay.querySelector('#agfColorsClose');
     const colorQBg = document.getElementById('agfColorQBg');
@@ -2348,7 +2356,16 @@ class ADHDHighlighter {
     if (tabWrench) tabWrench.addEventListener('click', showSettings);
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
-    const showRecords = () => { setView('records'); };
+    let recordsScope = 'current';
+    const setRecordsScope = (scope) => {
+      recordsScope = scope;
+      if (recordsTabCurrent) recordsTabCurrent.classList.toggle('active', scope === 'current');
+      if (recordsTabAll) recordsTabAll.classList.toggle('active', scope === 'all');
+      if (currentView === 'records') openRecordsListPanel();
+    };
+    if (recordsTabCurrent) recordsTabCurrent.addEventListener('click', () => setRecordsScope('current'));
+    if (recordsTabAll) recordsTabAll.addEventListener('click', () => setRecordsScope('all'));
+    const showRecords = () => { setView('records'); setRecordsScope(recordsScope); };
     const hideRecords = () => { setView('chat'); };
     if (recordsClose) recordsClose.addEventListener('click', hideRecords);
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
@@ -2874,6 +2891,12 @@ class ADHDHighlighter {
       recordsList.innerHTML = '';
       let items = [];
       try { items = await dbListConversations(50); } catch (_) {}
+      try {
+        if (recordsScope === 'current') {
+          const u = getCanonicalUrl();
+          items = items.filter(it => (it.canonicalUrl && it.canonicalUrl === u.canonicalUrl) || (it.pageUrl && it.pageUrl === u.pageUrl));
+        }
+      } catch (_) {}
       const deriveSubject = (item) => {
         let prefix = item.prefix || '';
         const msgs = item.messages || [];
@@ -2908,7 +2931,21 @@ class ADHDHighlighter {
         dateEl.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
         const subjEl = document.createElement('div');
         subjEl.className = 'agf-record-subject';
-        subjEl.textContent = item.subject || deriveSubject(item);
+        const subjectText = item.subject || deriveSubject(item);
+        subjEl.textContent = subjectText;
+        if (recordsScope === 'all') {
+          const linkUrl = item.canonicalUrl || item.pageUrl || '';
+          if (linkUrl) {
+            const a = document.createElement('a');
+            a.className = 'agf-record-link';
+            try { a.textContent = new URL(linkUrl, window.location.href).hostname; } catch (_) { a.textContent = linkUrl; }
+            a.href = linkUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            subjEl.appendChild(document.createTextNode(' '));
+            subjEl.appendChild(a);
+          }
+        }
         leftBox.appendChild(dateEl);
         leftBox.appendChild(subjEl);
         const actions = document.createElement('div');
@@ -2943,7 +2980,6 @@ class ADHDHighlighter {
         el.appendChild(actions);
         recordsList.appendChild(el);
       });
-      showRecords();
     };
     const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const markdownToHtml = (md) => {
@@ -3444,7 +3480,7 @@ class ADHDHighlighter {
       }
     });
     if (tabPencil) tabPencil.addEventListener('click', () => { newConversation(); });
-    if (tabDoc) tabDoc.addEventListener('click', () => { openRecordsListPanel(); });
+    if (tabDoc) tabDoc.addEventListener('click', () => { showRecords(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
