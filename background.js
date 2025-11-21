@@ -610,13 +610,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   } else if (request.action === 'agfConvPut') {
     const obj = request.data || {};
-    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
     reqOpen.onupgradeneeded = () => {
       const db = reqOpen.result;
       if (!db.objectStoreNames.contains('conversations')) {
         const store = db.createObjectStore('conversations', { keyPath: 'id' });
         store.createIndex('createdAt', 'createdAt');
         store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
       }
     };
     reqOpen.onsuccess = () => {
@@ -633,13 +637,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   } else if (request.action === 'agfConvGet') {
     const id = request.id;
-    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
     reqOpen.onupgradeneeded = () => {
       const db = reqOpen.result;
       if (!db.objectStoreNames.contains('conversations')) {
         const store = db.createObjectStore('conversations', { keyPath: 'id' });
         store.createIndex('createdAt', 'createdAt');
         store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
       }
     };
     reqOpen.onsuccess = () => {
@@ -656,13 +664,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   } else if (request.action === 'agfConvList') {
     const limit = Math.max(1, Math.min(1000, Number(request.limit||500)));
-    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
     reqOpen.onupgradeneeded = () => {
       const db = reqOpen.result;
       if (!db.objectStoreNames.contains('conversations')) {
         const store = db.createObjectStore('conversations', { keyPath: 'id' });
         store.createIndex('createdAt', 'createdAt');
         store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
       }
     };
     reqOpen.onsuccess = () => {
@@ -687,13 +699,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   } else if (request.action === 'agfConvDelete') {
     const id = request.id;
-    const reqOpen = indexedDB.open('agf_ai_db_unified', 1);
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
     reqOpen.onupgradeneeded = () => {
       const db = reqOpen.result;
       if (!db.objectStoreNames.contains('conversations')) {
         const store = db.createObjectStore('conversations', { keyPath: 'id' });
         store.createIndex('createdAt', 'createdAt');
         store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
       }
     };
     reqOpen.onsuccess = () => {

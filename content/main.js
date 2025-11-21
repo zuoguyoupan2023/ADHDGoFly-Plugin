@@ -2036,6 +2036,11 @@ class ADHDHighlighter {
       .agf-record-link{max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a73e8}
       .agf-record-scope-btn{height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:8px}
       .agf-record-scope-btn.active{background:#333;color:#fff;border-color:#333}
+      .agf-records-search{height:24px;border:1px solid #e0e0e0;border-radius:6px;padding:0 8px;width:40%}
+      .agf-group{border:1px dashed #e0e0e0;border-radius:6px}
+      .agf-group-title{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;color:#333}
+      .agf-group-body{padding:8px}
+      .agf-group-body.collapsed{display:none}
       .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
@@ -2224,6 +2229,7 @@ class ADHDHighlighter {
                 <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active">当前记录</button>
                 <button id="agfRecordsTabAll" class="agf-record-scope-btn">所有记录</button>
               </div>
+              <input id="agfRecordsSearch" class="agf-records-search" placeholder="搜索主题或链接" />
               <button class="agf-records-close" id="agfRecordsClose">X</button>
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
@@ -2313,6 +2319,7 @@ class ADHDHighlighter {
     const recordsClose = overlay.querySelector('#agfRecordsClose');
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
     const recordsTabAll = document.getElementById('agfRecordsTabAll');
+    const recordsSearchInput = document.getElementById('agfRecordsSearch');
     const colorsPanel = overlay.querySelector('#agfColorsPanel');
     const colorsClose = overlay.querySelector('#agfColorsClose');
     const colorQBg = document.getElementById('agfColorQBg');
@@ -2357,6 +2364,7 @@ class ADHDHighlighter {
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
     let recordsScope = 'all';
+    let recordsSearch = '';
     const setRecordsScope = (scope) => {
       recordsScope = scope;
       if (recordsTabCurrent) recordsTabCurrent.classList.toggle('active', scope === 'current');
@@ -2365,6 +2373,7 @@ class ADHDHighlighter {
     };
     if (recordsTabCurrent) recordsTabCurrent.addEventListener('click', () => setRecordsScope('current'));
     if (recordsTabAll) recordsTabAll.addEventListener('click', () => setRecordsScope('all'));
+    if (recordsSearchInput) recordsSearchInput.addEventListener('input', (e) => { recordsSearch = String(e.target.value||'').trim().toLowerCase(); if (currentView === 'records') openRecordsListPanel(); });
     const showRecords = () => { setView('records'); setRecordsScope(recordsScope); };
     const hideRecords = () => { setView('chat'); };
     if (recordsClose) recordsClose.addEventListener('click', hideRecords);
@@ -2891,7 +2900,7 @@ class ADHDHighlighter {
         }
         return (prefix ? (prefix + ' · ') : '') + (title || '未命名');
       };
-      items.forEach(item => {
+      const buildRecordItem = (item) => {
         const el = document.createElement('div');
         el.className = 'agf-record-item';
         const leftBox = document.createElement('div');
@@ -2949,8 +2958,226 @@ class ADHDHighlighter {
         actions.appendChild(delBtn);
         el.appendChild(leftBox);
         el.appendChild(actions);
-        recordsList.appendChild(el);
-      });
+        return el;
+      };
+      let filtered = items.slice();
+      if (recordsSearch) {
+        const q = recordsSearch.toLowerCase();
+        filtered = filtered.filter(it => {
+          const subj = (it.subject || deriveSubject(it)).toLowerCase();
+          const url = (it.pageUrl || it.canonicalUrl || '').toLowerCase();
+          return subj.indexOf(q) >= 0 || url.indexOf(q) >= 0;
+        });
+      }
+      if (!filtered.length) return;
+      const ys = new Set();
+      const yms = new Set();
+      const ymds = new Set();
+      const getY = (t) => new Date(t).getFullYear();
+      const getYM = (t) => { const d = new Date(t); const m = d.getMonth()+1; return getY(t) + '-' + String(m).padStart(2,'0'); };
+      const getYMD = (t) => { const d = new Date(t); const m = d.getMonth()+1; const dd = d.getDate(); return getY(t) + '-' + String(m).padStart(2,'0') + '-' + String(dd).padStart(2,'0'); };
+      filtered.forEach(it => { const t = it.updatedAt || it.createdAt; ys.add(getY(t)); yms.add(getYM(t)); ymds.add(getYMD(t)); });
+      const showYear = ys.size > 1;
+      const showMonth = yms.size > 1;
+      const showDay = ymds.size > 1;
+      const groups = [];
+      if (!showYear && !showMonth && !showDay) {
+        filtered.forEach(it => recordsList.appendChild(buildRecordItem(it)));
+        return;
+      }
+      if (showYear) {
+        const mapY = new Map();
+        filtered.forEach(it => { const t = it.updatedAt || it.createdAt; const y = getY(t); if (!mapY.has(y)) mapY.set(y, []); mapY.get(y).push(it); });
+        Array.from(mapY.keys()).sort((a,b)=>b-a).forEach(y => {
+          const arrY = mapY.get(y);
+          if (showMonth) {
+            const mapM = new Map();
+            arrY.forEach(it => { const t = it.updatedAt || it.createdAt; const key = getYM(t); if (!mapM.has(key)) mapM.set(key, []); mapM.get(key).push(it); });
+            const yBox = document.createElement('div');
+            yBox.className = 'agf-group';
+            const yTitle = document.createElement('div');
+            yTitle.className = 'agf-group-title';
+            const ySpan = document.createElement('span');
+            ySpan.textContent = String(y) + '年';
+            const yBtn = document.createElement('button');
+            yBtn.className = 'agf-records-close';
+            yBtn.textContent = '折叠';
+            const yBody = document.createElement('div');
+            yBody.className = 'agf-group-body';
+            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            yTitle.appendChild(ySpan);
+            yTitle.appendChild(yBtn);
+            yBox.appendChild(yTitle);
+            yBox.appendChild(yBody);
+            Array.from(mapM.keys()).sort((a,b)=> a<b?1:-1).forEach(ym => {
+              const arrM = mapM.get(ym);
+              if (showDay) {
+                const mapD = new Map();
+                arrM.forEach(it => { const t = it.updatedAt || it.createdAt; const key = getYMD(t); if (!mapD.has(key)) mapD.set(key, []); mapD.get(key).push(it); });
+                Array.from(mapD.keys()).sort((a,b)=> a<b?1:-1).forEach(ymd => {
+                  const dBox = document.createElement('div');
+                  dBox.className = 'agf-group';
+                  const dTitle = document.createElement('div');
+                  dTitle.className = 'agf-group-title';
+                  const dSpan = document.createElement('span');
+                  const parts = ymd.split('-');
+                  dSpan.textContent = parts[1] + '月' + parts[2] + '日';
+                  const dBtn = document.createElement('button');
+                  dBtn.className = 'agf-records-close';
+                  dBtn.textContent = '折叠';
+                  const dBody = document.createElement('div');
+                  dBody.className = 'agf-group-body';
+                  dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+                  dTitle.appendChild(dSpan);
+                  dTitle.appendChild(dBtn);
+                  dBox.appendChild(dTitle);
+                  dBox.appendChild(dBody);
+                  mapD.get(ymd).forEach(it => dBody.appendChild(buildRecordItem(it)));
+                  yBody.appendChild(dBox);
+                });
+              } else {
+                const mBox = document.createElement('div');
+                mBox.className = 'agf-group';
+                const mTitle = document.createElement('div');
+                mTitle.className = 'agf-group-title';
+                const mSpan = document.createElement('span');
+                const parts = ym.split('-');
+                mSpan.textContent = parts[1] + '月';
+                const mBtn = document.createElement('button');
+                mBtn.className = 'agf-records-close';
+                mBtn.textContent = '折叠';
+                const mBody = document.createElement('div');
+                mBody.className = 'agf-group-body';
+                mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+                mTitle.appendChild(mSpan);
+                mTitle.appendChild(mBtn);
+                mBox.appendChild(mTitle);
+                mBox.appendChild(mBody);
+                arrM.forEach(it => mBody.appendChild(buildRecordItem(it)));
+                yBody.appendChild(mBox);
+              }
+            });
+            recordsList.appendChild(yBox);
+          } else {
+            const yBox = document.createElement('div');
+            yBox.className = 'agf-group';
+            const yTitle = document.createElement('div');
+            yTitle.className = 'agf-group-title';
+            const ySpan = document.createElement('span');
+            ySpan.textContent = String(y) + '年';
+            const yBtn = document.createElement('button');
+            yBtn.className = 'agf-records-close';
+            yBtn.textContent = '折叠';
+            const yBody = document.createElement('div');
+            yBody.className = 'agf-group-body';
+            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            yTitle.appendChild(ySpan);
+            yTitle.appendChild(yBtn);
+            yBox.appendChild(yTitle);
+            yBox.appendChild(yBody);
+            arrY.forEach(it => yBody.appendChild(buildRecordItem(it)));
+            recordsList.appendChild(yBox);
+          }
+        });
+        return;
+      }
+      if (showMonth) {
+        const mapM = new Map();
+        filtered.forEach(it => { const t = it.updatedAt || it.createdAt; const key = getYM(t); if (!mapM.has(key)) mapM.set(key, []); mapM.get(key).push(it); });
+        Array.from(mapM.keys()).sort((a,b)=> a<b?1:-1).forEach(ym => {
+          const arrM = mapM.get(ym);
+          if (showDay) {
+            const mapD = new Map();
+            arrM.forEach(it => { const t = it.updatedAt || it.createdAt; const key = getYMD(t); if (!mapD.has(key)) mapD.set(key, []); mapD.get(key).push(it); });
+            const mBox = document.createElement('div');
+            mBox.className = 'agf-group';
+            const mTitle = document.createElement('div');
+            mTitle.className = 'agf-group-title';
+            const mSpan = document.createElement('span');
+            const parts = ym.split('-');
+            mSpan.textContent = parts[0] + '年' + parts[1] + '月';
+            const mBtn = document.createElement('button');
+            mBtn.className = 'agf-records-close';
+            mBtn.textContent = '折叠';
+            const mBody = document.createElement('div');
+            mBody.className = 'agf-group-body';
+            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            mTitle.appendChild(mSpan);
+            mTitle.appendChild(mBtn);
+            mBox.appendChild(mTitle);
+            mBox.appendChild(mBody);
+            Array.from(mapD.keys()).sort((a,b)=> a<b?1:-1).forEach(ymd => {
+              const dBox = document.createElement('div');
+              dBox.className = 'agf-group';
+              const dTitle = document.createElement('div');
+              dTitle.className = 'agf-group-title';
+              const dSpan = document.createElement('span');
+              const ps = ymd.split('-');
+              dSpan.textContent = ps[2] + '日';
+              const dBtn = document.createElement('button');
+              dBtn.className = 'agf-records-close';
+              dBtn.textContent = '折叠';
+              const dBody = document.createElement('div');
+              dBody.className = 'agf-group-body';
+              dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+              dTitle.appendChild(dSpan);
+              dTitle.appendChild(dBtn);
+              dBox.appendChild(dTitle);
+              dBox.appendChild(dBody);
+              mapD.get(ymd).forEach(it => dBody.appendChild(buildRecordItem(it)));
+              mBody.appendChild(dBox);
+            });
+            recordsList.appendChild(mBox);
+          } else {
+            const mBox = document.createElement('div');
+            mBox.className = 'agf-group';
+            const mTitle = document.createElement('div');
+            mTitle.className = 'agf-group-title';
+            const mSpan = document.createElement('span');
+            const parts = ym.split('-');
+            mSpan.textContent = parts[0] + '年' + parts[1] + '月';
+            const mBtn = document.createElement('button');
+            mBtn.className = 'agf-records-close';
+            mBtn.textContent = '折叠';
+            const mBody = document.createElement('div');
+            mBody.className = 'agf-group-body';
+            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            mTitle.appendChild(mSpan);
+            mTitle.appendChild(mBtn);
+            mBox.appendChild(mTitle);
+            mBox.appendChild(mBody);
+            arrM.forEach(it => mBody.appendChild(buildRecordItem(it)));
+            recordsList.appendChild(mBox);
+          }
+        });
+        return;
+      }
+      if (showDay) {
+        const mapD = new Map();
+        filtered.forEach(it => { const t = it.updatedAt || it.createdAt; const key = getYMD(t); if (!mapD.has(key)) mapD.set(key, []); mapD.get(key).push(it); });
+        Array.from(mapD.keys()).sort((a,b)=> a<b?1:-1).forEach(ymd => {
+          const dBox = document.createElement('div');
+          dBox.className = 'agf-group';
+          const dTitle = document.createElement('div');
+          dTitle.className = 'agf-group-title';
+          const dSpan = document.createElement('span');
+          const ps = ymd.split('-');
+          dSpan.textContent = ps[0] + '年' + ps[1] + '月' + ps[2] + '日';
+          const dBtn = document.createElement('button');
+          dBtn.className = 'agf-records-close';
+          dBtn.textContent = '折叠';
+          const dBody = document.createElement('div');
+          dBody.className = 'agf-group-body';
+          dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+          dTitle.appendChild(dSpan);
+          dTitle.appendChild(dBtn);
+          dBox.appendChild(dTitle);
+          dBox.appendChild(dBody);
+          mapD.get(ymd).forEach(it => dBody.appendChild(buildRecordItem(it)));
+          recordsList.appendChild(dBox);
+        });
+        return;
+      }
     };
     const escapeHtml = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const markdownToHtml = (md) => {
