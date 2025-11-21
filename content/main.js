@@ -2697,7 +2697,7 @@ class ADHDHighlighter {
         req.onerror = () => reject(req.error);
       });
     };
-    const dbListConversations = async () => {
+    const dbListConversations = async (limit = 50) => {
       const db = await dbOpen();
       return new Promise((resolve, reject) => {
         const tx = db.transaction('conversations', 'readonly');
@@ -2707,7 +2707,10 @@ class ADHDHighlighter {
         const req = idx.openCursor(null, 'prev');
         req.onsuccess = (e) => {
           const cursor = e.target.result;
-          if (cursor) { items.push(cursor.value); cursor.continue(); } else { resolve(items); }
+          if (!cursor) { resolve(items); return; }
+          items.push(cursor.value);
+          if (items.length >= limit) { resolve(items); return; }
+          cursor.continue();
         };
         req.onerror = () => reject(req.error);
       });
@@ -2735,7 +2738,7 @@ class ADHDHighlighter {
       if (!recordsPanel || !recordsList) return;
       recordsList.innerHTML = '';
       let items = [];
-      try { items = await dbListConversations(); } catch (_) {}
+      try { items = await dbListConversations(50); } catch (_) {}
       items.forEach(item => {
         const el = document.createElement('div');
         el.className = 'agf-record-item';
@@ -2751,7 +2754,7 @@ class ADHDHighlighter {
             if (chatList) {
               chatList.innerHTML = '';
               qaCounter = 0;
-              chatMessages.forEach(m => appendMessage(m.role, m.content));
+              chatMessages.forEach(m => appendMessage(m.role, m.content, { highlight: false }));
             }
             currentConversationId = item.id;
             hideRecords();
@@ -2809,7 +2812,7 @@ class ADHDHighlighter {
     };
 
     
-    const appendMessage = (role, text) => {
+    const appendMessage = (role, text, opts = {}) => {
       if (!chatList) return;
       const wrap = document.createElement('div');
       wrap.className = 'agf-msg ' + (role === 'user' ? 'user' : 'assistant');
@@ -2904,7 +2907,7 @@ class ADHDHighlighter {
           try { this.pageProcessor.processTextNode(node); } catch (_) {}
         });
       };
-      highlightBubbleContent(contentEl);
+      if (opts.highlight !== false) highlightBubbleContent(contentEl);
     };
 
     const startAssistantStream = () => {
@@ -2932,7 +2935,7 @@ class ADHDHighlighter {
       const prompt = composerInput.value.trim();
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
-      appendMessage('user', prompt);
+      appendMessage('user', prompt, { highlight: true });
       chatMessages.push({ role: 'user', content: prompt });
       composerInput.value = '';
       let key = '';
@@ -2982,7 +2985,7 @@ class ADHDHighlighter {
         text = '';
       }
       if (!text) text = '...';
-      appendMessage('assistant', text);
+      appendMessage('assistant', text, { highlight: true });
       chatMessages.push({ role: 'assistant', content: text });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
@@ -2992,7 +2995,6 @@ class ADHDHighlighter {
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
-      const origin = (()=>{ try { return (new URL(pageUrl)).origin; } catch(_) { return ''; } })();
       const candidates = new Set([pageUrl, canonicalUrl]);
       try {
         const iframes = Array.from(document.querySelectorAll('iframe'));
@@ -3005,7 +3007,6 @@ class ADHDHighlighter {
           } catch (_) {}
         }
       } catch (_) {}
-      const recentCutoff = Date.now() - 30*60*1000;
       return new Promise((resolve) => {
         const tx = db.transaction('page_segments','readonly');
         const st = tx.objectStore('page_segments');
@@ -3018,9 +3019,6 @@ class ADHDHighlighter {
             let ok = false;
             if (val) {
               if (candidates.has(val.pageUrl) || candidates.has(val.canonicalUrl)) ok = true;
-              if (!ok && origin) {
-                try { const u = new URL(val.pageUrl); if (u.origin === origin && val.timestamp >= recentCutoff) ok = true; } catch(_) {}
-              }
             }
             if (ok) arr.push(val);
             cursor.continue();
