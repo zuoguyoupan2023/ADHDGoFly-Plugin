@@ -3353,6 +3353,7 @@ class ADHDHighlighter {
           if (colContent.classList.contains('collapsed')) {
             if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
             colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
+            if (highlightEnabled) scheduleIncrementalHighlight(colContent);
           } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
         });
         col.appendChild(colContent);
@@ -3378,6 +3379,7 @@ class ADHDHighlighter {
             if (colContent.classList.contains('collapsed')) {
               if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
               colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
+              if (highlightEnabled) scheduleIncrementalHighlight(colContent);
             } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
           });
           col.appendChild(colContent);
