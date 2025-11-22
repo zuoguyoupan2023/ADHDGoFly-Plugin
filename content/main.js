@@ -2144,7 +2144,7 @@ class ADHDHighlighter {
       .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
       .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
       .agf-ai-controls{display:inline-flex;gap:8px}
-      .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:18px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
+      .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:14px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
       .agf-status{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
       .agf-status-dot{width:10px;height:10px;border-radius:50%;border:1px solid #e0e0e0;background:#bbb}
       .agf-status-btn{height:20px;line-height:20px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
@@ -2545,7 +2545,11 @@ class ADHDHighlighter {
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
-    bubble.addEventListener('click', () => this.restoreAiSettingPanel());
+    let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
+    const bubbleMove = (e) => { if (!bDragging) return; const dx = e.clientX - bStartX; const dy = e.clientY - bStartY; const nl = Math.min(Math.max(0, bStartLeft + dx), window.innerWidth - bubble.offsetWidth); const nt = Math.min(Math.max(0, bStartTop + dy), window.innerHeight - bubble.offsetHeight); bubble.style.left = nl + 'px'; bubble.style.top = nt + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; if (Math.abs(dx) + Math.abs(dy) > 3) bMoved = true; };
+    const bubbleUp = () => { if (!bDragging) return; bDragging = false; document.removeEventListener('mousemove', bubbleMove); document.removeEventListener('mouseup', bubbleUp); if (bMoved) { this.__bubblePos = { left: parseInt(bubble.style.left, 10) || 0, top: parseInt(bubble.style.top, 10) || 0 }; bMoved = false; } else { this.restoreAiSettingPanel(); } };
+    const bubbleDown = (e) => { try { const rect = bubble.getBoundingClientRect(); bDragging = true; bMoved = false; bStartX = e.clientX; bStartY = e.clientY; bStartLeft = rect.left; bStartTop = rect.top; bubble.style.left = bStartLeft + 'px'; bubble.style.top = bStartTop + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; document.addEventListener('mousemove', bubbleMove); document.addEventListener('mouseup', bubbleUp); } catch (_) {} };
+    bubble.addEventListener('mousedown', bubbleDown);
     let currentView = 'chat';
     const setView = (which) => {
       currentView = which;
@@ -4374,6 +4378,7 @@ class ADHDHighlighter {
     const bubble = document.getElementById('agfAiBubble');
     if (overlay) overlay.style.display = 'none';
     if (bubble) bubble.style.display = 'none';
+    this.__bubblePos = null;
   }
 
   minimizeAiSettingPanel() {
