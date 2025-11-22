@@ -2223,6 +2223,7 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
+      .agf-status-row{display:flex;align-items:center;justify-content:flex-start;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-bottom:8px}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
@@ -2275,11 +2276,9 @@ class ADHDHighlighter {
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
             <div class="agf-ai-display">
+              <div class="agf-status-row"><span id="agfStatusText"></span></div>
               <div class="agf-chat">
-                <div class="agf-chat-list">
-                  <div class="agf-msg assistant"><div class="agf-bubble">您好，我是AI助手。</div></div>
-                  <div class="agf-msg user"><div class="agf-bubble user">请总结这段文本。</div></div>
-                </div>
+                <div class="agf-chat-list"></div>
               </div>
             </div>
             <div class="agf-ai-input">
@@ -2471,6 +2470,7 @@ class ADHDHighlighter {
     const tabDoc = document.getElementById('agfAiTabDoc');
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
+    const statusText = document.getElementById('agfStatusText');
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
     const modelList = document.getElementById('agfModelList');
@@ -3802,7 +3802,8 @@ class ADHDHighlighter {
     const updateStorageStatusUI = async () => {
       const segs = await getLatestStoredSegmentsForPage();
       if (statusDot) {
-        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
+        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; if (statusText) statusText.textContent = '处理完成，可以点击上方按钮'; }
+        else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; if (statusText) statusText.textContent = '处理失败，请刷新以重新处理'; }
       }
       const has = segs.length > 0;
       if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
