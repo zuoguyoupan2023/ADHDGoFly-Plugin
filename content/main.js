@@ -4043,7 +4043,33 @@ class ADHDHighlighter {
       const testNormalized = this.normalizeText(rawText || '');
       const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
       const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
-      // 第二部分已删除：不再进行旧逻辑补全的分配与展示
+      const structSecs = this.collectPageSections();
+      const secList = [];
+      for (let i=0;i<structSecs.length;i++) {
+        const sec = structSecs[i];
+        const text = (sec.blocks && sec.blocks.length) ? sec.blocks.map(b=>String(b.text||'')).join('\n') : '';
+        secList.push({ title: String(sec.sectionTitle||''), text: this.normalizeText(text||'') });
+      }
+      const assignMap = new Map();
+      const titleNorm = (s)=>this.normalizeText(String(s||'')).slice(0,200);
+      const ngrams = (s)=>{ const t=this.normalizeText(String(s||'')); const L=Math.min(1200,t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+      supplements.forEach(it=>{
+        let targetIdx = -1;
+        const st = titleNorm(it.title);
+        if (st) {
+          for (let i=0;i<secList.length;i++) { if (titleNorm(secList[i].title)===st) { targetIdx=i; break; } }
+        }
+        if (targetIdx<0) {
+          let best=-1, bi=-1;
+          for (let i=0;i<secList.length;i++) { const sim=jac(it.text, secList[i].text.slice(0,1200)); if (sim>best) { best=sim; bi=i; } }
+          if (best>=0.05) targetIdx=bi;
+        }
+        if (targetIdx<0) targetIdx = -1;
+        const key = targetIdx>=0 ? ('sec:'+targetIdx) : 'unplaced';
+        if (!assignMap.has(key)) assignMap.set(key, []);
+        assignMap.get(key).push(it.text);
+      });
       if (fulltextContent) {
         fulltextContent.innerHTML = '';
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
