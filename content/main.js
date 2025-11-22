@@ -1694,6 +1694,19 @@ class ADHDHighlighter {
     return false;
   }
 
+  isCssOrAdText(s) {
+    const t = String(s || '');
+    const lower = t.toLowerCase();
+    if (!t.trim()) return false;
+    if (lower.indexOf('adsbygoogle') >= 0 || lower.indexOf('googletag') >= 0 || lower.indexOf('doubleclick') >= 0) return true;
+    if (/[{};]/.test(t) && (lower.indexOf('display')>=0 || lower.indexOf('width')>=0 || lower.indexOf('height')>=0 || lower.indexOf('margin')>=0 || lower.indexOf('padding')>=0 || lower.indexOf('text-align')>=0 || lower.indexOf('position')>=0)) return true;
+    if (/@media\b/.test(t)) return true;
+    if (/function\b|\bvar\b|\blet\b|\bconst\b|=>|\(\s*\)\s*=>/.test(t)) return true;
+    const punct = (t.match(/[{};<>\[\]()$]/g) || []).length;
+    if (punct > Math.max(10, Math.floor(t.length * 0.25))) return true;
+    return false;
+  }
+
   smartTruncate(s, limit) {
     const t = String(s || '');
     if (t.length <= limit) return t;
@@ -2223,6 +2236,9 @@ class ADHDHighlighter {
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
       .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:12px;overflow:auto}
       .agf-fulltext-content{white-space:pre-wrap;color:#333;font-size:13px}
+      .agf-fulltext-section{margin-bottom:12px}
+      .agf-fulltext-title{font-weight:600;font-size:13px;color:#333;margin-bottom:6px}
+      .agf-fulltext-body{white-space:pre-wrap;color:#333;font-size:13px}
       .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
@@ -3941,7 +3957,104 @@ class ADHDHighlighter {
     if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const segs = await getStoredSegmentsForPage(); const rawText = segs.map(r => (r.blocks || []).map(b => String(b.text || '')).join('\n')).join('\n\n'); if (fulltextContent) fulltextContent.textContent = rawText || '无存储文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
-    if (testTextBtn) testTextBtn.addEventListener('click', async () => { const u = getCanonicalUrl(); const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r)); const rawText = res && res.text || ''; if (fulltextContent) fulltextContent.textContent = rawText || '未保存文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
+    if (testTextBtn) testTextBtn.addEventListener('click', async () => {
+      const u = getCanonicalUrl();
+      const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
+      const rawText = (res && res.text) ? String(res.text) : '';
+      const testNormalized = this.normalizeText(rawText || '');
+      let segs = [];
+      try { segs = await getLatestStoredSegmentsForPage(); } catch (_) { segs = []; }
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
+      const testKeys = new Set();
+      if (testNormalized) {
+        const lines = testNormalized.split('\n');
+        for (let i=0;i<lines.length;i++) { const line = lines[i].trim(); if (line.length >= 2) { testKeys.add(makeKey(line)); } }
+      }
+      const supSet = new Set();
+      const supplements = [];
+      for (let i=0;i<segs.length;i++) {
+        const r = segs[i];
+        const blocks = Array.isArray(r.blocks) ? r.blocks : [];
+        for (let j=0;j<blocks.length;j++) {
+          const t = this.normalizeText(String(blocks[j].text||''));
+          if (!t || t.length < 30) continue;
+          if (uiTokens.has(t)) continue;
+          if (this.isNavigationText(t)) continue;
+          if (this.isCssOrAdText(t)) continue;
+          const k = makeKey(t);
+          if (testKeys.has(k)) continue;
+          if (testNormalized && testNormalized.indexOf(t) >= 0) continue;
+          if (supSet.has(k)) continue;
+          supSet.add(k);
+          supplements.push({ text: t, title: String(r.sectionTitle||'') });
+        }
+      }
+      const supText = supplements.map(x=>x.text).join('\n\n');
+      const structSecs = this.collectPageSections();
+      const secList = [];
+      for (let i=0;i<structSecs.length;i++) {
+        const sec = structSecs[i];
+        const text = (sec.blocks && sec.blocks.length) ? sec.blocks.map(b=>String(b.text||'')).join('\n') : '';
+        secList.push({ title: String(sec.sectionTitle||''), text: this.normalizeText(text||'') });
+      }
+      const assignMap = new Map();
+      const titleNorm = (s)=>this.normalizeText(String(s||'')).slice(0,200);
+      const ngrams = (s)=>{ const t=this.normalizeText(String(s||'')); const L=Math.min(1200,t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+      supplements.forEach(it=>{
+        let targetIdx = -1;
+        const st = titleNorm(it.title);
+        if (st) {
+          for (let i=0;i<secList.length;i++) { if (titleNorm(secList[i].title)===st) { targetIdx=i; break; } }
+        }
+        if (targetIdx<0) {
+          let best=-1, bi=-1;
+          for (let i=0;i<secList.length;i++) { const sim=jac(it.text, secList[i].text.slice(0,1200)); if (sim>best) { best=sim; bi=i; } }
+          if (best>=0.05) targetIdx=bi;
+        }
+        if (targetIdx<0) targetIdx = -1;
+        const key = targetIdx>=0 ? ('sec:'+targetIdx) : 'unplaced';
+        if (!assignMap.has(key)) assignMap.set(key, []);
+        assignMap.get(key).push(it.text);
+      });
+      if (fulltextContent) {
+        fulltextContent.innerHTML = '';
+        const sec1 = document.createElement('div'); sec1.className = 'agf-fulltext-section';
+        const ttl1 = document.createElement('div'); ttl1.className = 'agf-fulltext-title'; ttl1.textContent = '当前方法获取的全文';
+        const body1 = document.createElement('div'); body1.className = 'agf-fulltext-body'; body1.textContent = testNormalized || '未保存文本';
+        sec1.appendChild(ttl1); sec1.appendChild(body1);
+        const sec2 = document.createElement('div'); sec2.className = 'agf-fulltext-section';
+        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = '用旧逻辑补充的文本';
+        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || '无补充文本';
+        sec2.appendChild(ttl2); sec2.appendChild(body2);
+        const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
+        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '位置对齐后的文本（结构化）';
+        const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
+        let aligned = '';
+        for (let i=0;i<secList.length;i++) {
+          const s = secList[i];
+          aligned += (s.title ? ('# '+s.title+'\n\n') : '');
+          aligned += (s.text ? (s.text+'\n\n') : '');
+          const supplementsForSec = assignMap.get('sec:'+i) || [];
+          if (supplementsForSec.length) {
+            aligned += '[补充]\n';
+            aligned += supplementsForSec.join('\n\n') + '\n\n';
+          }
+        }
+        const unplaced = assignMap.get('unplaced') || [];
+        if (unplaced.length) {
+          aligned += '未对齐补充\n';
+          aligned += unplaced.join('\n\n');
+        }
+        body3.textContent = aligned || '无结构化内容';
+        sec3.appendChild(ttl3); sec3.appendChild(body3);
+        fulltextContent.appendChild(sec1);
+        fulltextContent.appendChild(sec2);
+        fulltextContent.appendChild(sec3);
+      }
+      if (fulltextPanel) fulltextPanel.style.display = 'block';
+    });
     if (fulltextClose) fulltextClose.addEventListener('click', () => { if (fulltextPanel) fulltextPanel.style.display = 'none'; });
     const onComposerSendClick = (e) => {
       if (!composerSend) return;
