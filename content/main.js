@@ -2286,6 +2286,7 @@ class ADHDHighlighter {
             <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
             <button id="agfAiHalf" data-i18n="aiPanel.size.half">中</button>
             <button id="agfAiMini" data-i18n="aiPanel.size.mini">小</button>
+            <button id="agfAiClose">X</button>
           </div>
         </div>
         
@@ -2483,6 +2484,7 @@ class ADHDHighlighter {
     const fullBtn = document.getElementById('agfAiFull');
     const halfBtn = document.getElementById('agfAiHalf');
     const miniBtn = document.getElementById('agfAiMini');
+    const closeBtn = document.getElementById('agfAiClose');
     const titleLabel = document.getElementById('agfTitleLabel');
     const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
@@ -2557,6 +2559,7 @@ class ADHDHighlighter {
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
     const bubbleMove = (e) => { if (!bDragging) return; const dx = e.clientX - bStartX; const dy = e.clientY - bStartY; const nl = Math.min(Math.max(0, bStartLeft + dx), window.innerWidth - bubble.offsetWidth); const nt = Math.min(Math.max(0, bStartTop + dy), window.innerHeight - bubble.offsetHeight); bubble.style.left = nl + 'px'; bubble.style.top = nt + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; if (Math.abs(dx) + Math.abs(dy) > 3) bMoved = true; };
     const bubbleUp = () => { if (!bDragging) return; bDragging = false; document.removeEventListener('mousemove', bubbleMove); document.removeEventListener('mouseup', bubbleUp); if (bMoved) { this.__bubblePos = { left: parseInt(bubble.style.left, 10) || 0, top: parseInt(bubble.style.top, 10) || 0 }; bMoved = false; } else { this.restoreAiSettingPanel(); } };

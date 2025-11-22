@@ -56,7 +56,7 @@
     "explain": "Plain Explanation",
     "outline": "Extract Outline",
     "keywords": "Extract Keywords & Terms",
-    "fullText": "Full Text",
+    "fullText": "Text",
     "size": { "full": "Full", "half": "Medium", "mini": "Small" },
     "highlight": { "on": "Highlight", "off": "Off" },
     "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
