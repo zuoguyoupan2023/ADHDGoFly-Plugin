@@ -2223,13 +2223,13 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
-      .agf-status-fixed{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-top:8px}
-      .agf-conv-index{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-      .agf-conv-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agf-status-fixed{display:none}
+      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
-      .agf-status-row{display:flex;align-items:center;justify-content:flex-start;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-bottom:8px}
-      .agf-fixed-bar{position:sticky;top:48px;z-index:98;display:flex;align-items:flex-start;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin:8px 12px}
+      .agf-status-row{display:none}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin:8px 12px}
+      .agf-fixed-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
@@ -2279,7 +2279,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><span id="agfStatusText"></span><div id="agfConvIndex" class="agf-conv-index"><div class="agf-conv-row" id="agfConvRowQ"></div><div class="agf-conv-row" id="agfConvRowA"></div></div></div>
+      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
@@ -2558,16 +2558,12 @@ class ADHDHighlighter {
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
       const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
-      if (!ci || !cl) return;
+      const roundsEl = document.getElementById('agfConvRounds');
+      if (!ci || !cl || !roundsEl) return;
       ci.innerHTML = '';
       const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
-      const roundsEl = document.createElement('span');
-      roundsEl.className = 'agf-conv-rounds';
       roundsEl.textContent = '对话' + rounds + '轮';
-      ci.appendChild(roundsEl);
-      const rowQ = document.createElement('div'); rowQ.className = 'agf-conv-row';
-      const rowA = document.createElement('div'); rowA.className = 'agf-conv-row';
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
@@ -2576,10 +2572,8 @@ class ADHDHighlighter {
         item.className = 'agf-conv-item';
         item.textContent = t;
         item.addEventListener('click', () => { try { const bub = lab.closest('.agf-bubble') || lab; bub.scrollIntoView({ block: 'start' }); } catch (_) {} });
-        if (t.startsWith('Q')) rowQ.appendChild(item); else if (t.startsWith('A')) rowA.appendChild(item); else ci.appendChild(item);
+        ci.appendChild(item);
       }
-      if (rowQ.childNodes.length > 0) ci.appendChild(rowQ);
-      if (rowA.childNodes.length > 0) ci.appendChild(rowA);
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
@@ -3837,8 +3831,8 @@ class ADHDHighlighter {
     const updateStorageStatusUI = async () => {
       const segs = await getLatestStoredSegmentsForPage();
       if (statusDot) {
-        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; if (statusText) statusText.textContent = '处理完成，可以点击上方按钮'; }
-        else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; if (statusText) statusText.textContent = '处理失败，请刷新以重新处理'; }
+        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; if (statusText) { statusText.textContent = ''; statusText.style.display = 'none'; } }
+        else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; if (statusText) { statusText.textContent = '处理失败，请刷新以重新处理'; statusText.style.display = 'inline'; } }
       }
       const has = segs.length > 0;
       if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
@@ -3859,7 +3853,7 @@ class ADHDHighlighter {
     const setStatusProcessing = () => {
       if (statusDot) { statusDot.style.background = '#f39c12'; statusDot.title = '处理中: 正在获取该页面文本'; }
       const statusTextEl = document.getElementById('agfStatusText');
-      if (statusTextEl) statusTextEl.textContent = '正在处理文本';
+      if (statusTextEl) { statusTextEl.textContent = '正在处理文本'; statusTextEl.style.display = 'inline'; }
       if (refreshBtn) { refreshBtn.classList.remove('breathing'); refreshBtn.style.display = 'none'; }
       if (refreshHint) refreshHint.style.display = 'none';
       if (quickSummaryBtn) quickSummaryBtn.disabled = true;
