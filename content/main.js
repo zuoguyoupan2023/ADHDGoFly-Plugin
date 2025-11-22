@@ -3820,6 +3820,41 @@ class ADHDHighlighter {
       return segs;
     };
 
+    const setStatusProcessing = () => {
+      if (statusDot) { statusDot.style.background = '#f39c12'; statusDot.title = '处理中: 正在获取该页面文本'; }
+      if (refreshBtn) { refreshBtn.classList.remove('breathing'); refreshBtn.style.display = 'none'; }
+      if (refreshHint) refreshHint.style.display = 'none';
+      if (quickSummaryBtn) quickSummaryBtn.disabled = true;
+      if (moreBtn) moreBtn.disabled = true;
+      if (btnStructured) btnStructured.disabled = true;
+      if (btnExplain) btnExplain.disabled = true;
+      if (btnOutline) btnOutline.disabled = true;
+      if (btnKeywords) btnKeywords.disabled = true;
+    };
+
+    const sessionGet = async (key) => { try { const o = await chrome.storage.session.get([key]); return o && o[key]; } catch (_) { return undefined; } };
+    const sessionSet = async (key, val) => { try { await chrome.storage.session.set({ [key]: val }); } catch (_) {} };
+
+    const ensureAutoCollect = async () => {
+      const u = getCanonicalUrl();
+      const key = 'agfCollect:' + u.canonicalUrl;
+      let segs = [];
+      try { segs = await getLatestStoredSegmentsForPage(); } catch (_) { segs = []; }
+      if (segs.length > 0) { await updateStorageStatusUI(); return; }
+      const trig = await sessionGet(key);
+      if (trig) { await updateStorageStatusUI(); return; }
+      setStatusProcessing();
+      await sessionSet(key, Date.now());
+      if (isPdfPage()) {
+        try { await new Promise(s => chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url: u.pageUrl }, s)); } catch (_) {}
+        for (let i = 0; i < 10; i++) { await new Promise(r => setTimeout(r, 400)); const xs = await getLatestStoredSegmentsForPage(); if (xs.length > 0) break; }
+        await updateStorageStatusUI();
+      } else {
+        try { await this.collectDynamicSegments(3000); } catch (_) {}
+        await updateStorageStatusUI();
+      }
+    };
+
     const buildSummaryPrompt = (segs) => {
       const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
       const filterUiText = (s) => {
@@ -4282,7 +4317,7 @@ class ADHDHighlighter {
     resizeLeft.addEventListener('mousedown', onResizeDownLeft);
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
-    (async ()=>{ try { await updateStorageStatusUI(); } catch (_) {} })();
+    (async ()=>{ try { await updateStorageStatusUI(); await ensureAutoCollect(); } catch (_) {} })();
     this.__aiSettingPanelInitialized = true;
   }
 
