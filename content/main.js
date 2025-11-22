@@ -3950,12 +3950,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildStructuredSummaryPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const segs = await getStoredSegmentsForPage(); const rawText = segs.map(r => (r.blocks || []).map(b => String(b.text || '')).join('\n')).join('\n\n'); if (fulltextContent) fulltextContent.textContent = rawText || '无存储文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
@@ -4479,3 +4479,64 @@ console.log('ADHD文本高亮器主控制器加载完成');
       }
     };
     initGovernanceControls();
+    const buildTStructuredText = async () => {
+      const u = getCanonicalUrl();
+      const resp = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
+      const rawText = (resp && resp.text) ? String(resp.text) : '';
+      const testNormalized = this.normalizeText(rawText || '');
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
+      const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
+      const paraKeys = new Set();
+      const filteredParas = [];
+      for (let i=0;i<paras.length;i++) {
+        const p = paras[i];
+        if (p.length < 2) continue;
+        if (uiTokens.has(p)) continue;
+        if (this.isCssOrAdText(p)) continue;
+        const k = makeKey(p);
+        if (paraKeys.has(k)) continue;
+        paraKeys.add(k);
+        filteredParas.push(p);
+      }
+      const structSecs = this.collectPageSections();
+      const hint = [];
+      for (let i=0;i<structSecs.length;i++) {
+        const hp = String(structSecs[i].headingPath||'');
+        const m = hp.match(/^h([1-6]):/);
+        if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
+      }
+      const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
+      const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+      const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } } const s = jac(tp, ht); if (s > best && s >= 0.12) { best = s; bl = hint[i].level; } } return bl || 0; };
+      const anchors = Array.from(document.querySelectorAll('a'));
+      const anchorList = [];
+      const seenAnchor = new Set();
+      for (let i=0;i<anchors.length;i++) {
+        const a = anchors[i];
+        const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
+        let href = String(a.getAttribute('href')||a.href||'').trim();
+        if (!txt || txt.length < 2) continue;
+        if (!href) continue;
+        try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
+        const key = txt.toLowerCase()+"|"+href;
+        if (seenAnchor.has(key)) continue;
+        seenAnchor.add(key);
+        anchorList.push({ text: txt, href });
+      }
+      const linkify = (s)=>{ let out = String(s||''); const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60); list.sort((a,b)=>b.text.length - a.text.length); let rep = 0; for (let i=0;i<list.length && rep<3;i++) { const t = list[i].text; const h = list[i].href; const idx = out.indexOf(t); if (idx < 0) continue; const before = idx>0 ? out[idx-1] : ' '; const afterIdx = idx + t.length; const after = afterIdx < out.length ? out[afterIdx] : ' '; const wb = /[\w\u4e00-\u9fa5]/; const ok = !wb.test(before) && !wb.test(after); if (!ok) continue; out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx); rep++; } return out; };
+      let aligned = '';
+      let prevKey = '';
+      for (let i=0;i<filteredParas.length;i++) {
+        const p = filteredParas[i];
+        const k = makeKey(p);
+        if (k === prevKey) continue;
+        prevKey = k;
+        const lvl = detectLevel(p);
+        const px = linkify(p);
+        if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
+        else { aligned += px + '\n\n'; }
+      }
+      return aligned;
+    };
