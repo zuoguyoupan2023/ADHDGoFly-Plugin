@@ -567,7 +567,7 @@ class ADHDHighlighter {
           try { await this.collectAndStorePageSegments(); } catch (_) {}
         }
       } catch (_) {}
-      try { await this.plainCollectAndSaveText(); } catch (_) {}
+      try { await this.testCollectAndSaveText(); } catch (_) {}
       
       console.log('ADHD文本高亮器初始化完成');
       
@@ -1952,7 +1952,7 @@ class ADHDHighlighter {
     return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
   }
 
-  async plainCollectAndSaveText() {
+  async testCollectAndSaveText() {
     const pageUrl = window.location.href;
     let canonicalUrl = pageUrl;
     try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
@@ -1981,10 +1981,8 @@ class ADHDHighlighter {
     try { const h1 = document.querySelector('h1'); if (h1 && h1.textContent) title = h1.textContent.trim(); } catch (_) {}
     if (!title) title = (document.title || '').trim();
     const domain = (new URL(pageUrl)).hostname;
-    const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
-    const action = useOld ? 'agfTestSaveText' : 'agfPlainSaveText';
     return await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action, data: { pageUrl, canonicalUrl, domain, title, timestamp: Date.now(), text, textLength, textHash } }, (res) => {
+      chrome.runtime.sendMessage({ action: 'agfTestSaveText', data: { pageUrl, canonicalUrl, domain, title, timestamp: Date.now(), text, textLength, textHash } }, (res) => {
         resolve(res && res.success ? { success: true } : { success: false, error: (res && res.error) || 'save_failed' });
       });
     });
@@ -2258,7 +2256,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfFullTextBtn" class="agf-status-btn" disabled>全文</button><button id="agfPlainTextBtn" class="agf-status-btn">网页文本</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfFullTextBtn" class="agf-status-btn" disabled>全文</button><button id="agfTestTextBtn" class="agf-status-btn">t</button></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2498,7 +2496,7 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const fullTextBtn = document.getElementById('agfFullTextBtn');
-    const plainTextBtn = document.getElementById('agfPlainTextBtn');
+    const testTextBtn = document.getElementById('agfTestTextBtn');
     const fulltextPanel = document.getElementById('agfFulltextPanel');
     const fulltextContent = document.getElementById('agfFulltextContent');
     const fulltextClose = document.getElementById('agfFulltextClose');
@@ -3507,7 +3505,7 @@ class ADHDHighlighter {
     };
 
     const openTPanelThirdPart = () => {
-      const tBtn = document.getElementById('agfPlainTextBtn');
+      const tBtn = document.getElementById('agfTestTextBtn');
       if (tBtn) tBtn.click();
       setTimeout(() => {
         try {
@@ -3936,9 +3934,7 @@ class ADHDHighlighter {
 
     const buildTStructuredText = async () => {
       const u = getCanonicalUrl();
-      const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
-      const action = useOld ? 'agfTestGetTextForPage' : 'agfPlainGetTextForPage';
-      const resp = await new Promise(r => chrome.runtime.sendMessage({ action, pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
+      const resp = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
       const rawText = (resp && resp.text) ? String(resp.text) : '';
       const testNormalized = this.normalizeText(rawText || '');
       const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
@@ -4034,15 +4030,40 @@ class ADHDHighlighter {
     if (btnOutline) btnOutline.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (btnKeywords) btnKeywords.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const segs = await getStoredSegmentsForPage(); const rawText = segs.map(r => (r.blocks || []).map(b => String(b.text || '')).join('\n')).join('\n\n'); if (fulltextContent) fulltextContent.textContent = rawText || '无存储文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
-    if (plainTextBtn) plainTextBtn.addEventListener('click', async () => {
+    if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
-      const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
-      const action = useOld ? 'agfTestGetTextForPage' : 'agfPlainGetTextForPage';
-      const res = await new Promise(r => chrome.runtime.sendMessage({ action, pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
+      const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
       const rawText = (res && res.text) ? String(res.text) : '';
       const testNormalized = this.normalizeText(rawText || '');
+      let segs = [];
+      try { segs = await getLatestStoredSegmentsForPage(); } catch (_) { segs = []; }
       const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
       const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
+      const testKeys = new Set();
+      if (testNormalized) {
+        const lines = testNormalized.split('\n');
+        for (let i=0;i<lines.length;i++) { const line = lines[i].trim(); if (line.length >= 2) { testKeys.add(makeKey(line)); } }
+      }
+      const supSet = new Set();
+      const supplements = [];
+      for (let i=0;i<segs.length;i++) {
+        const r = segs[i];
+        const blocks = Array.isArray(r.blocks) ? r.blocks : [];
+        for (let j=0;j<blocks.length;j++) {
+          const t = this.normalizeText(String(blocks[j].text||''));
+          if (!t || t.length < 30) continue;
+          if (uiTokens.has(t)) continue;
+          if (this.isNavigationText(t)) continue;
+          if (this.isCssOrAdText(t)) continue;
+          const k = makeKey(t);
+          if (testKeys.has(k)) continue;
+          if (testNormalized && testNormalized.indexOf(t) >= 0) continue;
+          if (supSet.has(k)) continue;
+          supSet.add(k);
+          supplements.push({ text: t, title: String(r.sectionTitle||'') });
+        }
+      }
+      const supText = supplements.map(x=>x.text).join('\n\n');
       const structSecs = this.collectPageSections();
       const secList = [];
       for (let i=0;i<structSecs.length;i++) {
@@ -4072,8 +4093,16 @@ class ADHDHighlighter {
       });
       if (fulltextContent) {
         fulltextContent.innerHTML = '';
+        const sec1 = document.createElement('div'); sec1.className = 'agf-fulltext-section';
+        const ttl1 = document.createElement('div'); ttl1.className = 'agf-fulltext-title'; ttl1.textContent = '当前方法获取的全文';
+        const body1 = document.createElement('div'); body1.className = 'agf-fulltext-body'; body1.textContent = testNormalized || '未保存文本';
+        sec1.appendChild(ttl1); sec1.appendChild(body1);
+        const sec2 = document.createElement('div'); sec2.className = 'agf-fulltext-section';
+        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = '用旧逻辑补充的文本';
+        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || '无补充文本';
+        sec2.appendChild(ttl2); sec2.appendChild(body2);
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
-        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '网页文本逻辑（结构化）';
+        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '位置对齐后的文本（结构化）';
         const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
         const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
         const paraKeys = new Set();
@@ -4153,6 +4182,8 @@ class ADHDHighlighter {
         }
         body3.textContent = aligned || '无结构化内容';
         sec3.appendChild(ttl3); sec3.appendChild(body3);
+        fulltextContent.appendChild(sec1);
+        fulltextContent.appendChild(sec2);
         fulltextContent.appendChild(sec3);
       }
       if (fulltextPanel) fulltextPanel.style.display = 'block';
