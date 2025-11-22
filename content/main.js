@@ -2247,7 +2247,7 @@ class ADHDHighlighter {
       .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
-      .agf-ai-header{position:relative;z-index:99}
+      .agf-ai-header{position:sticky;top:0;z-index:99}
       .agf-more-wrap{position:relative;display:inline-block;margin-left:8px}
       .agf-more-btn{height:22px;min-width:56px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:10}
@@ -2551,7 +2551,29 @@ class ADHDHighlighter {
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
     };
-    const showChat = () => setView('chat');
+    const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} };
+    const rebuildConvIndex = () => {
+      const ci = document.getElementById('agfConvIndex');
+      const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
+      if (!ci || !cl) return;
+      ci.innerHTML = '';
+      const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
+      const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
+      const roundsEl = document.createElement('span');
+      roundsEl.className = 'agf-conv-rounds';
+      roundsEl.textContent = '对话' + rounds + '轮';
+      ci.appendChild(roundsEl);
+      for (let i = 0; i < labels.length; i++) {
+        const lab = labels[i];
+        const t = String(lab.textContent || '').trim();
+        if (!t) continue;
+        const item = document.createElement('span');
+        item.className = 'agf-conv-item';
+        item.textContent = t;
+        item.addEventListener('click', () => { try { const bub = lab.closest('.agf-bubble') || lab; bub.scrollIntoView({ block: 'start' }); } catch (_) {} });
+        ci.appendChild(item);
+      }
+    };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
@@ -3650,6 +3672,7 @@ class ADHDHighlighter {
       const shouldHighlight = highlightEnabled && opts.highlight === true && role !== 'user' && !opts.highlightHtml;
       if (shouldHighlight) highlightBubbleContent(contentEl);
       if (shouldHighlight && typeof opts.msgIndex === 'number') { setTimeout(() => { try { const html = contentEl.innerHTML; if (html && html.indexOf('adhd-processed') >= 0) { chatMessages[opts.msgIndex].highlightHtml = html; saveConversationSnapshot(); } } catch (_) {} }, 600); }
+      try { rebuildConvIndex(); } catch (_) {}
     };
 
     const startAssistantStream = () => {
@@ -3681,6 +3704,7 @@ class ADHDHighlighter {
           } catch (_) {}
         }, 600);
       }
+      try { rebuildConvIndex(); } catch (_) {}
     };
 
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
