@@ -3504,6 +3504,24 @@ class ADHDHighlighter {
       } catch (_) {}
     };
 
+    const openTPanelThirdPart = () => {
+      const tBtn = document.getElementById('agfTestTextBtn');
+      if (tBtn) tBtn.click();
+      setTimeout(() => {
+        try {
+          if (fulltextPanel) {
+            fulltextPanel.style.display = 'block';
+            const titles = fulltextPanel.querySelectorAll('.agf-fulltext-title');
+            for (let i=0;i<titles.length;i++) {
+              const el = titles[i];
+              const txt = String(el.textContent||'');
+              if (txt.indexOf('位置对齐后的文本') >= 0) { el.scrollIntoView({ block: 'start' }); break; }
+            }
+          }
+        } catch (_) {}
+      }, 80);
+    };
+
     highlightInitPhase = false;
 
     
@@ -3528,24 +3546,17 @@ class ADHDHighlighter {
         const headHtml = markdownToHtml(head);
         const headDiv = document.createElement('div');
         headDiv.innerHTML = headHtml;
-        const col = document.createElement('div');
-        col.className = 'agf-collapse';
-        const colContent = document.createElement('div');
-        colContent.className = 'agf-collapse-content collapsed';
-        const colToggle = document.createElement('button');
-        colToggle.className = 'agf-collapse-toggle';
-        colToggle.textContent = '展开全文';
-        colToggle.addEventListener('click', () => {
-          if (colContent.classList.contains('collapsed')) {
-            if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
-            colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
-            if (highlightEnabled) scheduleIncrementalHighlight(colContent);
-          } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
-        });
-        col.appendChild(colContent);
-        col.appendChild(colToggle);
+        const preview = document.createElement('div');
+        preview.className = 'agf-collapse-content';
+        const p30 = (body || '').slice(0, 30);
+        preview.innerHTML = markdownToHtml(p30 + (body.length > 30 ? '…' : ''));
+        const goBtn = document.createElement('button');
+        goBtn.className = 'agf-collapse-toggle';
+        goBtn.textContent = '去看全文';
+        goBtn.addEventListener('click', () => { openTPanelThirdPart(); });
         contentEl.appendChild(headDiv);
-        contentEl.appendChild(col);
+        contentEl.appendChild(preview);
+        contentEl.appendChild(goBtn);
       } else {
         const LONG = foldThresholdChars || 2000;
         if (text.length > LONG) {
@@ -3919,6 +3930,68 @@ class ADHDHighlighter {
       lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       lines.push('输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。');
       return lines.join('\n');
+    };
+
+    const buildTStructuredText = async () => {
+      const u = getCanonicalUrl();
+      const resp = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
+      const rawText = (resp && resp.text) ? String(resp.text) : '';
+      const testNormalized = this.normalizeText(rawText || '');
+      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
+      const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
+      const paraKeys = new Set();
+      const filteredParas = [];
+      for (let i=0;i<paras.length;i++) {
+        const p = paras[i];
+        if (p.length < 2) continue;
+        if (uiTokens.has(p)) continue;
+        if (this.isCssOrAdText(p)) continue;
+        const k = makeKey(p);
+        if (paraKeys.has(k)) continue;
+        paraKeys.add(k);
+        filteredParas.push(p);
+      }
+      const structSecs = this.collectPageSections();
+      const hint = [];
+      for (let i=0;i<structSecs.length;i++) {
+        const hp = String(structSecs[i].headingPath||'');
+        const m = hp.match(/^h([1-6]):/);
+        if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
+      }
+      const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
+      const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+      const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } } const s = jac(tp, ht); if (s > best && s >= 0.12) { best = s; bl = hint[i].level; } } return bl || 0; };
+      const anchors = Array.from(document.querySelectorAll('a'));
+      const anchorList = [];
+      const seenAnchor = new Set();
+      for (let i=0;i<anchors.length;i++) {
+        const a = anchors[i];
+        const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
+        let href = String(a.getAttribute('href')||a.href||'').trim();
+        if (!txt || txt.length < 2) continue;
+        if (!href) continue;
+        try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
+        const key = txt.toLowerCase()+"|"+href;
+        if (seenAnchor.has(key)) continue;
+        seenAnchor.add(key);
+        anchorList.push({ text: txt, href });
+      }
+      const linkify = (s)=>{ let out = String(s||''); const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60); list.sort((a,b)=>b.text.length - a.text.length); let rep = 0; for (let i=0;i<list.length && rep<3;i++) { const t = list[i].text; const h = list[i].href; const idx = out.indexOf(t); if (idx < 0) continue; const before = idx>0 ? out[idx-1] : ' '; const afterIdx = idx + t.length; const after = afterIdx < out.length ? out[afterIdx] : ' '; const wb = /[\w\u4e00-\u9fa5]/; const ok = !wb.test(before) && !wb.test(after); if (!ok) continue; out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx); rep++; } return out; };
+      let aligned = '';
+      let prevKey = '';
+      for (let i=0;i<filteredParas.length;i++) {
+        const p = filteredParas[i];
+        const k = makeKey(p);
+        if (k === prevKey) continue;
+        prevKey = k;
+        const lvl = detectLevel(p);
+        const px = linkify(p);
+        if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
+        else { aligned += px + '\n\n'; }
+      }
+      return aligned;
     };
 
     this.__onAiStreamDelta = (delta) => {
@@ -4479,64 +4552,3 @@ console.log('ADHD文本高亮器主控制器加载完成');
       }
     };
     initGovernanceControls();
-    const buildTStructuredText = async () => {
-      const u = getCanonicalUrl();
-      const resp = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
-      const rawText = (resp && resp.text) ? String(resp.text) : '';
-      const testNormalized = this.normalizeText(rawText || '');
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
-      const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
-      const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
-      const paraKeys = new Set();
-      const filteredParas = [];
-      for (let i=0;i<paras.length;i++) {
-        const p = paras[i];
-        if (p.length < 2) continue;
-        if (uiTokens.has(p)) continue;
-        if (this.isCssOrAdText(p)) continue;
-        const k = makeKey(p);
-        if (paraKeys.has(k)) continue;
-        paraKeys.add(k);
-        filteredParas.push(p);
-      }
-      const structSecs = this.collectPageSections();
-      const hint = [];
-      for (let i=0;i<structSecs.length;i++) {
-        const hp = String(structSecs[i].headingPath||'');
-        const m = hp.match(/^h([1-6]):/);
-        if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
-      }
-      const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
-      const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
-      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
-      const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } } const s = jac(tp, ht); if (s > best && s >= 0.12) { best = s; bl = hint[i].level; } } return bl || 0; };
-      const anchors = Array.from(document.querySelectorAll('a'));
-      const anchorList = [];
-      const seenAnchor = new Set();
-      for (let i=0;i<anchors.length;i++) {
-        const a = anchors[i];
-        const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
-        let href = String(a.getAttribute('href')||a.href||'').trim();
-        if (!txt || txt.length < 2) continue;
-        if (!href) continue;
-        try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
-        const key = txt.toLowerCase()+"|"+href;
-        if (seenAnchor.has(key)) continue;
-        seenAnchor.add(key);
-        anchorList.push({ text: txt, href });
-      }
-      const linkify = (s)=>{ let out = String(s||''); const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60); list.sort((a,b)=>b.text.length - a.text.length); let rep = 0; for (let i=0;i<list.length && rep<3;i++) { const t = list[i].text; const h = list[i].href; const idx = out.indexOf(t); if (idx < 0) continue; const before = idx>0 ? out[idx-1] : ' '; const afterIdx = idx + t.length; const after = afterIdx < out.length ? out[afterIdx] : ' '; const wb = /[\w\u4e00-\u9fa5]/; const ok = !wb.test(before) && !wb.test(after); if (!ok) continue; out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx); rep++; } return out; };
-      let aligned = '';
-      let prevKey = '';
-      for (let i=0;i<filteredParas.length;i++) {
-        const p = filteredParas[i];
-        const k = makeKey(p);
-        if (k === prevKey) continue;
-        prevKey = k;
-        const lvl = detectLevel(p);
-        const px = linkify(p);
-        if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
-        else { aligned += px + '\n\n'; }
-      }
-      return aligned;
-    };
