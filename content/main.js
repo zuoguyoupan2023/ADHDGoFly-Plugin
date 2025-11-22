@@ -2569,7 +2569,7 @@ class ADHDHighlighter {
       ci.innerHTML = '';
       const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
-      roundsEl.textContent = '对话' + rounds + '轮';
+      roundsEl.textContent =  rounds + '轮考题';
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
