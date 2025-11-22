@@ -2224,7 +2224,8 @@ class ADHDHighlighter {
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-status-fixed{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-top:8px}
-      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agf-conv-index{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+      .agf-conv-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:flex;align-items:center;justify-content:flex-start;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-bottom:8px}
@@ -2563,6 +2564,8 @@ class ADHDHighlighter {
       roundsEl.className = 'agf-conv-rounds';
       roundsEl.textContent = '对话' + rounds + '轮';
       ci.appendChild(roundsEl);
+      const rowQ = document.createElement('div'); rowQ.className = 'agf-conv-row';
+      const rowA = document.createElement('div'); rowA.className = 'agf-conv-row';
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
@@ -2571,8 +2574,10 @@ class ADHDHighlighter {
         item.className = 'agf-conv-item';
         item.textContent = t;
         item.addEventListener('click', () => { try { const bub = lab.closest('.agf-bubble') || lab; bub.scrollIntoView({ block: 'start' }); } catch (_) {} });
-        ci.appendChild(item);
+        if (t.startsWith('Q')) rowQ.appendChild(item); else if (t.startsWith('A')) rowA.appendChild(item); else ci.appendChild(item);
       }
+      if (rowQ.childNodes.length > 0) ci.appendChild(rowQ);
+      if (rowA.childNodes.length > 0) ci.appendChild(rowA);
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
