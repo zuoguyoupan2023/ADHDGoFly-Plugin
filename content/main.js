@@ -564,7 +564,7 @@ class ADHDHighlighter {
         if (mode === 'persistent') {
           this.ensureAiSettingPanel();
           this.showAiSettingPanel();
-          
+          try { await this.collectAndStorePageSegments(); } catch (_) {}
         }
       } catch (_) {}
       try { await this.plainCollectAndSaveText(); } catch (_) {}
@@ -1991,16 +1991,6 @@ class ADHDHighlighter {
     if (!candidates.length) candidates = [document.body];
     let best = '';
     let bestLen = -1;
-    const textLayers = Array.from(document.querySelectorAll('.textLayer'));
-    if (textLayers.length > 0) {
-      const parts = [];
-      textLayers.forEach(layer => {
-        const spans = Array.from(layer.querySelectorAll('span'));
-        spans.forEach(sp => { const t = this.normalizeText(sp.textContent || ''); if (t && t.length > 1) parts.push(t); });
-      });
-      best = parts.join('\n');
-      bestLen = best.length;
-    }
     for (const el of candidates) {
       try {
         const t = String(el.innerText || el.textContent || '').trim();
