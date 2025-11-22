@@ -4038,7 +4038,6 @@ class ADHDHighlighter {
           const p = paras[i];
           if (p.length < 2) continue;
           if (uiTokens.has(p)) continue;
-          if (this.isNavigationText(p)) continue;
           if (this.isCssOrAdText(p)) continue;
           const k = makeKey(p);
           if (paraKeys.has(k)) continue;
@@ -4060,6 +4059,42 @@ class ADHDHighlighter {
           if (s > best && s >= 0.12) { best = s; bl = hint[i].level; }
         }
         return bl || 0; };
+        const anchors = Array.from(document.querySelectorAll('a'));
+        const anchorList = [];
+        const seenAnchor = new Set();
+        for (let i=0;i<anchors.length;i++) {
+          const a = anchors[i];
+          const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
+          let href = String(a.getAttribute('href')||a.href||'').trim();
+          if (!txt || txt.length < 2) continue;
+          if (!href) continue;
+          try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
+          const key = txt.toLowerCase()+"|"+href;
+          if (seenAnchor.has(key)) continue;
+          seenAnchor.add(key);
+          anchorList.push({ text: txt, href });
+        }
+        const linkify = (s)=>{
+          let out = String(s||'');
+          const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60);
+          list.sort((a,b)=>b.text.length - a.text.length);
+          let rep = 0;
+          for (let i=0;i<list.length && rep<3;i++) {
+            const t = list[i].text;
+            const h = list[i].href;
+            const idx = out.indexOf(t);
+            if (idx < 0) continue;
+            const before = idx>0 ? out[idx-1] : ' ';
+            const afterIdx = idx + t.length;
+            const after = afterIdx < out.length ? out[afterIdx] : ' ';
+            const wb = /[\w\u4e00-\u9fa5]/;
+            const ok = !wb.test(before) && !wb.test(after);
+            if (!ok) continue;
+            out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx);
+            rep++;
+          }
+          return out;
+        };
         let aligned = '';
         let prevKey = '';
         for (let i=0;i<filteredParas.length;i++) {
@@ -4068,8 +4103,9 @@ class ADHDHighlighter {
           if (k === prevKey) continue;
           prevKey = k;
           const lvl = detectLevel(p);
-          if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + p + '\n\n'; }
-          else { aligned += p + '\n\n'; }
+          const px = linkify(p);
+          if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
+          else { aligned += px + '\n\n'; }
         }
         body3.textContent = aligned || '无结构化内容';
         sec3.appendChild(ttl3); sec3.appendChild(body3);
