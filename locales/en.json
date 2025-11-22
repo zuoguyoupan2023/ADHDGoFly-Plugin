@@ -117,7 +117,18 @@
     "collapse": { "goFull": "Go to full text", "expand": "Expand full text", "collapse": "Collapse" },
     "fulltext": { "pdfTitle": "PDF Full Text", "webTitle": "Web Page Full Text", "none": "No supplementary text", "noStructured": "No structured content" },
     "mode": { "persistent": "Persistent", "manual": "Manual" },
-    "save": "Save"
+    "save": "Save",
+    "unnamed": "Untitled",
+    "date": { "yearSuffix": "", "monthSuffix": "", "daySuffix": "" },
+    "prompts": {
+      "summaryTitle": "Summarize this article: ",
+      "structuredTitle": "Generate a structured summary with section key points and TL;DR.",
+      "explainTitle": "Explain the core content and key points in a concise way.",
+      "outlineTitle": "Extract the outline and hierarchical structure, keep headings and key points.",
+      "keywordsTitle": "Extract Top-N keywords and terms, grouped by category.",
+      "pageLabel": "Page: ",
+      "bodyLabel": "Body:"
+    }
   },
   "legend": {
     "title": "Part of Speech Colors",

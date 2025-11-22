@@ -3199,7 +3199,7 @@ class ADHDHighlighter {
           if (m) urlStr = m[1]; else urlStr = item.pageUrl || item.canonicalUrl || '';
           try { if (urlStr) { const u2 = new URL(urlStr, window.location.href); title = u2.hostname; } } catch (_) { title = urlStr || ''; }
         }
-        return (prefix ? (prefix + ' · ') : '') + (title || '未命名');
+        return (prefix ? (prefix + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
       };
       const buildRecordItem = (item) => {
         const el = document.createElement('div');
@@ -3299,13 +3299,13 @@ class ADHDHighlighter {
             const yTitle = document.createElement('div');
             yTitle.className = 'agf-group-title';
             const ySpan = document.createElement('span');
-            ySpan.textContent = String(y) + '年';
+            ySpan.textContent = String(y) + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年');
             const yBtn = document.createElement('button');
             yBtn.className = 'agf-records-close';
-            yBtn.textContent = '折叠';
+            yBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
             const yBody = document.createElement('div');
             yBody.className = 'agf-group-body';
-            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
             yTitle.appendChild(ySpan);
             yTitle.appendChild(yBtn);
             yBox.appendChild(yTitle);
@@ -3322,13 +3322,13 @@ class ADHDHighlighter {
                   dTitle.className = 'agf-group-title';
                   const dSpan = document.createElement('span');
                   const parts = ymd.split('-');
-                  dSpan.textContent = parts[1] + '月' + parts[2] + '日';
+                  dSpan.textContent = parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月') + parts[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
                   const dBtn = document.createElement('button');
                   dBtn.className = 'agf-records-close';
-                  dBtn.textContent = '折叠';
+                  dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
                   const dBody = document.createElement('div');
                   dBody.className = 'agf-group-body';
-                  dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+                  dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
                   dTitle.appendChild(dSpan);
                   dTitle.appendChild(dBtn);
                   dBox.appendChild(dTitle);
@@ -3343,13 +3343,13 @@ class ADHDHighlighter {
                 mTitle.className = 'agf-group-title';
                 const mSpan = document.createElement('span');
                 const parts = ym.split('-');
-                mSpan.textContent = parts[1] + '月';
+                mSpan.textContent = parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
                 const mBtn = document.createElement('button');
                 mBtn.className = 'agf-records-close';
-                mBtn.textContent = '折叠';
+                mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
                 const mBody = document.createElement('div');
                 mBody.className = 'agf-group-body';
-                mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+                mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
                 mTitle.appendChild(mSpan);
                 mTitle.appendChild(mBtn);
                 mBox.appendChild(mTitle);
@@ -3365,13 +3365,13 @@ class ADHDHighlighter {
             const yTitle = document.createElement('div');
             yTitle.className = 'agf-group-title';
             const ySpan = document.createElement('span');
-            ySpan.textContent = String(y) + '年';
+            ySpan.textContent = String(y) + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年');
             const yBtn = document.createElement('button');
             yBtn.className = 'agf-records-close';
-            yBtn.textContent = '折叠';
+            yBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
             const yBody = document.createElement('div');
             yBody.className = 'agf-group-body';
-            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            yBtn.addEventListener('click', () => { yBody.classList.toggle('collapsed'); yBtn.textContent = yBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
             yTitle.appendChild(ySpan);
             yTitle.appendChild(yBtn);
             yBox.appendChild(yTitle);
@@ -3396,13 +3396,13 @@ class ADHDHighlighter {
             mTitle.className = 'agf-group-title';
             const mSpan = document.createElement('span');
             const parts = ym.split('-');
-            mSpan.textContent = parts[0] + '年' + parts[1] + '月';
+            mSpan.textContent = parts[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
             const mBtn = document.createElement('button');
             mBtn.className = 'agf-records-close';
-            mBtn.textContent = '折叠';
+            mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
             const mBody = document.createElement('div');
             mBody.className = 'agf-group-body';
-            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
             mTitle.appendChild(mSpan);
             mTitle.appendChild(mBtn);
             mBox.appendChild(mTitle);
@@ -3414,13 +3414,13 @@ class ADHDHighlighter {
               dTitle.className = 'agf-group-title';
               const dSpan = document.createElement('span');
               const ps = ymd.split('-');
-              dSpan.textContent = ps[2] + '日';
+              dSpan.textContent = ps[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
               const dBtn = document.createElement('button');
               dBtn.className = 'agf-records-close';
-              dBtn.textContent = '折叠';
+              dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
               const dBody = document.createElement('div');
               dBody.className = 'agf-group-body';
-              dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+              dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
               dTitle.appendChild(dSpan);
               dTitle.appendChild(dBtn);
               dBox.appendChild(dTitle);
@@ -3436,13 +3436,13 @@ class ADHDHighlighter {
             mTitle.className = 'agf-group-title';
             const mSpan = document.createElement('span');
             const parts = ym.split('-');
-            mSpan.textContent = parts[0] + '年' + parts[1] + '月';
+            mSpan.textContent = parts[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
             const mBtn = document.createElement('button');
             mBtn.className = 'agf-records-close';
-            mBtn.textContent = '折叠';
+            mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
             const mBody = document.createElement('div');
             mBody.className = 'agf-group-body';
-            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+            mBtn.addEventListener('click', () => { mBody.classList.toggle('collapsed'); mBtn.textContent = mBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
             mTitle.appendChild(mSpan);
             mTitle.appendChild(mBtn);
             mBox.appendChild(mTitle);
@@ -3463,13 +3463,13 @@ class ADHDHighlighter {
           dTitle.className = 'agf-group-title';
           const dSpan = document.createElement('span');
           const ps = ymd.split('-');
-          dSpan.textContent = ps[0] + '年' + ps[1] + '月' + ps[2] + '日';
+          dSpan.textContent = ps[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + ps[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月') + ps[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
           const dBtn = document.createElement('button');
           dBtn.className = 'agf-records-close';
-          dBtn.textContent = '折叠';
+          dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
           const dBody = document.createElement('div');
           dBody.className = 'agf-group-body';
-          dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? '展开' : '折叠'; });
+          dBtn.addEventListener('click', () => { dBody.classList.toggle('collapsed'); dBtn.textContent = dBody.classList.contains('collapsed') ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠'); });
           dTitle.appendChild(dSpan);
           dTitle.appendChild(dBtn);
           dBox.appendChild(dTitle);
@@ -3654,7 +3654,8 @@ class ADHDHighlighter {
           showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制');
         } catch(_) { showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制'); }
       });
-      const idx = text.indexOf('\n正文:');
+      const bodyLabelDetect = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
+      const idx = text.indexOf('\n' + bodyLabelDetect);
       if (idx >= 0) {
         const head = text.slice(0, idx);
         const body = text.slice(idx + 4).replace(/^\s*:\s*/,'');
@@ -3779,7 +3780,8 @@ class ADHDHighlighter {
       const prompt = composerInput.value.trim();
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
-      const isGeneratedPrompt = nextPromptIsGenerated || prompt.indexOf('\n正文:') >= 0;
+      const bodyLabelDetect2 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
+      const isGeneratedPrompt = nextPromptIsGenerated || prompt.indexOf('\n' + bodyLabelDetect2) >= 0;
       const userIndex = chatMessages.length;
       chatMessages.push({ role: 'user', content: prompt });
       appendMessage('user', prompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
@@ -3961,7 +3963,7 @@ class ADHDHighlighter {
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
       const lines = [];
-      lines.push('帮我总结这篇文章: ' + canonicalUrl);
+      lines.push(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: ') + canonicalUrl);
       lines.push('存储的详情: ' + segs.length + ' 段');
       const tops = segs.slice(0, 5);
       tops.forEach((r, i) => {
@@ -3984,7 +3986,7 @@ class ADHDHighlighter {
         if (remain <= 0) break;
       }
       if (bodyTexts.length) {
-        lines.push('正文:');
+        lines.push((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:');
         lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
       }
       return lines.join('\n');
@@ -3997,8 +3999,8 @@ class ADHDHighlighter {
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
       const lines = [];
-      lines.push('请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。');
-      lines.push('页面: ' + canonicalUrl);
+      lines.push((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。');
+      lines.push(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ') + canonicalUrl);
       const MAX_CHARS = 12000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
@@ -4027,8 +4029,8 @@ class ADHDHighlighter {
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
       const lines = [];
-      lines.push('请用更简单的语言解释以下内容，面向非技术读者。');
-      lines.push('页面: ' + canonicalUrl);
+      lines.push((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用更简单的语言解释以下内容，面向非技术读者。');
+      lines.push(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ') + canonicalUrl);
       const MAX_CHARS = 9000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
@@ -4056,8 +4058,8 @@ class ADHDHighlighter {
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
       const lines = [];
-      lines.push('请提取全文大纲，保留层级结构与章节标题。');
-      lines.push('页面: ' + canonicalUrl);
+      lines.push((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取全文大纲，保留层级结构与章节标题。');
+      lines.push(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ') + canonicalUrl);
       const MAX_CHARS = 9000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
@@ -4086,8 +4088,8 @@ class ADHDHighlighter {
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
       const lines = [];
-      lines.push('请提取 Top-N 关键词与术语，并按类别分组。');
-      lines.push('页面: ' + canonicalUrl);
+      lines.push((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请提取 Top-N 关键词与术语，并按类别分组。');
+      lines.push(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ') + canonicalUrl);
       const MAX_CHARS = 8000;
       let remain = MAX_CHARS;
       const bodyTexts = [];
@@ -4199,12 +4201,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
@@ -4212,7 +4214,7 @@ class ADHDHighlighter {
       const testNormalized = this.normalizeText(rawText || '');
       let segs = [];
       try { segs = await getLatestStoredSegmentsForPage(); } catch (_) { segs = []; }
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
       const testKeys = new Set();
       if (testNormalized) {

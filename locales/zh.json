@@ -114,7 +114,18 @@
     "collapse": { "goFull": "去看全文", "expand": "展开全文", "collapse": "收起" },
     "fulltext": { "pdfTitle": "pdf全文", "webTitle": "网页全文", "none": "无补充文本", "noStructured": "无结构化内容" },
     "mode": { "persistent": "常驻", "manual": "手动" },
-    "save": "保存"
+    "save": "保存",
+    "unnamed": "未命名",
+    "date": { "yearSuffix": "年", "monthSuffix": "月", "daySuffix": "日" },
+    "prompts": {
+      "summaryTitle": "帮我总结这篇文章: ",
+      "structuredTitle": "请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。",
+      "explainTitle": "请用简明方式解释以下正文的核心内容与关键点。",
+      "outlineTitle": "请提取全文大纲，保留层级结构与章节标题。",
+      "keywordsTitle": "请提取 Top-N 关键词与术语，并按类别分组。",
+      "pageLabel": "页面: ",
+      "bodyLabel": "正文:"
+    }
   },
   "legend": {
     "title": "词性颜色",
