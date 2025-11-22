@@ -4031,21 +4031,47 @@ class ADHDHighlighter {
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
         const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '位置对齐后的文本（结构化）';
         const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
+        const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
+        const paraKeys = new Set();
+        const filteredParas = [];
+        for (let i=0;i<paras.length;i++) {
+          const p = paras[i];
+          if (p.length < 2) continue;
+          if (uiTokens.has(p)) continue;
+          if (this.isNavigationText(p)) continue;
+          if (this.isCssOrAdText(p)) continue;
+          const k = makeKey(p);
+          if (paraKeys.has(k)) continue;
+          paraKeys.add(k);
+          filteredParas.push(p);
+        }
+        const assignT = new Map();
+        const titleNorm = (s)=>this.normalizeText(String(s||'')).slice(0,200);
+        const ngrams = (s)=>{ const t=this.normalizeText(String(s||'')); const L=Math.min(800,t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+        const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+        for (let i=0;i<filteredParas.length;i++) {
+          const p = filteredParas[i];
+          let targetIdx = -1;
+          for (let sidx=0;sidx<secList.length;sidx++) { const st = titleNorm(secList[sidx].title); if (st && titleNorm(p)===st) { targetIdx = sidx; break; } }
+          if (targetIdx<0) {
+            let best=-1, bi=-1;
+            for (let sidx=0;sidx<secList.length;sidx++) { const sim=jac(p, secList[sidx].title || ''); if (sim>best) { best=sim; bi=sidx; } }
+            if (best>=0.08) targetIdx=bi;
+          }
+          const key = targetIdx>=0 ? ('sec:'+targetIdx) : 'ROOT';
+          if (!assignT.has(key)) assignT.set(key, []);
+          assignT.get(key).push(p);
+        }
         let aligned = '';
         for (let i=0;i<secList.length;i++) {
-          const s = secList[i];
-          aligned += (s.title ? ('# '+s.title+'\n\n') : '');
-          aligned += (s.text ? (s.text+'\n\n') : '');
-          const supplementsForSec = assignMap.get('sec:'+i) || [];
-          if (supplementsForSec.length) {
-            aligned += '[补充]\n';
-            aligned += supplementsForSec.join('\n\n') + '\n\n';
-          }
+          const group = assignT.get('sec:'+i) || [];
+          if (!group.length) continue;
+          aligned += (secList[i].title ? ('# '+secList[i].title+'\n\n') : '');
+          aligned += group.join('\n\n') + '\n\n';
         }
-        const unplaced = assignMap.get('unplaced') || [];
-        if (unplaced.length) {
-          aligned += '未对齐补充\n';
-          aligned += unplaced.join('\n\n');
+        const rootGroup = assignT.get('ROOT') || [];
+        if (rootGroup.length) {
+          aligned += '# ROOT\n\n' + rootGroup.join('\n\n');
         }
         body3.textContent = aligned || '无结构化内容';
         sec3.appendChild(ttl3); sec3.appendChild(body3);
