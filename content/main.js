@@ -2165,13 +2165,14 @@ class ADHDHighlighter {
       .agf-msg{display:flex}
       .agf-msg.user{justify-content:flex-start}
       .agf-msg.assistant{justify-content:flex-start}
-      .agf-bubble{width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:0;padding:8px 10px;font-size:13px;background:#fff}
+      .agf-bubble{position:relative;width:100%;max-width:100%;box-sizing:border-box;border:none;border-radius:0;padding:8px 32px 8px 10px;font-size:13px;background:#fff}
       .agf-bubble.user{background:var(--agf-q-bg,#ffffff);color:var(--agf-q-text,#000000)}
       .agf-msg.assistant .agf-bubble{background:var(--agf-a-bg,#ffffff);color:var(--agf-a-text,#000000)}
       .agf-bubble strong{font-weight:700}
       .agf-bubble em{font-style:italic}
       .agf-bubble code{font-family:Menlo,Monaco,monospace;background:#f5f5f5;color:#333;padding:0 2px;border-radius:3px}
       .agf-bubble pre{background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:8px;overflow:auto}
+      .agf-copy-btn{position:absolute;top:6px;right:8px;height:20px;width:20px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;color:#333;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
       .agf-bubble h1,.agf-bubble h2,.agf-bubble h3{margin:4px 0;font-weight:700}
       .agf-bubble ul,.agf-bubble ol{margin:4px 0 4px 18px}
       .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
@@ -3618,6 +3619,30 @@ class ADHDHighlighter {
       const contentEl = document.createElement('span');
       contentEl.className = 'agf-qa-content';
       if (typeof opts.msgIndex === 'number') contentEl.dataset.msgIndex = String(opts.msgIndex);
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'agf-copy-btn';
+      copyBtn.title = '复制';
+      copyBtn.textContent = '⧉';
+      copyBtn.addEventListener('click', async () => {
+        let s = '';
+        try { s = contentEl.innerText || contentEl.textContent || ''; } catch(_) {}
+        if (!s) try { s = bubble.innerText || ''; } catch(_) {}
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(s); }
+          else {
+            const ta = document.createElement('textarea');
+            ta.value = s;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); } catch(_){}
+            document.body.removeChild(ta);
+          }
+          showToast('已复制');
+        } catch(_) { showToast('已复制'); }
+      });
       const idx = text.indexOf('\n正文:');
       if (idx >= 0) {
         const head = text.slice(0, idx);
@@ -3667,6 +3692,7 @@ class ADHDHighlighter {
           else { contentEl.innerHTML = markdownToHtml(text); }
         }
       }
+      bubble.appendChild(copyBtn);
       bubble.appendChild(labelEl);
       bubble.appendChild(contentEl);
       wrap.appendChild(bubble);
@@ -3687,13 +3713,34 @@ class ADHDHighlighter {
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
       const label = 'A' + (qaCounter || 1);
-      bubbleEl.innerHTML = '<span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
+      bubbleEl.innerHTML = '<button class="agf-copy-btn" title="复制">⧉</button><span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       streamingBubble = bubbleEl;
       streamingText = '';
       streamingContentEl = bubbleEl.querySelector('.agf-qa-content');
+      const copyBtn2 = bubbleEl.querySelector('.agf-copy-btn');
+      if (copyBtn2) copyBtn2.addEventListener('click', async () => {
+        let s = '';
+        try { s = streamingContentEl && (streamingContentEl.innerText || streamingContentEl.textContent) || ''; } catch(_) {}
+        if (!s) try { s = bubbleEl.innerText || ''; } catch(_) {}
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(s); }
+          else {
+            const ta = document.createElement('textarea');
+            ta.value = s;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); } catch(_){}
+            document.body.removeChild(ta);
+          }
+          showToast('已复制');
+        } catch(_) { showToast('已复制'); }
+      });
       if (highlightEnabled && lastUserContentEl) {
         scheduleIncrementalHighlight(lastUserContentEl);
         setTimeout(() => {
