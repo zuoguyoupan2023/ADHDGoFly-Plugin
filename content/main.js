@@ -86,6 +86,15 @@
   } catch (e) {}
 })();
 
+const getUiTokens = () => {
+  const t = (k) => { try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch (_) { return ''; } };
+  const base = ['ExamPage','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
+  const dyn = ['aiPanel.summary','aiPanel.more','aiPanel.send','aiPanel.collapse.expand','aiPanel.collapse.collapse','aiPanel.fullText','aiPanel.mode.persistent','aiPanel.mode.manual'];
+  const out = base.slice();
+  for (let i = 0; i < dyn.length; i++) { const v = t(dyn[i]); if (v) out.push(v); }
+  return new Set(out);
+};
+
 // 主控制器模块
 class ADHDHighlighter {
   constructor() {
@@ -1807,7 +1816,7 @@ class ADHDHighlighter {
     const results = [];
     const seenBlocks = new Set();
     const seenSegmentHashes = new Set();
-    const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+    const uiTokens = getUiTokens();
     for (const sec of sections) {
       let bufLen = 0;
       let chunkBlocks = [];
@@ -2266,7 +2275,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn">全文</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled data-i18n="aiPanel.keywords">提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn" data-i18n="aiPanel.fullText">全文</button></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2274,9 +2283,9 @@ class ADHDHighlighter {
             <button id="agfAiTabWrench">🔧</button>
           </div>
           <div class="agf-ai-controls">
-            <button id="agfAiFull">全</button>
-            <button id="agfAiHalf">中</button>
-            <button id="agfAiMini">小</button>
+            <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
+            <button id="agfAiHalf" data-i18n="aiPanel.size.half">中</button>
+            <button id="agfAiMini" data-i18n="aiPanel.size.mini">小</button>
           </div>
         </div>
         
@@ -2313,52 +2322,52 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn active">M</button>
                   </div>
                   <div class="agf-highlight-toggle">
-                    <button class="agf-mode-btn active" id="agfHighlightOn">高亮</button>
-                    <button class="agf-mode-btn" id="agfHighlightOff">不亮</button>
+                    <button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button>
+                    <button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button>
                   </div>
                 </div>
                 <div class="agf-composer-body">
-                  <textarea class="agf-input-textarea" id="agfComposerInput" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
-                  <button class="agf-send" id="agfComposerSend">发送</button>
+                  <textarea class="agf-input-textarea" id="agfComposerInput" data-i18n-placeholder="aiPanel.compose.placeholder" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                  <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                 </div>
-                <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none">刷新以采取全文</div>
+                <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none" data-i18n="aiPanel.refreshHint">刷新以采取全文</div>
               </div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
             <div class="agf-records-header">
-              <div class="agf-records-title">全文</div>
-              <button id="agfFulltextClose" class="agf-records-close">关闭</button>
+              <div class="agf-records-title" data-i18n="aiPanel.fullText">全文</div>
+              <button id="agfFulltextClose" class="agf-records-close" data-i18n="aiPanel.close">关闭</button>
             </div>
             <div id="agfFulltextContent" class="agf-fulltext-content"></div>
           </div>
             <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
               <div class="agf-settings-layout">
                 <div class="agf-settings-sidebar">
-                  <button id="agfSettingsTabApi" class="agf-settings-tab active">API Key</button>
-                  <button id="agfSettingsTabColors" class="agf-settings-tab">颜色管理</button>
+                  <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
+                  <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
                 </div>
                 <div class="agf-settings-content">
                   <div id="agfSettingsContentApi">
                     <div class="agf-settings-group">
-                      <div style="font-size:13px;color:#333;font-weight:600;">综合设置</div>
+                      <div style="font-size:13px;color:#333;font-weight:600;" data-i18n="aiPanel.settings.general">综合设置</div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">服务商</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.provider">服务商</div>
                         <div id="agfProviderList" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">模型</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.model">模型</div>
                         <div id="agfModelList" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">供应商URL</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.baseUrl">供应商URL</div>
                         <input id="agfBaseUrlInput" class="agf-input" type="text" placeholder="https://..." />
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">API Key</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.apiKey">API Key</div>
                         <div style="display:flex;align-items:center;gap:8px;">
                           <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
-                          <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button>
+                          <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.save">保存</button>
                           <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                         </div>
                       </div>
@@ -2367,51 +2376,51 @@ class ADHDHighlighter {
                         <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">PDF解析</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
                         <div id="agfPdfParseToggle" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">敏感过滤</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.sensitiveFilter">敏感过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;">立即解析当前PDF</button>
+                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">保留天数</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.retentionDays">保留天数</div>
                         <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">折叠阈值</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
                         <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
-                        <span class="agf-hint">超出则折叠</span>
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHint">超出则折叠</span>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">折叠高度</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldHeight">折叠高度</div>
                         <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
-                        <span class="agf-hint">折叠区最大高度(px)</span>
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHeightHint">折叠区最大高度(px)</span>
                       </div>
                     </div>
                   </div>
                   <div id="agfSettingsContentColors" style="display:none;">
                     <div class="agf-settings-group">
-                      <div style="font-size:13px;color:#333;font-weight:600;">颜色管理</div>
-                      <div class="agf-settings-row"><div class="agf-label">问题背景</div><input id="agfColorQBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">回答背景</div><input id="agfColorABg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">问题文本</div><input id="agfColorQText2" type="color" /></div>
-                      <div class="agf-settings-row"><div class="agf-label">回答文本</div><input id="agfColorAText2" type="color" /></div>
+                      <div style="font-size:13px;color:#333;font-weight:600;" data-i18n="aiPanel.settings.tabs.colors">颜色管理</div>
+                      <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.qBg">问题背景</div><input id="agfColorQBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.aBg">回答背景</div><input id="agfColorABg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.displayBg">显示区背景</div><input id="agfColorDisplayBg2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.qText">问题文本</div><input id="agfColorQText2" type="color" /></div>
+                      <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.aText">回答文本</div><input id="agfColorAText2" type="color" /></div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">预设组合</div>
+                        <div class="agf-label" data-i18n="aiPanel.presets.title">预设组合</div>
                         <div class="agf-button-list">
-                          <button id="agfPreset1Btn" class="agf-btn">柔和米色</button>
-                          <button id="agfPreset2Btn" class="agf-btn">护眼微绿</button>
-                          <button id="agfPreset3Btn" class="agf-btn">柔黄纸感</button>
-                          <button id="agfPreset4Btn" class="agf-btn">轻灰纸张</button>
+                          <button id="agfPreset1Btn" class="agf-btn" data-i18n="aiPanel.presets.p1">柔和米色</button>
+                          <button id="agfPreset2Btn" class="agf-btn" data-i18n="aiPanel.presets.p2">护眼微绿</button>
+                          <button id="agfPreset3Btn" class="agf-btn" data-i18n="aiPanel.presets.p3">柔黄纸感</button>
+                          <button id="agfPreset4Btn" class="agf-btn" data-i18n="aiPanel.presets.p4">轻灰纸张</button>
                         </div>
                       </div>
                       <div class="agf-settings-row">
-                        <button id="agfPresetResetBtn" class="agf-btn">重置默认</button>
+                        <button id="agfPresetResetBtn" class="agf-btn" data-i18n="aiPanel.presets.reset">重置默认</button>
                       </div>
                     </div>
                   </div>
@@ -2421,25 +2430,25 @@ class ADHDHighlighter {
           <div class="agf-records-panel" id="agfRecordsPanel">
             <div class="agf-records-header">
               <div class="agf-records-title">
-                <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active">当前记录</button>
-                <button id="agfRecordsTabAll" class="agf-record-scope-btn">所有记录</button>
+                <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active" data-i18n="aiPanel.records.current">当前记录</button>
+                <button id="agfRecordsTabAll" class="agf-record-scope-btn" data-i18n="aiPanel.records.all">所有记录</button>
               </div>
-              <input id="agfRecordsSearch" class="agf-records-search" placeholder="搜索主题或链接" />
+              <input id="agfRecordsSearch" class="agf-records-search" data-i18n-placeholder="aiPanel.records.search" placeholder="搜索主题或链接" />
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
           </div>
           <div class="agf-colors-panel" id="agfColorsPanel">
             <div class="agf-records-header">
-              <div class="agf-records-title">颜色管理</div>
+              <div class="agf-records-title" data-i18n="aiPanel.settings.tabs.colors">颜色管理</div>
               <button class="agf-records-close" id="agfColorsClose">X</button>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px">
-              <div class="agf-settings-row"><div class="agf-label">Q背景</div><input id="agfColorQBg" type="color" /></div>
-              <div class="agf-settings-row"><div class="agf-label">A背景</div><input id="agfColorABg" type="color" /></div>
-              <div class="agf-settings-row"><div class="agf-label">显示区背景</div><input id="agfColorDisplayBg" type="color" /></div>
-              <div class="agf-settings-row"><div class="agf-label">Q文本</div><input id="agfColorQText" type="color" /></div>
-              <div class="agf-settings-row"><div class="agf-label">A文本</div><input id="agfColorAText" type="color" /></div>
-              <div class="agf-settings-row"><button id="agfColorsApply" class="agf-input" style="height:28px;min-width:64px">应用</button></div>
+              <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.qBgShort">Q背景</div><input id="agfColorQBg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.aBgShort">A背景</div><input id="agfColorABg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.displayBg">显示区背景</div><input id="agfColorDisplayBg" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.qTextShort">Q文本</div><input id="agfColorQText" type="color" /></div>
+              <div class="agf-settings-row"><div class="agf-label" data-i18n="aiPanel.colors.labels.aTextShort">A文本</div><input id="agfColorAText" type="color" /></div>
+              <div class="agf-settings-row"><button id="agfColorsApply" class="agf-input" style="height:28px;min-width:64px" data-i18n="aiPanel.apply">应用</button></div>
             </div>
           </div>
         </div>
@@ -2447,6 +2456,7 @@ class ADHDHighlighter {
       </div>
     `;
     document.documentElement.appendChild(overlay);
+    try { if (window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations(); } catch (_) {}
     overlay.style.top = '5px';
     const initialLeft = Math.max(5, window.innerWidth - overlay.offsetWidth - 5);
     overlay.style.left = initialLeft + 'px';
@@ -2569,7 +2579,7 @@ class ADHDHighlighter {
       ci.innerHTML = '';
       const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
-      roundsEl.textContent =  rounds + '轮考题';
+      roundsEl.textContent =  rounds + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.roundsSuffix') : '轮考题');
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
@@ -2617,12 +2627,12 @@ class ADHDHighlighter {
       p4:    { qBg: '#fcfcfc', aBg: '#f3f3f3', displayBg: '#ffffff', qText: '#1a1a1a', aText: '#1a1a1a' }
     };
 
-    const applyPreset = (cfg, name) => { applyColorConfig(cfg); fillColorsInputs2(); if (name) showToast(name + '预设已应用'); };
+    const applyPreset = (cfg, name) => { applyColorConfig(cfg); fillColorsInputs2(); if (name) showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.presets.applied', { name }) : (name + '预设已应用')); };
     if (preset1Btn) preset1Btn.addEventListener('click', () => applyPreset(presets.p1, '柔和米色'));
     if (preset2Btn) preset2Btn.addEventListener('click', () => applyPreset(presets.p2, '护眼微绿'));
     if (preset3Btn) preset3Btn.addEventListener('click', () => applyPreset(presets.p3, '柔黄纸感'));
     if (preset4Btn) preset4Btn.addEventListener('click', () => applyPreset(presets.p4, '轻灰纸张'));
-    if (presetResetBtn) presetResetBtn.addEventListener('click', () => applyPreset(presets.reset, '已重置默认'));
+    if (presetResetBtn) presetResetBtn.addEventListener('click', () => applyPreset(presets.reset, (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.presets.reset') : '已重置默认'));
 
     const applyColorsFromInputs2 = (label) => {
       const d = { qBg: '#ffffff', aBg: '#ffffff', displayBg: '#ffffff', qText: '#000000', aText: '#000000' };
@@ -2634,13 +2644,13 @@ class ADHDHighlighter {
         aText: (colorAText2 && colorAText2.value) || d.aText
       };
       applyColorConfig(cfg);
-      if (label) showToast(label + '颜色已应用');
+      if (label) showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.appliedWithLabel', { label }) : (label + '颜色已应用'));
     };
-    if (colorQBg2) colorQBg2.addEventListener('input', () => applyColorsFromInputs2('问题背景'));
-    if (colorABg2) colorABg2.addEventListener('input', () => applyColorsFromInputs2('回答背景'));
-    if (colorDisplayBg2) colorDisplayBg2.addEventListener('input', () => applyColorsFromInputs2('显示区背景'));
-    if (colorQText2) colorQText2.addEventListener('input', () => applyColorsFromInputs2('问题文本'));
-    if (colorAText2) colorAText2.addEventListener('input', () => applyColorsFromInputs2('回答文本'));
+    if (colorQBg2) colorQBg2.addEventListener('input', () => applyColorsFromInputs2((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.labels.qBg') : '问题背景'));
+    if (colorABg2) colorABg2.addEventListener('input', () => applyColorsFromInputs2((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.labels.aBg') : '回答背景'));
+    if (colorDisplayBg2) colorDisplayBg2.addEventListener('input', () => applyColorsFromInputs2((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.labels.displayBg') : '显示区背景'));
+    if (colorQText2) colorQText2.addEventListener('input', () => applyColorsFromInputs2((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.labels.qText') : '问题文本'));
+    if (colorAText2) colorAText2.addEventListener('input', () => applyColorsFromInputs2((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.colors.labels.aText') : '回答文本'));
 
     const PROVIDERS_CONFIG = {
       deepseek: {
@@ -3223,7 +3233,7 @@ class ADHDHighlighter {
         actions.className = 'agf-record-actions';
         const openBtn = document.createElement('button');
         openBtn.className = 'agf-records-open';
-        openBtn.textContent = '打开';
+        openBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.open') : '打开';
         openBtn.addEventListener('click', async () => {
           const data = await dbGetConversation(item.id);
           if (data && data.messages) {
@@ -3241,9 +3251,9 @@ class ADHDHighlighter {
         delBtn.className = 'agf-record-delete';
         delBtn.textContent = '✕';
         delBtn.addEventListener('click', async () => {
-          const ok = window.confirm('确定删除该记录？');
+          const ok = window.confirm((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.deleteConfirm') : '确定删除该记录？');
           if (!ok) return;
-          try { await dbDeleteConversation(item.id); el.remove(); if (toastEl) { toastEl.textContent = '记录已删除'; toastEl.style.display = 'block'; setTimeout(() => { toastEl.style.display = 'none'; }, 2000); } } catch (_) {}
+          try { await dbDeleteConversation(item.id); el.remove(); if (toastEl) { toastEl.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.deleted') : '记录已删除'; toastEl.style.display = 'block'; setTimeout(() => { toastEl.style.display = 'none'; }, 2000); } } catch (_) {}
         });
         actions.appendChild(openBtn);
         actions.appendChild(delBtn);
@@ -3592,7 +3602,7 @@ class ADHDHighlighter {
           if (fulltextPanel) {
             fulltextPanel.style.display = 'block';
             const titles = fulltextPanel.querySelectorAll('.agf-fulltext-title');
-            const target = isPdfPage() ? 'pdf全文' : '网页全文';
+            const target = isPdfPage() ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfTitle') : 'pdf全文') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.webTitle') : '网页全文');
             for (let i=0;i<titles.length;i++) {
               const el = titles[i];
               const txt = String(el.textContent||'');
@@ -3622,7 +3632,7 @@ class ADHDHighlighter {
       if (typeof opts.msgIndex === 'number') contentEl.dataset.msgIndex = String(opts.msgIndex);
       const copyBtn = document.createElement('button');
       copyBtn.className = 'agf-copy-btn';
-      copyBtn.title = '复制';
+      copyBtn.title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制';
       copyBtn.textContent = '⧉';
       copyBtn.addEventListener('click', async () => {
         let s = '';
@@ -3641,8 +3651,8 @@ class ADHDHighlighter {
             try { document.execCommand('copy'); } catch(_){}
             document.body.removeChild(ta);
           }
-          showToast('已复制');
-        } catch(_) { showToast('已复制'); }
+          showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制');
+        } catch(_) { showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制'); }
       });
       const idx = text.indexOf('\n正文:');
       if (idx >= 0) {
@@ -3657,7 +3667,7 @@ class ADHDHighlighter {
         preview.innerHTML = markdownToHtml(p30 + (body.length > 30 ? '…' : ''));
         const goBtn = document.createElement('button');
         goBtn.className = 'agf-collapse-toggle';
-        goBtn.textContent = '去看全文';
+        goBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.goFull') : '去看全文';
         goBtn.addEventListener('click', () => { openTPanelThirdPart(); });
         contentEl.appendChild(headDiv);
         contentEl.appendChild(preview);
@@ -3676,13 +3686,13 @@ class ADHDHighlighter {
           colContent.className = 'agf-collapse-content collapsed';
           const colToggle = document.createElement('button');
           colToggle.className = 'agf-collapse-toggle';
-          colToggle.textContent = '展开全文';
+          colToggle.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开全文';
           colToggle.addEventListener('click', () => {
             if (colContent.classList.contains('collapsed')) {
               if (!colContent.innerHTML) { colContent.innerHTML = markdownToHtml(body); }
-              colContent.classList.remove('collapsed'); colToggle.textContent = '收起';
+              colContent.classList.remove('collapsed'); colToggle.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '收起';
               if (highlightEnabled) scheduleIncrementalHighlight(colContent);
-            } else { colContent.classList.add('collapsed'); colToggle.textContent = '展开全文'; }
+            } else { colContent.classList.add('collapsed'); colToggle.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.expand') : '展开全文'; }
           });
           col.appendChild(colContent);
           col.appendChild(colToggle);
@@ -3714,7 +3724,7 @@ class ADHDHighlighter {
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
       const label = 'A' + (qaCounter || 1);
-      bubbleEl.innerHTML = '<button class="agf-copy-btn" title="复制">⧉</button><span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
+      bubbleEl.innerHTML = '<button class="agf-copy-btn" title="' + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制') + '">⧉</button><span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
@@ -3739,8 +3749,8 @@ class ADHDHighlighter {
             try { document.execCommand('copy'); } catch(_){}
             document.body.removeChild(ta);
           }
-          showToast('已复制');
-        } catch(_) { showToast('已复制'); }
+          showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制');
+        } catch(_) { showToast((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copied') : '已复制'); }
       });
       if (highlightEnabled && lastUserContentEl) {
         scheduleIncrementalHighlight(lastUserContentEl);
@@ -3883,15 +3893,15 @@ class ADHDHighlighter {
     const updateStorageStatusUI = async () => {
       const segs = await getLatestStoredSegmentsForPage();
       if (statusDot) {
-        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; if (statusText) { statusText.textContent = ''; statusText.style.display = 'none'; } }
-        else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; if (statusText) { statusText.textContent = '处理失败，请刷新以重新处理'; statusText.style.display = 'inline'; } }
+        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.statusHintOk') : '绿色: 已获取该页面文本'; if (statusText) { statusText.textContent = ''; statusText.style.display = 'none'; } }
+        else { statusDot.style.background = '#bbb'; statusDot.title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.statusHintNone') : '灰色: 未获取该页面文本'; if (statusText) { statusText.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.statusFailed') : '处理失败，请刷新以重新处理'; statusText.style.display = 'inline'; } }
       }
       const has = segs.length > 0;
       if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
       if (refreshHint) refreshHint.style.display = has ? 'none' : 'block';
       if (composerSend) {
         composerSend.dataset.mode = has ? 'send' : 'refresh';
-        composerSend.textContent = has ? '发送' : '⟳';
+        composerSend.textContent = has ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.send') : '发送') : '⟳';
       }
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (moreBtn) { moreBtn.disabled = !has; }
@@ -3903,9 +3913,9 @@ class ADHDHighlighter {
     };
 
     const setStatusProcessing = () => {
-      if (statusDot) { statusDot.style.background = '#f39c12'; statusDot.title = '处理中: 正在获取该页面文本'; }
+      if (statusDot) { statusDot.style.background = '#f39c12'; statusDot.title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.statusHintProcessing') : '处理中: 正在获取该页面文本'; }
       const statusTextEl = document.getElementById('agfStatusText');
-      if (statusTextEl) { statusTextEl.textContent = '正在处理文本'; statusTextEl.style.display = 'inline'; }
+      if (statusTextEl) { statusTextEl.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.processingText') : '正在处理文本'; statusTextEl.style.display = 'inline'; }
       if (refreshBtn) { refreshBtn.classList.remove('breathing'); refreshBtn.style.display = 'none'; }
       if (refreshHint) refreshHint.style.display = 'none';
       if (quickSummaryBtn) quickSummaryBtn.disabled = true;
@@ -3940,7 +3950,7 @@ class ADHDHighlighter {
     };
 
     const buildSummaryPrompt = (segs) => {
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const filterUiText = (s) => {
         const arr = String(s||'').split('\n');
         const out = [];
@@ -3981,7 +3991,7 @@ class ADHDHighlighter {
     };
 
     const buildStructuredSummaryPrompt = (segs) => {
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line) && !this.isNavigationText(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
@@ -4011,7 +4021,7 @@ class ADHDHighlighter {
     };
 
     const buildExplainPrompt = (segs) => {
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line) && !this.isNavigationText(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
@@ -4040,7 +4050,7 @@ class ADHDHighlighter {
     };
 
     const buildOutlinePrompt = (segs) => {
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line) && !this.isNavigationText(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
@@ -4070,7 +4080,7 @@ class ADHDHighlighter {
     };
 
     const buildKeywordsPrompt = (segs) => {
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const filterUiText = (s) => { const arr = String(s||'').split('\n'); const out = []; for (let i=0;i<arr.length;i++) { const line = arr[i].trim(); if (!uiTokens.has(line) && !this.isNavigationText(line)) out.push(arr[i]); } return out.join('\n'); };
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
@@ -4103,7 +4113,7 @@ class ADHDHighlighter {
       const resp = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
       const rawText = (resp && resp.text) ? String(resp.text) : '';
       const testNormalized = this.normalizeText(rawText || '');
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
+      const uiTokens = getUiTokens();
       const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
       const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
       const paraKeys = new Set();
@@ -4258,13 +4268,13 @@ class ADHDHighlighter {
       });
       if (fulltextContent) {
         fulltextContent.innerHTML = '';
-        try { const titleEl = fulltextPanel.querySelector('.agf-records-title'); if (titleEl) titleEl.textContent = isPdfPage() ? 'pdf全文' : '网页全文'; } catch (_) {}
+        try { const titleEl = fulltextPanel.querySelector('.agf-records-title'); if (titleEl) titleEl.textContent = isPdfPage() ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfTitle') : 'pdf全文') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.webTitle') : '网页全文'); } catch (_) {}
         const sec2 = document.createElement('div'); sec2.className = 'agf-fulltext-section';
-        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = 'pdf全文';
-        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || '无补充文本';
+        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfTitle') : 'pdf全文';
+        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.none') : '无补充文本');
         sec2.appendChild(ttl2); sec2.appendChild(body2);
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
-        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '网页全文';
+        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.webTitle') : '网页全文';
         const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
         const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
         const paraKeys = new Set();
@@ -4342,7 +4352,7 @@ class ADHDHighlighter {
           if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
           else { aligned += px + '\n\n'; }
         }
-        body3.textContent = aligned || '无结构化内容';
+        body3.textContent = aligned || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
         sec3.appendChild(ttl3); sec3.appendChild(body3);
         if (isPdfPage()) { fulltextContent.appendChild(sec2); }
         else { fulltextContent.appendChild(sec3); }
@@ -4693,12 +4703,17 @@ console.log('加载ADHD文本高亮器主控制器...');
 
 // 等待DOM加载完成后初始化
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
+    try { await window.i18n.init(); } catch (e) {}
     window.adhdHighlighter = new ADHDHighlighter();
   });
 } else {
   // DOM已经加载完成
-  window.adhdHighlighter = new ADHDHighlighter();
+  try {
+    window.i18n.init().then(() => { window.adhdHighlighter = new ADHDHighlighter(); });
+  } catch (e) {
+    window.adhdHighlighter = new ADHDHighlighter();
+  }
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
