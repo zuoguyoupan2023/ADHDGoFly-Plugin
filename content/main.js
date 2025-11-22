@@ -1790,33 +1790,6 @@ class ADHDHighlighter {
     return sections;
   }
 
-  computeStructureHints() {
-    const hints = [];
-    const pushHint = (el) => {
-      if (!el) return;
-      if (this.isHiddenEl(el)) return;
-      if (this.isExcludedTag(el)) return;
-      if (this.hasExcludedClass(el)) return;
-      if (this.isExtensionUi(el)) return;
-      const tag = el.tagName && el.tagName.toLowerCase();
-      if (!/^h[1-6]$/.test(tag||'')) return;
-      const ttl = this.normalizeText(String(el.textContent||el.innerText||''));
-      if (!ttl || ttl.length < 1) return;
-      if (this.isNavigationText(ttl)) return;
-      const m = tag.match(/^h([1-6])$/);
-      const level = m ? Math.max(1, Math.min(6, parseInt(m[1],10))) : 0;
-      if (level > 0) { hints.push({ title: ttl.toLowerCase(), level }); }
-    };
-    const collectFromRoot = (root) => {
-      try { root.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(pushHint); } catch (_) {}
-    };
-    collectFromRoot(document);
-    try { document.querySelectorAll('*').forEach(el => { if (el.shadowRoot) collectFromRoot(el.shadowRoot); }); } catch(_){}
-    const iframes = Array.from(document.querySelectorAll('iframe'));
-    iframes.forEach(fr => { try { const doc = fr.contentDocument; if (doc) collectFromRoot(doc); } catch(_){} });
-    return hints;
-  }
-
   async sha256Hex(s) {
     const enc = new TextEncoder();
     const buf = await crypto.subtle.digest('SHA-256', enc.encode(s));
@@ -3544,7 +3517,7 @@ class ADHDHighlighter {
             for (let i=0;i<titles.length;i++) {
               const el = titles[i];
               const txt = String(el.textContent||'');
-              if (txt.indexOf('网页文本逻辑') >= 0) { el.scrollIntoView({ block: 'start' }); break; }
+              if (txt.indexOf('位置对齐后的文本') >= 0) { el.scrollIntoView({ block: 'start' }); break; }
             }
           }
         } catch (_) {}
@@ -3781,22 +3754,17 @@ class ADHDHighlighter {
     };
 
     const updateStorageStatusUI = async () => {
-      const u = getCanonicalUrl();
-      const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
-      const action = useOld ? 'agfTestGetTextForPage' : 'agfPlainGetTextForPage';
-      let has = false;
-      try {
-        const resp = await new Promise(r => chrome.runtime.sendMessage({ action, pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
-        const text = (resp && resp.text) ? String(resp.text) : '';
-        has = !!text && text.trim().length > 0;
-      } catch(_) { has = false; }
+      const segs = await getLatestStoredSegmentsForPage();
       if (statusDot) {
-        if (has) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; }
-        else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
+        if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
       }
+      const has = segs.length > 0;
       if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
       if (refreshHint) refreshHint.style.display = has ? 'none' : 'block';
-      if (composerSend) { composerSend.dataset.mode = has ? 'send' : 'refresh'; composerSend.textContent = has ? '发送' : '⟳'; }
+      if (composerSend) {
+        composerSend.dataset.mode = has ? 'send' : 'refresh';
+        composerSend.textContent = has ? '发送' : '⟳';
+      }
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (moreBtn) { moreBtn.disabled = !has; }
       if (btnStructured) btnStructured.disabled = !has;
@@ -3804,7 +3772,7 @@ class ADHDHighlighter {
       if (btnOutline) btnOutline.disabled = !has;
       if (btnKeywords) btnKeywords.disabled = !has;
       if (fullTextBtn) fullTextBtn.disabled = !has;
-      return has;
+      return segs;
     };
 
     const buildSummaryPrompt = (segs) => {
@@ -3966,7 +3934,7 @@ class ADHDHighlighter {
       return lines.join('\n');
     };
 
-  const buildTStructuredText = async () => {
+    const buildTStructuredText = async () => {
       const u = getCanonicalUrl();
       const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
       const action = useOld ? 'agfTestGetTextForPage' : 'agfPlainGetTextForPage';
@@ -3995,64 +3963,6 @@ class ADHDHighlighter {
         const m = hp.match(/^h([1-6]):/);
         if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
       }
-      const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
-      const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
-      const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
-      const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } } const s = jac(tp, ht); if (s > best && s >= 0.12) { best = s; bl = hint[i].level; } } return bl || 0; };
-      const anchors = Array.from(document.querySelectorAll('a'));
-      const anchorList = [];
-      const seenAnchor = new Set();
-      for (let i=0;i<anchors.length;i++) {
-        const a = anchors[i];
-        const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
-        let href = String(a.getAttribute('href')||a.href||'').trim();
-        if (!txt || txt.length < 2) continue;
-        if (!href) continue;
-        try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
-        const key = txt.toLowerCase()+"|"+href;
-        if (seenAnchor.has(key)) continue;
-        seenAnchor.add(key);
-        anchorList.push({ text: txt, href });
-      }
-      const linkify = (s)=>{ let out = String(s||''); const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60); list.sort((a,b)=>b.text.length - a.text.length); let rep = 0; for (let i=0;i<list.length && rep<3;i++) { const t = list[i].text; const h = list[i].href; const idx = out.indexOf(t); if (idx < 0) continue; const before = idx>0 ? out[idx-1] : ' '; const afterIdx = idx + t.length; const after = afterIdx < out.length ? out[afterIdx] : ' '; const wb = /[\w\u4e00-\u9fa5]/; const ok = !wb.test(before) && !wb.test(after); if (!ok) continue; out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx); rep++; } return out; };
-      let aligned = '';
-      let prevKey = '';
-      for (let i=0;i<filteredParas.length;i++) {
-        const p = filteredParas[i];
-        const k = makeKey(p);
-        if (k === prevKey) continue;
-        prevKey = k;
-        const lvl = detectLevel(p);
-        const px = linkify(p);
-        if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
-        else { aligned += px + '\n\n'; }
-      }
-      return aligned;
-    };
-
-    const buildWebTextStructured = async () => {
-      const u = getCanonicalUrl();
-      const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
-      const action = useOld ? 'agfTestGetTextForPage' : 'agfPlainGetTextForPage';
-      const resp = await new Promise(r => chrome.runtime.sendMessage({ action, pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
-      const rawText = (resp && resp.text) ? String(resp.text) : '';
-      const testNormalized = this.normalizeText(rawText || '');
-      const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
-      const makeKey = (s) => { const t = this.normalizeText(String(s||'')); return t.length + ':' + t.slice(0,300); };
-      const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
-      const paraKeys = new Set();
-      const filteredParas = [];
-      for (let i=0;i<paras.length;i++) {
-        const p = paras[i];
-        if (p.length < 2) continue;
-        if (uiTokens.has(p)) continue;
-        if (this.isCssOrAdText(p)) continue;
-        const k = makeKey(p);
-        if (paraKeys.has(k)) continue;
-        paraKeys.add(k);
-        filteredParas.push(p);
-      }
-      const hint = this.computeStructureHints();
       const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
       const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
       const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
@@ -4117,13 +4027,13 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildWebTextStructured(); const MAX_CHARS = 12000; const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildWebTextStructured(); const MAX_CHARS = 12000; const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildWebTextStructured(); const MAX_CHARS = 12000; const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildWebTextStructured(); const MAX_CHARS = 12000; const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildWebTextStructured(); const MAX_CHARS = 12000; const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const structured = await buildWebTextStructured(); if (fulltextContent) { fulltextContent.innerHTML = ''; const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section'; const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '网页文本逻辑（结构化）'; const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body'; body3.textContent = structured || '未保存文本'; sec3.appendChild(ttl3); sec3.appendChild(body3); fulltextContent.appendChild(sec3); } if (fulltextPanel) fulltextPanel.style.display = 'block'; });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const structured = await buildTStructuredText(); const MAX_CHARS = 12000; const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(structured, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const segs = await getStoredSegmentsForPage(); const rawText = segs.map(r => (r.blocks || []).map(b => String(b.text || '')).join('\n')).join('\n\n'); if (fulltextContent) fulltextContent.textContent = rawText || '无存储文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
     if (plainTextBtn) plainTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const useOld = await (async()=>{ try { const r = await chrome.storage.local.get(['useOldTextActions']); return !!r.useOldTextActions; } catch(_) { return false; } })();
@@ -4139,8 +4049,83 @@ class ADHDHighlighter {
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
         const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '网页文本逻辑（结构化）';
         const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
-        const structured = await buildWebTextStructured();
-        body3.textContent = structured || '无结构化内容';
+        const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
+        const paraKeys = new Set();
+        const filteredParas = [];
+        for (let i=0;i<paras.length;i++) {
+          const p = paras[i];
+          if (p.length < 2) continue;
+          if (uiTokens.has(p)) continue;
+          if (this.isCssOrAdText(p)) continue;
+          const k = makeKey(p);
+          if (paraKeys.has(k)) continue;
+          paraKeys.add(k);
+          filteredParas.push(p);
+        }
+        const structSecs = this.collectPageSections();
+        const hint = [];
+        for (let i=0;i<structSecs.length;i++) {
+          const hp = String(structSecs[i].headingPath||'');
+          const m = hp.match(/^h([1-6]):/);
+          if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
+        }
+        const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
+        const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+        const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+        const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } }
+          const s = jac(tp, ht);
+          if (s > best && s >= 0.12) { best = s; bl = hint[i].level; }
+        }
+        return bl || 0; };
+        const anchors = Array.from(document.querySelectorAll('a'));
+        const anchorList = [];
+        const seenAnchor = new Set();
+        for (let i=0;i<anchors.length;i++) {
+          const a = anchors[i];
+          const txt = this.normalizeText(String(a.innerText||a.textContent||'')).trim();
+          let href = String(a.getAttribute('href')||a.href||'').trim();
+          if (!txt || txt.length < 2) continue;
+          if (!href) continue;
+          try { href = new URL(href, window.location.href).href; } catch (_) { continue; }
+          const key = txt.toLowerCase()+"|"+href;
+          if (seenAnchor.has(key)) continue;
+          seenAnchor.add(key);
+          anchorList.push({ text: txt, href });
+        }
+        const linkify = (s)=>{
+          let out = String(s||'');
+          const list = anchorList.filter(x=>x.text.length>=2 && x.text.length<=60);
+          list.sort((a,b)=>b.text.length - a.text.length);
+          let rep = 0;
+          for (let i=0;i<list.length && rep<3;i++) {
+            const t = list[i].text;
+            const h = list[i].href;
+            const idx = out.indexOf(t);
+            if (idx < 0) continue;
+            const before = idx>0 ? out[idx-1] : ' ';
+            const afterIdx = idx + t.length;
+            const after = afterIdx < out.length ? out[afterIdx] : ' ';
+            const wb = /[\w\u4e00-\u9fa5]/;
+            const ok = !wb.test(before) && !wb.test(after);
+            if (!ok) continue;
+            out = out.slice(0, idx) + '['+t+']('+h+')' + out.slice(afterIdx);
+            rep++;
+          }
+          return out;
+        };
+        let aligned = '';
+        let prevKey = '';
+        for (let i=0;i<filteredParas.length;i++) {
+          const p = filteredParas[i];
+          const k = makeKey(p);
+          if (k === prevKey) continue;
+          prevKey = k;
+          const lvl = detectLevel(p);
+          const px = linkify(p);
+          if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
+          else { aligned += px + '\n\n'; }
+        }
+        body3.textContent = aligned || '无结构化内容';
         sec3.appendChild(ttl3); sec3.appendChild(body3);
         fulltextContent.appendChild(sec3);
       }
