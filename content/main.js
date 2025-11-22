@@ -2158,7 +2158,7 @@ class ADHDHighlighter {
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff)}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:8px;font-size:14px;color:#333;overflow:hidden;box-sizing:border-box;min-height:130px;height:130px}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:0}
@@ -2213,7 +2213,7 @@ class ADHDHighlighter {
       .agf-group-title{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;color:#333}
       .agf-group-body{padding:8px}
       .agf-group-body.collapsed{display:none}
-      .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
+      .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
@@ -4364,6 +4364,23 @@ class ADHDHighlighter {
         else { showChat(); sendChat(); }
       }
     });
+    const initComposerAutosize = () => {
+      if (!composerInput) return;
+      const container = document.querySelector('.agf-ai-input');
+      const header = document.querySelector('.agf-composer-header');
+      const compute = () => {
+        const hh = header ? header.offsetHeight : 0;
+        const max = Math.max(56, Math.floor(window.innerHeight * 0.5 - hh - 8));
+        composerInput.style.height = 'auto';
+        const h = Math.min(composerInput.scrollHeight, max);
+        composerInput.style.height = h + 'px';
+        if (container) container.style.maxHeight = '50vh';
+      };
+      composerInput.addEventListener('input', compute);
+      window.addEventListener('resize', compute);
+      setTimeout(compute, 0);
+    };
+    initComposerAutosize();
     if (titleLabel) titleLabel.addEventListener('click', () => { hideFulltextPanel(); });
     if (tabPencil) tabPencil.addEventListener('click', () => { hideFulltextPanel(); showChat(); });
     if (tabDoc) tabDoc.addEventListener('click', () => { hideFulltextPanel(); showRecords(); });
