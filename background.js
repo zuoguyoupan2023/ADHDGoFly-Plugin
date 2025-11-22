@@ -724,6 +724,94 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     };
     reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
     return true;
+  } else if (request.action === 'agfTestSaveText') {
+    const data = request.data || {};
+    const reqOpen = indexedDB.open('agf_test_text_db', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('page_texts')) {
+        const store = db.createObjectStore('page_texts', { keyPath: 'id' });
+        store.createIndex('canonicalUrl', 'canonicalUrl');
+        store.createIndex('pageUrl', 'pageUrl');
+        store.createIndex('domain', 'domain');
+        store.createIndex('timestamp', 'timestamp');
+        store.createIndex('textHash', 'textHash');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const id = (data.canonicalUrl || data.pageUrl || '') + '|' + (data.textHash || '');
+        const rec = {
+          id,
+          pageUrl: data.pageUrl || '',
+          canonicalUrl: data.canonicalUrl || data.pageUrl || '',
+          domain: data.domain || '',
+          title: data.title || '',
+          timestamp: data.timestamp || Date.now(),
+          textHash: data.textHash || '',
+          textLength: data.textLength || (data.text ? String(data.text).length : 0),
+          text: data.text || ''
+        };
+        const tx = db.transaction('page_texts', 'readwrite');
+        const st = tx.objectStore('page_texts');
+        const rq = st.put(rec);
+        rq.onsuccess = () => sendResponse({ success: true });
+        rq.onerror = () => sendResponse({ success: false, error: String(rq.error || 'put_error') });
+      } catch (e) {
+        sendResponse({ success: false, error: String(e) });
+      }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error || 'open_error') });
+    return true;
+  } else if (request.action === 'agfTestGetTextForPage') {
+    const pageUrl = request.pageUrl || '';
+    const canonicalUrl = request.canonicalUrl || pageUrl;
+    const reqOpen = indexedDB.open('agf_test_text_db', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('page_texts')) {
+        const store = db.createObjectStore('page_texts', { keyPath: 'id' });
+        store.createIndex('canonicalUrl', 'canonicalUrl');
+        store.createIndex('pageUrl', 'pageUrl');
+        store.createIndex('domain', 'domain');
+        store.createIndex('timestamp', 'timestamp');
+        store.createIndex('textHash', 'textHash');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('page_texts', 'readonly');
+        const st = tx.objectStore('page_texts');
+        const idx = st.index('canonicalUrl');
+        const reqAll = idx.getAll(canonicalUrl);
+        reqAll.onsuccess = () => {
+          const items = Array.isArray(reqAll.result) ? reqAll.result : [];
+          let chosen = null;
+          if (items.length) {
+            chosen = items.sort((a,b) => (b.timestamp||0) - (a.timestamp||0))[0];
+          } else {
+            const idx2 = st.index('pageUrl');
+            const reqAll2 = idx2.getAll(pageUrl);
+            reqAll2.onsuccess = () => {
+              const items2 = Array.isArray(reqAll2.result) ? reqAll2.result : [];
+              let c = null;
+              if (items2.length) c = items2.sort((a,b) => (b.timestamp||0) - (a.timestamp||0))[0];
+              sendResponse({ success: true, text: c && c.text || '' });
+            };
+            reqAll2.onerror = () => sendResponse({ success: false, error: String(reqAll2.error || 'getall_error') });
+            return;
+          }
+          sendResponse({ success: true, text: chosen && chosen.text || '' });
+        };
+        reqAll.onerror = () => sendResponse({ success: false, error: String(reqAll.error || 'getall_error') });
+      } catch (e) {
+        sendResponse({ success: false, error: String(e) });
+      }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error || 'open_error') });
+    return true;
   }
 });
 

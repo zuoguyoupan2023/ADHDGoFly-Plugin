@@ -567,6 +567,7 @@ class ADHDHighlighter {
           try { await this.collectAndStorePageSegments(); } catch (_) {}
         }
       } catch (_) {}
+      try { await this.testCollectAndSaveText(); } catch (_) {}
       
       console.log('ADHD文本高亮器初始化完成');
       
@@ -1649,6 +1650,14 @@ class ADHDHighlighter {
     const tag = el.tagName.toLowerCase();
     if (['script','style','noscript','svg','canvas'].includes(tag)) return true;
     if (['header','footer','nav','aside'].includes(tag)) return true;
+    try {
+      const role = el.getAttribute('role') || '';
+      if (/^(navigation|banner|contentinfo|complementary)$/i.test(role)) return true;
+      const cls = (typeof el.className === 'string' ? el.className : (el.className ? String(el.className) : '')).toLowerCase();
+      if (/(sidebar|footer|navbar|breadcrumb|menu|tabs|pagination|widget|recommend|related|guwen|console|dashboard|setting|account|profile|help|support)/.test(cls)) return true;
+      const id = (typeof el.id === 'string' ? el.id : '').toLowerCase();
+      if (/(sidebar|footer|navbar|breadcrumb|menu|tabs|pagination|widget|recommend|related|guwen|console|dashboard|setting|account|profile|help|support)/.test(id)) return true;
+    } catch (_) {}
     return false;
   }
 
@@ -1673,9 +1682,15 @@ class ADHDHighlighter {
   isNavigationText(s) {
     const t = String(s || '').trim();
     if (!t) return false;
-    const nav = new Set(['Product','Use Cases','Pricing','Blog','Resources','Download','Docs','Changelog','Experience liftoff','About Google','Google Products','Privacy','Terms']);
+    const nav = new Set([
+      'Product','Use Cases','Pricing','Blog','Resources','Download','Docs','Changelog','Experience liftoff','About Google','Google Products','Privacy','Terms',
+      '推荐','诗文','名句','作者','古籍','我的','APP','完善','展开阅读全文','猜你喜欢','猜您喜欢','帮助中心','技术社群','控制台','应用空间','体验中心','开发文档','特惠专区','财务','设置','账号设置','实名认证','授权管理','项目管理','速率限制','用户权益','安全管理','工单记录'
+    ]);
     if (nav.has(t)) return true;
-    if (t.length <= 20 && /^(Product|Pricing|Blog|Docs|Download|Terms|Privacy)$/i.test(t)) return true;
+    if (t.length <= 20 && (
+      /^(Product|Pricing|Blog|Docs|Download|Terms|Privacy)$/i.test(t) ||
+      /^(推荐|诗文|名句|作者|古籍|我的|完善|帮助中心|技术社群|控制台|应用空间|体验中心|开发文档|特惠专区|财务|设置|账号设置|实名认证|授权管理|项目管理|速率限制|用户权益|安全管理|工单记录)$/.test(t)
+    )) return true;
     return false;
   }
 
@@ -1703,10 +1718,25 @@ class ADHDHighlighter {
   collectPageSections() {
     const globalSeen = new Set();
     const collectFromRoot = (root) => {
+      const mainCandidates = [];
+      try {
+        const selectors = [
+          'main',
+          'article',
+          '[role="main"]',
+          '.content,.main,.article,.post,.entry,.markdown-body,.blog-content,.detail-content,.post-content',
+          '#content,#main,#article,#post,#entry,#detail'
+        ];
+        selectors.forEach(sel => {
+          root.querySelectorAll(sel).forEach(el => { if (el && !this.isExtensionUi(el)) mainCandidates.push(el); });
+        });
+      } catch (_) {}
+      const scope = mainCandidates.length ? mainCandidates : [root];
       const arr = [];
       let current = null;
       let order = 0;
-      const nodes = root.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div');
+      const nodes = [];
+      scope.forEach(sc => { sc.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,article,section,div').forEach(n => nodes.push(n)); });
       nodes.forEach(el => {
         if (this.isHiddenEl(el)) return;
         if (this.isExcludedTag(el)) return;
@@ -1763,6 +1793,7 @@ class ADHDHighlighter {
     const maxLen = 10000;
     const results = [];
     const seenBlocks = new Set();
+    const seenSegmentHashes = new Set();
     const uiTokens = new Set(['ExamPage','总结','更多','✏️','📃','🔧','●','◑','○','您好，我是AI助手。','请总结这段文本。','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','常驻','手动','发送','收起','展开全文','keyboard_arrow_down']);
     for (const sec of sections) {
       let bufLen = 0;
@@ -1788,6 +1819,8 @@ class ADHDHighlighter {
           const textHash = await this.sha256Hex(text);
           const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
           const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+          if (seenSegmentHashes.has(textHash)) { chunkBlocks = []; bufLen = 0; continue; }
+          seenSegmentHashes.add(textHash);
           await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
           results.push(rec);
           chunkBlocks = [];
@@ -1803,6 +1836,8 @@ class ADHDHighlighter {
         const textHash = await this.sha256Hex(text);
         const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
         const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+        if (seenSegmentHashes.has(textHash)) { chunkBlocks = []; bufLen = 0; continue; }
+        seenSegmentHashes.add(textHash);
         await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
         results.push(rec);
       }
@@ -1902,6 +1937,42 @@ class ADHDHighlighter {
     if (!sections.length) return { collectedSections: 0, storedSegments: 0, runId: null };
     const stored = await this.storePageSegments(sections);
     return { collectedSections: sections.length, storedSegments: stored.segmentsCount, runId: stored.runId };
+  }
+
+  async testCollectAndSaveText() {
+    const pageUrl = window.location.href;
+    let canonicalUrl = pageUrl;
+    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+    let candidates = [];
+    try {
+      const sels = ['main','article','[role="main"]','.markdown-body','.theme-doc-markdown','.content','.post','.entry','.article','.docItemContainer','#content','#main','#article','#post','#entry','#detail'];
+      sels.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if (el && !this.isExtensionUi(el)) candidates.push(el); }); });
+    } catch (_) {}
+    if (!candidates.length) candidates = [document.body];
+    let best = '';
+    let bestLen = -1;
+    for (const el of candidates) {
+      try {
+        const t = String(el.innerText || el.textContent || '').trim();
+        const n = this.normalizeText(t);
+        if (n && n.length > bestLen) { best = n; bestLen = n.length; }
+      } catch (_) {}
+    }
+    if (!best || best.length < 10) {
+      try { const t = String(document.body && (document.body.innerText || document.body.textContent) || '').trim(); best = this.normalizeText(t); } catch (_) {}
+    }
+    const text = best || '';
+    const textLength = text.length;
+    const textHash = await this.sha256Hex(text);
+    let title = '';
+    try { const h1 = document.querySelector('h1'); if (h1 && h1.textContent) title = h1.textContent.trim(); } catch (_) {}
+    if (!title) title = (document.title || '').trim();
+    const domain = (new URL(pageUrl)).hostname;
+    return await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ action: 'agfTestSaveText', data: { pageUrl, canonicalUrl, domain, title, timestamp: Date.now(), text, textLength, textHash } }, (res) => {
+        resolve(res && res.success ? { success: true } : { success: false, error: (res && res.error) || 'save_failed' });
+      });
+    });
   }
 
   /**
@@ -2150,6 +2221,8 @@ class ADHDHighlighter {
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
+      .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:12px;overflow:auto}
+      .agf-fulltext-content{white-space:pre-wrap;color:#333;font-size:13px}
       .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
@@ -2167,7 +2240,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfFullTextBtn" class="agf-status-btn" disabled>全文</button><button id="agfTestTextBtn" class="agf-status-btn">t</button></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2226,6 +2299,13 @@ class ADHDHighlighter {
                 <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none">刷新以采取全文</div>
               </div>
             </div>
+          </div>
+          <div id="agfFulltextPanel" class="agf-fulltext-panel">
+            <div class="agf-records-header">
+              <div class="agf-records-title">存储的全文</div>
+              <button id="agfFulltextClose" class="agf-records-close">关闭</button>
+            </div>
+            <div id="agfFulltextContent" class="agf-fulltext-content"></div>
           </div>
             <div class="agf-settings" id="agfAiViewSettings" style="display:none;">
               <div class="agf-settings-layout">
@@ -2399,6 +2479,11 @@ class ADHDHighlighter {
     const btnExplain = document.getElementById('agfBtnExplain');
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
+    const fullTextBtn = document.getElementById('agfFullTextBtn');
+    const testTextBtn = document.getElementById('agfTestTextBtn');
+    const fulltextPanel = document.getElementById('agfFulltextPanel');
+    const fulltextContent = document.getElementById('agfFulltextContent');
+    const fulltextClose = document.getElementById('agfFulltextClose');
     const refreshHint = document.getElementById('agfRefreshHint');
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
@@ -3625,8 +3710,22 @@ class ADHDHighlighter {
       });
     };
 
+    const getLatestStoredSegmentsForPage = async () => {
+      const all = await getStoredSegmentsForPage();
+      if (!all || all.length === 0) return [];
+      const runTs = {};
+      all.forEach(r => { const rid = r.runId || 'none'; const ts = r.timestamp || 0; runTs[rid] = Math.max(runTs[rid] || 0, ts); });
+      const latestRunId = Object.entries(runTs).sort((a, b) => b[1] - a[1])[0][0];
+      const latest = all.filter(r => r.runId === latestRunId);
+      const seen = new Set();
+      const out = [];
+      latest.forEach(r => { const h = r.textHash || ''; if (h && seen.has(h)) return; if (h) seen.add(h); out.push(r); });
+      out.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+      return out;
+    };
+
     const updateStorageStatusUI = async () => {
-      const segs = await getStoredSegmentsForPage();
+      const segs = await getLatestStoredSegmentsForPage();
       if (statusDot) {
         if (segs.length > 0) { statusDot.style.background = '#27ae60'; statusDot.title = '绿色: 已获取该页面文本'; } else { statusDot.style.background = '#bbb'; statusDot.title = '灰色: 未获取该页面文本'; }
       }
@@ -3643,6 +3742,7 @@ class ADHDHighlighter {
       if (btnExplain) btnExplain.disabled = !has;
       if (btnOutline) btnOutline.disabled = !has;
       if (btnKeywords) btnKeywords.disabled = !has;
+      if (fullTextBtn) fullTextBtn.disabled = !has;
       return segs;
     };
 
@@ -3840,6 +3940,9 @@ class ADHDHighlighter {
     if (btnExplain) btnExplain.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildExplainPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (btnOutline) btnOutline.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildOutlinePrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (btnKeywords) btnKeywords.addEventListener('click', async () => { const segs = await updateStorageStatusUI(); const prompt = buildKeywordsPrompt(segs); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; const u = getCanonicalUrl(); currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (fullTextBtn) fullTextBtn.addEventListener('click', async () => { const segs = await getStoredSegmentsForPage(); const rawText = segs.map(r => (r.blocks || []).map(b => String(b.text || '')).join('\n')).join('\n\n'); if (fulltextContent) fulltextContent.textContent = rawText || '无存储文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
+    if (testTextBtn) testTextBtn.addEventListener('click', async () => { const u = getCanonicalUrl(); const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r)); const rawText = res && res.text || ''; if (fulltextContent) fulltextContent.textContent = rawText || '未保存文本'; if (fulltextPanel) fulltextPanel.style.display = 'block'; });
+    if (fulltextClose) fulltextClose.addEventListener('click', () => { if (fulltextPanel) fulltextPanel.style.display = 'none'; });
     const onComposerSendClick = (e) => {
       if (!composerSend) return;
       if (composerSend.dataset.mode === 'refresh') { e.preventDefault(); try { window.location.reload(); } catch (_) {} return; }
