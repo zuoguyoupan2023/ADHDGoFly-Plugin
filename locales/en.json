@@ -479,13 +479,24 @@
          "developer": "Developer:",
          "website": "Website:"
        },
-       "changelog": {
-         "title": "Update Log",
-         "v015": {
-           "title": "Cache Logic Optimization & Custom Dictionary Enhancement",
-           "feature1": "Optimized caching logic for improved page loading performance",
-           "feature2": "Added vocabulary-part-of-speech copy function for easier custom dictionary creation",
-           "feature3": "Use official logo",
+      "changelog": {
+        "title": "Update Log",
+        "v016": {
+          "title": "AI Panel & Quick Actions",
+          "feature1": "Added AI panel with draggable overlay integrating chat and controls",
+          "feature2": "Size controls Full/Medium/Small; added X to fully close panel",
+          "feature3": "Quick actions: Summary, More, Text for faster page analysis",
+          "feature4": "Full-text viewer for Web/PDF with structured and supplementary text",
+          "feature5": "Highlight toggle to enable/disable text highlighting",
+          "feature6": "Settings: Provider/Model, API Key, Base URL, Temperature",
+          "feature7": "Parsing & filters: PDF Auto/Manual; Sensitive filter On/Off; Input Persistent/Manual",
+          "feature8": "Personalization: color themes & 4 presets + Reset; fold threshold/height"
+        },
+        "v015": {
+          "title": "Cache Logic Optimization & Custom Dictionary Enhancement",
+          "feature1": "Optimized caching logic for improved page loading performance",
+          "feature2": "Added vocabulary-part-of-speech copy function for easier custom dictionary creation",
+          "feature3": "Use official logo",
            "feature4": "Added Q&A page",
            "feature5": "Added review reminders",
            "feature6": "Added anonymous information collection for product optimization",
