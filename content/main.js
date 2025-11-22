@@ -2229,6 +2229,7 @@ class ADHDHighlighter {
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:flex;align-items:center;justify-content:flex-start;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-bottom:8px}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;display:flex;align-items:flex-start;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin:8px 12px}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
@@ -2276,8 +2277,9 @@ class ADHDHighlighter {
             <button id="agfAiMini">○</button>
           </div>
         </div>
-        <div class="agf-status-fixed"><span id="agfStatusText"></span><div id="agfConvIndex" class="agf-conv-index"></div></div>
+        
       </div>
+      <div class="agf-fixed-bar"><span id="agfStatusText"></span><div id="agfConvIndex" class="agf-conv-index"><div class="agf-conv-row" id="agfConvRowQ"></div><div class="agf-conv-row" id="agfConvRowA"></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
