@@ -2572,11 +2572,12 @@ class ADHDHighlighter {
       await updateStorageStatusUI();
       const MAX_CHARS = 12000;
       const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints();
-      const preview = String(body||'').slice(0,30);
       addedFullText = this.smartTruncate(String(body||''), MAX_CHARS);
-      addedFullQuestion = composerInput ? String(composerInput.value||'').trim() : '';
-      const disp = '我的问题是：' + (addedFullQuestion||'') + ',我和你的讨论是基于{' + preview + (String(body||'').length>30 ? '…全文' : '') + '}';
-      if (composerInput) composerInput.value = disp;
+      const prefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
+      if (composerInput) {
+        const cur = String(composerInput.value||'');
+        if (!cur.startsWith(prefix)) composerInput.value = prefix + cur;
+      }
     });
     let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
     const bubbleMove = (e) => { if (!bDragging) return; const dx = e.clientX - bStartX; const dy = e.clientY - bStartY; const nl = Math.min(Math.max(0, bStartLeft + dx), window.innerWidth - bubble.offsetWidth); const nt = Math.min(Math.max(0, bStartTop + dy), window.innerHeight - bubble.offsetHeight); bubble.style.left = nl + 'px'; bubble.style.top = nt + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; if (Math.abs(dx) + Math.abs(dy) > 3) bMoved = true; };
@@ -3800,7 +3801,9 @@ class ADHDHighlighter {
       const model = sessionModelSelect.value;
       let prompt = composerInput.value.trim();
       if (addedFullText && addedFullText.trim().length > 0) {
-        const q = addedFullQuestion || prompt;
+        const displayPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
+        let q = prompt;
+        if (q && displayPrefix && q.startsWith(displayPrefix)) q = q.slice(displayPrefix.length).trim();
         prompt = '我的问题是：' + q + ',我和你的讨论是基于{' + addedFullText + '}';
       }
       if (!prompt) return;
@@ -3938,6 +3941,7 @@ class ADHDHighlighter {
       if (btnExplain) btnExplain.disabled = !has;
       if (btnOutline) btnOutline.disabled = !has;
       if (btnKeywords) btnKeywords.disabled = !has;
+      if (addFullBtn) addFullBtn.disabled = !has;
       return segs;
     };
 

@@ -62,6 +62,7 @@
     "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
       "send": "Send",
       "addFullText": "Add Full Text",
+      "basedOnFullText": "Based on the current page's full text, ",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",
     "settings": {

@@ -59,6 +59,7 @@
     "compose": { "placeholder": "输入你的问题，按 Enter 发送，Shift+Enter 换行" },
       "send": "发送",
       "addFullText": "添加全文",
+      "basedOnFullText": "基于当前页面全文， ",
     "refreshHint": "刷新以采取全文",
     "close": "关闭",
     "settings": {
