@@ -2151,17 +2151,17 @@ class ADHDHighlighter {
     style.textContent = `
       .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:calc(100vw/3);min-height:calc(100vh * 2/3)}
       .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
-      .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px}
-      .agf-ai-controls{display:inline-flex;gap:8px}
+      .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:4px}
+      .agf-ai-controls{display:inline-flex;gap:6px}
       .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:14px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
-      .agf-status{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
+      .agf-status{display:inline-flex;align-items:center;gap:4px;margin-left:4px}
       .agf-status-dot{width:10px;height:10px;border-radius:50%;border:1px solid #e0e0e0;background:#bbb}
       .agf-status-btn{height:20px;line-height:20px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
       .agf-status-btn[disabled]{opacity:0.5;cursor:not-allowed}
       .agf-refresh-btn{height:20px;width:20px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;color:#333;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
       .agf-refresh-btn.breathing{color:#b58900;border-color:#ffd24d;box-shadow:0 0 0 0 rgba(255,210,77,0.25);animation:agf-breath 2s ease-in-out infinite}
       @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
-      .agf-ai-tabs{display:inline-flex;gap:8px;margin-left:12px}
+      .agf-ai-tabs{display:inline-flex;gap:6px;margin-left:6px}
       .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-ai-body{flex:1;padding:0 12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
@@ -2261,7 +2261,7 @@ class ADHDHighlighter {
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-ai-header{position:sticky;top:0;z-index:99}
-      .agf-more-wrap{position:relative;display:inline-block;margin-left:8px}
+      .agf-more-wrap{position:relative;display:inline-block;margin-left:4px}
       .agf-more-btn{height:22px;min-width:56px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:10}
       .agf-more-panel .agf-btn{display:block;width:180px;text-align:left;margin-bottom:6px}
@@ -2276,7 +2276,7 @@ class ADHDHighlighter {
     overlay.innerHTML = `
       <div class="agf-ai-header">
         <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled data-i18n="aiPanel.keywords">提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn" data-i18n="aiPanel.fullText">全文</button></div></div>
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabDoc">📃</button>
