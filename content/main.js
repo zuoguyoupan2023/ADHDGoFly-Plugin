@@ -2194,7 +2194,7 @@ class ADHDHighlighter {
       .agf-mode-btn.active{background:#333;color:#fff}
       .agf-records-panel{position:relative;height:100%;background:#fff;border:1px solid #e0e0e0;border-radius:4px;box-shadow:none;display:none;padding:12px;overflow:auto}
       .agf-colors-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
-      .agf-records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .agf-records-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:8px;background:#fff;border-bottom:1px solid #e0e0e0}
       .agf-records-title{font-size:14px;color:#333;font-weight:600}
       .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-records-open{height:24px;min-width:48px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
@@ -2242,9 +2242,10 @@ class ADHDHighlighter {
       .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
+      .agf-ai-header{position:relative;z-index:99}
       .agf-more-wrap{position:relative;display:inline-block;margin-left:8px}
       .agf-more-btn{height:22px;min-width:56px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:3}
+      .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:10}
       .agf-more-panel .agf-btn{display:block;width:180px;text-align:left;margin-bottom:6px}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
@@ -2256,7 +2257,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn">t</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" title="返回聊天视图">ExamPage</span><div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" title="灰色: 未获取该页面文本"></span><button id="agfRefreshBtn" class="agf-refresh-btn" title="刷新">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled>总结</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled>更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled>结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled>简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled>提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled>提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn">全文</button></div></div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2318,7 +2319,7 @@ class ADHDHighlighter {
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
             <div class="agf-records-header">
-              <div class="agf-records-title">存储的全文</div>
+              <div class="agf-records-title">全文</div>
               <button id="agfFulltextClose" class="agf-records-close">关闭</button>
             </div>
             <div id="agfFulltextContent" class="agf-fulltext-content"></div>
@@ -2548,7 +2549,7 @@ class ADHDHighlighter {
     };
     const showChat = () => setView('chat');
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
-    if (tabWrench) tabWrench.addEventListener('click', showSettings);
+    if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
     let recordsScope = 'all';
@@ -3558,7 +3559,7 @@ class ADHDHighlighter {
           if (fulltextPanel) {
             fulltextPanel.style.display = 'block';
             const titles = fulltextPanel.querySelectorAll('.agf-fulltext-title');
-            const target = isPdfPage() ? '用旧逻辑补充的文本' : '位置对齐后的文本';
+            const target = isPdfPage() ? 'pdf全文' : '网页全文';
             for (let i=0;i<titles.length;i++) {
               const el = titles[i];
               const txt = String(el.textContent||'');
@@ -4069,12 +4070,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['帮我总结这篇文章: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请用简明方式解释以下正文的核心内容与关键点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请提取以下正文的大纲与层级结构，保留标题与要点。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints(); const prompt = ['请从以下正文提取关键词与术语，并给出简要定义。', '页面: ' + u.canonicalUrl, '正文:', this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
@@ -4138,12 +4139,13 @@ class ADHDHighlighter {
       });
       if (fulltextContent) {
         fulltextContent.innerHTML = '';
+        try { const titleEl = fulltextPanel.querySelector('.agf-records-title'); if (titleEl) titleEl.textContent = isPdfPage() ? 'pdf全文' : '网页全文'; } catch (_) {}
         const sec2 = document.createElement('div'); sec2.className = 'agf-fulltext-section';
-        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = '用旧逻辑补充的文本';
+        const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = 'pdf全文';
         const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || '无补充文本';
         sec2.appendChild(ttl2); sec2.appendChild(body2);
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
-        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '位置对齐后的文本（结构化）';
+        const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = '网页全文';
         const body3 = document.createElement('div'); body3.className = 'agf-fulltext-body';
         const paras = testNormalized.split('\n').map(x=>x.trim()).filter(x=>x.length>0);
         const paraKeys = new Set();
@@ -4243,8 +4245,9 @@ class ADHDHighlighter {
         else { showChat(); sendChat(); }
       }
     });
-    if (tabPencil) tabPencil.addEventListener('click', () => { showChat(); });
-    if (tabDoc) tabDoc.addEventListener('click', () => { showRecords(); });
+    if (titleLabel) titleLabel.addEventListener('click', () => { hideFulltextPanel(); });
+    if (tabPencil) tabPencil.addEventListener('click', () => { hideFulltextPanel(); showChat(); });
+    if (tabDoc) tabDoc.addEventListener('click', () => { hideFulltextPanel(); showRecords(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
@@ -4592,3 +4595,4 @@ console.log('ADHD文本高亮器主控制器加载完成');
       }
     };
     initGovernanceControls();
+    const hideFulltextPanel = () => { const p = document.getElementById('agfFulltextPanel'); if (p) p.style.display = 'none'; };
