@@ -487,11 +487,22 @@
        "developer": "开发者：",
        "website": "官网："
      },
-     "changelog": {
-       "title": "更新日志",
-       "v015": {
-         "title": "缓存逻辑优化与自制词典功能完善",
-         "feature1": "优化缓存逻辑，提升页面加载性能",
+      "changelog": {
+        "title": "更新日志",
+        "v016": {
+          "title": "AI 面板与快捷操作",
+          "feature1": "新增 AI 面板：可拖拽浮层，集成聊天与控制",
+          "feature2": "尺寸控制：全/中/小，新增 X 一键关闭",
+          "feature3": "快捷功能：总结、更多、全文入口",
+          "feature4": "全文查看：支持网页/PDF 的结构化与补充文本",
+          "feature5": "高亮开关：支持开启/关闭提升阅读性",
+          "feature6": "设置管理：Provider/Model、API Key、Base URL、Temperature",
+          "feature7": "解析与过滤：PDF 自动/手动；敏感过滤 开启/关闭；输入模式 常驻/手动",
+          "feature8": "个性化：颜色主题与 4 套预设、重置；折叠阈值/高度可配"
+        },
+        "v015": {
+          "title": "缓存逻辑优化与自制词典功能完善",
+          "feature1": "优化缓存逻辑，提升页面加载性能",
          "feature2": "增加词汇-词性复制功能，自制词典更方便",
          "feature3": "使用正式logo",
          "feature4": "增加问答页面",
