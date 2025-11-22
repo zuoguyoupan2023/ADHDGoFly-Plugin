@@ -2223,6 +2223,10 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#333;color:#fff;border-color:#333}
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
+      .agf-status-fixed{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-top:8px}
+      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agf-conv-rounds{color:#666}
+      .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:flex;align-items:center;justify-content:flex-start;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:6px 8px;font-size:12px;margin-bottom:8px}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
@@ -2271,12 +2275,12 @@ class ADHDHighlighter {
             <button id="agfAiMini">○</button>
           </div>
         </div>
+        <div class="agf-status-fixed"><span id="agfStatusText"></span><div id="agfConvIndex" class="agf-conv-index"></div></div>
       </div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
             <div class="agf-ai-display">
-              <div class="agf-status-row"><span id="agfStatusText"></span></div>
               <div class="agf-chat">
                 <div class="agf-chat-list"></div>
               </div>
@@ -3823,6 +3827,8 @@ class ADHDHighlighter {
 
     const setStatusProcessing = () => {
       if (statusDot) { statusDot.style.background = '#f39c12'; statusDot.title = '处理中: 正在获取该页面文本'; }
+      const statusTextEl = document.getElementById('agfStatusText');
+      if (statusTextEl) statusTextEl.textContent = '正在处理文本';
       if (refreshBtn) { refreshBtn.classList.remove('breathing'); refreshBtn.style.display = 'none'; }
       if (refreshHint) refreshHint.style.display = 'none';
       if (quickSummaryBtn) quickSummaryBtn.disabled = true;
