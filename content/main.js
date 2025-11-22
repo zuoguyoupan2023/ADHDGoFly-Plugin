@@ -2183,11 +2183,12 @@ class ADHDHighlighter {
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
-      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:8px;height:100%}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:0;height:100%}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
-      .agf-composer-header{display:inline-flex;align-items:center;gap:8px}
+      .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
-      .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:6px}
+      .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:0}
+      .agf-highlight-toggle{display:inline-flex;align-items:center;margin-left:0}
       .agf-mode-btn{height:24px;line-height:24px;padding:0 8px;border:1px solid #e0e0e0;border-radius:0;background:#fff;color:#333;font-size:12px}
       .agf-mode-btn:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
       .agf-mode-btn:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
@@ -2214,7 +2215,7 @@ class ADHDHighlighter {
       .agf-group-body.collapsed{display:none}
       .agf-input-textarea{width:100%;min-height:72px;max-height:40vh;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
-      .agf-send{height:32px;min-width:88px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333}
+      .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
