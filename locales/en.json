@@ -41,7 +41,7 @@
     "refresh": "🔄 Refresh Analysis",
     "resetAll": "Reset All Settings"
   },
-  "aiPanel": {
+    "aiPanel": {
     "title": "ExamPage",
     "returnToChat": "Return to chat view",
     "refresh": "Refresh",
@@ -60,7 +60,8 @@
     "size": { "full": "Full", "half": "Medium", "mini": "Small" },
     "highlight": { "on": "Highlight", "off": "Off" },
     "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
-    "send": "Send",
+      "send": "Send",
+      "addFullText": "Add Full Text",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",
     "settings": {

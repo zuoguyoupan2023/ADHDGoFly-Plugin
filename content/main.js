@@ -2192,7 +2192,8 @@ class ADHDHighlighter {
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
-      .agf-composer{display:grid;grid-template-rows:auto 1fr auto;gap:0;height:100%}
+      .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
+      .agf-composer-extra{display:flex;justify-content:flex-end;margin-top:6px}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
@@ -2330,6 +2331,9 @@ class ADHDHighlighter {
                 <div class="agf-composer-body">
                   <textarea class="agf-input-textarea" id="agfComposerInput" data-i18n-placeholder="aiPanel.compose.placeholder" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
                   <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
+                </div>
+                <div class="agf-composer-extra">
+                  <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
                 </div>
                 <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none" data-i18n="aiPanel.refreshHint">刷新以采取全文</div>
               </div>
@@ -2525,6 +2529,9 @@ class ADHDHighlighter {
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerInput = document.getElementById('agfComposerInput');
     const composerSend = document.getElementById('agfComposerSend');
+    const addFullBtn = document.getElementById('agfAddFullTextBtn');
+    let addedFullText = '';
+    let addedFullQuestion = '';
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
@@ -2560,6 +2567,17 @@ class ADHDHighlighter {
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
+    if (addFullBtn) addFullBtn.addEventListener('click', async () => {
+      hideFulltextPanel();
+      await updateStorageStatusUI();
+      const MAX_CHARS = 12000;
+      const body = isPdfPage() ? await buildLegacySegmentText() : await buildStructuredFromLegacyOrHints();
+      const preview = String(body||'').slice(0,30);
+      addedFullText = this.smartTruncate(String(body||''), MAX_CHARS);
+      addedFullQuestion = composerInput ? String(composerInput.value||'').trim() : '';
+      const disp = '我的问题是：' + (addedFullQuestion||'') + ',我和你的讨论是基于{' + preview + (String(body||'').length>30 ? '…全文' : '') + '}';
+      if (composerInput) composerInput.value = disp;
+    });
     let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
     const bubbleMove = (e) => { if (!bDragging) return; const dx = e.clientX - bStartX; const dy = e.clientY - bStartY; const nl = Math.min(Math.max(0, bStartLeft + dx), window.innerWidth - bubble.offsetWidth); const nt = Math.min(Math.max(0, bStartTop + dy), window.innerHeight - bubble.offsetHeight); bubble.style.left = nl + 'px'; bubble.style.top = nt + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; if (Math.abs(dx) + Math.abs(dy) > 3) bMoved = true; };
     const bubbleUp = () => { if (!bDragging) return; bDragging = false; document.removeEventListener('mousemove', bubbleMove); document.removeEventListener('mouseup', bubbleUp); if (bMoved) { this.__bubblePos = { left: parseInt(bubble.style.left, 10) || 0, top: parseInt(bubble.style.top, 10) || 0 }; bMoved = false; } else { this.restoreAiSettingPanel(); } };
@@ -3780,7 +3798,11 @@ class ADHDHighlighter {
       if (!composerInput || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
-      const prompt = composerInput.value.trim();
+      let prompt = composerInput.value.trim();
+      if (addedFullText && addedFullText.trim().length > 0) {
+        const q = addedFullQuestion || prompt;
+        prompt = '我的问题是：' + q + ',我和你的讨论是基于{' + addedFullText + '}';
+      }
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
       const bodyLabelDetect2 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
@@ -3790,6 +3812,8 @@ class ADHDHighlighter {
       appendMessage('user', prompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
       nextPromptIsGenerated = false;
       composerInput.value = '';
+      addedFullText = '';
+      addedFullQuestion = '';
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
       try {
