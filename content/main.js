@@ -2272,9 +2272,9 @@ class ADHDHighlighter {
             <button id="agfAiTabWrench">🔧</button>
           </div>
           <div class="agf-ai-controls">
-            <button id="agfAiFull">●</button>
-            <button id="agfAiHalf">◑</button>
-            <button id="agfAiMini">○</button>
+            <button id="agfAiFull">全</button>
+            <button id="agfAiHalf">中</button>
+            <button id="agfAiMini">小</button>
           </div>
         </div>
         
