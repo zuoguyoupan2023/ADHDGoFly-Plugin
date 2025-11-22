@@ -4045,33 +4045,31 @@ class ADHDHighlighter {
           paraKeys.add(k);
           filteredParas.push(p);
         }
-        const assignT = new Map();
-        const titleNorm = (s)=>this.normalizeText(String(s||'')).slice(0,200);
-        const ngrams = (s)=>{ const t=this.normalizeText(String(s||'')); const L=Math.min(800,t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
+        const structSecs = this.collectPageSections();
+        const hint = [];
+        for (let i=0;i<structSecs.length;i++) {
+          const hp = String(structSecs[i].headingPath||'');
+          const m = hp.match(/^h([1-6]):/);
+          if (m) { const lvl = parseInt(m[1],10); const tn = this.normalizeText(String(structSecs[i].sectionTitle||'')).toLowerCase(); if (tn) hint.push({ title: tn, level: Math.max(1, Math.min(6, lvl)) }); }
+        }
+        const titleNorm = (s)=>this.normalizeText(String(s||'')).toLowerCase();
+        const ngrams = (s)=>{ const t=titleNorm(s); const L=Math.min(120, t.length); const out=new Set(); for(let i=0;i<Math.max(0,L-2);i++){ out.add(t.slice(i,i+3)); } return out; };
         const jac = (a,b)=>{ const A=ngrams(a), B=ngrams(b); if (A.size===0 || B.size===0) return 0; let inter=0; A.forEach(x=>{ if (B.has(x)) inter++; }); return inter/(A.size+B.size-inter); };
+        const detectLevel = (p)=>{ const tp = titleNorm(p); let best = 0; let bl = 0; for (let i=0;i<hint.length;i++) { const ht = hint[i].title; if (tp === ht) { return hint[i].level; } const short = Math.max(tp.length, ht.length) <= 40; const contain = tp && ht && (tp.includes(ht) || ht.includes(tp)); if (short && contain) { const r = Math.min(tp.length, ht.length)/Math.max(tp.length, ht.length); if (r >= 0.6) { if (1 > best) { best = 1; bl = hint[i].level; } continue; } }
+          const s = jac(tp, ht);
+          if (s > best && s >= 0.12) { best = s; bl = hint[i].level; }
+        }
+        return bl || 0; };
+        let aligned = '';
+        let prevKey = '';
         for (let i=0;i<filteredParas.length;i++) {
           const p = filteredParas[i];
-          let targetIdx = -1;
-          for (let sidx=0;sidx<secList.length;sidx++) { const st = titleNorm(secList[sidx].title); if (st && titleNorm(p)===st) { targetIdx = sidx; break; } }
-          if (targetIdx<0) {
-            let best=-1, bi=-1;
-            for (let sidx=0;sidx<secList.length;sidx++) { const sim=jac(p, secList[sidx].title || ''); if (sim>best) { best=sim; bi=sidx; } }
-            if (best>=0.08) targetIdx=bi;
-          }
-          const key = targetIdx>=0 ? ('sec:'+targetIdx) : 'ROOT';
-          if (!assignT.has(key)) assignT.set(key, []);
-          assignT.get(key).push(p);
-        }
-        let aligned = '';
-        for (let i=0;i<secList.length;i++) {
-          const group = assignT.get('sec:'+i) || [];
-          if (!group.length) continue;
-          aligned += (secList[i].title ? ('# '+secList[i].title+'\n\n') : '');
-          aligned += group.join('\n\n') + '\n\n';
-        }
-        const rootGroup = assignT.get('ROOT') || [];
-        if (rootGroup.length) {
-          aligned += '# ROOT\n\n' + rootGroup.join('\n\n');
+          const k = makeKey(p);
+          if (k === prevKey) continue;
+          prevKey = k;
+          const lvl = detectLevel(p);
+          if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + p + '\n\n'; }
+          else { aligned += p + '\n\n'; }
         }
         body3.textContent = aligned || '无结构化内容';
         sec3.appendChild(ttl3); sec3.appendChild(body3);
