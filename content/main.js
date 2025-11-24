@@ -4551,7 +4551,7 @@ class ADHDHighlighter {
     };
     initComposerAutosize();
     if (titleLabel) titleLabel.addEventListener('click', () => { hideFulltextPanel(); });
-    if (tabPencil) tabPencil.addEventListener('click', () => { hideFulltextPanel(); showChat(); });
+    if (tabPencil) tabPencil.addEventListener('click', async () => { hideFulltextPanel(); try { await newConversation(); showToast(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.newConversation') : '已创建新对话')); } catch (_) {} showChat(); });
     if (tabDoc) tabDoc.addEventListener('click', () => { hideFulltextPanel(); showRecords(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
