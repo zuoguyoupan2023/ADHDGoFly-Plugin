@@ -2254,6 +2254,7 @@ class ADHDHighlighter {
       .agf-status-row{display:none}
       .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0 12px}
       .agf-fixed-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+      .agf-carry-top{margin-left:auto}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
@@ -2304,7 +2305,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div></div></div>
+      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:52px" /><span class="agf-rounds-label">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
@@ -2339,7 +2340,6 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button>
                     <button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button>
                   </div>
-                  <div id="agfCarryWrap" class="agf-rounds-wrap"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:52px" /><span class="agf-rounds-label">轮问答</span></div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
@@ -2548,6 +2548,10 @@ class ADHDHighlighter {
     const composerHidden = document.getElementById('agfComposerHidden');
     const composerSend = document.getElementById('agfComposerSend');
     const addFullBtn = document.getElementById('agfAddFullTextBtn');
+    const carryWrap = document.getElementById('agfCarryWrap');
+    const carryInput = document.getElementById('agfCarryInput');
+    let carryEdited = false;
+    if (carryInput) carryInput.addEventListener('input', () => { carryEdited = true; });
     let addedFullText = '';
     let addedFullQuestion = '';
     let addedFullActive = false;
@@ -2659,6 +2663,11 @@ class ADHDHighlighter {
       const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
       roundsEl.textContent =  rounds + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.roundsSuffix') : '轮考题');
+      try {
+        const prevRounds = Math.max(0, rounds - 1);
+        if (carryWrap) carryWrap.style.display = prevRounds > 0 ? 'flex' : 'none';
+        if (carryInput && !carryEdited) carryInput.value = String(Math.min(4, prevRounds));
+      } catch (_) {}
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
@@ -3896,9 +3905,28 @@ class ADHDHighlighter {
       try { rebuildConvIndex(); } catch (_) {}
     };
 
-    const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
-    const toAnthropicStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
-    const toGeminiStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
+    const toOpenAIStyle = (arr) => (arr || chatMessages).map(m => ({ role: m.role, content: m.content }));
+    const toAnthropicStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
+    const toGeminiStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
+    const buildCarryMessages = (x) => {
+      const msgs = chatMessages.slice();
+      const userIdxs = [];
+      for (let i=0;i<msgs.length;i++) { if (msgs[i] && msgs[i].role === 'user') userIdxs.push(i); }
+      if (!userIdxs.length) return [];
+      const curIdx = userIdxs[userIdxs.length-1];
+      const prevRounds = Math.max(0, userIdxs.length - 1);
+      const useX = Math.max(0, Math.min(Number(x||0)||0, Math.min(prevRounds, 4)));
+      if (useX <= 0) return [msgs[curIdx]];
+      const prevUserIdxs = userIdxs.slice(userIdxs.length - 1 - useX, userIdxs.length - 1);
+      const out = [];
+      for (let j=0;j<prevUserIdxs.length;j++) {
+        const start = prevUserIdxs[j];
+        const end = (j+1<prevUserIdxs.length ? prevUserIdxs[j+1] : curIdx);
+        for (let k=start;k<end;k++) out.push(msgs[k]);
+      }
+      out.push(msgs[curIdx]);
+      return out;
+    };
 
     const sendChat = async () => {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
@@ -3962,22 +3990,27 @@ class ADHDHighlighter {
       let url = base;
       let headers = { 'Content-Type': 'application/json' };
       let body = null;
+      let subset = chatMessages.slice();
+      try {
+        const x = carryInput ? Math.max(0, Math.min(4, parseInt(String(carryInput.value||'0'),10)||0)) : 0;
+        subset = buildCarryMessages(x);
+      } catch (_) {}
       if (prov === 'anthropic') {
         headers['x-api-key'] = key;
         headers['anthropic-version'] = '2023-06-01';
-        body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle() });
+        body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle(subset) });
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
-        body = JSON.stringify({ contents: toGeminiStyle() });
+        body = JSON.stringify({ contents: toGeminiStyle(subset) });
       } else if (prov === 'deepseek') {
         try {
           startAssistantStream();
-          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle() });
+          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
           return;
         } catch (_) {}
       } else {
         headers['Authorization'] = 'Bearer ' + key;
-        body = JSON.stringify({ model, messages: toOpenAIStyle() });
+        body = JSON.stringify({ model, messages: toOpenAIStyle(subset) });
       }
       let text = '';
       try {
