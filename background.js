@@ -1216,6 +1216,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // 📊 发送独立安装统计到新表
     console.log('📊 启动独立安装统计收集');
     await sendIndependentInstallationStats(details);
+
+    await chrome.storage.local.set({ enabled: true });
   }
   
   // 获取存储的数据

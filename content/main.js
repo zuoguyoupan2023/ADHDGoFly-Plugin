@@ -847,8 +847,13 @@ class ADHDHighlighter {
   async loadStoredState() {
     try {
       const result = await chrome.storage.local.get(['enabled']);
-      if (result.enabled) {
+      const unset = typeof result.enabled === 'undefined';
+      const shouldEnable = unset ? true : !!result.enabled;
+      if (shouldEnable) {
         await this.enable();
+      }
+      if (unset) {
+        await chrome.storage.local.set({ enabled: true });
       }
     } catch (error) {
       console.error('加载存储状态失败:', error);
