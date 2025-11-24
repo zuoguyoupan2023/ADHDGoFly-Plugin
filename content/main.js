@@ -2289,7 +2289,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-mode-toggle"><button class="agf-mode-btn">T</button><button class="agf-mode-btn active">M</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2916,8 +2916,13 @@ class ADHDHighlighter {
     let panelMode = 'manual';
     const modeBtns = overlay.querySelectorAll('.agf-mode-btn');
     if (modeBtns && modeBtns.length >= 2) {
-      modeBtns[0].textContent = '常驻';
-      modeBtns[1].textContent = '手动';
+      try {
+        const t = (k)=>{ try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch(_) { return ''; } };
+        modeBtns[0].setAttribute('data-i18n','aiPanel.mode.persistent');
+        modeBtns[1].setAttribute('data-i18n','aiPanel.mode.manual');
+        modeBtns[0].textContent = t('aiPanel.mode.persistent') || '常驻';
+        modeBtns[1].textContent = t('aiPanel.mode.manual') || '手动';
+      } catch(_) {}
       const setActiveMode = (m) => {
         modeBtns[0].classList.toggle('active', m === 'persistent');
         modeBtns[1].classList.toggle('active', m !== 'persistent');
