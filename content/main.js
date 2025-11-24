@@ -2199,7 +2199,7 @@ class ADHDHighlighter {
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
       .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
       .agf-composer-extra{display:grid;grid-template-columns:1fr auto;align-items:start;margin-top:2px}
-      .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
+      .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
       .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:0}
@@ -2231,7 +2231,8 @@ class ADHDHighlighter {
       .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
-      #agfAddFullTextBtn{grid-column:2;justify-self:start;height:auto;padding:4px 8px;font-size:11px;line-height:14px;white-space:normal;word-break:break-all;width:40px;text-align:center}
+      .agf-send-col{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;height:100%}
+      #agfAddFullTextBtn{height:auto;padding:4px 8px;font-size:11px;line-height:14px;white-space:normal;word-break:break-all;width:40px;text-align:center;margin-top:8px}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
@@ -2336,10 +2337,10 @@ class ADHDHighlighter {
                 </div>
                 <div class="agf-composer-body">
                   <textarea class="agf-input-textarea" id="agfComposerInput" data-i18n-placeholder="aiPanel.compose.placeholder" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
-                  <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
-                </div>
-                <div class="agf-composer-extra">
-                  <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
+                  <div class="agf-send-col">
+                    <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
+                    <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
+                  </div>
                 </div>
                 <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none" data-i18n="aiPanel.refreshHint">刷新以采取全文</div>
               </div>
