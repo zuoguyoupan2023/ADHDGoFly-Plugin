@@ -2198,7 +2198,7 @@ class ADHDHighlighter {
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
       .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
-      .agf-composer-extra{display:flex;justify-content:flex-end;margin-top:6px}
+      .agf-composer-extra{display:grid;grid-template-columns:1fr auto;align-items:start;margin-top:2px}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
@@ -2231,6 +2231,7 @@ class ADHDHighlighter {
       .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
+      #agfAddFullTextBtn{grid-column:2;justify-self:start;height:auto;padding:4px 8px;font-size:11px;line-height:14px;white-space:normal;word-break:break-all;width:40px;text-align:center}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
