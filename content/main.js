@@ -2229,6 +2229,9 @@ class ADHDHighlighter {
       .agf-group-body{padding:8px}
       .agf-group-body.collapsed{display:none}
       .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
+      .agf-input-editor{width:100%;min-height:56px;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff;white-space:pre-wrap;outline:none;overflow:auto}
+      .agf-input-affix{color:#666;opacity:0.85;pointer-events:none;user-select:none;margin-left:4px}
+      #agfInputPrefix{color:#333;pointer-events:none;user-select:none;margin-right:2px}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-send-col{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;height:100%}
@@ -2337,12 +2340,13 @@ class ADHDHighlighter {
                   </div>
                 </div>
                 <div class="agf-composer-body">
-                  <textarea class="agf-input-textarea" id="agfComposerInput" data-i18n-placeholder="aiPanel.compose.placeholder" placeholder="输入你的问题，按 Enter 发送，Shift+Enter 换行"></textarea>
+                  <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="false" style="display:none">我的问题是：</span><span id="agfInputUser"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
                   </div>
                 </div>
+                <input type="hidden" id="agfComposerHidden" />
                 <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none" data-i18n="aiPanel.refreshHint">刷新以采取全文</div>
               </div>
             </div>
@@ -2535,13 +2539,18 @@ class ADHDHighlighter {
     const fulltextClose = document.getElementById('agfFulltextClose');
     const refreshHint = document.getElementById('agfRefreshHint');
     const chatList = overlay.querySelector('.agf-chat-list');
-    const composerInput = document.getElementById('agfComposerInput');
+    const composerEditor = document.getElementById('agfComposerEditor');
+    const inputPrefix = document.getElementById('agfInputPrefix');
+    const inputUser = document.getElementById('agfInputUser');
+    const inputAffix = document.getElementById('agfInputAffix');
+    const composerHidden = document.getElementById('agfComposerHidden');
     const composerSend = document.getElementById('agfComposerSend');
     const addFullBtn = document.getElementById('agfAddFullTextBtn');
     let addedFullText = '';
     let addedFullQuestion = '';
     let addedFullActive = false;
     let addedFullDisplayPrefix = '';
+    let addedFullLinkPreview = '';
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
@@ -2577,6 +2586,9 @@ class ADHDHighlighter {
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
+    const updateHiddenFromEditor = () => { if (composerHidden && inputUser) composerHidden.value = String(inputUser.innerText||''); };
+    if (composerEditor) composerEditor.addEventListener('input', updateHiddenFromEditor);
+    const focusUserCaretEnd = () => { try { if (!inputUser) return; const range = document.createRange(); range.selectNodeContents(inputUser); range.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } catch (_) {} };
     if (addFullBtn) addFullBtn.addEventListener('click', async () => {
       hideFulltextPanel();
       if (!addedFullActive) {
@@ -2587,23 +2599,23 @@ class ADHDHighlighter {
         const link = String(location && location.href || '');
         const previewRaw = String(addedFullText||'');
         const preview = previewRaw.slice(0, 20) + (previewRaw.length > 20 ? '...' : '');
-        addedFullDisplayPrefix = '基于当前全文（' + link + '+' + preview + '）, 我的问题是： ';
+        addedFullDisplayPrefix = '我的问题是： ';
+        addedFullLinkPreview = '，基于当前全文（' + link + '+' + preview + '）';
         addFullBtn.classList.add('active');
-        if (composerInput) {
-          const cur = String(composerInput.value||'');
-          if (!cur.startsWith(addedFullDisplayPrefix)) composerInput.value = addedFullDisplayPrefix + cur;
-        }
+        if (inputPrefix) { inputPrefix.style.display = 'inline'; }
+        if (inputAffix) { inputAffix.textContent = addedFullLinkPreview; inputAffix.style.display = 'inline'; }
         addedFullActive = true;
+        focusUserCaretEnd();
       } else {
         addFullBtn.classList.remove('active');
-        if (composerInput) {
-          const cur = String(composerInput.value||'');
-          if (addedFullDisplayPrefix && cur.startsWith(addedFullDisplayPrefix)) composerInput.value = cur.slice(addedFullDisplayPrefix.length);
-        }
+        if (inputPrefix) { inputPrefix.style.display = 'none'; }
+        if (inputAffix) { inputAffix.textContent = ''; inputAffix.style.display = 'none'; }
         addedFullText = '';
         addedFullQuestion = '';
         addedFullDisplayPrefix = '';
+        addedFullLinkPreview = '';
         addedFullActive = false;
+        focusUserCaretEnd();
       }
     });
     let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
@@ -3859,16 +3871,18 @@ class ADHDHighlighter {
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
 
     const sendChat = async () => {
-      if (!composerInput || !sessionProviderSelect || !sessionModelSelect) return;
+      if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
-      let prompt = composerInput.value.trim();
+      let prompt = (composerHidden.value || '').trim();
+      let displayPrompt = prompt;
       if (addedFullText && addedFullText.trim().length > 0) {
         const displayPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
         let q = prompt;
         if (q && addedFullDisplayPrefix && q.startsWith(addedFullDisplayPrefix)) q = q.slice(addedFullDisplayPrefix.length).trim();
         else if (q && displayPrefix && q.startsWith(displayPrefix)) q = q.slice(displayPrefix.length).trim();
         prompt = '我的问题是：' + q + ',我和你的讨论是基于{' + addedFullText + '}';
+        displayPrompt = '我的问题是：' + q + (addedFullLinkPreview || '');
       }
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
@@ -3876,12 +3890,16 @@ class ADHDHighlighter {
       const isGeneratedPrompt = nextPromptIsGenerated || prompt.indexOf('\n' + bodyLabelDetect2) >= 0;
       const userIndex = chatMessages.length;
       chatMessages.push({ role: 'user', content: prompt });
-      appendMessage('user', prompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
+      appendMessage('user', displayPrompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
       nextPromptIsGenerated = false;
-      composerInput.value = '';
+      if (inputUser) inputUser.innerText = '';
+      if (composerHidden) composerHidden.value = '';
+      if (inputPrefix) { inputPrefix.style.display = 'none'; }
+      if (inputAffix) { inputAffix.textContent = ''; inputAffix.style.display = 'none'; }
       addedFullText = '';
       addedFullQuestion = '';
       addedFullDisplayPrefix = '';
+      addedFullLinkPreview = '';
       addedFullActive = false;
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
@@ -4303,12 +4321,12 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'block' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (composerInput) { composerInput.value = prompt; } if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const MAX_CHARS = 12000; const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, this.smartTruncate(body, MAX_CHARS)].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词与术语'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
@@ -4491,7 +4509,7 @@ class ADHDHighlighter {
       sendChat();
     };
     if (composerSend) composerSend.addEventListener('click', onComposerSendClick);
-    if (composerInput) composerInput.addEventListener('keydown', (e) => {
+    if (composerEditor) composerEditor.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (composerSend && composerSend.dataset.mode === 'refresh') { try { window.location.reload(); } catch (_) {} }
@@ -4499,18 +4517,18 @@ class ADHDHighlighter {
       }
     });
     const initComposerAutosize = () => {
-      if (!composerInput) return;
+      if (!composerEditor) return;
       const container = document.querySelector('.agf-ai-input');
       const header = document.querySelector('.agf-composer-header');
       const compute = () => {
         const hh = header ? header.offsetHeight : 0;
         const max = Math.max(56, Math.floor(window.innerHeight * 0.5 - hh - 8));
-        composerInput.style.height = 'auto';
-        const h = Math.min(composerInput.scrollHeight, max);
-        composerInput.style.height = h + 'px';
+        composerEditor.style.height = 'auto';
+        const h = Math.min(composerEditor.scrollHeight || composerEditor.getBoundingClientRect().height, max);
+        composerEditor.style.height = h + 'px';
         if (container) container.style.maxHeight = '50vh';
       };
-      composerInput.addEventListener('input', compute);
+      composerEditor.addEventListener('input', compute);
       window.addEventListener('resize', compute);
       setTimeout(compute, 0);
     };
