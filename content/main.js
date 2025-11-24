@@ -2197,6 +2197,7 @@ class ADHDHighlighter {
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
+      .agf-go-full{background:#27ae60;color:#fff;border-color:#27ae60;box-shadow:0 4px 10px rgba(39,174,96,0.25)}
       .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
       .agf-composer-extra{display:grid;grid-template-columns:1fr auto;align-items:start;margin-top:2px}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
@@ -3764,7 +3765,7 @@ class ADHDHighlighter {
         const p30 = (body || '').slice(0, 30);
         preview.innerHTML = markdownToHtml(p30 + (body.length > 30 ? '…' : ''));
         const goBtn = document.createElement('button');
-        goBtn.className = 'agf-collapse-toggle';
+        goBtn.className = 'agf-collapse-toggle agf-go-full';
         goBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.goFull') : '去看全文';
         goBtn.addEventListener('click', () => { openTPanelThirdPart(); });
         contentEl.appendChild(headDiv);
@@ -3803,7 +3804,7 @@ class ADHDHighlighter {
             const needGo = (typeof addedFullText === 'string' && addedFullText.trim().length > 0) || (text.indexOf('基于当前全文') >= 0);
             if (needGo) {
               const goBtn2 = document.createElement('button');
-              goBtn2.className = 'agf-collapse-toggle';
+              goBtn2.className = 'agf-collapse-toggle agf-go-full';
               goBtn2.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.goFull') : '去看全文';
               goBtn2.addEventListener('click', () => { openTPanelThirdPart(); });
               contentEl.appendChild(goBtn2);
