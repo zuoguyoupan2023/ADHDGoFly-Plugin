@@ -1845,7 +1845,7 @@ class ADHDHighlighter {
           const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
           const textHash = await this.sha256Hex(text);
           const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
-          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, outlinePath: sec.outlinePath || null, outlineLevel: typeof sec.outlineLevel === 'number' ? sec.outlineLevel : 0, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+          const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
           if (seenSegmentHashes.has(textHash)) { chunkBlocks = []; bufLen = 0; continue; }
           seenSegmentHashes.add(textHash);
           await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
@@ -1862,7 +1862,7 @@ class ADHDHighlighter {
         const approxTokens = Math.ceil(textLength * this.approxTokensPerChar(text));
         const textHash = await this.sha256Hex(text);
         const pageIndex = /^pdf-(\d+)$/.test(sec.sectionId||'') ? parseInt((sec.sectionId||'').split('-')[1],10) : null;
-        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, outlinePath: sec.outlinePath || null, outlineLevel: typeof sec.outlineLevel === 'number' ? sec.outlineLevel : 0, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
+        const rec = { id: 'seg-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), runId, pageUrl, sourceUrl: pageUrl, canonicalUrl, pageIndex, domain, timestamp: Date.now(), sectionId: sec.sectionId, sectionTitle: sec.sectionTitle, orderIndex: idx++, textLength, approxTokens, textHash, blocks: chunkBlocks.slice(), vocabularyStats: null };
         if (seenSegmentHashes.has(textHash)) { chunkBlocks = []; bufLen = 0; continue; }
         seenSegmentHashes.add(textHash);
         await new Promise((resolve, reject) => { const tx = db.transaction('page_segments', 'readwrite'); const st = tx.objectStore('page_segments'); const rq = st.put(rec); rq.onsuccess = () => resolve(true); rq.onerror = () => reject(rq.error); });
@@ -3133,37 +3133,6 @@ class ADHDHighlighter {
         if (t && t.trim().length > 0) parts.push(t);
       }
       return parts.join('\n');
-    };
-
-    const buildPdfStructuredOutlineText = async () => {
-      const segs = await getLatestStoredSegmentsForPage();
-      if (!segs || segs.length === 0) return '';
-      const groups = new Map();
-      const titles = new Map();
-      for (let i=0;i<segs.length;i++) {
-        const r = segs[i];
-        const isPdf = /^pdf-/.test(String(r.sectionId||''));
-        if (!isPdf) continue;
-        const key = r.outlinePath ? String(r.outlinePath) : ('pdf:'+ (r.pageIndex||i+1));
-        const label = r.outlinePath ? String(r.outlinePath).split('>').map(s=>s.trim()).filter(Boolean).pop() || r.sectionTitle || key : (r.sectionTitle || key);
-        const txt = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
-        if (!txt || !txt.trim()) continue;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push({ pageIndex: r.pageIndex||0, text: txt });
-        if (!titles.has(key)) titles.set(key, label);
-      }
-      const arr = Array.from(groups.entries()).map(([k, xs]) => ({ k, title: titles.get(k)||k, minPage: Math.min.apply(null, xs.map(x=>x.pageIndex||0)), text: xs.map(x=>x.text).join('\n') }));
-      arr.sort((a,b)=> (a.minPage-b.minPage) || a.title.localeCompare(b.title));
-      const lines = [];
-      for (let i=0;i<arr.length;i++) {
-        const h = String(arr[i].title||'').trim();
-        const body = String(arr[i].text||'').trim();
-        if (!body) continue;
-        lines.push(h);
-        lines.push(body);
-        lines.push('');
-      }
-      return lines.join('\n');
     };
     const buildStructuredFromLegacyOrHints = async () => {
       if (typeof buildTStructuredText === 'function') {
@@ -4439,18 +4408,8 @@ class ADHDHighlighter {
         }
         body3.textContent = aligned || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
         sec3.appendChild(ttl3); sec3.appendChild(body3);
-        if (isPdfPage()) {
-          fulltextContent.appendChild(sec2);
-          let pdfStructured = '';
-          try { pdfStructured = await buildPdfStructuredOutlineText(); } catch (_) { pdfStructured = ''; }
-          const sec4 = document.createElement('div'); sec4.className = 'agf-fulltext-section';
-          const ttl4 = document.createElement('div'); ttl4.className = 'agf-fulltext-title'; ttl4.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfStructuredTitle') : '结构化PDF文本';
-          const body4 = document.createElement('div'); body4.className = 'agf-fulltext-body'; body4.textContent = pdfStructured || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
-          sec4.appendChild(ttl4); sec4.appendChild(body4);
-          fulltextContent.appendChild(sec4);
-        } else {
-          fulltextContent.appendChild(sec3);
-        }
+        if (isPdfPage()) { fulltextContent.appendChild(sec2); }
+        else { fulltextContent.appendChild(sec3); }
       }
       if (fulltextPanel) fulltextPanel.style.display = 'block';
     });
