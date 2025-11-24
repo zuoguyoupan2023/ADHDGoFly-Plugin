@@ -3884,6 +3884,8 @@ class ADHDHighlighter {
     };
 
     const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
+    const toAnthropicStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
+    const toGeminiStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
 
     const sendChat = async () => {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
@@ -3932,10 +3934,10 @@ class ADHDHighlighter {
       if (prov === 'anthropic') {
         headers['x-api-key'] = key;
         headers['anthropic-version'] = '2023-06-01';
-        body = JSON.stringify({ model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] });
+        body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle() });
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
-        body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+        body = JSON.stringify({ contents: toGeminiStyle() });
       } else if (prov === 'deepseek') {
         try {
           startAssistantStream();
