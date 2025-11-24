@@ -100,8 +100,9 @@
       "offscreen/pdf-parser.html",
       "offscreen/pdf-parser.js",
       "offscreen/pdfjs/pdf.min.js",
-      "offscreen/pdfjs/pdf.worker.min.js"
-      
+      "offscreen/pdfjs/pdf.worker.min.js",
+      "offscreen/pdf.min.js",
+      "offscreen/pdf.worker.min.js"
     ],
     "matches": ["<all_urls>"]
   }]

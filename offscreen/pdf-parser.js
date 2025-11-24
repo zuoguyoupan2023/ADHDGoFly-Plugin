@@ -27,19 +27,31 @@
           if (!pdfjsLib) {
             try {
               const script = document.createElement('script');
-              script.src = chrome.runtime.getURL('offscreen/pdfjs/pdf.min.js');
+              script.src = chrome.runtime.getURL('offscreen/pdf.min.js');
               document.head.appendChild(script);
               await new Promise((r,j)=>{ script.onload=r; script.onerror=j; });
-              pdfjsLib = getPdfjsLib();
             } catch(_) {}
+            if (!pdfjsLib) {
+              try {
+                const alt = document.createElement('script');
+                alt.src = chrome.runtime.getURL('offscreen/pdfjs/pdf.min.js');
+                document.head.appendChild(alt);
+                await new Promise((r,j)=>{ alt.onload=r; alt.onerror=j; });
+              } catch(_) {}
+            }
+            pdfjsLib = getPdfjsLib();
           }
           if (!pdfjsLib) { send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:'pdfjs_missing' }); sendResponse && sendResponse({ ok:false }); return true; }
           try {
             if (pdfjsLib.GlobalWorkerOptions) {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdfjs/pdf.worker.min.js');
+              pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdf.worker.min.js');
             }
           } catch(_){
-            // no-op
+            try {
+              if (pdfjsLib.GlobalWorkerOptions) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdfjs/pdf.worker.min.js');
+              }
+            } catch(__){}
           }
           const doc = await pdfjsLib.getDocument({ url }).promise;
           const numPages = doc.numPages || 0;
@@ -100,9 +112,15 @@
           if (!pdfjsLib) { send({ type:'OFFSCREEN_PDF_ERROR', tabId, error:'pdfjs_missing' }); sendResponse && sendResponse({ ok:false }); return true; }
           try {
             if (pdfjsLib.GlobalWorkerOptions) {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdfjs/pdf.worker.min.js');
+              pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdf.worker.min.js');
             }
-          } catch(_){}
+          } catch(_){
+            try {
+              if (pdfjsLib.GlobalWorkerOptions) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('offscreen/pdfjs/pdf.worker.min.js');
+              }
+            } catch(__){}
+          }
           let u8 = null;
           if (bytes && Array.isArray(bytes) && bytes.length > 0) {
             u8 = new Uint8Array(bytes);
