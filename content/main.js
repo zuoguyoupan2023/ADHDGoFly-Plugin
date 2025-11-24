@@ -2305,7 +2305,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:52px" /><span class="agf-rounds-label">轮问答</span></div></div></div>
+      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
