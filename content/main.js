@@ -2230,8 +2230,8 @@ class ADHDHighlighter {
       .agf-group-body.collapsed{display:none}
       .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-input-editor{width:100%;min-height:56px;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff;white-space:pre-wrap;outline:none;overflow:auto}
-      .agf-input-affix{color:#666;opacity:0.85;pointer-events:none;user-select:none;margin-left:4px}
-      #agfInputPrefix{color:#333;pointer-events:none;user-select:none;margin-right:2px}
+      .agf-input-affix{color:#666;opacity:0.85;margin-left:4px}
+      #agfInputPrefix{color:#333;margin-right:2px}
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-send-col{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;height:100%}
@@ -2340,7 +2340,7 @@ class ADHDHighlighter {
                   </div>
                 </div>
                 <div class="agf-composer-body">
-                  <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="false" style="display:none">我的问题是：</span><span id="agfInputUser"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
+                  <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
@@ -2631,7 +2631,7 @@ class ADHDHighlighter {
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
     };
-    const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} };
+    const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} try { focusUserCaretEnd(); } catch (_) {} };
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
       const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
@@ -3874,15 +3874,17 @@ class ADHDHighlighter {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
-      let prompt = (composerHidden.value || '').trim();
-      let displayPrompt = prompt;
+      const q = (composerHidden.value || '').trim();
+      let prefixTxt = '';
+      if (inputPrefix && inputPrefix.style.display !== 'none') {
+        try { prefixTxt = String(inputPrefix.innerText || inputPrefix.textContent || '').trim(); } catch (_) { prefixTxt = ''; }
+      }
+      const normPrefix = prefixTxt ? prefixTxt.replace(/\s*$/, ' ') : '';
+      let prompt = q;
+      let displayPrompt = q;
       if (addedFullText && addedFullText.trim().length > 0) {
-        const displayPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
-        let q = prompt;
-        if (q && addedFullDisplayPrefix && q.startsWith(addedFullDisplayPrefix)) q = q.slice(addedFullDisplayPrefix.length).trim();
-        else if (q && displayPrefix && q.startsWith(displayPrefix)) q = q.slice(displayPrefix.length).trim();
-        prompt = '我的问题是：' + q + ',我和你的讨论是基于{' + addedFullText + '}';
-        displayPrompt = '我的问题是：' + q + (addedFullLinkPreview || '');
+        prompt = normPrefix + q + ',我和你的讨论是基于{' + addedFullText + '}';
+        displayPrompt = normPrefix + q + (addedFullLinkPreview || '');
       }
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
