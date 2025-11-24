@@ -3140,26 +3140,31 @@ class ADHDHighlighter {
       if (!segs || segs.length === 0) return '';
       const groups = new Map();
       const titles = new Map();
+      const levels = new Map();
       for (let i=0;i<segs.length;i++) {
         const r = segs[i];
         const isPdf = /^pdf-/.test(String(r.sectionId||''));
         if (!isPdf) continue;
         const key = r.outlinePath ? String(r.outlinePath) : ('pdf:'+ (r.pageIndex||i+1));
         const label = r.outlinePath ? String(r.outlinePath).split('>').map(s=>s.trim()).filter(Boolean).pop() || r.sectionTitle || key : (r.sectionTitle || key);
+        const lvl = typeof r.outlineLevel === 'number' ? r.outlineLevel : 0;
         const txt = (r.blocks && r.blocks.length ? r.blocks.map(b => String(b.text||'')).join('\n') : '');
         if (!txt || !txt.trim()) continue;
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push({ pageIndex: r.pageIndex||0, text: txt });
         if (!titles.has(key)) titles.set(key, label);
+        if (!levels.has(key)) { levels.set(key, lvl); } else { const cur = levels.get(key)||0; levels.set(key, Math.min(cur||0, lvl||0)); }
       }
-      const arr = Array.from(groups.entries()).map(([k, xs]) => ({ k, title: titles.get(k)||k, minPage: Math.min.apply(null, xs.map(x=>x.pageIndex||0)), text: xs.map(x=>x.text).join('\n') }));
+      const arr = Array.from(groups.entries()).map(([k, xs]) => ({ k, title: titles.get(k)||k, level: levels.get(k)||0, minPage: Math.min.apply(null, xs.map(x=>x.pageIndex||0)), text: xs.map(x=>x.text).join('\n') }));
       arr.sort((a,b)=> (a.minPage-b.minPage) || a.title.localeCompare(b.title));
       const lines = [];
       for (let i=0;i<arr.length;i++) {
         const h = String(arr[i].title||'').trim();
         const body = String(arr[i].text||'').trim();
         if (!body) continue;
-        lines.push(h);
+        const lvl = Math.max(0, Math.min(6, parseInt(arr[i].level||0,10)));
+        const pfx = lvl > 0 ? Array(lvl).fill('#').join('') + ' ' : '';
+        lines.push(pfx + h);
         lines.push(body);
         lines.push('');
       }
