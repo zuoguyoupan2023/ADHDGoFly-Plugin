@@ -3937,6 +3937,14 @@ class ADHDHighlighter {
       if (composerHidden) composerHidden.value = '';
       if (inputPrefix) { inputPrefix.style.display = 'none'; }
       if (inputAffix) { inputAffix.textContent = ''; inputAffix.style.display = 'none'; }
+      if (composerEditor) {
+        const keep = new Set(['agfInputPrefix','agfInputUser','agfInputAffix']);
+        Array.from(composerEditor.childNodes).forEach(n => {
+          if (n.nodeType === 3) { try { composerEditor.removeChild(n); } catch(_){} return; }
+          if (n.nodeType === 1 && !keep.has(n.id)) { try { composerEditor.removeChild(n); } catch(_){} }
+        });
+      }
+      try { updateHiddenFromEditor(); } catch (_) {}
       addedFullText = '';
       addedFullQuestion = '';
       addedFullDisplayPrefix = '';
