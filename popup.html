@@ -420,6 +420,31 @@
         font-size: 18px;
       }
 
+      .sidebar-group {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sidebar-submenu {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+      }
+
+      .sidebar-submenu.open {
+        display: flex;
+      }
+
+      .sidebar-submenu .sidebar-btn {
+        width: 32px;
+        height: 32px;
+      }
+
       /* 页面切换 */
       .page {
           display: none;
@@ -3995,60 +4020,92 @@
         id="home-btn"
         title="主页"
         data-i18n-title="sidebar.home"
+        data-action="page"
       >
         <span>🏠</span>
       </button>
 
-      <button
-        class="sidebar-btn"
-        id="dict-btn"
-        title="词典"
-        data-i18n-title="sidebar.dict"
-      >
-        <span>📚</span>
-      </button>
+      <div class="sidebar-group">
+        <button
+          class="sidebar-btn group-btn"
+          id="tools-group-btn"
+          title="工具"
+          data-i18n-title="sidebar.tools"
+          data-action="group"
+          data-submenu="tools-submenu"
+        >
+          <span>🧰</span>
+        </button>
+        <div class="sidebar-submenu" id="tools-submenu">
+          <button
+            class="sidebar-btn"
+            id="dict-btn"
+            title="词典"
+            data-i18n-title="sidebar.dict"
+            data-action="page"
+          >
+            <span>📚</span>
+          </button>
+          <button
+            class="sidebar-btn"
+            id="colors-btn"
+            title="颜色"
+            data-i18n-title="sidebar.colors"
+            data-action="page"
+          >
+            <span>🎨</span>
+          </button>
+          <button
+            class="sidebar-btn"
+            id="text-btn"
+            title="文本"
+            data-i18n-title="sidebar.text"
+            data-action="page"
+          >
+            <span>文</span>
+          </button>
+        </div>
+      </div>
 
-      <button
-        class="sidebar-btn"
-        id="colors-btn"
-        title="颜色"
-        data-i18n-title="sidebar.colors"
-      >
-        <span>🎨</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="text-btn"
-        title="文本"
-        data-i18n-title="sidebar.text"
-      >
-        <span>文</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="ai-btn"
-        title="AI"
-        data-i18n-title="sidebar.ai"
-      >
-        <span>📊</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="chat-btn"
-        title="AI 对话"
-        data-i18n-title="sidebar.aiChat"
-      >
-        <span>🤖</span>
-      </button>
+      <div class="sidebar-group">
+        <button
+          class="sidebar-btn group-btn"
+          id="ai-group-btn"
+          title="AI"
+          data-i18n-title="sidebar.aiGroup"
+          data-action="group"
+          data-submenu="ai-submenu"
+        >
+          <span>🤖</span>
+        </button>
+        <div class="sidebar-submenu" id="ai-submenu">
+          <button
+            class="sidebar-btn"
+            id="ai-btn"
+            title="AI分析"
+            data-i18n-title="sidebar.ai"
+            data-action="page"
+          >
+            <span>📊</span>
+          </button>
+          <button
+            class="sidebar-btn"
+            id="chat-btn"
+            title="AI 对话"
+            data-i18n-title="sidebar.aiChat"
+            data-action="page"
+          >
+            <span>💬</span>
+          </button>
+        </div>
+      </div>
 
       <button
         class="sidebar-btn"
         id="faq-btn"
         title="常见问题"
         data-i18n-title="sidebar.faq"
+        data-action="page"
       >
         <span>❓</span>
       </button>
@@ -4059,11 +4116,11 @@
         title="设置"
         data-section="settings"
         data-i18n-title="sidebar.settings"
+        data-action="page"
       >
         <span>⚙️</span>
       </button>
 
-      <!-- 语言切换按钮 -->
       <div class="language-switcher">
         <button
           id="languageToggle"

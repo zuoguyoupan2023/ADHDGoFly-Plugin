@@ -446,19 +446,25 @@ class PopupController {
   }
 
   bindSidebarEvents() {
-    const sidebarBtns = document.querySelectorAll('.sidebar-btn');
-    
-    sidebarBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        // 移除所有active状态
-        sidebarBtns.forEach(b => b.classList.remove('active'));
-        
-        // 添加当前按钮的active状态
+    const pageBtns = document.querySelectorAll('.sidebar-btn[data-action="page"]');
+    const groupBtns = document.querySelectorAll('.sidebar-btn[data-action="group"]');
+
+    pageBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        pageBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
-        // 处理不同按钮的点击
+        const parentSubmenu = btn.closest('.sidebar-submenu');
+        if (parentSubmenu) parentSubmenu.classList.add('open');
         const btnId = btn.id;
         this.handleSidebarClick(btnId);
+      });
+    });
+
+    groupBtns.forEach(groupBtn => {
+      groupBtn.addEventListener('click', () => {
+        const submenuId = groupBtn.getAttribute('data-submenu');
+        const submenu = submenuId ? document.getElementById(submenuId) : null;
+        if (submenu) submenu.classList.toggle('open');
       });
     });
   }
