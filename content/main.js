@@ -2594,9 +2594,13 @@ class ADHDHighlighter {
       hideFulltextPanel();
       if (!addedFullActive) {
         await updateStorageStatusUI();
-        const MAX_CHARS = 12000;
+        const MAX_WARN_CHARS = 12000;
         const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
-        addedFullText = this.smartTruncate(String(body||''), MAX_CHARS);
+        const raw = String(body || '');
+        if (raw.length > MAX_WARN_CHARS) {
+          showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
+        }
+        addedFullText = raw;
         const link = String(location && location.href || '');
         const previewRaw = String(addedFullText||'');
         const preview = previewRaw.slice(0, 20) + (previewRaw.length > 20 ? '...' : '');
