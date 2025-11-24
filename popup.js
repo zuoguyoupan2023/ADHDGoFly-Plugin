@@ -471,11 +471,8 @@ class PopupController {
       case 'dict-btn':
         this.showPage('dict');
         break;
-      case 'colors-btn':
-        this.showPage('colors');
-        break;
-      case 'text-btn':
-        this.showPage('text');
+      case 'style-btn':
+        this.showPage('style');
         break;
       case 'ai-btn':
         this.showPage('data-panel');
@@ -510,6 +507,15 @@ class PopupController {
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => page.classList.remove('active'));
     
+    if (pageId === 'style') {
+      const colorsPage = document.getElementById('colors-page');
+      const textPage = document.getElementById('text-page');
+      if (colorsPage) colorsPage.classList.add('active');
+      if (textPage) textPage.classList.add('active');
+      this.currentPage = 'style';
+      return;
+    }
+
     // 显示目标页面
     const targetPage = document.getElementById(`${pageId}-page`);
     if (targetPage) {
