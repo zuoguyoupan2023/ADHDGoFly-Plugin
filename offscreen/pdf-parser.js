@@ -90,29 +90,8 @@
               const blocks = [];
               let order = 0;
               for (let q=0;q<sorted.length;q++) {
-                const arr = sorted[q].arr;
-                let buf = '';
-                let prevX = null;
-                for (let tIdx=0; tIdx<arr.length; tIdx++) {
-                  let token = String(arr[tIdx].s||'').trim();
-                  if (!token) continue;
-                  const nextTok = (tIdx+1<arr.length) ? String(arr[tIdx+1].s||'').trim() : '';
-                  const nextStartsLower = !!nextTok && /^[a-z]/.test(nextTok);
-                  const isUpperSingle = token.length===1 && /^[A-Z]$/.test(token);
-                  if (isUpperSingle && nextStartsLower) { token = token + nextTok; tIdx++; }
-                  const x = arr[tIdx].x;
-                  const gap = prevX==null ? 0 : (x - prevX);
-                  const prev = buf;
-                  const attachRight = /^[,.;:!?)]$/.test(token) || /^[-–—]$/.test(token);
-                  const prevEndsHyphen = /[-–—]$/.test(prev);
-                  const attachLeft = /[([{]$/.test(prev) || prevEndsHyphen;
-                  const isLettersPair = /[A-Za-z]$/.test(prev) && /^[A-Za-z]/.test(token);
-                  const smallGap = gap>=0 && gap<3;
-                  const noSpace = attachRight || attachLeft || (isLettersPair && smallGap);
-                  buf += noSpace ? token : (buf ? (' ' + token) : token);
-                  prevX = x;
-                }
-                const t = buf.trim();
+                const text = sorted[q].arr.map(z=>z.s).join(' ');
+                const t = String(text||'').trim();
                 if (t) blocks.push({ text: t, orderIndex: order++ });
               }
               if (!blocks.length && items.length) {
@@ -203,29 +182,8 @@
               const blocks = [];
               let order = 0;
               for (let q=0;q<sorted.length;q++) {
-                const arr = sorted[q].arr;
-                let buf = '';
-                let prevX = null;
-                for (let tIdx=0; tIdx<arr.length; tIdx++) {
-                  let token = String(arr[tIdx].s||'').trim();
-                  if (!token) continue;
-                  const nextTok = (tIdx+1<arr.length) ? String(arr[tIdx+1].s||'').trim() : '';
-                  const nextStartsLower = !!nextTok && /^[a-z]/.test(nextTok);
-                  const isUpperSingle = token.length===1 && /^[A-Z]$/.test(token);
-                  if (isUpperSingle && nextStartsLower) { token = token + nextTok; tIdx++; }
-                  const x = arr[tIdx].x;
-                  const gap = prevX==null ? 0 : (x - prevX);
-                  const prev = buf;
-                  const attachRight = /^[,.;:!?)]$/.test(token) || /^[-–—]$/.test(token);
-                  const prevEndsHyphen = /[-–—]$/.test(prev);
-                  const attachLeft = /[([{]$/.test(prev) || prevEndsHyphen;
-                  const isLettersPair = /[A-Za-z]$/.test(prev) && /^[A-Za-z]/.test(token);
-                  const smallGap = gap>=0 && gap<3;
-                  const noSpace = attachRight || attachLeft || (isLettersPair && smallGap);
-                  buf += noSpace ? token : (buf ? (' ' + token) : token);
-                  prevX = x;
-                }
-                const t = buf.trim();
+                const text = sorted[q].arr.map(z=>z.s).join(' ');
+                const t = String(text||'').trim();
                 if (t) blocks.push({ text: t, orderIndex: order++ });
               }
               if (!blocks.length && items.length) {
