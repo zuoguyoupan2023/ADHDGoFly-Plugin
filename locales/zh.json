@@ -52,7 +52,7 @@
     "structured": "结构化摘要",
     "explain": "简明解释",
     "outline": "提取大纲",
-    "keywords": "提取关键词与术语",
+    "keywords": "提取关键词",
     "fullText": "全文",
     "size": { "full": "全", "half": "中", "mini": "小" },
     "highlight": { "on": "高亮", "off": "不亮" },

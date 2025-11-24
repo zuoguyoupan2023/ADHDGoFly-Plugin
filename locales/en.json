@@ -55,7 +55,7 @@
     "structured": "Structured Summary",
     "explain": "Plain Explanation",
     "outline": "Extract Outline",
-    "keywords": "Extract Keywords & Terms",
+    "keywords": "Extract Keywords",
     "fullText": "Text",
     "size": { "full": "Full", "half": "Medium", "mini": "Small" },
     "highlight": { "on": "Highlight", "off": "Off" },
