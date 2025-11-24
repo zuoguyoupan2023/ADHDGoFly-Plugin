@@ -2263,9 +2263,6 @@ class ADHDHighlighter {
       .agf-fulltext-section{margin-bottom:12px}
       .agf-fulltext-title{font-weight:600;font-size:13px;color:#333;margin-bottom:6px}
       .agf-fulltext-body{white-space:pre-wrap;color:#333;font-size:13px}
-      .agf-fulltext-body h1{font-size:16px;font-weight:700;margin:8px 0 4px;color:#222}
-      .agf-fulltext-body h2{font-size:15px;font-weight:600;margin:8px 0 4px;color:#222}
-      .agf-fulltext-body h3{font-size:14px;font-weight:600;margin:6px 0 4px;color:#222}
       .agf-refresh-hint{font-size:11px;color:#b58900}
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
@@ -4364,7 +4361,7 @@ class ADHDHighlighter {
         try { const titleEl = fulltextPanel.querySelector('.agf-records-title'); if (titleEl) titleEl.textContent = isPdfPage() ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfTitle') : 'pdf全文') : ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.webTitle') : '网页全文'); } catch (_) {}
         const sec2 = document.createElement('div'); sec2.className = 'agf-fulltext-section';
         const ttl2 = document.createElement('div'); ttl2.className = 'agf-fulltext-title'; ttl2.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfTitle') : 'pdf全文';
-        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.innerHTML = markdownToHtml(supText || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.none') : '无补充文本'));
+        const body2 = document.createElement('div'); body2.className = 'agf-fulltext-body'; body2.textContent = supText || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.none') : '无补充文本');
         sec2.appendChild(ttl2); sec2.appendChild(body2);
         const sec3 = document.createElement('div'); sec3.className = 'agf-fulltext-section';
         const ttl3 = document.createElement('div'); ttl3.className = 'agf-fulltext-title'; ttl3.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.webTitle') : '网页全文';
@@ -4445,7 +4442,7 @@ class ADHDHighlighter {
           if (lvl > 0) { aligned += Array(lvl).fill('#').join('') + ' ' + px + '\n\n'; }
           else { aligned += px + '\n\n'; }
         }
-        body3.innerHTML = markdownToHtml(aligned || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容'));
+        body3.textContent = aligned || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
         sec3.appendChild(ttl3); sec3.appendChild(body3);
         if (isPdfPage()) {
           fulltextContent.appendChild(sec2);
@@ -4453,7 +4450,7 @@ class ADHDHighlighter {
           try { pdfStructured = await buildPdfStructuredOutlineText(); } catch (_) { pdfStructured = ''; }
           const sec4 = document.createElement('div'); sec4.className = 'agf-fulltext-section';
           const ttl4 = document.createElement('div'); ttl4.className = 'agf-fulltext-title'; ttl4.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfStructuredTitle') : '结构化PDF文本';
-          const body4 = document.createElement('div'); body4.className = 'agf-fulltext-body'; body4.innerHTML = markdownToHtml(pdfStructured || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容'));
+          const body4 = document.createElement('div'); body4.className = 'agf-fulltext-body'; body4.textContent = pdfStructured || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
           sec4.appendChild(ttl4); sec4.appendChild(body4);
           fulltextContent.appendChild(sec4);
         } else {
