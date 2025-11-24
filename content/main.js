@@ -3979,12 +3979,7 @@ class ADHDHighlighter {
       await sessionSet(key, Date.now());
       if (isPdfPage()) {
         try { await new Promise(s => chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url: u.pageUrl }, s)); } catch (_) {}
-        let ok = false;
-        for (let i = 0; i < 30; i++) { await new Promise(r => setTimeout(r, 500)); const xs = await getLatestStoredSegmentsForPage(); if (xs.length > 0) { ok = true; break; } }
-        if (!ok) {
-          try { await new Promise(s => chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url: u.pageUrl }, s)); } catch (_) {}
-          for (let i = 0; i < 30; i++) { await new Promise(r => setTimeout(r, 500)); const xs = await getLatestStoredSegmentsForPage(); if (xs.length > 0) { ok = true; break; } }
-        }
+        for (let i = 0; i < 10; i++) { await new Promise(r => setTimeout(r, 400)); const xs = await getLatestStoredSegmentsForPage(); if (xs.length > 0) break; }
         await updateStorageStatusUI();
       } else {
         try { await this.collectDynamicSegments(3000); } catch (_) {}
