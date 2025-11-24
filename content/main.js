@@ -2341,13 +2341,13 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button>
                     <button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button>
                   </div>
+                  <div id="agfCarryWrap" class="agf-rounds-wrap" style="display:none"><span class="agf-rounds-label">携带</span><select class="agf-field" id="agfCarryRounds" style="width:52px"></select><span class="agf-rounds-label">轮</span></div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
-                    <div id="agfCarryWrap" class="agf-rounds-wrap" style="display:none"><span class="agf-rounds-label">携带</span><select class="agf-field" id="agfCarryRounds" style="width:52px"></select><span class="agf-rounds-label">轮</span></div>
                   </div>
                 </div>
                 <input type="hidden" id="agfComposerHidden" />
