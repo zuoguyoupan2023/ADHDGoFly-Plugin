@@ -1578,6 +1578,36 @@ class ADHDHighlighter {
           console.error('获取词汇统计失败:', error);
         }
       }
+
+      const isEmptyVocab = !vocabularyStats || (
+        (!vocabularyStats.nouns || vocabularyStats.nouns.length === 0) &&
+        (!vocabularyStats.verbs || vocabularyStats.verbs.length === 0) &&
+        (!vocabularyStats.adjectives || vocabularyStats.adjectives.length === 0)
+      );
+
+      if (isEmptyVocab) {
+        // 优先尝试从存储读取（刷新后可用）
+        const stored = await this.loadVocabularyStatsForPage();
+        if (stored && (
+          (stored.nouns && stored.nouns.length) ||
+          (stored.verbs && stored.verbs.length) ||
+          (stored.adjectives && stored.adjectives.length)
+        )) {
+          vocabularyStats = stored;
+        } else {
+          // 回退：直接从DOM统计
+          const domStats = this.collectVocabularyFromDOM();
+          if (domStats && (
+            (domStats.nouns && domStats.nouns.length) ||
+            (domStats.verbs && domStats.verbs.length) ||
+            (domStats.adjectives && domStats.adjectives.length)
+          )) {
+            vocabularyStats = domStats;
+            // 顺便保存一份，便于后续刷新快速加载
+            await this.saveVocabularyStatsForPage(domStats);
+          }
+        }
+      }
       
       // 生成智能推荐 - 暂时禁用
       // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
@@ -5011,3 +5041,69 @@ console.log('ADHD文本高亮器主控制器加载完成');
     };
     initGovernanceControls();
     const hideFulltextPanel = () => { const p = document.getElementById('agfFulltextPanel'); if (p) p.style.display = 'none'; };
+      try {
+        const vocabStats = this.collectVocabularyFromDOM();
+        await this.saveVocabularyStatsForPage(vocabStats);
+      } catch (e) {
+        console.warn('⚠️ 保存页面词汇统计失败:', e);
+      }
+  collectVocabularyFromDOM() {
+    const collect = (selector) => {
+      const map = new Map();
+      document.querySelectorAll(selector).forEach(el => {
+        const w = (el.getAttribute('data-word') || el.textContent || '').trim().toLowerCase();
+        if (!w) return;
+        map.set(w, (map.get(w) || 0) + 1);
+      });
+      return Array.from(map.entries())
+        .map(([word, count]) => ({ word, count }))
+        .sort((a, b) => b.count - a.count);
+    };
+
+    return {
+      nouns: collect('.adhd-n'),
+      verbs: collect('.adhd-v'),
+      adjectives: collect('.adhd-a')
+    };
+  }
+
+  getPageStorageKey() {
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const canonicalUrl = canonical ? canonical.href : null;
+    const url = canonicalUrl || window.location.href;
+    return url;
+  }
+
+  async saveVocabularyStatsForPage(stats) {
+    if (!stats) return;
+    const key = this.getPageStorageKey();
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
+          const bucket = data.vocabStatsByUrl || {};
+          bucket[key] = {
+            stats,
+            updatedAt: Date.now()
+          };
+          chrome.storage.local.set({ vocabStatsByUrl: bucket }, () => resolve(true));
+        });
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+
+  async loadVocabularyStatsForPage() {
+    const key = this.getPageStorageKey();
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
+          const bucket = data.vocabStatsByUrl || {};
+          const entry = bucket[key];
+          resolve(entry ? entry.stats : null);
+        });
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
