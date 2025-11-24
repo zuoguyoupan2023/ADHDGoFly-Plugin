@@ -2341,7 +2341,7 @@ class ADHDHighlighter {
                   </div>
                 </div>
                 <div class="agf-composer-body">
-                  <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
+                  <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
@@ -2587,7 +2587,19 @@ class ADHDHighlighter {
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
-    const updateHiddenFromEditor = () => { if (composerHidden && inputUser) composerHidden.value = String(inputUser.innerText||''); };
+    const updateHiddenFromEditor = () => {
+      if (!composerHidden) return;
+      let raw = '';
+      try { raw = String(composerEditor && composerEditor.innerText || '').trim(); } catch (_) { raw = ''; }
+      let pre = '';
+      let aft = '';
+      try { pre = (inputPrefix && inputPrefix.style.display !== 'none') ? String(inputPrefix.innerText || inputPrefix.textContent || '') : ''; } catch (_) { pre = ''; }
+      try { aft = (inputAffix && inputAffix.style.display !== 'none') ? String(inputAffix.innerText || inputAffix.textContent || '') : ''; } catch (_) { aft = ''; }
+      if (pre) raw = raw.replace(pre, '').trim();
+      if (aft) raw = raw.replace(aft, '').trim();
+      const mid = String(inputUser && inputUser.innerText || '').trim();
+      composerHidden.value = mid || raw;
+    };
     if (composerEditor) composerEditor.addEventListener('input', updateHiddenFromEditor);
     const focusUserCaretEnd = () => { try { if (!inputUser) return; const range = document.createRange(); range.selectNodeContents(inputUser); range.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } catch (_) {} };
     if (addFullBtn) addFullBtn.addEventListener('click', async () => {
@@ -3891,7 +3903,17 @@ class ADHDHighlighter {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
-      const q = (composerHidden.value || '').trim();
+      let q = (composerHidden.value || '').trim();
+      if (!q) {
+        try {
+          let raw = String(composerEditor && composerEditor.innerText || '').trim();
+          let pre = (inputPrefix && inputPrefix.style.display !== 'none') ? String(inputPrefix.innerText || inputPrefix.textContent || '') : '';
+          let aft = (inputAffix && inputAffix.style.display !== 'none') ? String(inputAffix.innerText || inputAffix.textContent || '') : '';
+          if (pre) raw = raw.replace(pre, '').trim();
+          if (aft) raw = raw.replace(aft, '').trim();
+          q = raw;
+        } catch (_) {}
+      }
       let prefixTxt = '';
       if (inputPrefix && inputPrefix.style.display !== 'none') {
         try { prefixTxt = String(inputPrefix.innerText || inputPrefix.textContent || '').trim(); } catch (_) { prefixTxt = ''; }
@@ -4035,8 +4057,8 @@ class ADHDHighlighter {
       if (refreshBtn) { refreshBtn.classList.toggle('breathing', !has); refreshBtn.style.display = has ? 'none' : 'inline-flex'; }
       if (refreshHint) refreshHint.style.display = has ? 'none' : 'block';
       if (composerSend) {
-        composerSend.dataset.mode = has ? 'send' : 'refresh';
-        composerSend.textContent = has ? ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.send') : '发送') : '⟳';
+        composerSend.dataset.mode = 'send';
+        composerSend.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.send') : '发送';
       }
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (moreBtn) { moreBtn.disabled = !has; }
