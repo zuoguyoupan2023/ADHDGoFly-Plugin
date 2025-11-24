@@ -2558,8 +2558,7 @@ class ADHDHighlighter {
         const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
         const labels = Array.from(cl ? cl.querySelectorAll('.agf-qa-label') : []);
         const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
-        const prevRounds = Math.max(0, rounds - 1);
-        const maxVal = Math.min(4, prevRounds);
+        const maxVal = Math.min(4, rounds);
         const v = Math.max(0, Math.min(maxVal, parseInt(String(carryInput.value||'0'),10)||0));
         carryInput.value = String(v);
       } catch (_) {}
@@ -2676,10 +2675,9 @@ class ADHDHighlighter {
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
       roundsEl.textContent =  rounds + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.roundsSuffix') : '轮考题');
       try {
-        const prevRounds = Math.max(0, rounds - 1);
-        if (carryWrap) carryWrap.style.display = prevRounds > 0 ? 'flex' : 'none';
+        if (carryWrap) carryWrap.style.display = rounds > 0 ? 'flex' : 'none';
         if (carryInput) {
-          const allowedMax = Math.min(4, prevRounds);
+          const allowedMax = Math.min(4, rounds);
           carryInput.setAttribute('max', String(allowedMax));
           if (!carryEdited) carryInput.value = String(allowedMax);
           const v = parseInt(String(carryInput.value||'0'),10) || 0;
