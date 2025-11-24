@@ -2551,7 +2551,19 @@ class ADHDHighlighter {
     const carryWrap = document.getElementById('agfCarryWrap');
     const carryInput = document.getElementById('agfCarryInput');
     let carryEdited = false;
-    if (carryInput) carryInput.addEventListener('input', () => { carryEdited = true; });
+    if (carryInput) carryInput.addEventListener('input', () => {
+      carryEdited = true;
+      try {
+        const ci = document.getElementById('agfConvIndex');
+        const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
+        const labels = Array.from(cl ? cl.querySelectorAll('.agf-qa-label') : []);
+        const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
+        const prevRounds = Math.max(0, rounds - 1);
+        const maxVal = Math.min(4, prevRounds);
+        const v = Math.max(0, Math.min(maxVal, parseInt(String(carryInput.value||'0'),10)||0));
+        carryInput.value = String(v);
+      } catch (_) {}
+    });
     let addedFullText = '';
     let addedFullQuestion = '';
     let addedFullActive = false;
@@ -2666,7 +2678,14 @@ class ADHDHighlighter {
       try {
         const prevRounds = Math.max(0, rounds - 1);
         if (carryWrap) carryWrap.style.display = prevRounds > 0 ? 'flex' : 'none';
-        if (carryInput && !carryEdited) carryInput.value = String(Math.min(4, prevRounds));
+        if (carryInput) {
+          const allowedMax = Math.min(4, prevRounds);
+          carryInput.setAttribute('max', String(allowedMax));
+          if (!carryEdited) carryInput.value = String(allowedMax);
+          const v = parseInt(String(carryInput.value||'0'),10) || 0;
+          if (v > allowedMax) carryInput.value = String(allowedMax);
+          if (v < 0) carryInput.value = '0';
+        }
       } catch (_) {}
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
@@ -3369,6 +3388,7 @@ class ADHDHighlighter {
             }
             currentConversationId = item.id;
             showChat();
+            try { rebuildConvIndex(); } catch (_) {}
           }
         });
         const delBtn = document.createElement('button');
