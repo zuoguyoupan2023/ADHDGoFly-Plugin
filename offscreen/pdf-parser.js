@@ -73,31 +73,9 @@
             try{
               const page = await doc.getPage(i);
               const txt = await page.getTextContent();
-              const items = Array.isArray(txt.items) ? txt.items : [];
-              const lines = new Map();
-              for (let k=0;k<items.length;k++) {
-                const it = items[k];
-                const s = String(it && it.str || '').trim();
-                if (!s) continue;
-                const tr = it && it.transform || [];
-                const x = typeof tr[4] === 'number' ? tr[4] : 0;
-                const y = typeof tr[5] === 'number' ? tr[5] : 0;
-                const key = Math.round(y);
-                const cur = lines.get(key);
-                if (cur) cur.push({ x, s }); else lines.set(key, [{ x, s }]);
-              }
-              const sorted = Array.from(lines.entries()).sort((a,b)=>b[0]-a[0]).map(([y, arr])=>({ y, arr: arr.sort((m,n)=>m.x-n.x) }));
               const blocks = [];
               let order = 0;
-              for (let q=0;q<sorted.length;q++) {
-                const text = sorted[q].arr.map(z=>z.s).join(' ');
-                const t = String(text||'').trim();
-                if (t) blocks.push({ text: t, orderIndex: order++ });
-              }
-              if (!blocks.length && items.length) {
-                let order2 = 0;
-                items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order2++ }); });
-              }
+              txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
               const node = bestByPage[i];
               const title = node ? node.title : ('PDF Page '+i);
               if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, outlinePath: node ? node.path : null, outlineLevel: node ? node.level : 0, blocks });
@@ -165,31 +143,9 @@
             try{
               const page = await doc.getPage(i);
               const txt = await page.getTextContent();
-              const items = Array.isArray(txt.items) ? txt.items : [];
-              const lines = new Map();
-              for (let k=0;k<items.length;k++) {
-                const it = items[k];
-                const s = String(it && it.str || '').trim();
-                if (!s) continue;
-                const tr = it && it.transform || [];
-                const x = typeof tr[4] === 'number' ? tr[4] : 0;
-                const y = typeof tr[5] === 'number' ? tr[5] : 0;
-                const key = Math.round(y);
-                const cur = lines.get(key);
-                if (cur) cur.push({ x, s }); else lines.set(key, [{ x, s }]);
-              }
-              const sorted = Array.from(lines.entries()).sort((a,b)=>b[0]-a[0]).map(([y, arr])=>({ y, arr: arr.sort((m,n)=>m.x-n.x) }));
               const blocks = [];
               let order = 0;
-              for (let q=0;q<sorted.length;q++) {
-                const text = sorted[q].arr.map(z=>z.s).join(' ');
-                const t = String(text||'').trim();
-                if (t) blocks.push({ text: t, orderIndex: order++ });
-              }
-              if (!blocks.length && items.length) {
-                let order2 = 0;
-                items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order2++ }); });
-              }
+              txt.items.forEach(it=>{ const t = String(it.str||'').trim(); if (t) blocks.push({ text:t, orderIndex:order++ }); });
               const node = bestByPage[i];
               const title = node ? node.title : ('PDF Page '+i);
               if (blocks.length) sections.push({ sectionId:'pdf-'+i, sectionTitle:title, headingPath:'pdf:'+i, outlinePath: node ? node.path : null, outlineLevel: node ? node.level : 0, blocks });
