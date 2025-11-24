@@ -2233,6 +2233,7 @@ class ADHDHighlighter {
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-send-col{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;height:100%}
       #agfAddFullTextBtn{height:auto;padding:4px 8px;font-size:11px;line-height:14px;white-space:normal;word-break:break-all;width:40px;text-align:center;margin-top:8px}
+      #agfAddFullTextBtn.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
       .agf-settings-layout{display:grid;grid-template-columns:160px 1fr;gap:12px}
@@ -2539,6 +2540,8 @@ class ADHDHighlighter {
     const addFullBtn = document.getElementById('agfAddFullTextBtn');
     let addedFullText = '';
     let addedFullQuestion = '';
+    let addedFullActive = false;
+    let addedFullDisplayPrefix = '';
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
@@ -2576,14 +2579,31 @@ class ADHDHighlighter {
     if (closeBtn) closeBtn.addEventListener('click', () => this.hideAiSettingPanel());
     if (addFullBtn) addFullBtn.addEventListener('click', async () => {
       hideFulltextPanel();
-      await updateStorageStatusUI();
-      const MAX_CHARS = 12000;
-      const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
-      addedFullText = this.smartTruncate(String(body||''), MAX_CHARS);
-      const prefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
-      if (composerInput) {
-        const cur = String(composerInput.value||'');
-        if (!cur.startsWith(prefix)) composerInput.value = prefix + cur;
+      if (!addedFullActive) {
+        await updateStorageStatusUI();
+        const MAX_CHARS = 12000;
+        const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
+        addedFullText = this.smartTruncate(String(body||''), MAX_CHARS);
+        const link = String(location && location.href || '');
+        const previewRaw = String(addedFullText||'');
+        const preview = previewRaw.slice(0, 20) + (previewRaw.length > 20 ? '...' : '');
+        addedFullDisplayPrefix = '基于当前全文（' + link + '+' + preview + '）, 我的问题是： ';
+        addFullBtn.classList.add('active');
+        if (composerInput) {
+          const cur = String(composerInput.value||'');
+          if (!cur.startsWith(addedFullDisplayPrefix)) composerInput.value = addedFullDisplayPrefix + cur;
+        }
+        addedFullActive = true;
+      } else {
+        addFullBtn.classList.remove('active');
+        if (composerInput) {
+          const cur = String(composerInput.value||'');
+          if (addedFullDisplayPrefix && cur.startsWith(addedFullDisplayPrefix)) composerInput.value = cur.slice(addedFullDisplayPrefix.length);
+        }
+        addedFullText = '';
+        addedFullQuestion = '';
+        addedFullDisplayPrefix = '';
+        addedFullActive = false;
       }
     });
     let bDragging = false, bMoved = false, bStartX = 0, bStartY = 0, bStartLeft = 0, bStartTop = 0;
@@ -3846,7 +3866,8 @@ class ADHDHighlighter {
       if (addedFullText && addedFullText.trim().length > 0) {
         const displayPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.basedOnFullText') : '基于当前页面全文， ';
         let q = prompt;
-        if (q && displayPrefix && q.startsWith(displayPrefix)) q = q.slice(displayPrefix.length).trim();
+        if (q && addedFullDisplayPrefix && q.startsWith(addedFullDisplayPrefix)) q = q.slice(addedFullDisplayPrefix.length).trim();
+        else if (q && displayPrefix && q.startsWith(displayPrefix)) q = q.slice(displayPrefix.length).trim();
         prompt = '我的问题是：' + q + ',我和你的讨论是基于{' + addedFullText + '}';
       }
       if (!prompt) return;
@@ -3860,6 +3881,8 @@ class ADHDHighlighter {
       composerInput.value = '';
       addedFullText = '';
       addedFullQuestion = '';
+      addedFullDisplayPrefix = '';
+      addedFullActive = false;
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
       try {
