@@ -2339,6 +2339,7 @@ class ADHDHighlighter {
                     <button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button>
                     <button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button>
                   </div>
+                  <div id="agfCarryWrap" class="agf-rounds-wrap"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:52px" /><span class="agf-rounds-label">轮问答</span></div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
