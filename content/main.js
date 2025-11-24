@@ -3799,6 +3799,16 @@ class ADHDHighlighter {
         } else {
           if (opts.highlightHtml && highlightEnabled && role !== 'user') { contentEl.innerHTML = opts.highlightHtml; }
           else { contentEl.innerHTML = markdownToHtml(text); }
+          if (role === 'user') {
+            const needGo = (typeof addedFullText === 'string' && addedFullText.trim().length > 0) || (text.indexOf('基于当前全文') >= 0);
+            if (needGo) {
+              const goBtn2 = document.createElement('button');
+              goBtn2.className = 'agf-collapse-toggle';
+              goBtn2.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.goFull') : '去看全文';
+              goBtn2.addEventListener('click', () => { openTPanelThirdPart(); });
+              contentEl.appendChild(goBtn2);
+            }
+          }
         }
       }
       bubble.appendChild(copyBtn);
