@@ -4267,19 +4267,30 @@ class ADHDHighlighter {
       for (let i=0;i<segs.length;i++) {
         const r = segs[i];
         const blocks = Array.isArray(r.blocks) ? r.blocks : [];
-        for (let j=0;j<blocks.length;j++) {
-          const t = this.normalizeText(String(blocks[j].text||''));
-          if (!t || t.length < 30) continue;
-          if (uiTokens.has(t)) continue;
-          if (this.isNavigationText(t)) continue;
-          if (this.isCssOrAdText(t)) continue;
-          const k = makeKey(t);
-          if (testKeys.has(k)) continue;
-          if (testNormalized && testNormalized.indexOf(t) >= 0) continue;
-          if (supSet.has(k)) continue;
-          supSet.add(k);
-          supplements.push({ text: t, title: String(r.sectionTitle||'') });
-        }
+      for (let j=0;j<blocks.length;j++) {
+        const t = this.normalizeText(String(blocks[j].text||''));
+        if (!t) continue;
+        const isFirstPage = (r.pageIndex === 1);
+        const isAbstractHeader = /^abstract\b/i.test(t);
+        const isSubtitle = /^under\s+/i.test(t);
+        const isAuthorLine = /[†‡]/.test(t) || /\band\s+[A-Z][a-z]+/.test(t);
+        const isDateLine = /(January|February|March|April|May|June|July|August|September|October|November|December)\b.*\b\d{4}\b/i.test(t) || /\b\d{4}\b/.test(t);
+        const tokens = t.split(/\s+/).filter(x=>x.length>0);
+        const capCount = tokens.filter(x=>/^[A-Z][a-z]+$/.test(x)).length;
+        const keepTitleFrag = isFirstPage && capCount>=2 && tokens.length<=10 && !/@/.test(t);
+        const isFootnoteStar = /\*\s*$/.test(t);
+        const keepShortFront = isFirstPage && (isAbstractHeader || isSubtitle || isAuthorLine || isDateLine || keepTitleFrag || isFootnoteStar);
+        if (t.length < 30 && !keepShortFront) continue;
+        if (uiTokens.has(t)) continue;
+        if (this.isNavigationText(t)) continue;
+        if (this.isCssOrAdText(t)) continue;
+        const k = makeKey(t);
+        if (testKeys.has(k)) continue;
+        if (testNormalized && testNormalized.indexOf(t) >= 0) continue;
+        if (supSet.has(k)) continue;
+        supSet.add(k);
+        supplements.push({ text: t, title: String(r.sectionTitle||'') });
+      }
       }
       const supText = supplements.map(x=>x.text).join('\n\n');
       const structSecs = this.collectPageSections();
