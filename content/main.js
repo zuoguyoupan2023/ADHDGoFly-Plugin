@@ -2198,6 +2198,8 @@ class ADHDHighlighter {
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
       .agf-collapse-toggle{height:22px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-top:6px}
       .agf-go-full{background:#27ae60;color:#fff;border-color:#27ae60;box-shadow:0 4px 10px rgba(39,174,96,0.25)}
+      .agf-rounds-wrap{display:flex;align-items:center;gap:4px;margin-top:6px}
+      .agf-rounds-label{font-size:11px;color:#666}
       .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
       .agf-composer-extra{display:grid;grid-template-columns:1fr auto;align-items:start;margin-top:2px}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
@@ -2345,6 +2347,7 @@ class ADHDHighlighter {
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
+                    <div id="agfCarryWrap" class="agf-rounds-wrap" style="display:none"><span class="agf-rounds-label">携带</span><select class="agf-field" id="agfCarryRounds" style="width:52px"></select><span class="agf-rounds-label">轮</span></div>
                   </div>
                 </div>
                 <input type="hidden" id="agfComposerHidden" />
@@ -2646,6 +2649,16 @@ class ADHDHighlighter {
       const labels = Array.from(cl.querySelectorAll('.agf-qa-label'));
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
       roundsEl.textContent =  rounds + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.roundsSuffix') : '轮考题');
+      try {
+        const prevRounds = Math.max(0, rounds - 1);
+        if (carryWrap) carryWrap.style.display = prevRounds > 0 ? 'flex' : 'none';
+        if (carrySelect) {
+          carrySelect.innerHTML = '';
+          for (let i=0;i<=prevRounds;i++) { const opt = document.createElement('option'); opt.value = String(i); opt.textContent = String(i); carrySelect.appendChild(opt); }
+          const def = Math.min(2, prevRounds);
+          carrySelect.value = String(def);
+        }
+      } catch (_) {}
       for (let i = 0; i < labels.length; i++) {
         const lab = labels[i];
         const t = String(lab.textContent || '').trim();
@@ -3883,9 +3896,28 @@ class ADHDHighlighter {
       try { rebuildConvIndex(); } catch (_) {}
     };
 
-    const toOpenAIStyle = () => chatMessages.map(m => ({ role: m.role, content: m.content }));
-    const toAnthropicStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
-    const toGeminiStyle = () => chatMessages.map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
+    const toOpenAIStyle = (arr) => (arr || chatMessages).map(m => ({ role: m.role, content: m.content }));
+    const toAnthropicStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
+    const toGeminiStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
+    const buildCarryMessages = (x) => {
+      const msgs = chatMessages.slice();
+      const userIdxs = [];
+      for (let i=0;i<msgs.length;i++) { if (msgs[i] && msgs[i].role === 'user') userIdxs.push(i); }
+      if (!userIdxs.length) return [];
+      const curIdx = userIdxs[userIdxs.length-1];
+      const prevRounds = Math.max(0, userIdxs.length - 1);
+      const useX = Math.max(0, Math.min(Number(x||0)||0, prevRounds));
+      if (useX <= 0) return [msgs[curIdx]];
+      const prevUserIdxs = userIdxs.slice(userIdxs.length - 1 - useX, userIdxs.length - 1);
+      const out = [];
+      for (let j=0;j<prevUserIdxs.length;j++) {
+        const start = prevUserIdxs[j];
+        const end = (j+1<prevUserIdxs.length ? prevUserIdxs[j+1] : curIdx);
+        for (let k=start;k<end;k++) out.push(msgs[k]);
+      }
+      out.push(msgs[curIdx]);
+      return out;
+    };
 
     const sendChat = async () => {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
@@ -3931,22 +3963,25 @@ class ADHDHighlighter {
       let url = base;
       let headers = { 'Content-Type': 'application/json' };
       let body = null;
+      let carryX = 0;
+      try { carryX = carrySelect ? parseInt(carrySelect.value || '0',10) : 0; } catch (_) { carryX = 0; }
+      const subset = buildCarryMessages(carryX);
       if (prov === 'anthropic') {
         headers['x-api-key'] = key;
         headers['anthropic-version'] = '2023-06-01';
-        body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle() });
+        body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle(subset) });
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
-        body = JSON.stringify({ contents: toGeminiStyle() });
+        body = JSON.stringify({ contents: toGeminiStyle(subset) });
       } else if (prov === 'deepseek') {
         try {
           startAssistantStream();
-          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle() });
+          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
           return;
         } catch (_) {}
       } else {
         headers['Authorization'] = 'Bearer ' + key;
-        body = JSON.stringify({ model, messages: toOpenAIStyle() });
+        body = JSON.stringify({ model, messages: toOpenAIStyle(subset) });
       }
       let text = '';
       try {
