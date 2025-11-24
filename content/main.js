@@ -2305,7 +2305,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label">轮问答</span></div></div></div>
+      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
@@ -2912,6 +2912,16 @@ class ADHDHighlighter {
     }
 
     initFromStorage();
+
+    try {
+      const carryWrapInit = overlay.querySelector('#agfCarryWrap');
+      if (carryWrapInit) {
+        const t = (k)=>{ try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch(_) { return ''; } };
+        const labels = carryWrapInit.querySelectorAll('.agf-rounds-label');
+        if (labels[0]) { labels[0].setAttribute('data-i18n','aiPanel.carry'); labels[0].textContent = t('aiPanel.carry') || '携带'; }
+        if (labels[1]) { labels[1].setAttribute('data-i18n','aiPanel.qnaSuffix'); labels[1].textContent = t('aiPanel.qnaSuffix') || '轮问答'; }
+      }
+    } catch(_) {}
 
     let panelMode = 'manual';
     const modeBtns = overlay.querySelectorAll('.agf-mode-btn');

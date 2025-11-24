@@ -114,6 +114,8 @@
       "deleted": "Record deleted"
     },
     "roundsSuffix": " rounds",
+    "carry": "Carry",
+    "qnaSuffix": "Q&A rounds",
     "copy": "Copy",
     "copied": "Copied",
     "collapse": { "goFull": "Go to full text", "expand": "Expand full text", "collapse": "Collapse" },
