@@ -114,7 +114,7 @@
     "copy": "复制",
     "copied": "已复制",
     "collapse": { "goFull": "去看全文", "expand": "展开全文", "collapse": "收起" },
-    "fulltext": { "pdfTitle": "pdf全文", "webTitle": "网页全文", "none": "无补充文本", "noStructured": "无结构化内容" },
+    "fulltext": { "pdfTitle": "pdf全文", "webTitle": "网页全文", "pdfStructuredTitle": "结构化 PDF 文本", "none": "无补充文本", "noStructured": "无结构化内容" },
     "mode": { "persistent": "常驻", "manual": "手动" },
     "save": "保存",
     "unnamed": "未命名",

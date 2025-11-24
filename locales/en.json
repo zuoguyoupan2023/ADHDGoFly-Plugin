@@ -117,7 +117,7 @@
     "copy": "Copy",
     "copied": "Copied",
     "collapse": { "goFull": "Go to full text", "expand": "Expand full text", "collapse": "Collapse" },
-    "fulltext": { "pdfTitle": "PDF Full Text", "webTitle": "Web Page Full Text", "none": "No supplementary text", "noStructured": "No structured content" },
+    "fulltext": { "pdfTitle": "PDF Full Text", "webTitle": "Web Page Full Text", "pdfStructuredTitle": "Structured PDF Text", "none": "No supplementary text", "noStructured": "No structured content" },
     "mode": { "persistent": "Persistent", "manual": "Manual" },
     "save": "Save",
     "unnamed": "Untitled",
