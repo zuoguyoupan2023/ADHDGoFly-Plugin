@@ -4247,7 +4247,10 @@ class ADHDHighlighter {
         if (remain <= 0) break;
       }
       lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
-      lines.push('输出: 以清晰的分级标题呈现，每章 2-4 个要点，最后附 TL;DR。');
+      const out1 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredOutput') : '输出: 以清晰的分级标题呈现，每章 2-4 个要点，最后附 TL;DR。';
+      const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+      lines.push(out1);
+      lines.push(langHint);
       return lines.join('\n');
     };
 
@@ -4276,7 +4279,10 @@ class ADHDHighlighter {
         if (remain <= 0) break;
       }
       lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
-      lines.push('输出: 用通俗语言分点说明，避免术语堆砌。');
+      const out2 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainOutput') : '输出: 用通俗语言分点说明，避免术语堆砌。';
+      const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+      lines.push(out2);
+      lines.push(langHint);
       return lines.join('\n');
     };
 
@@ -4306,7 +4312,10 @@ class ADHDHighlighter {
         if (remain <= 0) break;
       }
       lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
-      lines.push('输出: 仅给出大纲，形如 H1/H2/H3 分层，必要处附一句描述。');
+      const out3 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineOutput') : '输出: 仅给出大纲，形如 H1/H2/H3 分层，必要处附一句描述。';
+      const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+      lines.push(out3);
+      lines.push(langHint);
       return lines.join('\n');
     };
 
@@ -4335,7 +4344,10 @@ class ADHDHighlighter {
         if (remain <= 0) break;
       }
       lines.push(this.smartTruncate(bodyTexts.join('\n\n'), MAX_CHARS));
-      lines.push('输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。');
+      const out4 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsOutput') : '输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。';
+      const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+      lines.push(out4);
+      lines.push(langHint);
       return lines.join('\n');
     };
 
@@ -4430,7 +4442,7 @@ class ADHDHighlighter {
     };
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, raw, langHint].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'grid' : 'none'; } });
     if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
     if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });

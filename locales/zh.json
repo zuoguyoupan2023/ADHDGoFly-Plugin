@@ -128,7 +128,13 @@
       "outlineTitle": "请提取全文大纲，保留层级结构与章节标题。",
       "keywordsTitle": "请提取 Top-N 关键词与术语，并按类别分组。",
       "pageLabel": "页面: ",
-      "bodyLabel": "正文:"
+      "bodyLabel": "正文:",
+      "structuredOutput": "输出: 以清晰的分级标题呈现，每章 2-4 个要点，最后附 TL;DR。",
+      "explainOutput": "输出: 用通俗语言分点说明，避免术语堆砌。",
+      "outlineOutput": "输出: 仅给出大纲，形如 H1/H2/H3 分层，必要处附一句描述。",
+      "keywordsOutput": "输出: 关键词/术语/缩写三类，各 10-20 个，附一句说明。",
+      "outputEnglish": "请用英文输出。",
+      "outputChinese": "请用中文输出。"
     }
   },
   "legend": {
