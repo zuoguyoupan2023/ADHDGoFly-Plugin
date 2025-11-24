@@ -2266,7 +2266,7 @@ class ADHDHighlighter {
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
-      .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:12px;overflow:auto}
+      .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:0 12px 12px 12px;overflow:auto}
       .agf-fulltext-content{white-space:pre-wrap;color:#333;font-size:13px}
       .agf-fulltext-section{margin-bottom:12px}
       .agf-fulltext-title{font-weight:600;font-size:13px;color:#333;margin-bottom:6px}
