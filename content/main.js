@@ -1632,6 +1632,67 @@ class ADHDHighlighter {
     }
   }
 
+  collectVocabularyFromDOM() {
+    const collect = (selector) => {
+      const map = new Map();
+      document.querySelectorAll(selector).forEach(el => {
+        const w = (el.getAttribute('data-word') || el.textContent || '').trim().toLowerCase();
+        if (!w) return;
+        map.set(w, (map.get(w) || 0) + 1);
+      });
+      return Array.from(map.entries())
+        .map(([word, count]) => ({ word, count }))
+        .sort((a, b) => b.count - a.count);
+    };
+
+    return {
+      nouns: collect('.adhd-n'),
+      verbs: collect('.adhd-v'),
+      adjectives: collect('.adhd-a')
+    };
+  }
+
+  getPageStorageKey() {
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const canonicalUrl = canonical ? canonical.href : null;
+    const url = canonicalUrl || window.location.href;
+    return url;
+  }
+
+  async saveVocabularyStatsForPage(stats) {
+    if (!stats) return;
+    const key = this.getPageStorageKey();
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
+          const bucket = data.vocabStatsByUrl || {};
+          bucket[key] = {
+            stats,
+            updatedAt: Date.now()
+          };
+          chrome.storage.local.set({ vocabStatsByUrl: bucket }, () => resolve(true));
+        });
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+
+  async loadVocabularyStatsForPage() {
+    const key = this.getPageStorageKey();
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
+          const bucket = data.vocabStatsByUrl || {};
+          const entry = bucket[key];
+          resolve(entry ? entry.stats : null);
+        });
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
   async segmentsDbOpen() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open('agf_segments_db', 1);
@@ -5041,69 +5102,3 @@ console.log('ADHD文本高亮器主控制器加载完成');
     };
     initGovernanceControls();
     const hideFulltextPanel = () => { const p = document.getElementById('agfFulltextPanel'); if (p) p.style.display = 'none'; };
-      try {
-        const vocabStats = this.collectVocabularyFromDOM();
-        await this.saveVocabularyStatsForPage(vocabStats);
-      } catch (e) {
-        console.warn('⚠️ 保存页面词汇统计失败:', e);
-      }
-  collectVocabularyFromDOM() {
-    const collect = (selector) => {
-      const map = new Map();
-      document.querySelectorAll(selector).forEach(el => {
-        const w = (el.getAttribute('data-word') || el.textContent || '').trim().toLowerCase();
-        if (!w) return;
-        map.set(w, (map.get(w) || 0) + 1);
-      });
-      return Array.from(map.entries())
-        .map(([word, count]) => ({ word, count }))
-        .sort((a, b) => b.count - a.count);
-    };
-
-    return {
-      nouns: collect('.adhd-n'),
-      verbs: collect('.adhd-v'),
-      adjectives: collect('.adhd-a')
-    };
-  }
-
-  getPageStorageKey() {
-    const canonical = document.querySelector('link[rel="canonical"]');
-    const canonicalUrl = canonical ? canonical.href : null;
-    const url = canonicalUrl || window.location.href;
-    return url;
-  }
-
-  async saveVocabularyStatsForPage(stats) {
-    if (!stats) return;
-    const key = this.getPageStorageKey();
-    return new Promise((resolve) => {
-      try {
-        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
-          const bucket = data.vocabStatsByUrl || {};
-          bucket[key] = {
-            stats,
-            updatedAt: Date.now()
-          };
-          chrome.storage.local.set({ vocabStatsByUrl: bucket }, () => resolve(true));
-        });
-      } catch (e) {
-        resolve(false);
-      }
-    });
-  }
-
-  async loadVocabularyStatsForPage() {
-    const key = this.getPageStorageKey();
-    return new Promise((resolve) => {
-      try {
-        chrome.storage.local.get(['vocabStatsByUrl'], (data) => {
-          const bucket = data.vocabStatsByUrl || {};
-          const entry = bucket[key];
-          resolve(entry ? entry.stats : null);
-        });
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  }
