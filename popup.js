@@ -506,12 +506,22 @@ class PopupController {
     // 隐藏所有页面
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => page.classList.remove('active'));
+    document.body.classList.remove('style-mode');
+    const colorsPage = document.getElementById('colors-page');
+    const textPage = document.getElementById('text-page');
+    if (colorsPage) colorsPage.classList.remove('style-section');
+    if (textPage) textPage.classList.remove('style-section');
     
     if (pageId === 'style') {
-      const colorsPage = document.getElementById('colors-page');
-      const textPage = document.getElementById('text-page');
-      if (colorsPage) colorsPage.classList.add('active');
-      if (textPage) textPage.classList.add('active');
+      if (colorsPage) {
+        colorsPage.classList.add('active');
+        colorsPage.classList.add('style-section');
+      }
+      if (textPage) {
+        textPage.classList.add('active');
+        textPage.classList.add('style-section');
+      }
+      document.body.classList.add('style-mode');
       this.currentPage = 'style';
       return;
     }

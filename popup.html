@@ -36,6 +36,10 @@
         overflow: hidden;
       }
 
+      .style-mode .main-content {
+        overflow: auto;
+      }
+
       /* 应用标题和状态区域 */
       .app-header {
         margin-bottom: 8px;
@@ -434,6 +438,18 @@
       .page.active {
         display: flex;
         width: 100%;
+      }
+
+      .page.style-section {
+        display: block;
+        height: auto;
+        overflow-y: visible;
+        margin-bottom: 16px;
+      }
+
+      .style-mode .color-schemes,
+      .style-mode .text-controls {
+        overflow-y: visible;
       }
 
 
@@ -3994,7 +4010,7 @@
       <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict" data-action="page"><span>📚</span></button>
       <button class="sidebar-btn" id="ai-btn" title="AI分析" data-i18n-title="sidebar.ai" data-action="page"><span>📊</span></button>
       <button class="sidebar-btn" id="chat-btn" title="AI 对话" data-i18n-title="sidebar.aiChat" data-action="page"><span>🤖</span></button>
-      <button class="sidebar-btn" id="style-btn" title="样式" data-i18n-title="sidebar.style" data-action="page"><span>🎛️</span></button>
+      <button class="sidebar-btn" id="style-btn" title="样式" data-i18n-title="sidebar.style" data-action="page"><span>🖍️</span></button>
       <button class="sidebar-btn" id="faq-btn" title="常见问题" data-i18n-title="sidebar.faq" data-action="page"><span>❓</span></button>
       <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings" data-action="page"><span>⚙️</span></button>
       <div class="language-switcher">
