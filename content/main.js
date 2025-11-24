@@ -2274,16 +2274,6 @@ class ADHDHighlighter {
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
-      #agfAiSettingOverlay{font-size:13px !important;line-height:1.4 !important}
-      #agfAiSettingOverlay .agf-ai-header{font-size:13px !important;line-height:20px !important}
-      #agfAiSettingOverlay .agf-ai-title{font-size:14px !important;line-height:20px !important}
-      #agfAiSettingOverlay .agf-ai-controls button{height:24px !important;line-height:24px !important;font-size:14px !important;padding:0 8px !important}
-      #agfAiSettingOverlay .agf-status-btn{height:20px !important;line-height:20px !important;font-size:12px !important}
-      #agfAiSettingOverlay .agf-refresh-btn{height:20px !important;width:20px !important;font-size:12px !important}
-      #agfAiSettingOverlay .agf-ai-tabs button{height:24px !important;line-height:24px !important;font-size:14px !important}
-      #agfAiSettingOverlay .agf-more-btn{height:22px !important;line-height:22px !important;font-size:12px !important}
-      #agfAiSettingOverlay .agf-records-title{font-size:14px !important;line-height:20px !important}
-      #agfAiSettingOverlay button{font-family:Arial,sans-serif !important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -4459,7 +4449,7 @@ class ADHDHighlighter {
           try { pdfStructured = await buildPdfStructuredOutlineText(); } catch (_) { pdfStructured = ''; }
           const sec4 = document.createElement('div'); sec4.className = 'agf-fulltext-section';
           const ttl4 = document.createElement('div'); ttl4.className = 'agf-fulltext-title'; ttl4.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.pdfStructuredTitle') : '结构化PDF文本';
-          const body4 = document.createElement('div'); body4.className = 'agf-fulltext-body'; body4.textContent = pdfStructured || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容');
+          const body4 = document.createElement('div'); body4.className = 'agf-fulltext-body'; body4.innerHTML = markdownToHtml(pdfStructured || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.fulltext.noStructured') : '无结构化内容'));
           sec4.appendChild(ttl4); sec4.appendChild(body4);
           fulltextContent.appendChild(sec4);
         } else {
