@@ -2353,6 +2353,7 @@ class ADHDHighlighter {
       .agf-group-title{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;color:#333}
       .agf-group-body{padding:8px}
       .agf-group-body.collapsed{display:none}
+      .agf-record-models{margin-left:8px;font-size:12px;color:#666}
       .agf-input-textarea{width:100%;min-height:56px;resize:none;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff}
       .agf-input-editor{width:100%;min-height:56px;border-radius:8px;border:1px solid #e0e0e0;padding:10px 12px;color:#333;background:#fff;white-space:pre-wrap;outline:none;overflow:auto}
       .agf-input-affix{color:#666;opacity:0.85;margin-left:4px}
@@ -3323,6 +3324,8 @@ class ADHDHighlighter {
 
     let chatMessages = [];
     let currentConversationId = null;
+    let currentReplyProvider = '';
+    let currentReplyModel = '';
     let streamingText = '';
     let streamingBubble = null;
     let streamingContentEl = null;
@@ -3532,7 +3535,20 @@ class ADHDHighlighter {
         leftBox.style.flexDirection = 'column';
         leftBox.style.alignItems = 'flex-start';
         const dateEl = document.createElement('div');
-        dateEl.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
+        dateEl.style.display = 'flex';
+        dateEl.style.alignItems = 'center';
+        const dateTxt = document.createElement('span');
+        dateTxt.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
+        const providerLabels = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok', openrouter: 'openrouter', groq: 'groq', siliconflow: 'siliconflow' };
+        const modelsSet = new Set();
+        const msgs = Array.isArray(item.messages) ? item.messages : [];
+        for (let i=0;i<msgs.length;i++) { const m = msgs[i]; if (m && m.role === 'assistant' && m.model) { const pv = m.provider || item.provider || ''; const pn = providerLabels[pv] || pv || ''; modelsSet.add((pn ? (pn + '/') : '') + m.model); } }
+        if (modelsSet.size === 0 && item && item.model) { const pv = item.provider || ''; const pn = providerLabels[pv] || pv || ''; modelsSet.add((pn ? (pn + '/') : '') + item.model); }
+        const modelInfo = document.createElement('span');
+        modelInfo.className = 'agf-record-models';
+        modelInfo.textContent = modelsSet.size ? Array.from(modelsSet).join(', ') : '';
+        dateEl.appendChild(dateTxt);
+        if (modelInfo.textContent) { dateEl.appendChild(modelInfo); }
         const subjEl = document.createElement('div');
         subjEl.className = 'agf-record-subject';
         const subjectText = item.subject || deriveSubject(item);
@@ -4196,6 +4212,8 @@ class ADHDHighlighter {
         const x = carryInput ? Math.max(0, Math.min(4, parseInt(String(carryInput.value||'0'),10)||0)) : 0;
         subset = buildCarryMessages(x);
       } catch (_) {}
+      currentReplyProvider = prov;
+      currentReplyModel = model;
       if (prov === 'anthropic') {
         headers['x-api-key'] = key;
         headers['anthropic-version'] = '2023-06-01';
@@ -4237,7 +4255,7 @@ class ADHDHighlighter {
           if (extra) msg = msg + '：' + String(extra).slice(0, 200);
           showStickyToast(msg);
           const aIndex = chatMessages.length;
-          chatMessages.push({ role: 'assistant', content: msg });
+          chatMessages.push({ role: 'assistant', content: msg, provider: currentReplyProvider, model: currentReplyModel });
           appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
           try { await saveConversationSnapshot(); } catch (_) {}
           return;
@@ -4258,7 +4276,7 @@ class ADHDHighlighter {
       }
       if (!text) text = '...';
       const aIndex = chatMessages.length;
-      chatMessages.push({ role: 'assistant', content: text });
+      chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
@@ -4626,7 +4644,7 @@ class ADHDHighlighter {
     this.__onAiStreamDone = () => {
       if (streamingText) {
         const idx = chatMessages.length;
-        chatMessages.push({ role: 'assistant', content: streamingText });
+        chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
       }
