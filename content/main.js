@@ -2389,6 +2389,7 @@ class ADHDHighlighter {
       .agf-btn{height:28px;padding:0 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:13px;cursor:pointer}
       .agf-btn.active{background:#333;color:#fff;border-color:#333}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      #agfApiKeyInput{width:280px;max-width:40%;flex:0 0 auto}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
       .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:12px;overflow:auto}
