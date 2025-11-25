@@ -2563,6 +2563,7 @@ class ADHDHighlighter {
                   <div id="agfSettingsContentDisplay" style="display:none;">
                     <div class="agf-settings-group">
                       <div style="font-size:13px;color:#333;font-weight:600;">显示与折叠</div>
+                      <div class="agf-hint">控制 AI 面板消息的显示与折叠：当单条回答超过“折叠阈值”（按字符数计算）时，会自动折叠，并显示“展开全文/收起”。“折叠高度”决定折叠状态下可见内容的最大高度（像素）。</div>
                       <div class="agf-settings-row">
                         <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
                         <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
@@ -2721,6 +2722,8 @@ class ADHDHighlighter {
     const settingsContentColors = document.getElementById('agfSettingsContentColors');
     const settingsContentParse = document.getElementById('agfSettingsContentParse');
     const settingsContentDisplay = document.getElementById('agfSettingsContentDisplay');
+    if (settingsTabDisplay) settingsTabDisplay.style.display = 'none';
+    if (settingsContentDisplay) settingsContentDisplay.style.display = 'none';
     const colorQBg2 = document.getElementById('agfColorQBg2');
     const colorABg2 = document.getElementById('agfColorABg2');
     const colorDisplayBg2 = document.getElementById('agfColorDisplayBg2');
@@ -3167,7 +3170,11 @@ class ADHDHighlighter {
     const initFoldSettings = async () => {
       try {
         const s = await chrome.storage.local.get(['foldThresholdChars','foldCollapsedMaxHeight']);
-        foldThresholdChars = typeof s.foldThresholdChars === 'number' ? s.foldThresholdChars : 2000;
+        foldThresholdChars = typeof s.foldThresholdChars === 'number' ? s.foldThresholdChars : 100000;
+        if (foldThresholdChars < 100000) {
+          foldThresholdChars = 100000;
+          try { await chrome.storage.local.set({ foldThresholdChars }); } catch(_){}
+        }
         foldCollapsedMaxHeight = typeof s.foldCollapsedMaxHeight === 'number' ? s.foldCollapsedMaxHeight : 160;
       } catch (_) {}
       if (foldThresholdInput) foldThresholdInput.value = foldThresholdChars;
