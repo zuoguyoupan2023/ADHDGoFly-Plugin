@@ -2650,6 +2650,7 @@ class ADHDHighlighter {
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
     const keySavedBtn = document.getElementById('agfKeySavedBtn');
+    if (keySavedBtn) keySavedBtn.style.display = 'none';
     const tempInput = document.getElementById('agfTempInput');
     const pdfToggle = document.getElementById('agfPdfParseToggle');
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
@@ -2997,6 +2998,7 @@ class ADHDHighlighter {
         save({ aiProvider: val });
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
+        if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
       }, labelMap);
     };
 
@@ -3014,6 +3016,7 @@ class ADHDHighlighter {
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
           if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
+          if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
           overlay.style.setProperty('--agf-q-bg', c.qBg || defaults.qBg);
@@ -3061,6 +3064,7 @@ class ADHDHighlighter {
               chrome.storage.local.set({ aiKeys: keys }, () => {
                 aiKeysState = keys;
                 if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
+                if (apiKeyInput) apiKeyInput.placeholder = '••••••••••••••••••••••••••••••••';
                 if (apiKeyInput) apiKeyInput.value = '';
                 renderProviderButtons(currentProvider);
                 initComposerSelects();
