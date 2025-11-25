@@ -72,6 +72,7 @@ class EventCacheManager {
         url: url,
         language: language,
         data: this.serializeHighlightData(highlightData),
+        dictSignature: (highlightData && highlightData.dictSignature) ? highlightData.dictSignature : '',
         createdAt: Date.now(),
         size: JSON.stringify(this.serializeHighlightData(highlightData)).length
       };

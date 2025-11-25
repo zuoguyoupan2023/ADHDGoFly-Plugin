@@ -363,19 +363,26 @@ class ADHDHighlighter {
         enabledLanguages: enabledLanguages
       });
 
-      // 查询所有匹配的缓存记录
       const cachedRecords = await this.eventCacheManager.getAllCachedHighlights(currentUrl, targetLanguage);
+      const dictIds = (this.dictionaryManager && typeof this.dictionaryManager.getEnabledDictionaryIds === 'function')
+        ? (this.dictionaryManager.getEnabledDictionaryIds(targetLanguage) || [])
+        : [];
+      const currentSig = dictIds.join('|');
       
       if (!cachedRecords || cachedRecords.length === 0) {
         console.log('📝 未找到匹配的缓存数据');
         return false;
       }
 
-      console.log(`🎯 找到 ${cachedRecords.length} 条缓存记录，尝试应用...`);
+      const filtered = cachedRecords.filter(r => {
+        if (r.dictSignature) return r.dictSignature === currentSig;
+        return currentSig === '';
+      });
+      console.log(`🎯 找到 ${cachedRecords.length} 条缓存记录，其中签名匹配 ${filtered.length} 条，尝试应用...`);
       
       // 应用所有缓存的高亮结果
       let totalApplied = 0;
-      for (const cachedData of cachedRecords) {
+      for (const cachedData of filtered) {
         const applied = await this.eventCacheManager.applyCachedHighlights(cachedData);
         if (applied) totalApplied++;
       }

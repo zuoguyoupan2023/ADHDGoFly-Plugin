@@ -487,7 +487,7 @@ class DictionaryAdapter {
      * 获取所有可用词典信息
      * @returns {Array} 词典信息列表
      */
-    getAvailableDictionaries() {
+  getAvailableDictionaries() {
         if (!this.newManager) {
             // 返回传统格式的词典信息
             return Object.keys(this.legacyData).map(lang => ({
@@ -496,10 +496,20 @@ class DictionaryAdapter {
                 enabled: this.enabledLanguages[lang] || false,
                 wordCount: Object.keys(this.legacyData[lang]).length
             }));
-        }
-        
-        return this.newManager.getAvailableDictionaries('all', false);
     }
+
+    return this.newManager.getAvailableDictionaries('all', false);
+  }
+
+  getEnabledDictionaryIds(language) {
+    if (!this.newManager) return [];
+    const ids = this.newManager
+      .getDictionariesByLanguage(language, false)
+      .filter(d => !!this.enabledDictionaries[d.id])
+      .map(d => d.id)
+      .sort();
+    return ids;
+  }
 
     /**
      * 重新加载词典
