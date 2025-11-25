@@ -3505,7 +3505,33 @@ class ADHDHighlighter {
       const prov = sessionProviderSelect && sessionProviderSelect.value || '';
       const model = sessionModelSelect && sessionModelSelect.value || '';
       const now = Date.now();
-      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || '', prefix: currentPrefix || '', pageTitle: currentPageTitle || '', pageUrl: currentPageUrl || '', canonicalUrl: currentCanonicalUrl || '' };
+      let old = null;
+      try { old = await dbGetConversation(currentConversationId); } catch(_) { old = null; }
+      let pageUrl = currentPageUrl || '';
+      let canonicalUrl = currentCanonicalUrl || '';
+      let pageTitle = currentPageTitle || '';
+      try {
+        if (!pageUrl || !canonicalUrl || !pageTitle) {
+          const u = getCanonicalUrl();
+          pageUrl = pageUrl || u.pageUrl;
+          canonicalUrl = canonicalUrl || u.canonicalUrl;
+          pageTitle = pageTitle || getMetaTitle();
+        }
+      } catch(_) {}
+      if ((!pageUrl || !canonicalUrl) && Array.isArray(chatMessages) && chatMessages.length) {
+        try {
+          const firstUser = chatMessages.find(m => m && m.role === 'user');
+          const c3 = (firstUser && firstUser.content) || '';
+          const m3 = c3.match(/页面:\s*(https?:\/\/\S+)/) || c3.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
+          if (m3) { pageUrl = pageUrl || m3[1]; canonicalUrl = canonicalUrl || m3[1]; }
+        } catch (_) {}
+      }
+      if (old) {
+        pageUrl = old.pageUrl || pageUrl;
+        canonicalUrl = old.canonicalUrl || canonicalUrl;
+        pageTitle = old.pageTitle || pageTitle;
+      }
+      const convo = { id: currentConversationId, createdAt: (old && old.createdAt) ? old.createdAt : now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || (old && old.subject) || '', prefix: currentPrefix || (old && old.prefix) || '', pageTitle, pageUrl, canonicalUrl };
       try { await dbPutConversation(convo); } catch (_) {}
     };
     const openRecordsListPanel = async () => {
@@ -3555,18 +3581,25 @@ class ADHDHighlighter {
         subjEl.className = 'agf-record-subject';
         const subjectText = item.subject || deriveSubject(item);
         subjEl.textContent = subjectText;
-        if (recordsScope === 'all') {
-          const linkUrl = item.pageUrl || item.canonicalUrl || '';
-          if (linkUrl) {
-            const a = document.createElement('a');
-            a.className = 'agf-record-link';
-            a.textContent = linkUrl;
-            a.href = linkUrl;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            subjEl.appendChild(document.createTextNode(' '));
-            subjEl.appendChild(a);
-          }
+        let linkUrl = item.pageUrl || item.canonicalUrl || '';
+        if (!linkUrl) {
+          try {
+            const msgs2 = item.messages || [];
+            const uMsg = msgs2.find(m => m && m.role === 'user');
+            const c2 = (uMsg && uMsg.content) || '';
+            const m2 = c2.match(/页面:\s*(https?:\/\/\S+)/) || c2.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
+            if (m2) linkUrl = m2[1];
+          } catch (_) {}
+        }
+        if (linkUrl) {
+          const a = document.createElement('a');
+          a.className = 'agf-record-link';
+          a.textContent = linkUrl;
+          a.href = linkUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          subjEl.appendChild(document.createTextNode(' '));
+          subjEl.appendChild(a);
         }
         leftBox.appendChild(dateEl);
         leftBox.appendChild(subjEl);
@@ -3585,6 +3618,7 @@ class ADHDHighlighter {
               chatMessages.forEach((m,i) => appendMessage(m.role, m.content, { highlight: highlightEnabled && !m.highlightHtml, highlightHtml: highlightEnabled ? m.highlightHtml : null, msgIndex: i }));
             }
             currentConversationId = item.id;
+            try { currentPageUrl = item.pageUrl || currentPageUrl; currentCanonicalUrl = item.canonicalUrl || currentCanonicalUrl; currentPageTitle = item.pageTitle || currentPageTitle; } catch(_){}
             showChat();
             try { rebuildConvIndex(); } catch (_) {}
           }
