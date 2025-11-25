@@ -2484,7 +2484,7 @@ class ADHDHighlighter {
                 <div class="agf-settings-sidebar">
                   <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
-                  <button id="agfSettingsTabParse" class="agf-settings-tab">解析与过滤</button>
+                  <button id="agfSettingsTabParse" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.parse">解析与过滤</button>
                   <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
                 <div class="agf-settings-content">
@@ -2541,15 +2541,15 @@ class ADHDHighlighter {
                   </div>
                   <div id="agfSettingsContentParse" style="display:none;">
                     <div class="agf-settings-group">
-                      <div style="font-size:13px;color:#333;font-weight:600;">解析与过滤</div>
+                      <div style="font-size:13px;color:#333;font-weight:600;" data-i18n="aiPanel.settings.parseTitle">解析与过滤</div>
                       <div class="agf-settings-row">
                         <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
                         <div id="agfPdfParseToggle" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label">隐私过滤</div>
+                        <div class="agf-label" data-i18n="aiPanel.settings.privacyFilter">隐私过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
-                        <span class="agf-hint">隐私是指pdf材料中的名字 邮箱 电话等信息</span>
+                        <span class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</span>
                       </div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3138,21 +3138,27 @@ class ADHDHighlighter {
           sensitive = !!s.privacySensitiveFilterEnabled;
         }
       } catch (_) {}
-      const autoItems = ['自动','手动'];
-      const autoMap = { '自动':'自动', '手动':'手动' };
-      renderButtons(pdfToggle, autoItems, auto ? '自动' : '手动', async (val, btn) => {
+      const autoItems = ['auto','manual'];
+      const autoMap = {
+        auto: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.settings.parse.auto') : '自动',
+        manual: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.settings.parse.manual') : '手动'
+      };
+      renderButtons(pdfToggle, autoItems, auto ? 'auto' : 'manual', async (val, btn) => {
         Array.from(pdfToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const enabled = val === '自动';
+        const enabled = val === 'auto';
         await chrome.storage.local.set({ pdfAutoCollectEnabled: enabled });
         if (manualParseBtn) manualParseBtn.style.display = enabled ? 'none' : 'inline-block';
       }, autoMap);
-      const sensItems = ['开启','关闭'];
-      const sensMap = { '开启':'开启', '关闭':'关闭' };
-      renderButtons(sensitiveToggle, sensItems, sensitive ? '开启' : '关闭', async (val, btn) => {
+      const sensItems = ['on','off'];
+      const sensMap = {
+        on: (window.i18n && window.i18n.t) ? window.i18n.t('buttons.enable') : '开启',
+        off: (window.i18n && window.i18n.t) ? window.i18n.t('buttons.disable') : '关闭'
+      };
+      renderButtons(sensitiveToggle, sensItems, sensitive ? 'on' : 'off', async (val, btn) => {
         Array.from(sensitiveToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const on = val === '开启';
+        const on = val === 'on';
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
       if (manualParseBtn) {
