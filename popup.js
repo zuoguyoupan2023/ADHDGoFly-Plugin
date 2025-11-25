@@ -1940,18 +1940,27 @@ class PopupController {
     const vocabularyItems = category.querySelectorAll('.vocabulary-item');
     console.log(`🔍 类别 ${categoryId} 中找到词汇项目数量:`, vocabularyItems.length);
     
-    vocabularyItems.forEach((item) => {
+    vocabularyItems.forEach((item, itemIndex) => {
+      // 跳过"暂无数据"的项目
       if (item.textContent.includes('暂无数据')) {
+        console.log(`⚠️ 跳过"暂无数据"项目`);
         return;
       }
+      
       const wordElement = item.querySelector('.vocabulary-word');
-      const countElement = item.querySelector('.vocabulary-count');
       if (wordElement) {
         const word = wordElement.textContent.trim();
-        const count = countElement ? parseInt(countElement.textContent.trim(), 10) || 0 : 0;
+        console.log(`🔍 词汇 ${itemIndex + 1}:`, word);
+        
         if (word && word !== '暂无数据') {
-          vocabularyData.push({ word, pos: posType, count });
+          vocabularyData.push({
+            word: word,
+            pos: posType
+          });
         }
+      } else {
+        console.log(`⚠️ 词汇项目 ${itemIndex + 1} 中没有找到 .vocabulary-word 元素`);
+        console.log(`📝 项目内容:`, item.textContent.trim());
       }
     });
   }
@@ -1975,8 +1984,7 @@ class PopupController {
       // 按JSON格式生成词汇数据
       const jsonData = vocabularyData.map(item => ({
         word: item.word,
-        pos: item.pos,
-        count: typeof item.count === 'number' ? item.count : 0
+        pos: item.pos
       }));
 
       // 转换为JSON字符串
