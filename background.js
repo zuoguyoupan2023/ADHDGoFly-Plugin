@@ -521,8 +521,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         let base = '';
         let key = '';
         try {
-          const res = await new Promise(r => chrome.storage.local.get(['aiBaseUrl','aiKeys'], r));
-          base = res.aiBaseUrl || '';
+          const res = await new Promise(r => chrome.storage.local.get(['aiBaseUrls','aiBaseUrl','aiProvider','aiKeys'], r));
+          base = (res.aiBaseUrls && res.aiBaseUrls[prov]) || (prov === (res.aiProvider || '') ? (res.aiBaseUrl || '') : '');
           const ks = res.aiKeys || {};
           key = ks[prov] || '';
         } catch (_) {}

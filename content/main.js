@@ -2979,6 +2979,7 @@ class ADHDHighlighter {
 
     let currentProvider = null;
     let aiKeysState = {};
+    let aiBaseUrlsState = {};
 
     const renderProviderButtons = (activeProv) => {
       const providerKeys = Object.keys(PROVIDERS_CONFIG);
@@ -2991,21 +2992,24 @@ class ADHDHighlighter {
         try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         currentProvider = val;
         fillModels(val);
-        const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
+        const base = (aiBaseUrlsState && aiBaseUrlsState[val]) || (PROVIDERS_CONFIG[val]?.baseUrl || '');
         if (baseUrlInput) baseUrlInput.value = base;
-        save({ aiProvider: val, aiBaseUrl: base });
+        save({ aiProvider: val });
+        if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
       }, labelMap);
     };
 
     const initFromStorage = () => {
       try {
-        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrls','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
           currentProvider = res.aiProvider || 'deepseek';
           aiKeysState = res.aiKeys || {};
+          aiBaseUrlsState = res.aiBaseUrls || {};
+          if (!aiBaseUrlsState[currentProvider] && res.aiBaseUrl) { aiBaseUrlsState[currentProvider] = res.aiBaseUrl; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
           renderProviderButtons(currentProvider);
           fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
-          const base = res.aiBaseUrl || PROVIDERS_CONFIG[currentProvider]?.baseUrl || '';
+          const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
           if (baseUrlInput) baseUrlInput.value = base;
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
@@ -3028,7 +3032,14 @@ class ADHDHighlighter {
 
     if (baseUrlInput) {
       baseUrlInput.addEventListener('change', () => {
-        save({ aiBaseUrl: baseUrlInput.value });
+        try {
+          chrome.storage.local.get(['aiBaseUrls'], (res) => {
+            const m = res.aiBaseUrls || {};
+            if (currentProvider) m[currentProvider] = baseUrlInput.value || '';
+            aiBaseUrlsState = m;
+            chrome.storage.local.set({ aiBaseUrls: m });
+          });
+        } catch(_){}
       });
     }
 
@@ -4182,10 +4193,10 @@ class ADHDHighlighter {
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
       try {
-        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrl'], resolve));
+        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const keys = res.aiKeys || {};
         key = keys[prov] || '';
-        if (res.aiBaseUrl) base = res.aiBaseUrl;
+        if (res.aiBaseUrls && res.aiBaseUrls[prov]) base = res.aiBaseUrls[prov];
       } catch (_) {}
       if (!key || String(key).trim().length === 0) { showStickyToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
       let url = base;
