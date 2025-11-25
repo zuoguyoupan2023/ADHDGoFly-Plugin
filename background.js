@@ -526,7 +526,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const ks = res.aiKeys || {};
           key = ks[prov] || '';
         } catch (_) {}
-        const url = base || (prov === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : '');
+        function fallbackBase(p){
+          switch(p){
+            case 'deepseek': return 'https://api.deepseek.com/v1/chat/completions';
+            case 'moonshot': return 'https://api.moonshot.cn/v1/chat/completions';
+            case 'openai': return 'https://api.openai.com/v1/chat/completions';
+            case 'openrouter': return 'https://openrouter.ai/api/v1/chat/completions';
+            case 'groq': return 'https://api.groq.com/openai/v1/chat/completions';
+            case 'siliconflow': return 'https://api.siliconflow.cn/v1/chat/completions';
+            case 'qwen': return 'https://dashscope.aliyuncs.com/api/v1/chat/completions';
+            case 'chatglm': return 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+            case 'minimax': return 'https://api.minimax.io/v1/chat/completions';
+            case 'grok': return 'https://api.x.ai/v1/chat/completions';
+            default: return '';
+          }
+        }
+        const url = base || fallbackBase(prov);
         const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
         const body = JSON.stringify({ model, messages: msgs, stream: true });
         let resp;
