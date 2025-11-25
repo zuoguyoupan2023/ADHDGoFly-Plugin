@@ -4275,7 +4275,7 @@ class ADHDHighlighter {
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
         body = JSON.stringify({ contents: toGeminiStyle(subset) });
-      } else if (prov === 'deepseek') {
+      } else if (prov === 'deepseek' || prov === 'moonshot') {
         try {
           startAssistantStream();
           chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
