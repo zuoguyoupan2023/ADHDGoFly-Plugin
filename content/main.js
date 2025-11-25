@@ -2997,7 +2997,7 @@ class ADHDHighlighter {
         if (baseUrlInput) baseUrlInput.value = base;
         save({ aiProvider: val });
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
-        if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
+        if (keySavedBtn) keySavedBtn.style.display = 'none';
         if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
       }, labelMap);
     };
@@ -3015,7 +3015,7 @@ class ADHDHighlighter {
           if (baseUrlInput) baseUrlInput.value = base;
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
-          if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
+          if (keySavedBtn) keySavedBtn.style.display = 'none';
           if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
@@ -3063,7 +3063,7 @@ class ADHDHighlighter {
               if (currentProvider) keys[currentProvider] = v;
               chrome.storage.local.set({ aiKeys: keys }, () => {
                 aiKeysState = keys;
-                if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
+                if (keySavedBtn) { keySavedBtn.style.display = 'inline-block'; setTimeout(()=>{ try { keySavedBtn.style.display = 'none'; } catch(_){} }, 3000); }
                 if (apiKeyInput) apiKeyInput.placeholder = '••••••••••••••••••••••••••••••••';
                 if (apiKeyInput) apiKeyInput.value = '';
                 renderProviderButtons(currentProvider);
