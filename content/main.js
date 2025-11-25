@@ -2549,8 +2549,8 @@ class ADHDHighlighter {
                       <div class="agf-settings-row">
                         <div class="agf-label" data-i18n="aiPanel.settings.privacyFilter">隐私过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
-                        <span class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</span>
                       </div>
+                      <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
                       </div>
