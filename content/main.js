@@ -703,19 +703,18 @@ class ADHDHighlighter {
           sendResponse({ success: true });
           break;
         case 'aiChatStreamDone':
-          if (this.__onAiStreamDone) this.__onAiStreamDone(message && message.message);
+          if (this.__onAiStreamDone) this.__onAiStreamDone(message && (message.message || message));
           sendResponse({ success: true });
           break;
         case 'aiChatStreamError':
           try {
             const err = (message && typeof message.error === 'string' && message.error) ? message.error : '请求失败';
             showStickyToast(err);
-            const aIndex = chatMessages.length;
-            chatMessages.push({ role: 'assistant', content: err });
-            appendMessage('assistant', err, { highlight: true, msgIndex: aIndex });
-            try { await saveConversationSnapshot(); } catch (_) {}
             streamingText = '';
             streamingBubble = null;
+            const pv = message && message.provider ? message.provider : currentReplyProvider || (sessionProviderSelect && sessionProviderSelect.value) || '';
+            const mdl = message && message.model ? message.model : currentReplyModel || (sessionModelSelect && sessionModelSelect.value) || '';
+            await sendNonStreamForProvider(pv, mdl);
             streamingContentEl = null;
           } catch (_) {}
           sendResponse({ success: true });
@@ -4350,6 +4349,97 @@ class ADHDHighlighter {
       try { await saveConversationSnapshot(); } catch (_) {}
     };
 
+    const sendNonStreamForProvider = async (prov, model) => {
+      try {
+        const subset = chatMessages.slice();
+        let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
+        let key = '';
+        try {
+          const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
+          const keys = res.aiKeys || {};
+          key = keys[prov] || '';
+          if (res.aiBaseUrls && res.aiBaseUrls[prov]) base = res.aiBaseUrls[prov];
+        } catch (_) {}
+        if (!key || String(key).trim().length === 0) { showStickyToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
+        let url = base;
+        let headers = { 'Content-Type': 'application/json' };
+        let body = null;
+        if (prov === 'anthropic') {
+          headers['x-api-key'] = key;
+          headers['anthropic-version'] = '2023-06-01';
+          body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle(subset) });
+        } else if (prov === 'gemini') {
+          url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+          body = JSON.stringify({ contents: toGeminiStyle(subset) });
+        } else {
+          headers['Authorization'] = 'Bearer ' + key;
+          const obj = { model, messages: toOpenAIStyle(subset) };
+          if (prov === 'minimax') obj.reasoning_split = true;
+          body = JSON.stringify(obj);
+        }
+        const respMsg = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url, method: 'POST', headers, body, timeout: 45000 }, resolve));
+        const status = respMsg && typeof respMsg.status === 'number' ? respMsg.status : 0;
+        const ok = !!(respMsg && respMsg.success && status >= 200 && status < 300);
+        const data = respMsg && respMsg.data ? respMsg.data : null;
+        if (!ok) {
+          let msg = '请求失败';
+          if (status === 401 || status === 403) msg = 'API Key 无效或不可用';
+          else if (status === 429) msg = '已超出频率限制，请稍后再试';
+          else if (status >= 500 && status < 600) msg = '服务端异常，请稍后再试';
+          else if (!respMsg || !respMsg.success) msg = '网络错误或超时';
+          let extra = '';
+          try {
+            if (data && typeof data === 'object') {
+              const e1 = data.error && (data.error.message || data.error);
+              if (e1) extra = String(e1);
+            } else if (typeof data === 'string') {
+              extra = data;
+            }
+          } catch(_){ }
+          if (extra) msg = msg + '：' + String(extra).slice(0, 200);
+          showStickyToast(msg);
+          const aIndex = chatMessages.length;
+          chatMessages.push({ role: 'assistant', content: msg, provider: prov, model });
+          appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
+          try { await saveConversationSnapshot(); } catch (_) {}
+          return;
+        }
+        let text = '';
+        let rawMsg = null;
+        let rz = '';
+        if (prov === 'anthropic') {
+          const c = data && data.content && data.content[0] && (data.content[0].text || (data.content[0].type === 'text' ? data.content[0].text : ''));
+          text = c || '';
+        } else if (prov === 'gemini') {
+          const cand = data && data.candidates && data.candidates[0];
+          const parts = cand && cand.content && cand.content.parts || [];
+          text = parts.map(p => p.text || '').join('');
+        } else {
+          const ch = data && data.choices && data.choices[0];
+          rawMsg = ch && ch.message || null;
+          text = (rawMsg && rawMsg.content) || '';
+          try {
+            if (rawMsg && rawMsg.reasoning_details) {
+              const rd = rawMsg.reasoning_details;
+              if (Array.isArray(rd)) rz = rd.map(x => (typeof x === 'string' ? x : ((x && x.text) || ''))).join('\n'); else if (rd && rd.text) rz = rd.text || '';
+            }
+          } catch(_){ }
+        }
+        if (!text) text = '...';
+        const aIndex = chatMessages.length;
+        chatMessages.push({ role: 'assistant', content: text, provider: prov, model, rawMessage: rawMsg, reasoning: rz });
+        appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
+        try { await saveConversationSnapshot(); } catch (_) {}
+      } catch (e) {
+        const msg = String(e || '请求失败');
+        showStickyToast(msg);
+        const aIndex = chatMessages.length;
+        chatMessages.push({ role: 'assistant', content: msg, provider: prov, model });
+        appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
+        try { await saveConversationSnapshot(); } catch(_){}
+      }
+    };
+
     const getStoredSegmentsForPage = async () => {
       const db = await this.segmentsDbOpen();
       const pageUrl = window.location.href;
@@ -4724,6 +4814,16 @@ class ADHDHighlighter {
         chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel, rawMessage: finalMsg || null, reasoning: rz });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
+      } else {
+        try {
+          if (streamingContentEl) {
+            try { const t = (streamingContentEl.innerText || streamingContentEl.textContent || '').trim(); if (!t) { const b = streamingContentEl.closest('.agf-bubble'); if (b) b.remove(); } } catch(_){}
+            streamingContentEl = null;
+          }
+          const pv = currentReplyProvider || (sessionProviderSelect && sessionProviderSelect.value) || '';
+          const mdl = currentReplyModel || (sessionModelSelect && sessionModelSelect.value) || '';
+          (async ()=>{ try { await sendNonStreamForProvider(pv, mdl); } catch(_){} })();
+        } catch(_){ }
       }
       streamingText = '';
       streamingBubble = null;
