@@ -2484,6 +2484,8 @@ class ADHDHighlighter {
                 <div class="agf-settings-sidebar">
                   <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
+                  <button id="agfSettingsTabParse" class="agf-settings-tab">解析与过滤</button>
+                  <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
                 <div class="agf-settings-content">
                   <div id="agfSettingsContentApi">
@@ -2513,31 +2515,6 @@ class ADHDHighlighter {
                         <div class="agf-label">temperature</div>
                         <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
                       </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
-                        <div id="agfPdfParseToggle" class="agf-button-list"></div>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.sensitiveFilter">敏感过滤</div>
-                        <div id="agfSensitiveToggle" class="agf-button-list"></div>
-                      </div>
-                      <div class="agf-settings-row">
-                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.retentionDays">保留天数</div>
-                        <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
-                        <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
-                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHint">超出则折叠</span>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.foldHeight">折叠高度</div>
-                        <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
-                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHeightHint">折叠区最大高度(px)</span>
-                      </div>
                     </div>
                   </div>
                   <div id="agfSettingsContentColors" style="display:none;">
@@ -2559,6 +2536,41 @@ class ADHDHighlighter {
                       </div>
                       <div class="agf-settings-row">
                         <button id="agfPresetResetBtn" class="agf-btn" data-i18n="aiPanel.presets.reset">重置默认</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agfSettingsContentParse" style="display:none;">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;">解析与过滤</div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
+                        <div id="agfPdfParseToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.sensitiveFilter">敏感过滤</div>
+                        <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.retentionDays">保留天数</div>
+                        <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agfSettingsContentDisplay" style="display:none;">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;">显示与折叠</div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
+                        <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHint">超出则折叠</span>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldHeight">折叠高度</div>
+                        <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHeightHint">折叠区最大高度(px)</span>
                       </div>
                     </div>
                   </div>
@@ -2702,8 +2714,12 @@ class ADHDHighlighter {
     const colorsApply = document.getElementById('agfColorsApply');
     const settingsTabApi = document.getElementById('agfSettingsTabApi');
     const settingsTabColors = document.getElementById('agfSettingsTabColors');
+    const settingsTabParse = document.getElementById('agfSettingsTabParse');
+    const settingsTabDisplay = document.getElementById('agfSettingsTabDisplay');
     const settingsContentApi = document.getElementById('agfSettingsContentApi');
     const settingsContentColors = document.getElementById('agfSettingsContentColors');
+    const settingsContentParse = document.getElementById('agfSettingsContentParse');
+    const settingsContentDisplay = document.getElementById('agfSettingsContentDisplay');
     const colorQBg2 = document.getElementById('agfColorQBg2');
     const colorABg2 = document.getElementById('agfColorABg2');
     const colorDisplayBg2 = document.getElementById('agfColorDisplayBg2');
@@ -2841,8 +2857,12 @@ class ADHDHighlighter {
     const setActiveSettingsTab = (which) => {
       if (settingsTabApi) settingsTabApi.classList.toggle('active', which === 'api');
       if (settingsTabColors) settingsTabColors.classList.toggle('active', which === 'colors');
+      if (settingsTabParse) settingsTabParse.classList.toggle('active', which === 'parse');
+      if (settingsTabDisplay) settingsTabDisplay.classList.toggle('active', which === 'display');
       if (settingsContentApi) settingsContentApi.style.display = which === 'api' ? 'block' : 'none';
       if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
+      if (settingsContentParse) settingsContentParse.style.display = which === 'parse' ? 'block' : 'none';
+      if (settingsContentDisplay) settingsContentDisplay.style.display = which === 'display' ? 'block' : 'none';
       if (which === 'colors') fillColorsInputs2();
     };
 
@@ -3218,6 +3238,8 @@ class ADHDHighlighter {
 
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
     if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
+    if (settingsTabParse) settingsTabParse.addEventListener('click', () => setActiveSettingsTab('parse'));
+    if (settingsTabDisplay) settingsTabDisplay.addEventListener('click', () => setActiveSettingsTab('display'));
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
