@@ -2984,7 +2984,7 @@ class ADHDHighlighter {
     let aiBaseUrlsState = {};
 
     const renderProviderButtons = (activeProv) => {
-      const providerKeys = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq');
+      const providerKeys = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok', openrouter: 'openrouter', groq: 'groq', siliconflow: 'siliconflow' };
       const labelMap = {};
       providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
@@ -3010,8 +3010,8 @@ class ADHDHighlighter {
           aiKeysState = res.aiKeys || {};
           aiBaseUrlsState = res.aiBaseUrls || {};
           if (!aiBaseUrlsState[currentProvider] && res.aiBaseUrl) { aiBaseUrlsState[currentProvider] = res.aiBaseUrl; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
-          if (cp === 'openrouter' || cp === 'siliconflow' || cp === 'groq') {
-            const candidates = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && aiKeysState && aiKeysState[p]);
+          if (cp === 'openrouter' || cp === 'siliconflow' || cp === 'groq' || cp === 'minimax') {
+            const candidates = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax' && aiKeysState && aiKeysState[p]);
             cp = candidates[0] || 'deepseek';
           }
           currentProvider = cp;
@@ -3286,7 +3286,7 @@ class ADHDHighlighter {
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
-      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq');
+      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       sessionProviderSelect.innerHTML = '';
       providers.forEach(p => {
         const opt = document.createElement('option');
@@ -4280,7 +4280,7 @@ class ADHDHighlighter {
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
         body = JSON.stringify({ contents: toGeminiStyle(subset) });
-      } else if (prov === 'deepseek' || prov === 'moonshot' || prov === 'openai' || prov === 'openrouter' || prov === 'groq' || prov === 'siliconflow' || prov === 'qwen' || prov === 'chatglm' || prov === 'minimax' || prov === 'grok') {
+      } else if (prov === 'deepseek' || prov === 'moonshot' || prov === 'openai' || prov === 'openrouter' || prov === 'groq' || prov === 'siliconflow' || prov === 'qwen' || prov === 'chatglm' || prov === 'grok') {
         try {
           startAssistantStream();
           chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
