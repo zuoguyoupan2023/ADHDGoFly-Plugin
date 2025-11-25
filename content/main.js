@@ -2317,6 +2317,7 @@ class ADHDHighlighter {
       .agf-chat-list .agf-msg:first-child .agf-bubble{border-top-left-radius:10px;border-top-right-radius:10px}
       .agf-chat-list .agf-msg:last-child .agf-bubble{border-bottom-left-radius:10px;border-bottom-right-radius:10px}
       .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
+      .agf-model-badge{display:inline-block;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:11px;color:#666;background:#f9f9f9}
       .agf-collapse{margin-top:6px;border-top:1px solid #e0e0e0;padding-top:6px}
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
@@ -3338,6 +3339,8 @@ class ADHDHighlighter {
 
     let chatMessages = [];
     let currentConversationId = null;
+    let currentReplyProvider = '';
+    let currentReplyModel = '';
     let streamingText = '';
     let streamingBubble = null;
     let streamingContentEl = null;
@@ -3966,6 +3969,23 @@ class ADHDHighlighter {
       const labelEl = document.createElement('span');
       labelEl.className = 'agf-qa-label';
       labelEl.textContent = label;
+      let modelBadge = null;
+      if (role !== 'user') {
+        let pv = '';
+        let mdl = '';
+        try {
+          if (typeof opts.msgIndex === 'number') {
+            const m = chatMessages[opts.msgIndex] || {};
+            pv = m.provider || (sessionProviderSelect && sessionProviderSelect.value) || '';
+            mdl = m.model || (sessionModelSelect && sessionModelSelect.value) || '';
+          }
+        } catch (_) {}
+        if (pv || mdl) {
+          modelBadge = document.createElement('span');
+          modelBadge.className = 'agf-model-badge';
+          modelBadge.textContent = (pv ? pv : '') + '/' + (mdl ? mdl : '');
+        }
+      }
       const contentEl = document.createElement('span');
       contentEl.className = 'agf-qa-content';
       if (typeof opts.msgIndex === 'number') contentEl.dataset.msgIndex = String(opts.msgIndex);
@@ -4055,6 +4075,7 @@ class ADHDHighlighter {
       }
       bubble.appendChild(copyBtn);
       bubble.appendChild(labelEl);
+      if (modelBadge) bubble.appendChild(modelBadge);
       bubble.appendChild(contentEl);
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
@@ -4074,7 +4095,7 @@ class ADHDHighlighter {
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
       const label = 'A' + (qaCounter || 1);
-      bubbleEl.innerHTML = '<button class="agf-copy-btn" title="' + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制') + '">⧉</button><span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
+      (function(){ const pv = sessionProviderSelect && sessionProviderSelect.value || ''; const mdl = sessionModelSelect && sessionModelSelect.value || ''; const pm = (pv || mdl) ? (pv + '/' + mdl) : ''; bubbleEl.innerHTML = '<button class="agf-copy-btn" title="' + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制') + '">⧉</button><span class="agf-qa-label">' + label + '</span>' + (pm ? ('<span class="agf-model-badge">' + pm + '</span>') : '') + '<span class="agf-qa-content"></span>'; })();
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
@@ -4147,6 +4168,8 @@ class ADHDHighlighter {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
+      currentReplyProvider = prov;
+      currentReplyModel = model;
       let q = (composerHidden.value || '').trim();
       if (!q) {
         try {
@@ -4252,7 +4275,7 @@ class ADHDHighlighter {
           if (extra) msg = msg + '：' + String(extra).slice(0, 200);
           showStickyToast(msg);
           const aIndex = chatMessages.length;
-          chatMessages.push({ role: 'assistant', content: msg });
+          chatMessages.push({ role: 'assistant', content: msg, provider: currentReplyProvider, model: currentReplyModel });
           appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
           try { await saveConversationSnapshot(); } catch (_) {}
           return;
@@ -4273,7 +4296,7 @@ class ADHDHighlighter {
       }
       if (!text) text = '...';
       const aIndex = chatMessages.length;
-      chatMessages.push({ role: 'assistant', content: text });
+      chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
@@ -4641,7 +4664,7 @@ class ADHDHighlighter {
     this.__onAiStreamDone = () => {
       if (streamingText) {
         const idx = chatMessages.length;
-        chatMessages.push({ role: 'assistant', content: streamingText });
+        chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
       }
