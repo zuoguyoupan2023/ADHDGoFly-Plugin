@@ -5078,6 +5078,22 @@ if (document.readyState === 'loading') {
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
+try {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.language) {
+      const nv = changes.language.newValue;
+      if (!nv) return;
+      if (window.i18n) {
+        const cur = typeof window.i18n.getCurrentLanguage === 'function' ? window.i18n.getCurrentLanguage() : null;
+        if (cur && cur !== nv && typeof window.i18n.switchLanguage === 'function') {
+          window.i18n.switchLanguage(nv);
+        } else if (typeof window.i18n.applyTranslations === 'function') {
+          window.i18n.applyTranslations();
+        }
+      }
+    }
+  });
+} catch (_) {}
 /**
  * 日志模式切换说明（统一开关）
  *
