@@ -1175,18 +1175,14 @@ class PopupController {
             cleanedSettings[dictId] = result.dictSettings[dictId];
           }
         });
-        // 直接采用存储的设置（不与默认合并），避免默认勾选干扰
-        this.dictSettings = cleanedSettings;
+        
+        this.dictSettings = { ...this.dictSettings, ...cleanedSettings };
         
         // 如果清理了设置，保存更新后的设置
         if (Object.keys(cleanedSettings).length !== Object.keys(result.dictSettings).length) {
           console.log('清理了无效的词典设置ID');
           await chrome.storage.local.set({ dictSettings: this.dictSettings });
         }
-      } else {
-        // 存储不存在时，使用与内容脚本一致的默认设置
-        this.dictSettings = { 'zh-preset': true, 'en-preset': true };
-        await chrome.storage.local.set({ dictSettings: this.dictSettings });
       }
       
       // 更新UI
@@ -1201,10 +1197,11 @@ class PopupController {
    * 根据词典设置更新复选框状态和首页标签显示
    */
   updateDictUI() {
-    const checkboxes = document.querySelectorAll('[id^="dict-"]');
-    checkboxes.forEach(cb => {
-      const dictId = cb.id.replace('dict-', '');
-      cb.checked = !!this.dictSettings[dictId];
+    Object.keys(this.dictSettings).forEach(dictId => {
+      const checkbox = document.getElementById(`dict-${dictId}`);
+      if (checkbox) {
+        checkbox.checked = this.dictSettings[dictId];
+      }
     });
     
     // 更新首页词典标签显示
