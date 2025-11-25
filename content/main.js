@@ -4123,6 +4123,7 @@ class ADHDHighlighter {
         key = keys[prov] || '';
         if (res.aiBaseUrl) base = res.aiBaseUrl;
       } catch (_) {}
+      if (!key || String(key).trim().length === 0) { showToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
       let url = base;
       let headers = { 'Content-Type': 'application/json' };
       let body = null;
