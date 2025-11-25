@@ -2292,11 +2292,11 @@ class ADHDHighlighter {
       @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
       .agf-ai-tabs{display:inline-flex;gap:2px;margin-left:2px}
       .agf-ai-tabs button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333}
-      .agf-ai-body{flex:1;padding:0 12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
+      .agf-ai-body{flex:1;padding:0;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
-      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff)}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh}
+      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh;width:100%}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:0}
@@ -2377,7 +2377,7 @@ class ADHDHighlighter {
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:none}
-      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0 12px}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%}
       .agf-fixed-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
       .agf-carry-top{margin-left:auto}
       
