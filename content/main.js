@@ -88,7 +88,7 @@
 
 const getUiTokens = () => {
   const t = (k) => { try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch (_) { return ''; } };
-  const base = ['ExamPage','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
+  const base = ['🏠ExamRoom','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
   const dyn = ['aiPanel.summary','aiPanel.more','aiPanel.send','aiPanel.collapse.expand','aiPanel.collapse.collapse','aiPanel.fullText','aiPanel.mode.persistent','aiPanel.mode.manual'];
   const out = base.slice();
   for (let i = 0; i < dyn.length; i++) { const v = t(dyn[i]); if (v) out.push(v); }
@@ -2328,6 +2328,7 @@ class ADHDHighlighter {
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
+      #agfCarryInput{height:20px;line-height:20px;padding:0 4px;border-radius:4px}
       .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:0}
       .agf-highlight-toggle{display:inline-flex;align-items:center;margin-left:0}
       .agf-mode-btn{height:24px;line-height:24px;padding:0 8px;border:1px solid #e0e0e0;border-radius:0;background:#fff;color:#333;font-size:12px}
@@ -2416,7 +2417,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">🏠ExamRoom</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
         <div style="display:flex;align-items:center;gap:4px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
@@ -2432,7 +2433,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
+          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
