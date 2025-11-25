@@ -557,7 +557,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
         let finalMsg = null;
-        let lastReasoning = null;
         if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' }); } catch(_){ }
         while (true) {
           const { value, done } = await reader.read();
@@ -577,17 +576,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                       (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) ||
                       j.output_text || j.content || '';
               if (!finalMsg && j && j.choices && j.choices[0] && j.choices[0].message) finalMsg = j.choices[0].message;
-              try {
-                const rd = (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.reasoning_details) || j.reasoning_details || null;
-                if (rd) lastReasoning = rd;
-              } catch(_){ }
             } catch (e) {
               delta = payload;
             }
             if (delta && tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta }); } catch(_){ }
           }
         }
-        if (!finalMsg && lastReasoning) finalMsg = { reasoning_details: lastReasoning };
         if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone', message: finalMsg }); } catch(_){ }
       }
       function handleErr(t, info){
@@ -602,23 +596,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const isNet = !!info && !!info.network;
         const can = is429 || is5xx || isNet;
         if (can && rc < mr) {
-          if (isNet && prov === 'minimax') {
-            try {
-              chrome.storage.local.get(['aiBaseUrls'], (res) => {
-                const m = res.aiBaseUrls || {};
-                const cur = m.minimax || '';
-                const alt = (cur && cur.indexOf('minimaxi.com') >= 0) ? 'https://api.minimax.io/v1/chat/completions' : 'https://api.minimaxi.com/v1/chat/completions';
-                m.minimax = alt;
-                chrome.storage.local.set({ aiBaseUrls: m }, () => { t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); });
-              });
-            } catch(_){}
-            return;
-          }
           const delay = is429 ? 60000 : Math.min(15000, Math.pow(2, rc) * 1000);
           setTimeout(()=>{ t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); }, delay);
           return;
         }
-        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', provider: prov, model: t.model, error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
       }
       function dispatch(prov){
         const s = st(prov);
