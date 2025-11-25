@@ -1476,6 +1476,18 @@ class ADHDHighlighter {
       // 旧格式：使用语言代码
       this.dictionaryManager.updateEnabledLanguages(dictSettings);
     }
+
+    try {
+      const currentUrl = window.location.href;
+      if (this.streamingPageProcessor && this.streamingPageProcessor.nodeLevelCacheManager) {
+        await this.streamingPageProcessor.nodeLevelCacheManager.invalidatePageCache(currentUrl);
+      }
+      if (this.eventCacheManager && typeof this.eventCacheManager.clearHighlightsByUrl === 'function') {
+        await this.eventCacheManager.clearHighlightsByUrl(currentUrl);
+      }
+    } catch (e) {
+      console.warn('清空页面缓存失败:', e);
+    }
     
     // 如果当前已启用高亮，重新处理页面
     if (this.enabled) {
