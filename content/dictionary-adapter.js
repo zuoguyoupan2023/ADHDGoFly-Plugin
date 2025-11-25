@@ -9,8 +9,8 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: false,
-            en: false,
+            zh: true,
+            en: true,
             fr: false,
             ru: false,
             es: false,
@@ -229,14 +229,11 @@ class DictionaryAdapter {
         }
 
         let result = {};
-        const selectedIds = Object.entries(this.enabledDictionaries)
-            .filter(([, v]) => !!v)
-            .map(([k]) => k);
-
-        if (this.newManager && selectedIds.length > 0) {
+        const hasIdSelection = this.newManager && Object.keys(this.enabledDictionaries).length > 0;
+        if (hasIdSelection) {
             const enabledDicts = this.newManager
                 .getDictionariesByLanguage(language, false)
-                .filter(dict => selectedIds.includes(dict.id));
+                .filter(dict => this.enabledDictionaries[dict.id]);
             if (enabledDicts.length > 0) {
                 enabledDicts.sort((a, b) => (a.priority || 999) - (b.priority || 999));
                 const mergedDict = {};
@@ -248,7 +245,7 @@ class DictionaryAdapter {
                 }
                 result = mergedDict;
             }
-        } else if (selectedIds.length === 0 && this.enabledLanguages[language]) {
+        } else if (this.enabledLanguages[language]) {
             result = this.legacyData[language] || {};
         }
 
