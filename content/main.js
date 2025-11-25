@@ -710,13 +710,12 @@ class ADHDHighlighter {
           try {
             const err = (message && typeof message.error === 'string' && message.error) ? message.error : '请求失败';
             showStickyToast(err);
-            const aIndex = chatMessages.length;
-            chatMessages.push({ role: 'assistant', content: err });
-            appendMessage('assistant', err, { highlight: true, msgIndex: aIndex });
-            try { await saveConversationSnapshot(); } catch (_) {}
             streamingText = '';
             streamingBubble = null;
             streamingContentEl = null;
+            const pv = message && message.provider ? message.provider : currentReplyProvider || (sessionProviderSelect && sessionProviderSelect.value) || '';
+            const mdl = message && message.model ? message.model : currentReplyModel || (sessionModelSelect && sessionModelSelect.value) || '';
+            if (pv) { try { await sendNonStreamForProvider(pv, mdl); } catch(_){} }
           } catch (_) {}
           sendResponse({ success: true });
           break;
@@ -4338,6 +4337,53 @@ class ADHDHighlighter {
       chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
+    };
+
+    const sendNonStreamForProvider = async (prov, model) => {
+      try {
+        const subset = chatMessages.slice();
+        const baseRes = await new Promise(r => chrome.storage.local.get(['aiBaseUrls','aiKeys'], r));
+        const base = (baseRes.aiBaseUrls && baseRes.aiBaseUrls[prov]) || (PROVIDERS_CONFIG[prov]?.baseUrl || '');
+        const key = (baseRes.aiKeys && baseRes.aiKeys[prov]) || '';
+        let url = base;
+        let headers = { 'Content-Type': 'application/json' };
+        let body = null;
+        if (prov === 'anthropic') {
+          headers['x-api-key'] = key;
+          headers['anthropic-version'] = '2023-06-01';
+          body = JSON.stringify({ model, max_tokens: 1024, messages: toAnthropicStyle(subset) });
+        } else if (prov === 'gemini') {
+          url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+          body = JSON.stringify({ contents: toGeminiStyle(subset) });
+        } else {
+          headers['Authorization'] = 'Bearer ' + key;
+          body = JSON.stringify({ model, messages: toOpenAIStyle(subset) });
+        }
+        const resp = await fetch(url, { method: 'POST', headers, body });
+        if (!resp.ok) {
+          let txt = '';
+          try { txt = await resp.text(); } catch(_){}
+          const aIndex = chatMessages.length;
+          chatMessages.push({ role: 'assistant', content: txt || String(resp.status), provider: prov, model });
+          appendMessage('assistant', txt || String(resp.status), { highlight: true, msgIndex: aIndex });
+          try { await saveConversationSnapshot(); } catch(_){}
+          return;
+        }
+        let text = '';
+        try {
+          const j = await resp.json();
+          text = (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || j.output_text || j.content || '';
+        } catch(_){}
+        const aIndex = chatMessages.length;
+        chatMessages.push({ role: 'assistant', content: text, provider: prov, model });
+        appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
+        try { await saveConversationSnapshot(); } catch(_){}
+      } catch (e) {
+        const aIndex = chatMessages.length;
+        chatMessages.push({ role: 'assistant', content: String(e), provider: prov, model });
+        appendMessage('assistant', String(e), { highlight: true, msgIndex: aIndex });
+        try { await saveConversationSnapshot(); } catch(_){}
+      }
     };
 
     const getStoredSegmentsForPage = async () => {

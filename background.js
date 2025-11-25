@@ -596,7 +596,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           setTimeout(()=>{ t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); }, delay);
           return;
         }
-        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', provider: prov, model: t.model, error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
       }
       function dispatch(prov){
         const s = st(prov);
