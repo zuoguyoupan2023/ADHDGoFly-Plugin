@@ -2367,6 +2367,7 @@ class ADHDHighlighter {
       .agf-carry-top{margin-left:auto}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
+      .agf-toast-close{position:absolute;top:4px;right:6px;background:transparent;border:none;color:#fff;cursor:pointer;font-size:12px}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2701,7 +2702,10 @@ class ADHDHighlighter {
     const presetResetBtn = document.getElementById('agfPresetResetBtn');
     const toastEl = document.getElementById('agfToast');
     let toastTimer = null;
-    const showToast = (msg) => { if (!toastEl) return; toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
+    let toastSticky = false;
+    const hideToast = () => { if (!toastEl) return; toastSticky = false; toastEl.style.display = 'none'; toastEl.innerHTML = ''; };
+    const showToast = (msg) => { if (!toastEl) return; if (toastSticky) { toastEl.querySelector('.agf-toast-msg') ? (toastEl.querySelector('.agf-toast-msg').textContent = msg) : (toastEl.textContent = msg); toastEl.style.display = 'block'; return; } toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
+    const showStickyToast = (msg) => { if (!toastEl) return; toastSticky = true; if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } toastEl.innerHTML = `<span class="agf-toast-msg"></span><button class="agf-toast-close">❌</button>`; const msgEl = toastEl.querySelector('.agf-toast-msg'); if (msgEl) msgEl.textContent = msg; toastEl.style.display = 'block'; const btn = toastEl.querySelector('.agf-toast-close'); if (btn) { btn.addEventListener('click', hideToast); } };
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
@@ -2800,7 +2804,7 @@ class ADHDHighlighter {
       }
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
-    if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
+    if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
     let recordsScope = 'all';
@@ -4123,7 +4127,7 @@ class ADHDHighlighter {
         key = keys[prov] || '';
         if (res.aiBaseUrl) base = res.aiBaseUrl;
       } catch (_) {}
-      if (!key || String(key).trim().length === 0) { showToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
+      if (!key || String(key).trim().length === 0) { showStickyToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
       let url = base;
       let headers = { 'Content-Type': 'application/json' };
       let body = null;
