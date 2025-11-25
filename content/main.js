@@ -2988,6 +2988,7 @@ class ADHDHighlighter {
       renderButtons(providerList, providerKeys, activeProv, (val, btn) => {
         Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         currentProvider = val;
         fillModels(val);
         const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
@@ -3287,6 +3288,7 @@ class ADHDHighlighter {
       };
       if (selectedProv) fillModelsForProv(selectedProv);
       sessionProviderSelect.addEventListener('change', () => {
+        try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         const prov = sessionProviderSelect.value;
         fillModelsForProv(prov);
       });
