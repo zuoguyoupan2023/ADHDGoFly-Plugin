@@ -564,6 +564,9 @@ class PopupController {
         
         // 立即更新主页词典标签显示
         this.updateDictTags();
+
+        // 勾选变更后立即保存并通知内容脚本
+        this.saveDictSettings();
       });
     });
     
