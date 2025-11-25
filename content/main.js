@@ -706,6 +706,20 @@ class ADHDHighlighter {
           if (this.__onAiStreamDone) this.__onAiStreamDone();
           sendResponse({ success: true });
           break;
+        case 'aiChatStreamError':
+          try {
+            const err = (message && typeof message.error === 'string' && message.error) ? message.error : '请求失败';
+            showStickyToast(err);
+            const aIndex = chatMessages.length;
+            chatMessages.push({ role: 'assistant', content: err });
+            appendMessage('assistant', err, { highlight: true, msgIndex: aIndex });
+            try { await saveConversationSnapshot(); } catch (_) {}
+            streamingText = '';
+            streamingBubble = null;
+            streamingContentEl = null;
+          } catch (_) {}
+          sendResponse({ success: true });
+          break;
           
         case 'testDictionaryLoading':
           const testResult = await this.testDictionaryLoading();
@@ -4156,7 +4170,32 @@ class ADHDHighlighter {
       let text = '';
       try {
         const respMsg = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url, method: 'POST', headers, body, timeout: 45000 }, resolve));
+        const status = respMsg && typeof respMsg.status === 'number' ? respMsg.status : 0;
+        const ok = !!(respMsg && respMsg.success && status >= 200 && status < 300);
         const data = respMsg && respMsg.data ? respMsg.data : null;
+        if (!ok) {
+          let msg = '请求失败';
+          if (status === 401 || status === 403) msg = 'API Key 无效或不可用';
+          else if (status === 429) msg = '已超出频率限制，请稍后再试';
+          else if (status >= 500 && status < 600) msg = '服务端异常，请稍后再试';
+          else if (!respMsg || !respMsg.success) msg = '网络错误或超时';
+          let extra = '';
+          try {
+            if (data && typeof data === 'object') {
+              const e1 = data.error && (data.error.message || data.error);
+              if (e1) extra = String(e1);
+            } else if (typeof data === 'string') {
+              extra = data;
+            }
+          } catch(_){}
+          if (extra) msg = msg + '：' + String(extra).slice(0, 200);
+          showStickyToast(msg);
+          const aIndex = chatMessages.length;
+          chatMessages.push({ role: 'assistant', content: msg });
+          appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
+          try { await saveConversationSnapshot(); } catch (_) {}
+          return;
+        }
         if (prov === 'anthropic') {
           const c = data && data.content && data.content[0] && (data.content[0].text || (data.content[0].type === 'text' ? data.content[0].text : ''));
           text = c || '';
