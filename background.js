@@ -469,6 +469,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'hideReviewLightTower') {
       hideReviewLightTower();
         sendResponse({ success: true });
+    } else if (request.action === 'collectAndStorePageSegments') {
+    (async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs && tabs[0];
+        if (!tab || !tab.id) { sendResponse({ success: false, error: 'no_active_tab' }); return; }
+        const resp = await chrome.tabs.sendMessage(tab.id, { action: 'collectAndStorePageSegments' });
+        sendResponse(resp || { success: true });
+      } catch (error) {
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
     } else if (request.action === 'aiChatRequest') {
     (async () => {
       try {
@@ -495,12 +508,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
     return true;
   } else if (request.action === 'aiChatStream') {
-    (async () => {
-      try {
-        const tabId = sender && sender.tab && sender.tab.id;
-        const prov = request.provider;
-        const model = request.model;
-        const msgs = request.messages || [];
+    (function(){
+      function g(){ return { deepseek: { perMinute: 10, concurrency: 1 } }; }
+      const S = '__aiProviderState';
+      if (!self[S]) self[S] = {};
+      function st(p){ if (!self[S][p]) { const d = g()[p] || { perMinute: 5, concurrency: 1 }; self[S][p] = { queue: [], running: 0, used: 0, resetAt: Date.now()+60000, perMinute: d.perMinute, concurrency: d.concurrency }; } return self[S][p]; }
+      async function run(t){
+        const tabId = t.tabId;
+        const prov = t.prov;
+        const model = t.model;
+        const msgs = t.msgs || [];
         let base = '';
         let key = '';
         try {
@@ -512,11 +529,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const url = base || (prov === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : '');
         const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
         const body = JSON.stringify({ model, messages: msgs, stream: true });
-        const resp = await fetch(url, { method: 'POST', headers, body });
+        let resp;
+        try { resp = await fetch(url, { method: 'POST', headers, body }); } catch (e) { return handleErr(t, { network: true, error: e }); }
+        if (!resp.ok) {
+          let text = '';
+          try { text = await resp.text(); } catch(_){}
+          return handleErr(t, { status: resp.status, body: text });
+        }
         const reader = resp.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' });
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' }); } catch(_){ }
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -537,21 +560,420 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             } catch (e) {
               delta = payload;
             }
-            if (delta && tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta });
+            if (delta && tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta }); } catch(_){ }
           }
         }
-        if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' });
-        sendResponse({ success: true, started: true });
-      } catch (error) {
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' }); } catch(_){ }
+      }
+      function handleErr(t, info){
+        const tabId = t.tabId;
+        const prov = t.prov;
+        const s = st(prov);
+        const rc = t.retryCount || 0;
+        const mr = t.maxRetries || 3;
+        const status = info && info.status ? info.status : 0;
+        const is429 = status === 429;
+        const is5xx = status >= 500 && status < 600;
+        const isNet = !!info && !!info.network;
+        const can = is429 || is5xx || isNet;
+        if (can && rc < mr) {
+          const delay = is429 ? 60000 : Math.min(15000, Math.pow(2, rc) * 1000);
+          setTimeout(()=>{ t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); }, delay);
+          return;
+        }
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
+      }
+      function dispatch(prov){
+        const s = st(prov);
+        const now = Date.now();
+        if (now >= s.resetAt) { s.resetAt = now + 60000; s.used = 0; }
+        while (s.running < s.concurrency && s.queue.length > 0 && s.used < s.perMinute) {
+          const t = s.queue.shift();
+          s.running += 1;
+          s.used += 1;
+          run(t).then(()=>{}).catch(e=>{ handleErr(t,{ error:e }); }).finally(()=>{ s.running -= 1; dispatch(prov); });
+        }
+        if (s.queue.length > 0 && s.used >= s.perMinute) {
+          const d = Math.max(0, s.resetAt - now) + 10;
+          setTimeout(()=>dispatch(prov), d);
+        }
+      }
+      const tabId = sender && sender.tab && sender.tab.id;
+      const prov = request.provider;
+      const model = request.model;
+      const msgs = request.messages || [];
+      const s = st(prov);
+      s.queue.push({ tabId, prov, model, msgs, retryCount: 0, maxRetries: 3 });
+      dispatch(prov);
+      sendResponse({ success: true, queued: true });
+    })();
+    return true;
+  } else if (request.action === 'agfConvPut') {
+    const obj = request.data || {};
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readwrite');
+        const st = tx.objectStore('conversations');
+        const reqPut = st.put(obj);
+        reqPut.onsuccess = () => sendResponse({ success: true });
+        reqPut.onerror = () => sendResponse({ success: false, error: String(reqPut.error||'put_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvGet') {
+    const id = request.id;
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readonly');
+        const st = tx.objectStore('conversations');
+        const reqGet = st.get(id);
+        reqGet.onsuccess = () => sendResponse({ success: true, item: reqGet.result || null });
+        reqGet.onerror = () => sendResponse({ success: false, error: String(reqGet.error||'get_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvList') {
+    const limit = Math.max(1, Math.min(1000, Number(request.limit||500)));
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readonly');
+        const st = tx.objectStore('conversations');
+        const idx = st.index('createdAt');
+        const items = [];
+        const reqCur = idx.openCursor(null, 'prev');
+        reqCur.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) { sendResponse({ success: true, items }); return; }
+          items.push(cursor.value);
+          if (items.length >= limit) { sendResponse({ success: true, items }); return; }
+          cursor.continue();
+        };
+        reqCur.onerror = () => sendResponse({ success: false, error: String(reqCur.error||'cursor_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfConvDelete') {
+    const id = request.id;
+    const reqOpen = indexedDB.open('agf_ai_db_unified', 2);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('conversations')) {
+        const store = db.createObjectStore('conversations', { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt');
+        store.createIndex('updatedAt', 'updatedAt');
+        store.createIndex('domain', 'domain');
+      } else {
+        const store = reqOpen.transaction.objectStore('conversations');
+        if (!store.indexNames.contains('domain')) store.createIndex('domain', 'domain');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('conversations', 'readwrite');
+        const st = tx.objectStore('conversations');
+        const reqDel = st.delete(id);
+        reqDel.onsuccess = () => sendResponse({ success: true });
+        reqDel.onerror = () => sendResponse({ success: false, error: String(reqDel.error||'delete_error') });
+      } catch (e) { sendResponse({ success: false, error: String(e) }); }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error||'open_error') });
+    return true;
+  } else if (request.action === 'agfTestSaveText') {
+    const data = request.data || {};
+    const reqOpen = indexedDB.open('agf_test_text_db', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('page_texts')) {
+        const store = db.createObjectStore('page_texts', { keyPath: 'id' });
+        store.createIndex('canonicalUrl', 'canonicalUrl');
+        store.createIndex('pageUrl', 'pageUrl');
+        store.createIndex('domain', 'domain');
+        store.createIndex('timestamp', 'timestamp');
+        store.createIndex('textHash', 'textHash');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const id = (data.canonicalUrl || data.pageUrl || '') + '|' + (data.textHash || '');
+        const rec = {
+          id,
+          pageUrl: data.pageUrl || '',
+          canonicalUrl: data.canonicalUrl || data.pageUrl || '',
+          domain: data.domain || '',
+          title: data.title || '',
+          timestamp: data.timestamp || Date.now(),
+          textHash: data.textHash || '',
+          textLength: data.textLength || (data.text ? String(data.text).length : 0),
+          text: data.text || ''
+        };
+        const tx = db.transaction('page_texts', 'readwrite');
+        const st = tx.objectStore('page_texts');
+        const rq = st.put(rec);
+        rq.onsuccess = () => sendResponse({ success: true });
+        rq.onerror = () => sendResponse({ success: false, error: String(rq.error || 'put_error') });
+      } catch (e) {
+        sendResponse({ success: false, error: String(e) });
+      }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error || 'open_error') });
+    return true;
+  } else if (request.action === 'agfTestGetTextForPage') {
+    const pageUrl = request.pageUrl || '';
+    const canonicalUrl = request.canonicalUrl || pageUrl;
+    const reqOpen = indexedDB.open('agf_test_text_db', 1);
+    reqOpen.onupgradeneeded = () => {
+      const db = reqOpen.result;
+      if (!db.objectStoreNames.contains('page_texts')) {
+        const store = db.createObjectStore('page_texts', { keyPath: 'id' });
+        store.createIndex('canonicalUrl', 'canonicalUrl');
+        store.createIndex('pageUrl', 'pageUrl');
+        store.createIndex('domain', 'domain');
+        store.createIndex('timestamp', 'timestamp');
+        store.createIndex('textHash', 'textHash');
+      }
+    };
+    reqOpen.onsuccess = () => {
+      try {
+        const db = reqOpen.result;
+        const tx = db.transaction('page_texts', 'readonly');
+        const st = tx.objectStore('page_texts');
+        const idx = st.index('canonicalUrl');
+        const reqAll = idx.getAll(canonicalUrl);
+        reqAll.onsuccess = () => {
+          const items = Array.isArray(reqAll.result) ? reqAll.result : [];
+          let chosen = null;
+          if (items.length) {
+            chosen = items.sort((a,b) => (b.timestamp||0) - (a.timestamp||0))[0];
+          } else {
+            const idx2 = st.index('pageUrl');
+            const reqAll2 = idx2.getAll(pageUrl);
+            reqAll2.onsuccess = () => {
+              const items2 = Array.isArray(reqAll2.result) ? reqAll2.result : [];
+              let c = null;
+              if (items2.length) c = items2.sort((a,b) => (b.timestamp||0) - (a.timestamp||0))[0];
+              sendResponse({ success: true, text: c && c.text || '' });
+            };
+            reqAll2.onerror = () => sendResponse({ success: false, error: String(reqAll2.error || 'getall_error') });
+            return;
+          }
+          sendResponse({ success: true, text: chosen && chosen.text || '' });
+        };
+        reqAll.onerror = () => sendResponse({ success: false, error: String(reqAll.error || 'getall_error') });
+      } catch (e) {
+        sendResponse({ success: false, error: String(e) });
+      }
+    };
+    reqOpen.onerror = () => sendResponse({ success: false, error: String(reqOpen.error || 'open_error') });
+    return true;
+  }
+});
+
+let __pdfOffscreen = null;
+let __pdfOffscreenReady = false;
+let __pdfPendingQueue = [];
+const __pdfTriggered = new Set();
+const DEFAULT_PDF_BLOCKED_DOMAINS = [
+  'qidian.com','youdubook.com','webnovel.com','jjwxc.net','m.jjwxc.net','zongheng.com','17k.com','yunqi.qq.com','hongxiu.com','xxsy.net','faloo.com','ciweimao.com','weread.qq.com','zhangyue.com','shuqi.com','migu.cn','read.douban.com','read.amazon.com','kindlecloudreader.com'
+];
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.type === 'OFFSCREEN_PDF_READY') {
+    __pdfOffscreenReady = true;
+    __pdfPendingQueue.splice(0).forEach(m => { try { chrome.runtime.sendMessage(m); } catch (_) {} });
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_RESULT') {
+    const tabId = msg.tabId;
+    const sections = msg.sections || [];
+    if (tabId) {
+      try { chrome.tabs.sendMessage(tabId, { action: 'storeSegments', sections }); } catch (_) {}
+    }
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_ERROR') {
+    const tabId = msg.tabId;
+    if (tabId) {
+      try { chrome.tabs.sendMessage(tabId, { action: 'notifyOffscreenPdfError', error: msg.error || 'unknown' }); } catch (_) {}
+    }
+    sendResponse && sendResponse({ ok: false, error: msg.error || 'unknown' });
+    return true;
+  } else if (msg && msg.type === 'OFFSCREEN_PDF_LIB_STATUS') {
+    const tabsQuery = { active: true, currentWindow: true };
+    chrome.tabs.query(tabsQuery).then(tabs => {
+      const tab = tabs && tabs[0];
+      if (tab && tab.id) {
+        try { chrome.tabs.sendMessage(tab.id, { action: 'notifyOffscreenPdfLibStatus', present: !!msg.present }); } catch (_) {}
+      }
+    }).catch(()=>{});
+    sendResponse && sendResponse({ ok: true });
+    return true;
+  } else if (msg && msg.action === 'collectPdfFromUrl') {
+    (async () => {
+      try {
+        const tabId = sender && sender.tab && sender.tab.id;
+        if (!__pdfOffscreen) {
+          try {
+            await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
+            __pdfOffscreen = true;
+          } catch (e) {
+            sendResponse({ success: false, error: e && e.message || 'offscreen_failed' });
+            return;
+          }
+        }
+        let sent = false;
         try {
-          const tabId = sender && sender.tab && sender.tab.id;
-          if (tabId) chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: error.message });
+          const resp = await fetch(msg.url);
+          if (resp && resp.ok) {
+            const buf = await resp.arrayBuffer();
+            if (buf && buf.byteLength > 0) {
+              const bytes = Array.from(new Uint8Array(buf));
+              const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', bytes, tabId };
+              if (__pdfOffscreenReady) {
+                await chrome.runtime.sendMessage(mbuf);
+              } else {
+                __pdfPendingQueue.push(mbuf);
+              }
+              sent = true;
+            }
+          }
         } catch (_) {}
-        sendResponse({ success: false, error: error.message });
+        if (!sent) {
+          const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url: msg.url, tabId };
+          if (__pdfOffscreenReady) {
+            try { await chrome.runtime.sendMessage(m); } catch (e) { sendResponse({ success: false, error: e && e.message || 'send_failed' }); return; }
+          } else {
+            __pdfPendingQueue.push(m);
+          }
+        }
+        sendResponse({ success: true });
+      } catch (error) {
+        sendResponse({ success: false, error: error && error.message || 'unknown' });
       }
     })();
     return true;
   }
+  else if (msg && msg.action === 'storeSegments') {
+    (async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs && tabs[0];
+        if (!tab || !tab.id) { sendResponse({ success: false, error: 'no_active_tab' }); return; }
+        const sections = Array.isArray(msg.sections) ? msg.sections : [];
+        await chrome.tabs.sendMessage(tab.id, { action: 'storeSegments', sections });
+        sendResponse({ success: true });
+      } catch (error) {
+        sendResponse({ success: false, error: error && error.message || 'unknown' });
+      }
+    })();
+    return true;
+  }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  try {
+    const url = changeInfo.url || tab.url || '';
+    const done = changeInfo.status === 'complete';
+    if (!url) return;
+    const isPdf = /\.pdf($|\?|#)/i.test(url) || /\/pdf\//i.test(url);
+    if (!isPdf) return;
+    const key = tabId + '|' + url;
+    if (__pdfTriggered.has(key)) return;
+    if (!done) return;
+    (async () => {
+      try {
+        let enabled = true;
+        let blocked = [];
+        try {
+          const settings = await chrome.storage.local.get(['pdfAutoCollectEnabled','pdfBlockedDomains']);
+          enabled = settings.pdfAutoCollectEnabled !== undefined ? !!settings.pdfAutoCollectEnabled : true;
+          const customBlocked = Array.isArray(settings.pdfBlockedDomains) ? settings.pdfBlockedDomains : [];
+          blocked = Array.from(new Set([ ...DEFAULT_PDF_BLOCKED_DOMAINS, ...customBlocked ]));
+        } catch (_) {}
+        try {
+          const host = new URL(url).hostname;
+          if (blocked.includes(host)) return;
+        } catch (_) {}
+        if (!enabled) return;
+        if (!__pdfOffscreen) {
+          await chrome.offscreen.createDocument({ url: chrome.runtime.getURL('offscreen/pdf-parser.html'), reasons: ['DOM_SCRAPING','BLOBS'], justification: 'Parse PDF text' });
+          __pdfOffscreen = true;
+        }
+        let sent = false;
+        try {
+          const resp = await fetch(url);
+          if (resp && resp.ok) {
+            const buf = await resp.arrayBuffer();
+            if (buf && buf.byteLength > 0) {
+              const bytes = Array.from(new Uint8Array(buf));
+              const mbuf = { type: 'OFFSCREEN_PDF_PARSE_BUFFER', bytes, tabId };
+              if (__pdfOffscreenReady) {
+                await chrome.runtime.sendMessage(mbuf);
+              } else {
+                __pdfPendingQueue.push(mbuf);
+              }
+              sent = true;
+            }
+          }
+        } catch (_) {}
+        if (!sent) {
+          const m = { type: 'OFFSCREEN_PDF_PARSE_URL', url, tabId };
+          if (__pdfOffscreenReady) {
+            await chrome.runtime.sendMessage(m);
+          } else {
+            __pdfPendingQueue.push(m);
+          }
+        }
+        __pdfTriggered.add(key);
+      } catch (e) {}
+    })();
+  } catch (_) {}
 });
 
 // ==================== 评价徽章管理 ====================
@@ -794,6 +1216,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // 📊 发送独立安装统计到新表
     console.log('📊 启动独立安装统计收集');
     await sendIndependentInstallationStats(details);
+
+    await chrome.storage.local.set({ enabled: true });
   }
   
   // 获取存储的数据

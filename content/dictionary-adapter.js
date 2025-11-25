@@ -9,8 +9,8 @@ class DictionaryAdapter {
         this.isLoaded = false;
         this.loadPromise = null;
         this.enabledLanguages = {
-            zh: true,
-            en: true,
+            zh: false,
+            en: false,
             fr: false,
             ru: false,
             es: false,
@@ -217,63 +217,43 @@ class DictionaryAdapter {
      * @returns {Object} 词典数据
      */
     getDictionary(language) {
-        // 检查缓存
         const cacheKey = `${language}_${this.cacheVersion}`;
         const cachedEntry = this.dictionaryCache.get(cacheKey);
-        
-        // 检查缓存是否存在且未过期
         if (cachedEntry) {
             const now = Date.now();
             if (now - cachedEntry.timestamp < this.cacheExpiry) {
                 return cachedEntry.data;
             } else {
-                // 缓存已过期，删除该条目
                 this.dictionaryCache.delete(cacheKey);
             }
         }
-        
-        console.log(`Getting dictionary for language: ${language}`);
-        
+
         let result = {};
-        
-        // 优先使用新的词典ID系统
-        if (this.newManager && Object.keys(this.enabledDictionaries).length > 0) {
-            const enabledDicts = this.newManager.getDictionariesByLanguage(language, false)
-                .filter(dict => this.enabledDictionaries[dict.id]);
-            
-            console.log(`Found ${enabledDicts.length} enabled dictionaries for ${language}:`, 
-                       enabledDicts.map(d => d.id));
-            
+        const selectedIds = Object.entries(this.enabledDictionaries)
+            .filter(([, v]) => !!v)
+            .map(([k]) => k);
+
+        if (this.newManager && selectedIds.length > 0) {
+            const enabledDicts = this.newManager
+                .getDictionariesByLanguage(language, false)
+                .filter(dict => selectedIds.includes(dict.id));
             if (enabledDicts.length > 0) {
-                // 按优先级排序（数字越小优先级越高）
                 enabledDicts.sort((a, b) => (a.priority || 999) - (b.priority || 999));
-                
-                // 合并多个词典
                 const mergedDict = {};
                 for (const dict of enabledDicts) {
                     const dictData = this.newManager.getDictionaryData(dict.id);
                     if (dictData) {
-                        // 高优先级词典的词条会覆盖低优先级的
                         Object.assign(mergedDict, dictData);
                     }
                 }
-                
-                console.log(`Merged dictionary size: ${Object.keys(mergedDict).length}`);
                 result = mergedDict;
             }
         }
-        
-        // 向后兼容：使用语言级别的设置
-        if (Object.keys(result).length === 0 && this.enabledLanguages[language]) {
-            result = this.legacyData[language] || {};
-        }
-        
-        // 缓存结果，包含时间戳
+
         this.dictionaryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
         return result;
     }
 
@@ -345,28 +325,7 @@ class DictionaryAdapter {
         this._updateLanguageStatusFromDictionaries();
     }
 
-    /**
-     * 更新启用的语言列表
-     * @param {Object} enabledLanguages 启用的语言设置
-     */
-    updateEnabledLanguages(enabledLanguages) {
-        console.log('Updating enabled languages:', enabledLanguages);
-        
-        // 检查是否有变化
-        const hasChanges = Object.keys(enabledLanguages).some(
-            lang => this.enabledLanguages[lang] !== enabledLanguages[lang]
-        );
-        
-        if (hasChanges) {
-            this.enabledLanguages = { ...enabledLanguages };
-            
-            // 清除缓存并更新版本号
-            this.invalidateCache();
-            
-            // 同步到注册表
-            this._syncEnabledLanguagesToRegistry(enabledLanguages);
-        }
-    }
+    // 注意：updateEnabledLanguages 已在上方定义（处理新/旧格式）。此处去重，防止被覆盖。
 
     /**
      * 清除词典缓存
@@ -505,7 +464,7 @@ class DictionaryAdapter {
      * 获取所有可用词典信息
      * @returns {Array} 词典信息列表
      */
-    getAvailableDictionaries() {
+  getAvailableDictionaries() {
         if (!this.newManager) {
             // 返回传统格式的词典信息
             return Object.keys(this.legacyData).map(lang => ({
@@ -514,10 +473,20 @@ class DictionaryAdapter {
                 enabled: this.enabledLanguages[lang] || false,
                 wordCount: Object.keys(this.legacyData[lang]).length
             }));
-        }
-        
-        return this.newManager.getAvailableDictionaries('all', false);
     }
+
+    return this.newManager.getAvailableDictionaries('all', false);
+  }
+
+  getEnabledDictionaryIds(language) {
+    if (!this.newManager) return [];
+    const ids = this.newManager
+      .getDictionariesByLanguage(language, false)
+      .filter(d => !!this.enabledDictionaries[d.id])
+      .map(d => d.id)
+      .sort();
+    return ids;
+  }
 
     /**
      * 重新加载词典

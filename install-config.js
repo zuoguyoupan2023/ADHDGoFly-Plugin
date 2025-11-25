@@ -4,7 +4,7 @@ window.ADHD_INSTALL_CONFIG = {
   "targetBrowser": "chrome",
   "version": "0.1.5",
   "buildTime": "2025-10-29T00:08:03.454Z",
-  "storeUrl": "https://feedback.adhdgofly.online/",
+  "storeUrl": "https://chromewebstore.google.com/detail/bdpadkojpehfdepjjadmpjeieiddeodl",
   "reviewAutoResetOnMajor": true,
   "reviewAutoClearReviewedOnMajor": true
 };

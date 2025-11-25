@@ -36,6 +36,10 @@
         overflow: hidden;
       }
 
+      .style-mode .main-content {
+        overflow: auto;
+      }
+
       /* 应用标题和状态区域 */
       .app-header {
         margin-bottom: 8px;
@@ -436,6 +440,18 @@
         width: 100%;
       }
 
+      .page.style-section {
+        display: block;
+        height: auto;
+        overflow-y: visible;
+        margin-bottom: 16px;
+      }
+
+      .style-mode .color-schemes,
+      .style-mode .text-controls {
+        overflow-y: visible;
+      }
+
 
 
       /* 确保所有页面内的直接子元素都有正确的宽度 */
@@ -545,6 +561,16 @@
       }
 
       .language-group.expanded .expand-icon {
+        transform: rotate(90deg);
+      }
+
+      .custom-dict-section .collapsible-content {
+        display: none;
+      }
+      .custom-dict-section.expanded .collapsible-content {
+        display: block;
+      }
+      .custom-dict-section.expanded .expand-icon {
         transform: rotate(90deg);
       }
 
@@ -3659,7 +3685,29 @@
               <h4 data-i18n="pages.settings.changelog.title">更新日志</h4>
             </div>
             <div class="section-content">
-              <div class="changelog">
+                <div class="changelog">
+                <div class="changelog-item">
+                  <div class="changelog-header" data-toggle="v016">
+                    <div class="changelog-version">
+                      <span class="version-tag">v0.1.6</span>
+                      <span class="version-date">2025-11-22</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                  </div>
+                  <div class="changelog-content" id="changelog-v016">
+                    <h5 data-i18n="pages.settings.changelog.v016.title">AI 面板与快捷操作</h5>
+                    <ul>
+                      <li data-i18n="pages.settings.changelog.v016.feature1">新增 AI 面板：可拖拽浮层，集成聊天与控制</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature2">尺寸控制：全/中/小，新增 X 一键关闭</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature3">快捷功能：总结、更多、全文入口</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature4">全文查看：支持网页/PDF 的结构化与补充文本</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature5">高亮开关：支持开启/关闭提升阅读性</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature6">设置管理：Provider/Model、API Key、Base URL、Temperature</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature7">解析与过滤：PDF 自动/手动；敏感过滤 开启/关闭；输入模式 常驻/手动</li>
+                      <li data-i18n="pages.settings.changelog.v016.feature8">个性化：颜色主题与 4 套预设、重置；折叠阈值/高度可配</li>
+                    </ul>
+                  </div>
+                </div>
                 <div class="changelog-item">
                   <div class="changelog-header" data-toggle="v015">
                     <div class="changelog-version">
@@ -3968,89 +4016,15 @@
 
     <!-- 右侧侧边栏 -->
     <div class="sidebar">
-      <button
-        class="sidebar-btn active"
-        id="home-btn"
-        title="主页"
-        data-i18n-title="sidebar.home"
-      >
-        <span>🏠</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="dict-btn"
-        title="词典"
-        data-i18n-title="sidebar.dict"
-      >
-        <span>📚</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="colors-btn"
-        title="颜色"
-        data-i18n-title="sidebar.colors"
-      >
-        <span>🎨</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="text-btn"
-        title="文本"
-        data-i18n-title="sidebar.text"
-      >
-        <span>文</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="ai-btn"
-        title="AI"
-        data-i18n-title="sidebar.ai"
-      >
-        <span>📊</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="chat-btn"
-        title="AI 对话"
-        data-i18n-title="sidebar.aiChat"
-      >
-        <span>🤖</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="faq-btn"
-        title="常见问题"
-        data-i18n-title="sidebar.faq"
-      >
-        <span>❓</span>
-      </button>
-
-      <button
-        class="sidebar-btn"
-        id="settings-btn"
-        title="设置"
-        data-section="settings"
-        data-i18n-title="sidebar.settings"
-      >
-        <span>⚙️</span>
-      </button>
-
-      <!-- 语言切换按钮 -->
+      <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home" data-action="page"><span>🏠</span></button>
+      <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict" data-action="page"><span>📚</span></button>
+      <button class="sidebar-btn" id="ai-btn" title="AI分析" data-i18n-title="sidebar.ai" data-action="page"><span>📊</span></button>
+      <button class="sidebar-btn" id="chat-btn" title="AI 对话" data-i18n-title="sidebar.aiChat" data-action="page"><span>🤖</span></button>
+      <button class="sidebar-btn" id="style-btn" title="样式" data-i18n-title="sidebar.style" data-action="page"><span>🖍️</span></button>
+      <button class="sidebar-btn" id="faq-btn" title="常见问题" data-i18n-title="sidebar.faq" data-action="page"><span>❓</span></button>
+      <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings" data-action="page"><span>⚙️</span></button>
       <div class="language-switcher">
-        <button
-          id="languageToggle"
-          class="sidebar-btn language-btn"
-          title="切换语言"
-          data-i18n-title="sidebar.language"
-        >
-          <span class="language-icon">🌐</span>
-        </button>
+        <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language"><span class="language-icon">🌐</span></button>
       </div>
     </div>
 

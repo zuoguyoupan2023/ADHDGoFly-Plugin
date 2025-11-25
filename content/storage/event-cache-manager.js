@@ -72,6 +72,7 @@ class EventCacheManager {
         url: url,
         language: language,
         data: this.serializeHighlightData(highlightData),
+        dictSignature: (highlightData && highlightData.dictSignature) ? highlightData.dictSignature : '',
         createdAt: Date.now(),
         size: JSON.stringify(this.serializeHighlightData(highlightData)).length
       };
@@ -152,6 +153,35 @@ class EventCacheManager {
     } catch (error) {
       console.warn('⚠️ 获取缓存数据失败:', error);
       return [];
+    }
+  }
+
+  async clearHighlightsByUrl(url) {
+    if (!this.cacheEnabled || !this.db) return 0;
+    try {
+      const transaction = this.db.transaction(['highlights'], 'readwrite');
+      const store = transaction.objectStore('highlights');
+      const index = store.index('url');
+      const range = IDBKeyRange.only(url);
+      let deleted = 0;
+      return new Promise((resolve, reject) => {
+        const request = index.openCursor(range);
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            cursor.delete();
+            deleted++;
+            cursor.continue();
+          } else {
+            console.log(`🧹 已清理事件缓存: ${url}, 删除 ${deleted} 条记录`);
+            resolve(deleted);
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.warn('按URL清理事件缓存失败:', error);
+      return 0;
     }
   }
 

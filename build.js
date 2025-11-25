@@ -128,8 +128,7 @@ const INSTALL_TYPES = {
 
 // 商店评价链接配置
 const STORE_URLS = {
-    // Chrome商店：上架后请将 CHROME_APP_ID 替换为实际的应用ID
-    [INSTALL_TYPES.CHROME_STORE]: process.env.CHROME_STORE_URL || 'https://chrome.google.com/webstore/detail/CHROME_APP_ID',
+    [INSTALL_TYPES.CHROME_STORE]: process.env.CHROME_STORE_URL || 'https://chromewebstore.google.com/detail/bdpadkojpehfdepjjadmpjeieiddeodl',
     // Edge商店：实际链接（包含中文字符）
     [INSTALL_TYPES.EDGE_STORE]: 'https://microsoftedge.microsoft.com/addons/detail/adhdgofly-%E7%82%B9%E4%BA%AE%E4%BD%A0%E7%9A%84%E8%A7%86%E9%87%8E-edge/odleggjpbedagojaljdopcgolkcibljh',
     [INSTALL_TYPES.FIREFOX_STORE]: 'https://addons.mozilla.org/firefox/addon/adhdgofly/reviews/',
@@ -188,6 +187,9 @@ async function main() {
         process.exit(1);
     }
     
+    // 准备 pdfjs 资源（若已安装）
+    ensurePdfjsResources();
+
     // 读取基础manifest
     let baseManifest;
     try {
@@ -229,7 +231,8 @@ async function main() {
         'public/logo-300x300.png',
         'content/',
         'dictionaries/',
-        'locales/'
+        'locales/',
+        'offscreen/'
     ];
      
     // 检查必要文件
@@ -2036,4 +2039,30 @@ function createZipFile(zipName, includeFiles, browserName, tempManifestPath, tem
 
         archive.finalize();
     });
+}
+function ensurePdfjsResources() {
+    try {
+        const srcDir = path.join('node_modules', 'pdfjs-dist', 'build');
+        const destDir = path.join('offscreen', 'pdfjs');
+        if (!fs.existsSync(srcDir)) {
+            console.log('⚠️ 未找到 pdfjs-dist，请执行: npm i pdfjs-dist');
+            return;
+        }
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+        }
+        const files = ['pdf.min.js', 'pdf.worker.min.js'];
+        files.forEach(file => {
+            const src = path.join(srcDir, file);
+            const dest = path.join(destDir, file);
+            if (fs.existsSync(src)) {
+                fs.copyFileSync(src, dest);
+                console.log(`📦 已复制 ${file} 到 offscreen/pdfjs/`);
+            } else {
+                console.log(`⚠️ 缺少 ${file}，请安装并检查 pdfjs-dist`);
+            }
+        });
+    } catch (error) {
+        console.log('⚠️ 复制 pdfjs 资源失败:', error.message);
+    }
 }

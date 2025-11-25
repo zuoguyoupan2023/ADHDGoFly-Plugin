@@ -108,8 +108,13 @@ class QuickHighlighter {
     
     // 检查存储的状态和设置
     chrome.storage.local.get(['enabled', 'highlightingToggles'], (result) => {
-      if (result.enabled) {
+      const unset = typeof result.enabled === 'undefined';
+      const shouldEnable = unset ? true : !!result.enabled;
+      if (shouldEnable) {
         this.enable();
+      }
+      if (unset) {
+        chrome.storage.local.set({ enabled: true });
       }
       if (result.highlightingToggles) {
         this.highlightingToggles = { ...this.highlightingToggles, ...result.highlightingToggles };

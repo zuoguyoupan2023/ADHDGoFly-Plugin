@@ -267,6 +267,9 @@ class NodeLevelCacheManager {
     }
     
 
+    if (renderingContext.dictSignature) {
+      cacheKey += `_dict_${renderingContext.dictSignature}`;
+    }
     
     return cacheKey;
   }

@@ -436,13 +436,17 @@ class PageProcessor extends EventTarget {
       const highlightElements = this.extractHighlightElements(segmentedHtml, language);
       
       // 创建事件数据
+      const dictIds = (this.dictionaryManager && typeof this.dictionaryManager.getEnabledDictionaryIds === 'function')
+        ? (this.dictionaryManager.getEnabledDictionaryIds(language) || [])
+        : [];
       const eventData = {
         language: language,
         originalText: textNode.textContent,
         segmentedHtml: segmentedHtml,
         elements: highlightElements,
         stats: stats,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        dictSignature: dictIds.join('|')
       };
       
       // 触发事件

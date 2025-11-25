@@ -583,7 +583,11 @@ class StreamingPageProcessor extends EventTarget {
       const language = this.languageDetector.detectLanguage(text);
       
       // 检查节点级缓存
-      const cachedResult = await this.nodeLevelCacheManager.getNodeCache(fingerprint, language, this.renderingContext);
+      const dictSig = (this.dictionaryManager && typeof this.dictionaryManager.getEnabledDictionaryIds === 'function')
+        ? (this.dictionaryManager.getEnabledDictionaryIds(language) || []).join('|')
+        : '';
+      const ctx = { ...this.renderingContext, dictSignature: dictSig };
+      const cachedResult = await this.nodeLevelCacheManager.getNodeCache(fingerprint, language, ctx);
       
       let segmentedHtml;
       let fromCache = false;
@@ -618,7 +622,11 @@ class StreamingPageProcessor extends EventTarget {
           };
           
           try {
-            await this.nodeLevelCacheManager.storeNodeCache(fingerprint, language, cacheData, this.renderingContext);
+            const dictSig2 = (this.dictionaryManager && typeof this.dictionaryManager.getEnabledDictionaryIds === 'function')
+              ? (this.dictionaryManager.getEnabledDictionaryIds(language) || []).join('|')
+              : '';
+            const ctx2 = { ...this.renderingContext, dictSignature: dictSig2 };
+            await this.nodeLevelCacheManager.storeNodeCache(fingerprint, language, cacheData, ctx2);
             this.stats.cacheStores++;
           } catch (cacheError) {
             this.stats.cacheErrors++;
