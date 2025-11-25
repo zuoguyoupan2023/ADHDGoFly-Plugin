@@ -2373,13 +2373,13 @@ class ADHDHighlighter {
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-status-fixed{display:none}
-      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:none}
-      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%}
-      .agf-fixed-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
-      .agf-carry-top{margin-left:auto}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%;box-sizing:border-box}
+      .agf-fixed-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .agf-carry-top{margin-left:auto;display:inline-flex;align-items:center;gap:4px}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-toast-close{position:absolute;top:4px;right:6px;background:transparent;border:none;color:#fff;cursor:pointer;font-size:12px}
@@ -2432,7 +2432,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
+          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
