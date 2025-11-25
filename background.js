@@ -536,16 +536,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             case 'siliconflow': return 'https://api.siliconflow.cn/v1/chat/completions';
             case 'qwen': return 'https://dashscope.aliyuncs.com/api/v1/chat/completions';
             case 'chatglm': return 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-            case 'minimax': return 'https://api.minimaxi.com/v1/chat/completions';
+            case 'minimax': return 'https://api.minimax.io/v1/chat/completions';
             case 'grok': return 'https://api.x.ai/v1/chat/completions';
             default: return '';
           }
         }
         const url = base || fallbackBase(prov);
         const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
-        const bodyObj = { model, messages: msgs, stream: true };
-        if (prov === 'minimax') bodyObj.reasoning_split = true;
-        const body = JSON.stringify(bodyObj);
+        const body = JSON.stringify({ model, messages: msgs, stream: true });
         let resp;
         try { resp = await fetch(url, { method: 'POST', headers, body }); } catch (e) { return handleErr(t, { network: true, error: e }); }
         if (!resp.ok) {
@@ -556,7 +554,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const reader = resp.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let finalMsg = null;
         if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamStarted' }); } catch(_){ }
         while (true) {
           const { value, done } = await reader.read();
@@ -575,14 +572,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               delta = (j && j.choices && j.choices[0] && (j.choices[0].delta && j.choices[0].delta.content)) ||
                       (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) ||
                       j.output_text || j.content || '';
-              if (!finalMsg && j && j.choices && j.choices[0] && j.choices[0].message) finalMsg = j.choices[0].message;
             } catch (e) {
               delta = payload;
             }
             if (delta && tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDelta', delta }); } catch(_){ }
           }
         }
-        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone', message: finalMsg }); } catch(_){ }
+        if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamDone' }); } catch(_){ }
       }
       function handleErr(t, info){
         const tabId = t.tabId;

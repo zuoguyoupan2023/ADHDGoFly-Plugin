@@ -703,7 +703,7 @@ class ADHDHighlighter {
           sendResponse({ success: true });
           break;
         case 'aiChatStreamDone':
-          if (this.__onAiStreamDone) this.__onAiStreamDone(message && message.message);
+          if (this.__onAiStreamDone) this.__onAiStreamDone();
           sendResponse({ success: true });
           break;
         case 'aiChatStreamError':
@@ -2931,7 +2931,7 @@ class ADHDHighlighter {
         models: ['glm-4.6', 'glm-4.5']
       },
       minimax: {
-        baseUrl: 'https://api.minimaxi.com/v1/chat/completions',
+        baseUrl: 'https://api.minimax.io/v1/chat/completions',
         models: ['MiniMax-M2', 'MiniMax-M2-Stable']
       },
       gemini: {
@@ -4180,7 +4180,7 @@ class ADHDHighlighter {
       try { rebuildConvIndex(); } catch (_) {}
     };
 
-    const toOpenAIStyle = (arr) => (arr || chatMessages).map(m => { const o = { role: m.role, content: m.content }; try { if (m && m.rawMessage && m.rawMessage.tool_calls) o.tool_calls = m.rawMessage.tool_calls; } catch(_){} return o; });
+    const toOpenAIStyle = (arr) => (arr || chatMessages).map(m => ({ role: m.role, content: m.content }));
     const toAnthropicStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
     const toGeminiStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
     const buildCarryMessages = (x) => {
@@ -4288,9 +4288,7 @@ class ADHDHighlighter {
         } catch (_) {}
       } else {
         headers['Authorization'] = 'Bearer ' + key;
-        const obj = { model, messages: toOpenAIStyle(subset) };
-        if (prov === 'minimax') obj.reasoning_split = true;
-        body = JSON.stringify(obj);
+        body = JSON.stringify({ model, messages: toOpenAIStyle(subset) });
       }
       let text = '';
       try {
@@ -4331,21 +4329,13 @@ class ADHDHighlighter {
         } else {
           const ch = data && data.choices && data.choices[0];
           text = (ch && ch.message && ch.message.content) || '';
-          var rawMsg = ch && ch.message || null;
-          var rz = '';
-          try {
-            if (rawMsg && rawMsg.reasoning_details) {
-              const rd = rawMsg.reasoning_details;
-              if (Array.isArray(rd)) rz = rd.map(x => (typeof x === 'string' ? x : ((x && x.text) || ''))).join('\n'); else if (rd && rd.text) rz = rd.text || '';
-            }
-          } catch(_){}
         }
       } catch (_) {
         text = '';
       }
       if (!text) text = '...';
       const aIndex = chatMessages.length;
-      chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel, rawMessage: (typeof rawMsg !== 'undefined' ? rawMsg : null), reasoning: (typeof rz !== 'undefined' ? rz : '') });
+      chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
@@ -4710,18 +4700,10 @@ class ADHDHighlighter {
         if (chatList && autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
       }
     };
-    this.__onAiStreamDone = (finalMsg) => {
+    this.__onAiStreamDone = () => {
       if (streamingText) {
         const idx = chatMessages.length;
-        let rz = '';
-        try {
-          if (finalMsg && finalMsg.reasoning_details) {
-            const rd = finalMsg.reasoning_details;
-            if (Array.isArray(rd)) rz = rd.map(x => (typeof x === 'string' ? x : ((x && x.text) || ''))).join('\n');
-            else if (rd && rd.text) rz = rd.text || '';
-          }
-        } catch(_){}
-        chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel, rawMessage: finalMsg || null, reasoning: rz });
+        chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
       }
