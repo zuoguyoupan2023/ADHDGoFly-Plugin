@@ -2547,8 +2547,9 @@ class ADHDHighlighter {
                         <div id="agfPdfParseToggle" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.sensitiveFilter">敏感过滤</div>
+                        <div class="agf-label">隐私过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                        <span class="agf-hint">隐私是指pdf材料中的名字 邮箱 电话等信息</span>
                       </div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3127,7 +3128,12 @@ class ADHDHighlighter {
       try {
         const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled']);
         auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
-        sensitive = s.privacySensitiveFilterEnabled !== undefined ? !!s.privacySensitiveFilterEnabled : true;
+        if (s.privacySensitiveFilterEnabled === undefined) {
+          try { await chrome.storage.local.set({ privacySensitiveFilterEnabled: true }); } catch(_){ }
+          sensitive = true;
+        } else {
+          sensitive = !!s.privacySensitiveFilterEnabled;
+        }
       } catch (_) {}
       const autoItems = ['自动','手动'];
       const autoMap = { '自动':'自动', '手动':'手动' };
@@ -3136,6 +3142,7 @@ class ADHDHighlighter {
         btn.classList.add('active');
         const enabled = val === '自动';
         await chrome.storage.local.set({ pdfAutoCollectEnabled: enabled });
+        if (manualParseBtn) manualParseBtn.style.display = enabled ? 'none' : 'inline-block';
       }, autoMap);
       const sensItems = ['开启','关闭'];
       const sensMap = { '开启':'开启', '关闭':'关闭' };
@@ -3146,6 +3153,7 @@ class ADHDHighlighter {
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
       if (manualParseBtn) {
+        manualParseBtn.style.display = auto ? 'none' : 'inline-block';
         manualParseBtn.addEventListener('click', async () => {
           const url = window.location.href;
           try { await chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url }); } catch (_) {}
