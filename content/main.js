@@ -2984,7 +2984,7 @@ class ADHDHighlighter {
     let aiBaseUrlsState = {};
 
     const renderProviderButtons = (activeProv) => {
-      const providerKeys = Object.keys(PROVIDERS_CONFIG);
+      const providerKeys = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow');
       const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok', openrouter: 'openrouter', groq: 'groq', siliconflow: 'siliconflow' };
       const labelMap = {};
       providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
@@ -3006,10 +3006,15 @@ class ADHDHighlighter {
     const initFromStorage = () => {
       try {
         chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrls','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
-          currentProvider = res.aiProvider || 'deepseek';
+          let cp = res.aiProvider || 'deepseek';
           aiKeysState = res.aiKeys || {};
           aiBaseUrlsState = res.aiBaseUrls || {};
           if (!aiBaseUrlsState[currentProvider] && res.aiBaseUrl) { aiBaseUrlsState[currentProvider] = res.aiBaseUrl; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
+          if (cp === 'openrouter' || cp === 'siliconflow') {
+            const candidates = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && aiKeysState && aiKeysState[p]);
+            cp = candidates[0] || 'deepseek';
+          }
+          currentProvider = cp;
           renderProviderButtons(currentProvider);
           fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
           const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
@@ -3281,7 +3286,7 @@ class ADHDHighlighter {
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
-      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]);
+      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow');
       sessionProviderSelect.innerHTML = '';
       providers.forEach(p => {
         const opt = document.createElement('option');
