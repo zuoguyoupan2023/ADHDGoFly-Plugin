@@ -641,8 +641,7 @@ class PopupController {
       const section = document.getElementById('custom-dict-section');
       
       if (section) {
-        // 默认展开，除非明确设置为折叠
-        const shouldExpand = result.customDictExpanded !== false;
+        const shouldExpand = result.customDictExpanded === true;
         if (shouldExpand) {
           section.classList.add('expanded');
         }
