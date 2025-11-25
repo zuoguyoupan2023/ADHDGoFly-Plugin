@@ -248,8 +248,6 @@ class DictionaryAdapter {
                 }
                 result = mergedDict;
             }
-        } else if (selectedIds.length === 0 && this.enabledLanguages[language]) {
-            result = this.legacyData[language] || {};
         }
 
         this.dictionaryCache.set(cacheKey, {
@@ -327,28 +325,7 @@ class DictionaryAdapter {
         this._updateLanguageStatusFromDictionaries();
     }
 
-    /**
-     * 更新启用的语言列表
-     * @param {Object} enabledLanguages 启用的语言设置
-     */
-    updateEnabledLanguages(enabledLanguages) {
-        console.log('Updating enabled languages:', enabledLanguages);
-        
-        // 检查是否有变化
-        const hasChanges = Object.keys(enabledLanguages).some(
-            lang => this.enabledLanguages[lang] !== enabledLanguages[lang]
-        );
-        
-        if (hasChanges) {
-            this.enabledLanguages = { ...enabledLanguages };
-            
-            // 清除缓存并更新版本号
-            this.invalidateCache();
-            
-            // 同步到注册表
-            this._syncEnabledLanguagesToRegistry(enabledLanguages);
-        }
-    }
+    // 注意：updateEnabledLanguages 已在上方定义（处理新/旧格式）。此处去重，防止被覆盖。
 
     /**
      * 清除词典缓存
