@@ -2514,6 +2514,21 @@ class PopupController {
         await this.updateVersionUI();
       } catch (_) {}
     };
+
+    const collapsed = document.getElementById('updateCollapsed');
+    if (collapsed) {
+      collapsed.onclick = async () => {
+        try {
+          const latestTag = this.versionInfo && this.versionInfo.latestVersion;
+          const latestNormalized = latestTag ? String(latestTag).replace(/^v/, '') : null;
+          if (!latestNormalized) return;
+          await new Promise(resolve => {
+            try { chrome.storage.local.set({ updateCollapsed: false, updateCollapsedVersion: latestNormalized }, () => resolve(true)); } catch (_) { resolve(true); }
+          });
+          await this.updateVersionUI();
+        } catch (_) {}
+      };
+    }
   }
 
   /**
