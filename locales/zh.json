@@ -24,7 +24,9 @@
     "downloadLabel": "📥 下载：",
     "officialDownloadPage": "官方下载页面",
     "slowTip": "💡 商店安装用户请耐心等待，会在1-7天内自动更新",
-    "contactInfo": "📞 WeChat: zuoguyoupan2023"
+    "contactInfo": "📞 WeChat: zuoguyoupan2023",
+    "gotIt": "知道了",
+    "newUpdates": "有更新"
   },
   "buttons": {
     "toggle": "切换高亮",
