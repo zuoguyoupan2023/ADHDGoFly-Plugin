@@ -7,10 +7,21 @@
 
 class VocabularyCounter {
   constructor() {
-    this.storageKey = 'adhd_vocabulary_stats';
-    this.expirationTime = 15 * 60 * 1000; // 15分钟
+    this.storageKey = this.computeStorageKey();
+    this.expirationTime = 15 * 60 * 1000;
     this.stats = this.loadStats();
     this.initCleanupTimer();
+  }
+
+  computeStorageKey() {
+    try {
+      const link = document.querySelector('link[rel="canonical"]');
+      const canonicalUrl = (link && link.href) ? link.href : null;
+      const url = canonicalUrl || window.location.href;
+      return `adhd_vocabulary_stats:${url}`;
+    } catch (_) {
+      return `adhd_vocabulary_stats:${window.location.href}`;
+    }
   }
 
   /**

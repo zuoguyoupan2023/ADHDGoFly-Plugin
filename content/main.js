@@ -88,7 +88,7 @@
 
 const getUiTokens = () => {
   const t = (k) => { try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch (_) { return ''; } };
-  const base = ['ExamPage','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
+  const base = ['🏠ExamRoom','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
   const dyn = ['aiPanel.summary','aiPanel.more','aiPanel.send','aiPanel.collapse.expand','aiPanel.collapse.collapse','aiPanel.fullText','aiPanel.mode.persistent','aiPanel.mode.manual'];
   const out = base.slice();
   for (let i = 0; i < dyn.length; i++) { const v = t(dyn[i]); if (v) out.push(v); }
@@ -704,6 +704,20 @@ class ADHDHighlighter {
           break;
         case 'aiChatStreamDone':
           if (this.__onAiStreamDone) this.__onAiStreamDone();
+          sendResponse({ success: true });
+          break;
+        case 'aiChatStreamError':
+          try {
+            const err = (message && typeof message.error === 'string' && message.error) ? message.error : '请求失败';
+            showStickyToast(err);
+            const aIndex = chatMessages.length;
+            chatMessages.push({ role: 'assistant', content: err });
+            appendMessage('assistant', err, { highlight: true, msgIndex: aIndex });
+            try { await saveConversationSnapshot(); } catch (_) {}
+            streamingText = '';
+            streamingBubble = null;
+            streamingContentEl = null;
+          } catch (_) {}
           sendResponse({ success: true });
           break;
           
@@ -1627,6 +1641,9 @@ class ADHDHighlighter {
           }
         }
       }
+      if (vocabularyStats) {
+        await this.saveVocabularyStatsForPage(vocabularyStats);
+      }
       
       // 生成智能推荐 - 暂时禁用
       // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
@@ -2267,8 +2284,8 @@ class ADHDHighlighter {
       .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:calc(100vw/3);min-height:calc(100vh * 2/3)}
       .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
       .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:4px}
-      .agf-ai-controls{display:inline-flex;gap:6px}
-      .agf-ai-controls button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:14px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
+      .agf-ai-controls{display:inline-flex;gap:2px}
+      .agf-ai-controls button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333;font-size:14px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
       .agf-status{display:inline-flex;align-items:center;gap:4px;margin-left:4px}
       .agf-status-dot{width:10px;height:10px;border-radius:50%;border:1px solid #e0e0e0;background:#bbb}
       .agf-status-btn{height:20px;line-height:20px;padding:0 8px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
@@ -2276,13 +2293,13 @@ class ADHDHighlighter {
       .agf-refresh-btn{height:20px;width:20px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;color:#333;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
       .agf-refresh-btn.breathing{color:#b58900;border-color:#ffd24d;box-shadow:0 0 0 0 rgba(255,210,77,0.25);animation:agf-breath 2s ease-in-out infinite}
       @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
-      .agf-ai-tabs{display:inline-flex;gap:6px;margin-left:6px}
-      .agf-ai-tabs button{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-ai-body{flex:1;padding:0 12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
+      .agf-ai-tabs{display:inline-flex;gap:2px;margin-left:2px}
+      .agf-ai-tabs button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333}
+      .agf-ai-body{flex:1;padding:0;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
-      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff)}
-      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh}
+      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%}
+      .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh;width:100%}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
       .agf-chat-title{font-size:12px;color:#666}
       .agf-chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:0}
@@ -2302,7 +2319,8 @@ class ADHDHighlighter {
       .agf-bubble hr{border:none;border-top:1px solid #e0e0e0;margin:6px 0}
       .agf-chat-list .agf-msg:first-child .agf-bubble{border-top-left-radius:10px;border-top-right-radius:10px}
       .agf-chat-list .agf-msg:last-child .agf-bubble{border-bottom-left-radius:10px;border-bottom-right-radius:10px}
-      .agf-qa-label{display:inline-block;min-width:32px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:12px;color:#666;background:#f9f9f9}
+      .agf-qa-label{display:inline-flex;align-items:center;padding:0 4px;border:1px solid #e0e0e0;border-radius:6px;margin-right:4px;font-size:12px;color:#666;background:#f9f9f9}
+      .agf-model-badge{display:inline-block;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;margin-right:6px;font-size:11px;color:#666;background:#f9f9f9}
       .agf-collapse{margin-top:6px;border-top:1px solid #e0e0e0;padding-top:6px}
       .agf-collapse-content{max-height:none;overflow:auto}
       .agf-collapse-content.collapsed{max-height:var(--agf-collapse-height,160px);overflow:auto}
@@ -2313,6 +2331,7 @@ class ADHDHighlighter {
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
       .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
+      #agfCarryInput{height:20px;line-height:20px;padding:0 4px;border-radius:4px}
       .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:0}
       .agf-highlight-toggle{display:inline-flex;align-items:center;margin-left:0}
       .agf-mode-btn{height:24px;line-height:24px;padding:0 8px;border:1px solid #e0e0e0;border-radius:0;background:#fff;color:#333;font-size:12px}
@@ -2358,15 +2377,16 @@ class ADHDHighlighter {
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-status-fixed{display:none}
-      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:none}
-      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0 12px}
-      .agf-fixed-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
-      .agf-carry-top{margin-left:auto}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%;box-sizing:border-box}
+      .agf-fixed-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .agf-carry-top{margin-left:auto;display:inline-flex;align-items:center;gap:4px}
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
+      .agf-toast-close{position:absolute;top:4px;right:6px;background:transparent;border:none;color:#fff;cursor:pointer;font-size:12px}
       .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
@@ -2374,6 +2394,7 @@ class ADHDHighlighter {
       .agf-btn{height:28px;padding:0 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:13px;cursor:pointer}
       .agf-btn.active{background:#333;color:#fff;border-color:#333}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
+      #agfApiKeyInput{width:280px;max-width:40%;flex:0 0 auto}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       .agf-hint{font-size:12px;color:#666;margin-left:8px}
       .agf-fulltext-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:3;padding:12px;overflow:auto}
@@ -2399,8 +2420,8 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">ExamPage</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">🏠ExamRoom</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
+        <div style="display:flex;align-items:center;gap:4px;">
           <div class="agf-ai-tabs">
             <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabDoc">📃</button>
@@ -2415,7 +2436,7 @@ class ADHDHighlighter {
         </div>
         
       </div>
-      <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="number" min="0" value="2" style="width:28px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
+          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
@@ -2468,6 +2489,8 @@ class ADHDHighlighter {
                 <div class="agf-settings-sidebar">
                   <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
+                  <button id="agfSettingsTabParse" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.parse">解析与过滤</button>
+                  <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
                 <div class="agf-settings-content">
                   <div id="agfSettingsContentApi">
@@ -2497,31 +2520,6 @@ class ADHDHighlighter {
                         <div class="agf-label">temperature</div>
                         <input id="agfTempInput" class="agf-input" type="number" step="0.1" value="0.7" />
                       </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
-                        <div id="agfPdfParseToggle" class="agf-button-list"></div>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.sensitiveFilter">敏感过滤</div>
-                        <div id="agfSensitiveToggle" class="agf-button-list"></div>
-                      </div>
-                      <div class="agf-settings-row">
-                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.retentionDays">保留天数</div>
-                        <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
-                        <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
-                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHint">超出则折叠</span>
-                      </div>
-                      <div class="agf-settings-row">
-                        <div class="agf-label" data-i18n="aiPanel.settings.foldHeight">折叠高度</div>
-                        <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
-                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHeightHint">折叠区最大高度(px)</span>
-                      </div>
                     </div>
                   </div>
                   <div id="agfSettingsContentColors" style="display:none;">
@@ -2543,6 +2541,43 @@ class ADHDHighlighter {
                       </div>
                       <div class="agf-settings-row">
                         <button id="agfPresetResetBtn" class="agf-btn" data-i18n="aiPanel.presets.reset">重置默认</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agfSettingsContentParse" style="display:none;">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;" data-i18n="aiPanel.settings.parseTitle">解析与过滤</div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.pdfParse">PDF解析</div>
+                        <div id="agfPdfParseToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.privacyFilter">隐私过滤</div>
+                        <div id="agfSensitiveToggle" class="agf-button-list"></div>
+                      </div>
+                      <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
+                      <div class="agf-settings-row">
+                        <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.retentionDays">保留天数</div>
+                        <input id="agfRetentionDaysInput" class="agf-input" type="number" min="1" step="1" value="7" />
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agfSettingsContentDisplay" style="display:none;">
+                    <div class="agf-settings-group">
+                      <div style="font-size:13px;color:#333;font-weight:600;">显示与折叠</div>
+                      <div class="agf-hint">控制 AI 面板消息的显示与折叠：当单条回答超过“折叠阈值”（按字符数计算）时，会自动折叠，并显示“展开全文/收起”。“折叠高度”决定折叠状态下可见内容的最大高度（像素）。</div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldThreshold">折叠阈值</div>
+                        <input id="agfFoldThresholdInput" class="agf-input" type="number" min="0" step="100" value="2000" />
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHint">超出则折叠</span>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label" data-i18n="aiPanel.settings.foldHeight">折叠高度</div>
+                        <input id="agfFoldHeightInput" class="agf-input" type="number" min="80" step="20" value="160" />
+                        <span class="agf-hint" data-i18n="aiPanel.settings.foldHeightHint">折叠区最大高度(px)</span>
                       </div>
                     </div>
                   </div>
@@ -2620,6 +2655,7 @@ class ADHDHighlighter {
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
     const keySavedBtn = document.getElementById('agfKeySavedBtn');
+    if (keySavedBtn) keySavedBtn.style.display = 'none';
     const tempInput = document.getElementById('agfTempInput');
     const pdfToggle = document.getElementById('agfPdfParseToggle');
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
@@ -2686,8 +2722,14 @@ class ADHDHighlighter {
     const colorsApply = document.getElementById('agfColorsApply');
     const settingsTabApi = document.getElementById('agfSettingsTabApi');
     const settingsTabColors = document.getElementById('agfSettingsTabColors');
+    const settingsTabParse = document.getElementById('agfSettingsTabParse');
+    const settingsTabDisplay = document.getElementById('agfSettingsTabDisplay');
     const settingsContentApi = document.getElementById('agfSettingsContentApi');
     const settingsContentColors = document.getElementById('agfSettingsContentColors');
+    const settingsContentParse = document.getElementById('agfSettingsContentParse');
+    const settingsContentDisplay = document.getElementById('agfSettingsContentDisplay');
+    if (settingsTabDisplay) settingsTabDisplay.style.display = 'none';
+    if (settingsContentDisplay) settingsContentDisplay.style.display = 'none';
     const colorQBg2 = document.getElementById('agfColorQBg2');
     const colorABg2 = document.getElementById('agfColorABg2');
     const colorDisplayBg2 = document.getElementById('agfColorDisplayBg2');
@@ -2701,7 +2743,10 @@ class ADHDHighlighter {
     const presetResetBtn = document.getElementById('agfPresetResetBtn');
     const toastEl = document.getElementById('agfToast');
     let toastTimer = null;
-    const showToast = (msg) => { if (!toastEl) return; toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
+    let toastSticky = false;
+    const hideToast = () => { if (!toastEl) return; toastSticky = false; toastEl.style.display = 'none'; toastEl.innerHTML = ''; };
+    const showToast = (msg) => { if (!toastEl) return; if (toastSticky) { toastEl.querySelector('.agf-toast-msg') ? (toastEl.querySelector('.agf-toast-msg').textContent = msg) : (toastEl.textContent = msg); toastEl.style.display = 'block'; return; } toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
+    const showStickyToast = (msg) => { if (!toastEl) return; toastSticky = true; if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } toastEl.innerHTML = `<span class="agf-toast-msg"></span><button class="agf-toast-close">❌</button>`; const msgEl = toastEl.querySelector('.agf-toast-msg'); if (msgEl) msgEl.textContent = msg; toastEl.style.display = 'block'; const btn = toastEl.querySelector('.agf-toast-close'); if (btn) { btn.addEventListener('click', hideToast); } };
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
     if (fullBtn) fullBtn.addEventListener('click', () => this.maximizeAiSettingPanel());
     if (halfBtn) halfBtn.addEventListener('click', () => this.halfAiSettingPanel());
@@ -2800,7 +2845,7 @@ class ADHDHighlighter {
       }
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
-    if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); showSettings(); });
+    if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     showChat();
     let recordsScope = 'all';
@@ -2822,8 +2867,12 @@ class ADHDHighlighter {
     const setActiveSettingsTab = (which) => {
       if (settingsTabApi) settingsTabApi.classList.toggle('active', which === 'api');
       if (settingsTabColors) settingsTabColors.classList.toggle('active', which === 'colors');
+      if (settingsTabParse) settingsTabParse.classList.toggle('active', which === 'parse');
+      if (settingsTabDisplay) settingsTabDisplay.classList.toggle('active', which === 'display');
       if (settingsContentApi) settingsContentApi.style.display = which === 'api' ? 'block' : 'none';
       if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
+      if (settingsContentParse) settingsContentParse.style.display = which === 'parse' ? 'block' : 'none';
+      if (settingsContentDisplay) settingsContentDisplay.style.display = which === 'display' ? 'block' : 'none';
       if (which === 'colors') fillColorsInputs2();
     };
 
@@ -2936,36 +2985,48 @@ class ADHDHighlighter {
 
     let currentProvider = null;
     let aiKeysState = {};
+    let aiBaseUrlsState = {};
 
     const renderProviderButtons = (activeProv) => {
-      const providerKeys = Object.keys(PROVIDERS_CONFIG);
+      const providerKeys = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       const PROVIDER_LABELS = { deepseek: 'deepseek', moonshot: 'moonshot', openai: 'chatgpt', anthropic: 'claude', qwen: 'qwen', chatglm: 'chatglm', minimax: 'minimax', gemini: 'gemini', grok: 'grok', openrouter: 'openrouter', groq: 'groq', siliconflow: 'siliconflow' };
       const labelMap = {};
       providerKeys.forEach(k => { labelMap[k] = aiKeysState && aiKeysState[k] ? (PROVIDER_LABELS[k] + ' ●') : PROVIDER_LABELS[k]; });
       renderButtons(providerList, providerKeys, activeProv, (val, btn) => {
         Array.from(providerList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         currentProvider = val;
         fillModels(val);
-        const base = PROVIDERS_CONFIG[val]?.baseUrl || '';
+        const base = (aiBaseUrlsState && aiBaseUrlsState[val]) || (PROVIDERS_CONFIG[val]?.baseUrl || '');
         if (baseUrlInput) baseUrlInput.value = base;
-        save({ aiProvider: val, aiBaseUrl: base });
-        if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[val] ? 'inline-block' : 'none';
+        save({ aiProvider: val });
+        if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
+        if (keySavedBtn) keySavedBtn.style.display = 'none';
+        if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
       }, labelMap);
     };
 
     const initFromStorage = () => {
       try {
-        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
-          currentProvider = res.aiProvider || 'deepseek';
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrls','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
+          let cp = res.aiProvider || 'deepseek';
           aiKeysState = res.aiKeys || {};
+          aiBaseUrlsState = res.aiBaseUrls || {};
+          if (!aiBaseUrlsState[currentProvider] && res.aiBaseUrl) { aiBaseUrlsState[currentProvider] = res.aiBaseUrl; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
+          if (cp === 'openrouter' || cp === 'siliconflow' || cp === 'groq' || cp === 'minimax') {
+            const candidates = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax' && aiKeysState && aiKeysState[p]);
+            cp = candidates[0] || 'deepseek';
+          }
+          currentProvider = cp;
           renderProviderButtons(currentProvider);
           fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
-          const base = res.aiBaseUrl || PROVIDERS_CONFIG[currentProvider]?.baseUrl || '';
+          const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
           if (baseUrlInput) baseUrlInput.value = base;
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
           if (tempInput) tempInput.value = t;
-          if (keySavedBtn) keySavedBtn.style.display = aiKeysState && aiKeysState[currentProvider] ? 'inline-block' : 'none';
+          if (keySavedBtn) keySavedBtn.style.display = 'none';
+          if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
           overlay.style.setProperty('--agf-q-bg', c.qBg || defaults.qBg);
@@ -2984,7 +3045,14 @@ class ADHDHighlighter {
 
     if (baseUrlInput) {
       baseUrlInput.addEventListener('change', () => {
-        save({ aiBaseUrl: baseUrlInput.value });
+        try {
+          chrome.storage.local.get(['aiBaseUrls'], (res) => {
+            const m = res.aiBaseUrls || {};
+            if (currentProvider) m[currentProvider] = baseUrlInput.value || '';
+            aiBaseUrlsState = m;
+            chrome.storage.local.set({ aiBaseUrls: m });
+          });
+        } catch(_){}
       });
     }
 
@@ -3005,7 +3073,8 @@ class ADHDHighlighter {
               if (currentProvider) keys[currentProvider] = v;
               chrome.storage.local.set({ aiKeys: keys }, () => {
                 aiKeysState = keys;
-                if (keySavedBtn) keySavedBtn.style.display = 'inline-block';
+                if (keySavedBtn) { keySavedBtn.style.display = 'inline-block'; setTimeout(()=>{ try { keySavedBtn.style.display = 'none'; } catch(_){} }, 3000); }
+                if (apiKeyInput) apiKeyInput.placeholder = '••••••••••••••••••••••••••••••••';
                 if (apiKeyInput) apiKeyInput.value = '';
                 renderProviderButtons(currentProvider);
                 initComposerSelects();
@@ -3088,25 +3157,38 @@ class ADHDHighlighter {
       try {
         const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled']);
         auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
-        sensitive = s.privacySensitiveFilterEnabled !== undefined ? !!s.privacySensitiveFilterEnabled : true;
+        if (s.privacySensitiveFilterEnabled === undefined) {
+          try { await chrome.storage.local.set({ privacySensitiveFilterEnabled: true }); } catch(_){ }
+          sensitive = true;
+        } else {
+          sensitive = !!s.privacySensitiveFilterEnabled;
+        }
       } catch (_) {}
-      const autoItems = ['自动','手动'];
-      const autoMap = { '自动':'自动', '手动':'手动' };
-      renderButtons(pdfToggle, autoItems, auto ? '自动' : '手动', async (val, btn) => {
+      const autoItems = ['auto','manual'];
+      const autoMap = {
+        auto: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.settings.parse.auto') : '自动',
+        manual: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.settings.parse.manual') : '手动'
+      };
+      renderButtons(pdfToggle, autoItems, auto ? 'auto' : 'manual', async (val, btn) => {
         Array.from(pdfToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const enabled = val === '自动';
+        const enabled = val === 'auto';
         await chrome.storage.local.set({ pdfAutoCollectEnabled: enabled });
+        if (manualParseBtn) manualParseBtn.style.display = enabled ? 'none' : 'inline-block';
       }, autoMap);
-      const sensItems = ['开启','关闭'];
-      const sensMap = { '开启':'开启', '关闭':'关闭' };
-      renderButtons(sensitiveToggle, sensItems, sensitive ? '开启' : '关闭', async (val, btn) => {
+      const sensItems = ['on','off'];
+      const sensMap = {
+        on: (window.i18n && window.i18n.t) ? window.i18n.t('buttons.enable') : '开启',
+        off: (window.i18n && window.i18n.t) ? window.i18n.t('buttons.disable') : '关闭'
+      };
+      renderButtons(sensitiveToggle, sensItems, sensitive ? 'on' : 'off', async (val, btn) => {
         Array.from(sensitiveToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const on = val === '开启';
+        const on = val === 'on';
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
       if (manualParseBtn) {
+        manualParseBtn.style.display = auto ? 'none' : 'inline-block';
         manualParseBtn.addEventListener('click', async () => {
           const url = window.location.href;
           try { await chrome.runtime.sendMessage({ action: 'collectPdfFromUrl', url }); } catch (_) {}
@@ -3120,7 +3202,11 @@ class ADHDHighlighter {
     const initFoldSettings = async () => {
       try {
         const s = await chrome.storage.local.get(['foldThresholdChars','foldCollapsedMaxHeight']);
-        foldThresholdChars = typeof s.foldThresholdChars === 'number' ? s.foldThresholdChars : 2000;
+        foldThresholdChars = typeof s.foldThresholdChars === 'number' ? s.foldThresholdChars : 100000;
+        if (foldThresholdChars < 100000) {
+          foldThresholdChars = 100000;
+          try { await chrome.storage.local.set({ foldThresholdChars }); } catch(_){}
+        }
         foldCollapsedMaxHeight = typeof s.foldCollapsedMaxHeight === 'number' ? s.foldCollapsedMaxHeight : 160;
       } catch (_) {}
       if (foldThresholdInput) foldThresholdInput.value = foldThresholdChars;
@@ -3199,10 +3285,12 @@ class ADHDHighlighter {
 
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
     if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
+    if (settingsTabParse) settingsTabParse.addEventListener('click', () => setActiveSettingsTab('parse'));
+    if (settingsTabDisplay) settingsTabDisplay.addEventListener('click', () => setActiveSettingsTab('display'));
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
-      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]);
+      const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       sessionProviderSelect.innerHTML = '';
       providers.forEach(p => {
         const opt = document.createElement('option');
@@ -3225,6 +3313,7 @@ class ADHDHighlighter {
       };
       if (selectedProv) fillModelsForProv(selectedProv);
       sessionProviderSelect.addEventListener('change', () => {
+        try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         const prov = sessionProviderSelect.value;
         fillModelsForProv(prov);
       });
@@ -3259,6 +3348,8 @@ class ADHDHighlighter {
 
     let chatMessages = [];
     let currentConversationId = null;
+    let currentReplyProvider = '';
+    let currentReplyModel = '';
     let streamingText = '';
     let streamingBubble = null;
     let streamingContentEl = null;
@@ -3423,7 +3514,33 @@ class ADHDHighlighter {
       const prov = sessionProviderSelect && sessionProviderSelect.value || '';
       const model = sessionModelSelect && sessionModelSelect.value || '';
       const now = Date.now();
-      const convo = { id: currentConversationId, createdAt: now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || '', prefix: currentPrefix || '', pageTitle: currentPageTitle || '', pageUrl: currentPageUrl || '', canonicalUrl: currentCanonicalUrl || '' };
+      let old = null;
+      try { old = await dbGetConversation(currentConversationId); } catch(_) { old = null; }
+      let pageUrl = currentPageUrl || '';
+      let canonicalUrl = currentCanonicalUrl || '';
+      let pageTitle = currentPageTitle || '';
+      try {
+        if (!pageUrl || !canonicalUrl || !pageTitle) {
+          const u = getCanonicalUrl();
+          pageUrl = pageUrl || u.pageUrl;
+          canonicalUrl = canonicalUrl || u.canonicalUrl;
+          pageTitle = pageTitle || getMetaTitle();
+        }
+      } catch(_) {}
+      if ((!pageUrl || !canonicalUrl) && Array.isArray(chatMessages) && chatMessages.length) {
+        try {
+          const firstUser = chatMessages.find(m => m && m.role === 'user');
+          const c3 = (firstUser && firstUser.content) || '';
+          const m3 = c3.match(/页面:\s*(https?:\/\/\S+)/) || c3.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
+          if (m3) { pageUrl = pageUrl || m3[1]; canonicalUrl = canonicalUrl || m3[1]; }
+        } catch (_) {}
+      }
+      if (old) {
+        pageUrl = old.pageUrl || pageUrl;
+        canonicalUrl = old.canonicalUrl || canonicalUrl;
+        pageTitle = old.pageTitle || pageTitle;
+      }
+      const convo = { id: currentConversationId, createdAt: (old && old.createdAt) ? old.createdAt : now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || (old && old.subject) || '', prefix: currentPrefix || (old && old.prefix) || '', pageTitle, pageUrl, canonicalUrl };
       try { await dbPutConversation(convo); } catch (_) {}
     };
     const openRecordsListPanel = async () => {
@@ -3473,18 +3590,25 @@ class ADHDHighlighter {
         subjEl.className = 'agf-record-subject';
         const subjectText = item.subject || deriveSubject(item);
         subjEl.textContent = subjectText;
-        if (recordsScope === 'all') {
-          const linkUrl = item.pageUrl || item.canonicalUrl || '';
-          if (linkUrl) {
-            const a = document.createElement('a');
-            a.className = 'agf-record-link';
-            a.textContent = linkUrl;
-            a.href = linkUrl;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            subjEl.appendChild(document.createTextNode(' '));
-            subjEl.appendChild(a);
-          }
+        let linkUrl = item.pageUrl || item.canonicalUrl || '';
+        if (!linkUrl) {
+          try {
+            const msgs2 = item.messages || [];
+            const uMsg = msgs2.find(m => m && m.role === 'user');
+            const c2 = (uMsg && uMsg.content) || '';
+            const m2 = c2.match(/页面:\s*(https?:\/\/\S+)/) || c2.match(/帮我总结这篇文章:\s*(https?:\/\/\S+)/);
+            if (m2) linkUrl = m2[1];
+          } catch (_) {}
+        }
+        if (linkUrl) {
+          const a = document.createElement('a');
+          a.className = 'agf-record-link';
+          a.textContent = linkUrl;
+          a.href = linkUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          subjEl.appendChild(document.createTextNode(' '));
+          subjEl.appendChild(a);
         }
         leftBox.appendChild(dateEl);
         leftBox.appendChild(subjEl);
@@ -3503,6 +3627,7 @@ class ADHDHighlighter {
               chatMessages.forEach((m,i) => appendMessage(m.role, m.content, { highlight: highlightEnabled && !m.highlightHtml, highlightHtml: highlightEnabled ? m.highlightHtml : null, msgIndex: i }));
             }
             currentConversationId = item.id;
+            try { currentPageUrl = item.pageUrl || currentPageUrl; currentCanonicalUrl = item.canonicalUrl || currentCanonicalUrl; currentPageTitle = item.pageTitle || currentPageTitle; } catch(_){}
             showChat();
             try { rebuildConvIndex(); } catch (_) {}
           }
@@ -3887,6 +4012,23 @@ class ADHDHighlighter {
       const labelEl = document.createElement('span');
       labelEl.className = 'agf-qa-label';
       labelEl.textContent = label;
+      let modelBadge = null;
+      if (role !== 'user') {
+        let pv = '';
+        let mdl = '';
+        try {
+          if (typeof opts.msgIndex === 'number') {
+            const m = chatMessages[opts.msgIndex] || {};
+            pv = m.provider || (sessionProviderSelect && sessionProviderSelect.value) || '';
+            mdl = m.model || (sessionModelSelect && sessionModelSelect.value) || '';
+          }
+        } catch (_) {}
+        if (pv || mdl) {
+          modelBadge = document.createElement('span');
+          modelBadge.className = 'agf-model-badge';
+          modelBadge.textContent = (pv ? pv : '') + '/' + (mdl ? mdl : '');
+        }
+      }
       const contentEl = document.createElement('span');
       contentEl.className = 'agf-qa-content';
       if (typeof opts.msgIndex === 'number') contentEl.dataset.msgIndex = String(opts.msgIndex);
@@ -3976,6 +4118,7 @@ class ADHDHighlighter {
       }
       bubble.appendChild(copyBtn);
       bubble.appendChild(labelEl);
+      if (modelBadge) bubble.appendChild(modelBadge);
       bubble.appendChild(contentEl);
       wrap.appendChild(bubble);
       chatList.appendChild(wrap);
@@ -3995,7 +4138,7 @@ class ADHDHighlighter {
       const bubbleEl = document.createElement('div');
       bubbleEl.className = 'agf-bubble';
       const label = 'A' + (qaCounter || 1);
-      bubbleEl.innerHTML = '<button class="agf-copy-btn" title="' + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制') + '">⧉</button><span class="agf-qa-label">' + label + '</span>' + '<span class="agf-qa-content"></span>';
+      (function(){ const pv = sessionProviderSelect && sessionProviderSelect.value || ''; const mdl = sessionModelSelect && sessionModelSelect.value || ''; const pm = (pv || mdl) ? (pv + '/' + mdl) : ''; bubbleEl.innerHTML = '<button class="agf-copy-btn" title="' + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.copy') : '复制') + '">⧉</button><span class="agf-qa-label">' + label + '</span>' + (pm ? ('<span class="agf-model-badge">' + pm + '</span>') : '') + '<span class="agf-qa-content"></span>'; })();
       wrap.appendChild(bubbleEl);
       chatList.appendChild(wrap);
       if (autoScrollEnabled) chatList.scrollTop = chatList.scrollHeight;
@@ -4068,6 +4211,8 @@ class ADHDHighlighter {
       if (!composerHidden || !sessionProviderSelect || !sessionModelSelect) return;
       const prov = sessionProviderSelect.value;
       const model = sessionModelSelect.value;
+      currentReplyProvider = prov;
+      currentReplyModel = model;
       let q = (composerHidden.value || '').trim();
       if (!q) {
         try {
@@ -4118,11 +4263,12 @@ class ADHDHighlighter {
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
       try {
-        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrl'], resolve));
+        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const keys = res.aiKeys || {};
         key = keys[prov] || '';
-        if (res.aiBaseUrl) base = res.aiBaseUrl;
+        if (res.aiBaseUrls && res.aiBaseUrls[prov]) base = res.aiBaseUrls[prov];
       } catch (_) {}
+      if (!key || String(key).trim().length === 0) { showStickyToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
       let url = base;
       let headers = { 'Content-Type': 'application/json' };
       let body = null;
@@ -4138,7 +4284,7 @@ class ADHDHighlighter {
       } else if (prov === 'gemini') {
         url = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
         body = JSON.stringify({ contents: toGeminiStyle(subset) });
-      } else if (prov === 'deepseek') {
+      } else if (prov === 'deepseek' || prov === 'moonshot' || prov === 'openai' || prov === 'openrouter' || prov === 'groq' || prov === 'siliconflow' || prov === 'qwen' || prov === 'chatglm' || prov === 'grok') {
         try {
           startAssistantStream();
           chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
@@ -4151,7 +4297,32 @@ class ADHDHighlighter {
       let text = '';
       try {
         const respMsg = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url, method: 'POST', headers, body, timeout: 45000 }, resolve));
+        const status = respMsg && typeof respMsg.status === 'number' ? respMsg.status : 0;
+        const ok = !!(respMsg && respMsg.success && status >= 200 && status < 300);
         const data = respMsg && respMsg.data ? respMsg.data : null;
+        if (!ok) {
+          let msg = '请求失败';
+          if (status === 401 || status === 403) msg = 'API Key 无效或不可用';
+          else if (status === 429) msg = '已超出频率限制，请稍后再试';
+          else if (status >= 500 && status < 600) msg = '服务端异常，请稍后再试';
+          else if (!respMsg || !respMsg.success) msg = '网络错误或超时';
+          let extra = '';
+          try {
+            if (data && typeof data === 'object') {
+              const e1 = data.error && (data.error.message || data.error);
+              if (e1) extra = String(e1);
+            } else if (typeof data === 'string') {
+              extra = data;
+            }
+          } catch(_){}
+          if (extra) msg = msg + '：' + String(extra).slice(0, 200);
+          showStickyToast(msg);
+          const aIndex = chatMessages.length;
+          chatMessages.push({ role: 'assistant', content: msg, provider: currentReplyProvider, model: currentReplyModel });
+          appendMessage('assistant', msg, { highlight: true, msgIndex: aIndex });
+          try { await saveConversationSnapshot(); } catch (_) {}
+          return;
+        }
         if (prov === 'anthropic') {
           const c = data && data.content && data.content[0] && (data.content[0].text || (data.content[0].type === 'text' ? data.content[0].text : ''));
           text = c || '';
@@ -4168,7 +4339,7 @@ class ADHDHighlighter {
       }
       if (!text) text = '...';
       const aIndex = chatMessages.length;
-      chatMessages.push({ role: 'assistant', content: text });
+      chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
       try { await saveConversationSnapshot(); } catch (_) {}
     };
@@ -4536,7 +4707,7 @@ class ADHDHighlighter {
     this.__onAiStreamDone = () => {
       if (streamingText) {
         const idx = chatMessages.length;
-        chatMessages.push({ role: 'assistant', content: streamingText });
+        chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
       }

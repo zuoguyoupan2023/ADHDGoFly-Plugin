@@ -42,7 +42,7 @@
     "resetAll": "Reset All Settings"
   },
     "aiPanel": {
-    "title": "ExamPage",
+    "title": "🏠ExamRoom",
     "returnToChat": "Return to chat view",
     "refresh": "Refresh",
     "statusHintNone": "Gray: Page text not loaded",
@@ -65,15 +65,18 @@
       "basedOnFullText": "Based on the current page's full text, ",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",
-    "settings": {
-      "tabs": { "api": "API Key", "colors": "Color Management" },
+      "settings": {
+      "tabs": { "api": "API Key", "colors": "Color Management", "parse": "Parse & Filter" },
       "general": "General Settings",
       "provider": "Provider",
       "model": "Model",
       "baseUrl": "Provider URL",
       "apiKey": "API Key",
       "pdfParse": "PDF Parsing",
-      "sensitiveFilter": "Sensitive Filter",
+      "privacyFilter": "Privacy Filter",
+      "privacyHint": "Privacy refers to names, emails, phone numbers in PDFs",
+      "parseTitle": "Parse & Filter",
+      "parse": { "auto": "Auto", "manual": "Manual" },
       "manualParsePdf": "Parse Current PDF Now",
       "retentionDays": "Retention Days",
       "foldThreshold": "Fold Threshold",
