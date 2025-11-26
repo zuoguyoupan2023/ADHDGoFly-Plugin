@@ -2398,7 +2398,7 @@ class PopupController {
       };
       
       // 更新UI显示
-      this.updateVersionUI();
+      await this.updateVersionUI();
       
       // 发送版本检查请求
       chrome.runtime.sendMessage({ action: 'checkVersion' }, (response) => {
@@ -2435,8 +2435,8 @@ class PopupController {
         alternativeDownloads: null,
         contactInfo: null
       };
-      this.updateVersionUI();
-    }
+      await this.updateVersionUI();
+  }
   }
 
   // 更新版本UI显示
@@ -2444,7 +2444,7 @@ class PopupController {
    * 更新版本UI
    * 根据版本检查结果更新版本信息显示
    */
-  updateVersionUI() {
+  async updateVersionUI() {
     if (!this.versionInfo) return;
     
     // 更新当前版本显示
@@ -2467,27 +2467,53 @@ class PopupController {
     
     // 处理更新提示
     const updateNotice = document.getElementById('updateNotice');
-    if (updateNotice) {
-      if (this.versionInfo.hasUpdate && !this.versionInfo.isChecking) {
-        updateNotice.style.display = 'block';
-        
-        // 设置GitHub链接
-        const githubLink = document.getElementById('githubLink');
-        if (githubLink && this.versionInfo.releaseUrl) {
-          githubLink.href = this.versionInfo.releaseUrl;
-        }
-        
-        // 设置其他下载链接
-        if (this.versionInfo.alternativeDownloads) {
-          const directLink = document.getElementById('directLink');
-          if (directLink && this.versionInfo.alternativeDownloads.direct) {
-            directLink.href = this.versionInfo.alternativeDownloads.direct;
-          }
+    const updateCollapsed = document.getElementById('updateCollapsed');
+    const gotItBadge = document.getElementById('updateGotItBadge');
+    if (gotItBadge) {
+      gotItBadge.textContent = window.i18n.t('version.gotIt');
+    }
+    if (updateCollapsed) {
+      updateCollapsed.textContent = window.i18n.t('version.newUpdates');
+    }
+    const latestTag = this.versionInfo.latestVersion;
+    const latestNormalized = latestTag ? String(latestTag).replace(/^v/, '') : null;
+    const currentVersion = this.versionInfo.currentVersion;
+    const hasUpdateSimple = !!latestNormalized && !!currentVersion && latestNormalized !== currentVersion;
+    if (updateNotice || updateCollapsed) {
+      if (hasUpdateSimple && !this.versionInfo.isChecking && !this.versionInfo.error) {
+        const prefs = await new Promise(resolve => {
+          try { chrome.storage.local.get(['updateCollapsed','updateCollapsedVersion'], (data) => resolve(data || {})); } catch (_) { resolve({}); }
+        });
+        const collapsed = !!prefs.updateCollapsed && prefs.updateCollapsedVersion === latestNormalized;
+        if (collapsed) {
+          if (updateNotice) updateNotice.style.display = 'none';
+          if (updateCollapsed) updateCollapsed.style.display = 'block';
+        } else {
+          if (updateCollapsed) updateCollapsed.style.display = 'none';
+          if (updateNotice) updateNotice.style.display = 'block';
         }
       } else {
-        updateNotice.style.display = 'none';
+        if (updateNotice) updateNotice.style.display = 'none';
+        if (updateCollapsed) updateCollapsed.style.display = 'none';
       }
     }
+    this.bindUpdateNoticeEvents();
+  }
+
+  bindUpdateNoticeEvents() {
+    const gotItBadge = document.getElementById('updateGotItBadge');
+    if (!gotItBadge) return;
+    gotItBadge.onclick = async () => {
+      try {
+        const latestTag = this.versionInfo && this.versionInfo.latestVersion;
+        const latestNormalized = latestTag ? String(latestTag).replace(/^v/, '') : null;
+        if (!latestNormalized) return;
+        await new Promise(resolve => {
+          try { chrome.storage.local.set({ updateCollapsed: true, updateCollapsedVersion: latestNormalized }, () => resolve(true)); } catch (_) { resolve(true); }
+        });
+        await this.updateVersionUI();
+      } catch (_) {}
+    };
   }
 
   /**
