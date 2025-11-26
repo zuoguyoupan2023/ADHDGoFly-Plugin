@@ -1641,6 +1641,9 @@ class ADHDHighlighter {
           }
         }
       }
+      if (vocabularyStats) {
+        await this.saveVocabularyStatsForPage(vocabularyStats);
+      }
       
       // 生成智能推荐 - 暂时禁用
       // const recommendations = this.generateRecommendations(languageStats, posStats, highlightStats);
