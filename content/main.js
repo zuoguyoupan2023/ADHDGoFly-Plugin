@@ -556,7 +556,6 @@ class ADHDHighlighter {
     try {
       this.setupMessageListener();
       this.setupPageBridge();
-      this.setupNavigationRehighlight();
       
       // 初始化词典
       await this.dictionaryManager.initialize();
@@ -925,39 +924,6 @@ class ADHDHighlighter {
         }
       }
     });
-  }
-
-  setupNavigationRehighlight() {
-    this.__lastUrl = window.location.href;
-    const invoke = () => {
-      const u = window.location.href;
-      if (u === this.__lastUrl) return;
-      this.__lastUrl = u;
-      this.scheduleRehighlight();
-    };
-    try {
-      const origPush = history.pushState.bind(history);
-      history.pushState = function() { const r = origPush.apply(this, arguments); try { invoke(); } catch(_){} return r; };
-    } catch(_) {}
-    try {
-      const origReplace = history.replaceState.bind(history);
-      history.replaceState = function() { const r = origReplace.apply(this, arguments); try { invoke(); } catch(_){} return r; };
-    } catch(_) {}
-    try { window.addEventListener('popstate', invoke); } catch(_) {}
-    try { window.addEventListener('hashchange', invoke); } catch(_) {}
-  }
-
-  scheduleRehighlight() {
-    if (!this.enabled) return;
-    if (this.__rehighlightTimer) clearTimeout(this.__rehighlightTimer);
-    this.__rehighlightTimer = setTimeout(() => { this.doRehighlight(); }, 300);
-  }
-
-  async doRehighlight() {
-    if (!this.enabled) return;
-    try {
-      await this.reprocessPage();
-    } catch(_) {}
   }
 
   injectCollectHelper() {
