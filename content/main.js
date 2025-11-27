@@ -5297,6 +5297,7 @@ try {
  * - 控制依赖 window.__LOG_DEV_MODE 的高频调试日志输出（内容脚本与页面环境）
  */
     const initGovernanceControls = async () => {
+      const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
       try {
         const st = await chrome.storage.local.get(['pageSegmentsRetentionDays']);
         const days = st.pageSegmentsRetentionDays !== undefined ? parseInt(st.pageSegmentsRetentionDays,10) : 7;
