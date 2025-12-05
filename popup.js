@@ -337,6 +337,9 @@ class PopupController {
     this.loadTextSettings();
     this.loadHighlightingToggles();
 
+    // 更新发送按钮可用性
+    this.updateSendButtonAvailability();
+
   }
 
   bindSettingsAboutEvents() {
@@ -535,6 +538,7 @@ class PopupController {
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
+      if (pageId === 'home') this.updateSendButtonAvailability();
       
       // 如果是词典页面，初始化语言分组监听器
       if (pageId === 'dict') {
@@ -555,6 +559,38 @@ class PopupController {
         this.initFAQ();
       }
     }
+  }
+
+  async updateSendButtonAvailability() {
+    try {
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      if (!sendBtn) return;
+      // 默认禁用
+      sendBtn.disabled = true;
+      sendBtn.style.opacity = '0.5';
+      sendBtn.style.cursor = 'not-allowed';
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) return;
+      let res;
+      try {
+        res = await chrome.tabs.sendMessage(tab.id, { action: 'canProvideVisibleText' });
+      } catch (_) {
+        res = null;
+      }
+      if (res && res.success && res.available === true) {
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '0.92';
+        sendBtn.style.cursor = 'pointer';
+        sendBtn.title = '一键发送到Reader';
+      } else {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+        const reason = (res && res.reason) || '不可获取';
+        sendBtn.title = `发送不可用：${reason}`;
+      }
+    } catch (_) {}
   }
 
   bindDictEvents() {

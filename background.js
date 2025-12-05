@@ -880,7 +880,7 @@ let __pdfOffscreen = null;
 let __pdfOffscreenReady = false;
 let __pdfPendingQueue = [];
 const __pdfTriggered = new Set();
-const DEFAULT_PDF_BLOCKED_DOMAINS = [
+const PAYWALL_BLOCKED_DOMAINS_DEFAULT = [
   'qidian.com','youdubook.com','webnovel.com','jjwxc.net','m.jjwxc.net','zongheng.com','17k.com','yunqi.qq.com','hongxiu.com','xxsy.net','faloo.com','ciweimao.com','weread.qq.com','zhangyue.com','shuqi.com','migu.cn','read.douban.com','read.amazon.com','kindlecloudreader.com'
 ];
 
@@ -995,7 +995,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
           const settings = await chrome.storage.local.get(['pdfAutoCollectEnabled','pdfBlockedDomains']);
           enabled = settings.pdfAutoCollectEnabled !== undefined ? !!settings.pdfAutoCollectEnabled : true;
           const customBlocked = Array.isArray(settings.pdfBlockedDomains) ? settings.pdfBlockedDomains : [];
-          blocked = Array.from(new Set([ ...DEFAULT_PDF_BLOCKED_DOMAINS, ...customBlocked ]));
+          blocked = Array.from(new Set([ ...PAYWALL_BLOCKED_DOMAINS_DEFAULT, ...customBlocked ]));
         } catch (_) {}
         try {
           const host = new URL(url).hostname;

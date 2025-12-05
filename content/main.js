@@ -717,6 +717,68 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error && error.message || 'extract_failed' });
           }
           break;
+        case 'canProvideVisibleText':
+          try {
+            const host = (() => { try { return new URL(window.location.href).hostname; } catch(_) { return ''; } })();
+            let blocked = [];
+            try { const s = await chrome.storage.local.get(['paywallBlockedDomains']); blocked = Array.isArray(s.paywallBlockedDomains) ? s.paywallBlockedDomains : []; } catch(_){ }
+            const DEFAULT_BLOCKED = [
+              'qidian.com','youdubook.com','webnovel.com','jjwxc.net','m.jjwxc.net','zongheng.com','17k.com','yunqi.qq.com','hongxiu.com','xxsy.net','faloo.com','ciweimao.com','weread.qq.com','zhangyue.com','shuqi.com','migu.cn','read.douban.com','read.amazon.com','kindlecloudreader.com'
+            ];
+            const blockedSet = new Set([ ...DEFAULT_BLOCKED, ...blocked ]);
+            if (host && blockedSet.has(host)) { sendResponse({ success: true, available: false, reason: '付费或受限站点' }); break; }
+            const hasPdfLayer = !!document.querySelector('.textLayer span');
+            let visibleLen = 0;
+            function textFrom(el){
+              if (!el) return '';
+              const style = getComputedStyle(el);
+              if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0) return '';
+              const rect = el.getBoundingClientRect();
+              if (rect.width <= 0 || rect.height <= 0) return '';
+              return (el.innerText || '').trim();
+            }
+            if (hasPdfLayer) {
+              const spans = Array.from(document.querySelectorAll('.textLayer span'));
+              const joined = spans.map(sp => textFrom(sp)).filter(t => t && t.length > 0).join('\n');
+              visibleLen = joined.length;
+            } else {
+              const candidates = [ 'main', 'article', '[role="main"]' ];
+              let buf = '';
+              for (const sel of candidates) {
+                const el = document.querySelector(sel);
+                if (el) { buf += '\n' + textFrom(el); }
+              }
+              if (!buf || buf.length < 50) buf = textFrom(document.body);
+              visibleLen = (buf || '').length;
+            }
+            // 付费遮罩/文案检测
+            const paywallHints = ['付费','会员','订阅','登录后可阅读','购买后可读','仅会员可见','解锁全文'];
+            let hintBlocked = false;
+            try {
+              const bodyText = (document.body && document.body.innerText) ? document.body.innerText : '';
+              hintBlocked = paywallHints.some(h => bodyText.includes(h));
+            } catch(_){ }
+            // 大遮罩检测
+            let overlayBlocked = false;
+            try {
+              const els = Array.from(document.querySelectorAll('div,section'));
+              const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+              const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+              overlayBlocked = els.some(el => {
+                const st = getComputedStyle(el);
+                if (st.position !== 'fixed') return false;
+                const r = el.getBoundingClientRect();
+                const coverRatio = (Math.min(r.width, vw) * Math.min(r.height, vh)) / (vw * vh);
+                return coverRatio > 0.6 && parseInt(st.zIndex || '0', 10) >= 1000 && st.pointerEvents !== 'none';
+              });
+            } catch(_){ }
+            if (hintBlocked || overlayBlocked) { sendResponse({ success: true, available: false, reason: '站点限制' }); break; }
+            const available = visibleLen >= (hasPdfLayer ? 50 : 200);
+            sendResponse({ success: true, available, reason: available ? 'ok' : '内容不足', length: visibleLen });
+          } catch (error) {
+            sendResponse({ success: false, available: false, reason: '异常' });
+          }
+          break;
         case 'deliverPayloadToReader':
           try {
             const pl = message && message.payload ? message.payload : null;
