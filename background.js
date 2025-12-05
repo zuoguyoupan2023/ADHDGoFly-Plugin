@@ -836,6 +836,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (!payload || typeof payload !== 'object') { sendResponse({ success: false, error: 'no_payload' }); return; }
         const jsonStr = JSON.stringify(payload);
         const isSmall = jsonStr.length <= 2000;
+        let base = 'http://localhost:5173';
+        try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
         const safeB64 = (str) => {
           try {
             const utf8 = new TextEncoder().encode(str);
@@ -849,12 +851,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (isSmall) {
           await log('使用URL备通道发送到Reader');
           const b64 = safeB64(jsonStr);
-          await chrome.tabs.create({ url: `https://reader.adhdgofly.online/?from=plugin&agf_import=${encodeURIComponent(b64)}&agf-import=${encodeURIComponent(b64)}` });
+          await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin&agf_import=${encodeURIComponent(b64)}&agf-import=${encodeURIComponent(b64)}` });
           await log('Reader标签页已打开（URL备通道）');
           sendResponse({ success: true });
         } else {
           await log('打开Reader标签页（主通道）');
-          const created = await chrome.tabs.create({ url: 'https://reader.adhdgofly.online/?from=plugin' });
+          const created = await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin` });
           const readerTabId = created && created.id ? created.id : null;
           if (!readerTabId) { await log('Reader标签页创建失败'); sendResponse({ success: false, error: 'create_failed' }); return; }
           const handler = async (tabId, changeInfo) => {

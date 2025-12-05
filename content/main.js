@@ -735,17 +735,19 @@ class ADHDHighlighter {
             if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
             const jsonStr = JSON.stringify(pl);
             const isSmall = jsonStr.length <= 2000;
-            let url = 'https://reader.adhdgofly.online/?from=plugin';
+            let base = 'http://localhost:5173';
+            try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
+            let url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
             if (isSmall) {
               try {
                 const utf8 = new TextEncoder().encode(jsonStr);
                 let bin = '';
                 for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
                 const b64 = btoa(bin);
-                url = 'https://reader.adhdgofly.online/?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+                url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
               } catch (_) {
                 const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-                url = 'https://reader.adhdgofly.online/?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+                url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
               }
             }
             console.log('AGF→Reader: 打开Reader窗口', { small: isSmall, bytes: jsonStr.length });
