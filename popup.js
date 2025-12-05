@@ -1390,6 +1390,7 @@ class PopupController {
 
   async handleSendToReader() {
     try {
+      console.log('AGF→Reader: 开始一键发送');
       const sendBtn = document.getElementById('sendToReaderBtn');
       const prevText = sendBtn ? sendBtn.textContent : '';
       if (sendBtn) { sendBtn.textContent = '发送中…'; sendBtn.disabled = true; }
@@ -1402,6 +1403,7 @@ class PopupController {
       try {
         const resSel = await chrome.tabs.sendMessage(tab.id, { action: 'getSelectedText' });
         if (resSel && resSel.success && typeof resSel.text === 'string') selected = resSel.text.trim();
+        console.log('AGF→Reader: 选中文本长度', selected.length || 0);
       } catch (_) {}
 
       // 获取页面最佳文本与标题
@@ -1410,6 +1412,7 @@ class PopupController {
       const text = selected && selected.length > 16 ? selected : res.text;
       const title = res.title && typeof res.title === 'string' ? res.title : (tab.title || '未命名');
       const sourceUrl = tab.url || '';
+      console.log('AGF→Reader: 文本与标题就绪', { title, length: (text || '').length });
 
       const payload = {
         version: 'v1',
@@ -1426,14 +1429,39 @@ class PopupController {
       const isSmall = jsonStr.length <= 2000;
       if (isSmall) {
         const b64 = btoa(jsonStr);
+        console.log('AGF→Reader: 使用URL备通道', { bytes: jsonStr.length });
         await chrome.tabs.create({ url: `https://reader.adhdgofly.online/?agf_import=${encodeURIComponent(b64)}` });
       } else {
+        console.log('AGF→Reader: 使用postMessage主通道');
         const created = await chrome.tabs.create({ url: 'https://reader.adhdgofly.online/?from=plugin' });
         const readerTabId = created && created.id ? created.id : null;
-        // 适当延时，确保Reader可接收
-        await new Promise(r => setTimeout(r, 600));
         if (readerTabId) {
-          await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
+          await new Promise((resolve) => {
+            const handler = async (tabId, changeInfo) => {
+              if (tabId === readerTabId && changeInfo.status === 'complete') {
+                try {
+                  console.log('AGF→Reader: Reader标签页已加载，尝试发送消息');
+                  await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
+                  console.log('AGF→Reader: 已通过内容脚本发送');
+                } catch (e) {
+                  console.warn('AGF→Reader: 内容脚本发送失败，尝试脚本注入', e && e.message);
+                  try {
+                    await chrome.scripting.executeScript({
+                      target: { tabId: readerTabId },
+                      func: (pl) => { window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); },
+                      args: [payload]
+                    });
+                    console.log('AGF→Reader: 注入脚本并发送postMessage成功');
+                  } catch (ee) {
+                    console.error('AGF→Reader: 注入脚本失败', ee && ee.message);
+                  }
+                }
+                try { chrome.tabs.onUpdated.removeListener(handler); } catch (_) {}
+                resolve(true);
+              }
+            };
+            chrome.tabs.onUpdated.addListener(handler);
+          });
         }
       }
     } catch (error) {

@@ -683,8 +683,36 @@ class ADHDHighlighter {
           break;
         case 'getPageTextForReader':
           try {
-            const r = await this.extractBestTextAndTitle();
-            sendResponse({ success: true, text: r.text, title: r.title });
+            console.log('AGF→Reader: 获取全文开始');
+            const pageUrl = window.location.href;
+            let canonicalUrl = pageUrl;
+            try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+            let saved = '';
+            try {
+              const bgRes = await new Promise((resolve) => {
+                try { chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl, canonicalUrl }, (res) => resolve(res)); } catch (_) { resolve(null); }
+              });
+              if (bgRes && bgRes.success && typeof bgRes.text === 'string') saved = String(bgRes.text || '');
+            } catch (_) {}
+            if (saved && saved.trim().length >= 50) {
+              console.log('AGF→Reader: 使用已保存全文', { length: saved.length });
+              const title = (document.title || '').trim();
+              sendResponse({ success: true, text: saved, title });
+              break;
+            }
+            let { text, title } = await this.extractBestTextAndTitle();
+            if ((!text || text.length < 200)) {
+              try {
+                const spans = Array.from(document.querySelectorAll('.textLayer span'));
+                if (spans.length) {
+                  const joined = spans.map(sp => this.normalizeText(sp.textContent || '')).filter(t => t && t.length > 1).join('\n');
+                  if (joined && joined.length > text.length) text = joined;
+                  console.log('AGF→Reader: PDF文本层复用', { spans: spans.length, length: (joined || '').length });
+                }
+              } catch (_) {}
+            }
+            console.log('AGF→Reader: 获取全文完成', { length: (text || '').length, title });
+            sendResponse({ success: true, text, title });
           } catch (error) {
             sendResponse({ success: false, error: error && error.message || 'extract_failed' });
           }
@@ -693,7 +721,9 @@ class ADHDHighlighter {
           try {
             const pl = message && message.payload ? message.payload : null;
             if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            console.log('AGF→Reader: 发送postMessage', { type: 'AGF_DOC_V1', title: pl && pl.title, length: (pl && pl.content ? String(pl.content).length : 0) });
             window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*');
+            console.log('AGF→Reader: postMessage已发出');
             sendResponse({ success: true });
           } catch (error) {
             sendResponse({ success: false, error: error && error.message || 'post_failed' });

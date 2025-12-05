@@ -3,7 +3,7 @@
   "name": "ADHDGoFly, highlight your sight",
   "version": "0.1.6",
   "description": "Text highlighting for better reading",
-  "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen"],
+  "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen", "scripting"],
   "host_permissions": [
     "https://api.github.com/*",
     "https://api.deepseek.com/*",
