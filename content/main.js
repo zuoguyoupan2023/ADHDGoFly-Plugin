@@ -729,6 +729,47 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error && error.message || 'post_failed' });
           }
           break;
+        case 'openReaderAndSend':
+          try {
+            const pl = message && message.payload ? message.payload : null;
+            if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            const jsonStr = JSON.stringify(pl);
+            const isSmall = jsonStr.length <= 2000;
+            let url = 'https://reader.adhdgofly.online/?from=plugin';
+            if (isSmall) {
+              try {
+                const utf8 = new TextEncoder().encode(jsonStr);
+                let bin = '';
+                for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
+                const b64 = btoa(bin);
+                url = 'https://reader.adhdgofly.online/?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+              } catch (_) {
+                const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+                url = 'https://reader.adhdgofly.online/?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+              }
+            }
+            console.log('AGF→Reader: 打开Reader窗口', { small: isSmall, bytes: jsonStr.length });
+            const w = window.open(url);
+            if (!w) { sendResponse({ success: false, error: 'window_open_failed' }); break; }
+            console.log('AGF→Reader: Reader窗口已打开，开始postMessage循环');
+            const tries = [500, 1200, 2500];
+            let sent = false;
+            for (let i = 0; i < tries.length; i++) {
+              await new Promise(r => setTimeout(r, tries[i]));
+              try { w.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); sent = true; console.log('AGF→Reader: postMessage已发送', { attempt: i+1 }); } catch (_) {}
+            }
+            sendResponse({ success: true, posted: sent });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'open_send_failed' });
+          }
+          break;
+        case 'agfLogProgress':
+          try {
+            const text = (message && message.text) ? String(message.text) : '';
+            if (text) console.log('AGF→Reader:', text);
+            sendResponse && sendResponse({ ok: true });
+          } catch (e) { sendResponse && sendResponse({ ok: false }); }
+          break;
         case 'showAiSettingPanel':
           this.ensureAiSettingPanel();
           this.showAiSettingPanel();

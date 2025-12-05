@@ -1423,46 +1423,14 @@ class PopupController {
         lang: navigator.language && navigator.language.startsWith('zh') ? 'zh' : 'en',
         mime: 'text/plain'
       };
-
-      // 小内容走URL备通道，否则postMessage
-      const jsonStr = JSON.stringify(payload);
-      const isSmall = jsonStr.length <= 2000;
-      if (isSmall) {
-        const b64 = btoa(jsonStr);
-        console.log('AGF→Reader: 使用URL备通道', { bytes: jsonStr.length });
-        await chrome.tabs.create({ url: `https://reader.adhdgofly.online/?agf_import=${encodeURIComponent(b64)}` });
-      } else {
-        console.log('AGF→Reader: 使用postMessage主通道');
-        const created = await chrome.tabs.create({ url: 'https://reader.adhdgofly.online/?from=plugin' });
-        const readerTabId = created && created.id ? created.id : null;
-        if (readerTabId) {
-          await new Promise((resolve) => {
-            const handler = async (tabId, changeInfo) => {
-              if (tabId === readerTabId && changeInfo.status === 'complete') {
-                try {
-                  console.log('AGF→Reader: Reader标签页已加载，尝试发送消息');
-                  await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
-                  console.log('AGF→Reader: 已通过内容脚本发送');
-                } catch (e) {
-                  console.warn('AGF→Reader: 内容脚本发送失败，尝试脚本注入', e && e.message);
-                  try {
-                    await chrome.scripting.executeScript({
-                      target: { tabId: readerTabId },
-                      func: (pl) => { window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); },
-                      args: [payload]
-                    });
-                    console.log('AGF→Reader: 注入脚本并发送postMessage成功');
-                  } catch (ee) {
-                    console.error('AGF→Reader: 注入脚本失败', ee && ee.message);
-                  }
-                }
-                try { chrome.tabs.onUpdated.removeListener(handler); } catch (_) {}
-                resolve(true);
-              }
-            };
-            chrome.tabs.onUpdated.addListener(handler);
-          });
-        }
+      try {
+        console.log('AGF→Reader: 首选内容脚本window.open发送');
+        const r = await chrome.tabs.sendMessage(tab.id, { action: 'openReaderAndSend', payload });
+        if (!r || r.success !== true) throw new Error(r && r.error || 'content_send_failed');
+        console.log('AGF→Reader: 内容脚本发送完成');
+      } catch (e) {
+        console.warn('AGF→Reader: 内容脚本发送失败，转交后台', e && e.message);
+        await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
       }
     } catch (error) {
       console.error('发送到Reader失败:', error);
