@@ -835,57 +835,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const log = async (text) => { try { if (sourceTabId) await chrome.tabs.sendMessage(sourceTabId, { action: 'agfLogProgress', text }); } catch(_){} };
         if (!payload || typeof payload !== 'object') { sendResponse({ success: false, error: 'no_payload' }); return; }
         const jsonStr = JSON.stringify(payload);
-        const isSmall = jsonStr.length <= 2000;
         let base = 'http://localhost:5173';
         try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
-        const safeB64 = (str) => {
-          try {
-            const utf8 = new TextEncoder().encode(str);
-            let bin = '';
-            for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
-            return btoa(bin);
-          } catch (_) {
-            return btoa(unescape(encodeURIComponent(str)));
+        await log('打开Reader标签页（主通道）');
+        const created = await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin` });
+        const readerTabId = created && created.id ? created.id : null;
+        if (!readerTabId) { await log('Reader标签页创建失败'); sendResponse({ success: false, error: 'create_failed' }); return; }
+        const handler = async (tabId, changeInfo) => {
+          if (tabId === readerTabId && changeInfo.status === 'complete') {
+            try { chrome.tabs.onUpdated.removeListener(handler); } catch (_) {}
+            try {
+              await log('Reader已加载，尝试postMessage发送');
+              await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
+              await log('通过内容脚本发送成功');
+            } catch (e) {
+              await log('内容脚本发送失败，尝试脚本注入');
+              try {
+                await chrome.scripting.executeScript({
+                  target: { tabId: readerTabId },
+                  func: (pl) => { try { window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); } catch (_) {} },
+                  args: [payload]
+                });
+                await log('脚本注入成功，postMessage已发送');
+              } catch (ee) {
+                await log('脚本注入失败：' + (ee && ee.message || 'unknown'));
+                sendResponse({ success: false, error: 'inject_failed' });
+                return;
+              }
+            }
+            sendResponse({ success: true });
           }
         };
-        if (isSmall) {
-          await log('使用URL备通道发送到Reader');
-          const b64 = safeB64(jsonStr);
-          await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin&agf_import=${encodeURIComponent(b64)}&agf-import=${encodeURIComponent(b64)}` });
-          await log('Reader标签页已打开（URL备通道）');
-          sendResponse({ success: true });
-        } else {
-          await log('打开Reader标签页（主通道）');
-          const created = await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin` });
-          const readerTabId = created && created.id ? created.id : null;
-          if (!readerTabId) { await log('Reader标签页创建失败'); sendResponse({ success: false, error: 'create_failed' }); return; }
-          const handler = async (tabId, changeInfo) => {
-            if (tabId === readerTabId && changeInfo.status === 'complete') {
-              try { chrome.tabs.onUpdated.removeListener(handler); } catch (_) {}
-              try {
-                await log('Reader已加载，尝试postMessage发送');
-                await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
-                await log('通过内容脚本发送成功');
-              } catch (e) {
-                await log('内容脚本发送失败，尝试脚本注入');
-                try {
-                  await chrome.scripting.executeScript({
-                    target: { tabId: readerTabId },
-                    func: (pl) => { try { window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); } catch (_) {} },
-                    args: [payload]
-                  });
-                  await log('脚本注入成功，postMessage已发送');
-                } catch (ee) {
-                  await log('脚本注入失败：' + (ee && ee.message || 'unknown'));
-                  sendResponse({ success: false, error: 'inject_failed' });
-                  return;
-                }
-              }
-              sendResponse({ success: true });
-            }
-          };
-          chrome.tabs.onUpdated.addListener(handler);
-        }
+        chrome.tabs.onUpdated.addListener(handler);
       } catch (error) {
         try { await chrome.tabs.sendMessage((sender && sender.tab && sender.tab.id) || 0, { action: 'agfLogProgress', text: '后台流程失败：' + (error && error.message || 'unknown') }); } catch (_){ }
         sendResponse({ success: false, error: error && error.message || 'unknown' });
