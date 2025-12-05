@@ -569,6 +569,7 @@ class PopupController {
       sendBtn.disabled = true;
       sendBtn.style.opacity = '0.5';
       sendBtn.style.cursor = 'not-allowed';
+      try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.textContent = window.i18n.t('sendToReader.btn'); else sendBtn.textContent = '发送'; } catch(_){ sendBtn.textContent = '发送'; }
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tab = tabs && tabs[0];
       if (!tab || !tab.id) return;
@@ -582,13 +583,13 @@ class PopupController {
         sendBtn.disabled = false;
         sendBtn.style.opacity = '0.92';
         sendBtn.style.cursor = 'pointer';
-        sendBtn.title = '一键发送到Reader';
+        try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.title = window.i18n.t('sendToReader.tooltipEnabled'); else sendBtn.title = '一键发送到Reader'; } catch(_){ sendBtn.title = '一键发送到Reader'; }
       } else {
         sendBtn.disabled = true;
         sendBtn.style.opacity = '0.5';
         sendBtn.style.cursor = 'not-allowed';
         const reason = (res && res.reason) || '不可获取';
-        sendBtn.title = `发送不可用：${reason}`;
+        try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.title = (window.i18n.t('sendToReader.tooltipDisabled') || '发送不可用：') + reason; else sendBtn.title = `发送不可用：${reason}`; } catch(_){ sendBtn.title = `发送不可用：${reason}`; }
       }
     } catch (_) {}
   }
