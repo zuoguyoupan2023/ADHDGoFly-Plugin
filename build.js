@@ -793,11 +793,28 @@ async function main() {
             <section class="download-section">
                 <h2>🎉 发现新版本！</h2>
                 <p>建议更新以获取最新功能和修复</p>
-                
+
                 <div class="download-grid">
+                    <div class="download-item">
+                        <h3>Edge 商店</h3>
+                        <p>优先推荐：通过浏览器商店自动更新</p>
+                        <a href="https://microsoftedge.microsoft.com/addons/detail/odleggjpbedagojaljdopcgolkcibljh" class="download-btn" rel="noopener noreferrer">
+                            🛒 在 Edge 商店安装
+                        </a>
+                    </div>
+                    <div class="download-item">
+                        <h3>Chrome 商店</h3>
+                        <p>优先推荐：通过浏览器商店自动更新</p>
+                        <a href="https://chromewebstore.google.com/detail/bdpadkojpehfdepjjadmpjeieiddeodl" class="download-btn" rel="noopener noreferrer">
+                            🛒 在 Chrome 商店安装
+                        </a>
+                    </div>
+                </div>
+
+                <div class="download-grid" style="margin-top: 10px;">
                     ${downloadLinksHtml}
                 </div>
-                
+
                 <!-- 下载统计显示 -->
                 <div class="stats-display">
                     <div class="stats-grid">
@@ -1576,11 +1593,28 @@ async function main() {
             <section class="download-section">
                 <h2>🎉 New Version Available!</h2>
                 <p>Update recommended to get the latest features and fixes.</p>
-                
+
                 <div class="download-grid">
+                    <div class="download-item">
+                        <h3>Edge Add-ons</h3>
+                        <p>Preferred: install via store for auto updates</p>
+                        <a href="https://microsoftedge.microsoft.com/addons/detail/odleggjpbedagojaljdopcgolkcibljh" class="download-btn" rel="noopener noreferrer">
+                            🛒 Install from Edge Add-ons
+                        </a>
+                    </div>
+                    <div class="download-item">
+                        <h3>Chrome Web Store</h3>
+                        <p>Preferred: install via store for auto updates</p>
+                        <a href="https://chromewebstore.google.com/detail/bdpadkojpehfdepjjadmpjeieiddeodl" class="download-btn" rel="noopener noreferrer">
+                            🛒 Install from Chrome Web Store
+                        </a>
+                    </div>
+                </div>
+
+                <div class="download-grid" style="margin-top: 10px;">
                     ${downloadLinksHtmlEn}
                 </div>
-                
+
                 <!-- 下载统计显示 -->
                 <div class="stats-display">
                     <div class="stats-grid">
