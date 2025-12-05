@@ -440,6 +440,11 @@
         width: 100%;
       }
 
+      /* 仅首页采用内部滚动 + 底部固定操作区 */
+      #home-page { overflow-y: hidden; }
+      .home-content { display: flex; flex-direction: column; height: 100%; }
+      .home-scroll { flex: 1; overflow-y: auto; }
+
       .page.style-section {
         display: block;
         height: auto;
@@ -2271,6 +2276,7 @@
       <!-- 主页面 -->
       <div class="page active" id="home-page">
         <div class="home-content">
+          <div class="home-scroll">
           <!-- 应用标题和状态 -->
           <div class="app-header">
             <div class="app-title">
@@ -2411,7 +2417,7 @@
               <!-- 动态生成已启用的词典标签 -->
             </div>
           </div>
-
+          </div>
           <!-- 发送到 Reader -->
           <div class="send-to-reader-section" style="margin-top:12px; padding-top:8px; border-top:1px solid #eee;">
             <h4 style="margin:0 0 6px 0; font-size:13px; color:#444" data-i18n="sendToReader.title">发送到 Reader</h4>

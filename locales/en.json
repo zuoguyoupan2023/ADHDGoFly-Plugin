@@ -157,6 +157,12 @@
   "dict": {
     "title": "Dictionaries"
   },
+  "sendToReader": {
+    "title": "Send to Reader",
+    "btn": "Send",
+    "tooltipEnabled": "Send to Reader",
+    "tooltipDisabled": "Send unavailable: "
+  },
   "pages": {
     "dict": {
       "title": "Dictionary Management",
