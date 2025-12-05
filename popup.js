@@ -301,6 +301,10 @@ class PopupController {
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => this.handleToggle());
     }
+    const sendBtn = document.getElementById('sendToReaderBtn');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', () => this.handleSendToReader());
+    }
     
     // 侧边栏按钮事件
     this.bindSidebarEvents();
@@ -1381,6 +1385,62 @@ class PopupController {
       this.updateUI({ ...this.currentStatus, error: error.message });
     } finally {
       toggleBtn.disabled = false;
+    }
+  }
+
+  async handleSendToReader() {
+    try {
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      const prevText = sendBtn ? sendBtn.textContent : '';
+      if (sendBtn) { sendBtn.textContent = '发送中…'; sendBtn.disabled = true; }
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) throw new Error('未检测到活动标签页');
+
+      // 优先获取选中文本
+      let selected = '';
+      try {
+        const resSel = await chrome.tabs.sendMessage(tab.id, { action: 'getSelectedText' });
+        if (resSel && resSel.success && typeof resSel.text === 'string') selected = resSel.text.trim();
+      } catch (_) {}
+
+      // 获取页面最佳文本与标题
+      const res = await chrome.tabs.sendMessage(tab.id, { action: 'getPageTextForReader' });
+      if (!res || !res.success || typeof res.text !== 'string') throw new Error(res && res.error || '提取文本失败');
+      const text = selected && selected.length > 16 ? selected : res.text;
+      const title = res.title && typeof res.title === 'string' ? res.title : (tab.title || '未命名');
+      const sourceUrl = tab.url || '';
+
+      const payload = {
+        version: 'v1',
+        title: title,
+        content: `# ${title}\n\n${text}`,
+        format: 'markdown',
+        sourceUrl: sourceUrl,
+        lang: navigator.language && navigator.language.startsWith('zh') ? 'zh' : 'en',
+        mime: 'text/plain'
+      };
+
+      // 小内容走URL备通道，否则postMessage
+      const jsonStr = JSON.stringify(payload);
+      const isSmall = jsonStr.length <= 2000;
+      if (isSmall) {
+        const b64 = btoa(jsonStr);
+        await chrome.tabs.create({ url: `https://reader.adhdgofly.online/?agf_import=${encodeURIComponent(b64)}` });
+      } else {
+        const created = await chrome.tabs.create({ url: 'https://reader.adhdgofly.online/?from=plugin' });
+        const readerTabId = created && created.id ? created.id : null;
+        // 适当延时，确保Reader可接收
+        await new Promise(r => setTimeout(r, 600));
+        if (readerTabId) {
+          await chrome.tabs.sendMessage(readerTabId, { action: 'deliverPayloadToReader', payload });
+        }
+      }
+    } catch (error) {
+      console.error('发送到Reader失败:', error);
+    } finally {
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送到Reader'; }
     }
   }
 

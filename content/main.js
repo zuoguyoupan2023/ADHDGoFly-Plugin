@@ -681,6 +681,24 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'getPageTextForReader':
+          try {
+            const r = await this.extractBestTextAndTitle();
+            sendResponse({ success: true, text: r.text, title: r.title });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'extract_failed' });
+          }
+          break;
+        case 'deliverPayloadToReader':
+          try {
+            const pl = message && message.payload ? message.payload : null;
+            if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*');
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'post_failed' });
+          }
+          break;
         case 'showAiSettingPanel':
           this.ensureAiSettingPanel();
           this.showAiSettingPanel();
@@ -2127,6 +2145,35 @@ class ADHDHighlighter {
         resolve(res && res.success ? { success: true } : { success: false, error: (res && res.error) || 'save_failed' });
       });
     });
+  }
+
+  async extractBestTextAndTitle() {
+    const pageUrl = window.location.href;
+    let canonicalUrl = pageUrl;
+    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+    let candidates = [];
+    try {
+      const sels = ['main','article','[role="main"]','.markdown-body','.theme-doc-markdown','.content','.post','.entry','.article','.docItemContainer','#content','#main','#article','#post','#entry','#detail'];
+      sels.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if (el && !this.isExtensionUi(el)) candidates.push(el); }); });
+    } catch (_) {}
+    if (!candidates.length) candidates = [document.body];
+    let best = '';
+    let bestLen = -1;
+    for (const el of candidates) {
+      try {
+        const t = String(el.innerText || el.textContent || '').trim();
+        const n = this.normalizeText(t);
+        if (n && n.length > bestLen) { best = n; bestLen = n.length; }
+      } catch (_) {}
+    }
+    if (!best || best.length < 10) {
+      try { const t = String(document.body && (document.body.innerText || document.body.textContent) || '').trim(); best = this.normalizeText(t); } catch (_) {}
+    }
+    const text = best || '';
+    let title = '';
+    try { const h1 = document.querySelector('h1'); if (h1 && h1.textContent) title = h1.textContent.trim(); } catch (_) {}
+    if (!title) title = (document.title || '').trim();
+    return { title, text, canonicalUrl };
   }
 
   /**
