@@ -49,7 +49,6 @@
     "matches": ["<all_urls>"],
     "js": [
         "i18n.js",
-        "content/security-helper.js",
         "content/file-list-generator.js",
         "content/dictionary-manager-new.js",
         "content/dictionary-adapter.js",
