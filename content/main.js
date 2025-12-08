@@ -808,8 +808,24 @@ class ADHDHighlighter {
           try {
             const pl = message && message.payload ? message.payload : null;
             if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            
+            // 辅助函数：重新签名payload（生成新的nonce和timestamp）
+            const resignPayload = async (originalPayload) => {
+              if (!window.securityHelper) return originalPayload;
+              try {
+                // 移除旧的安全信息
+                const cleanPayload = { ...originalPayload };
+                delete cleanPayload._security;
+                // 重新签名
+                return await window.securityHelper.signPayload(cleanPayload);
+              } catch (e) {
+                console.warn('重新签名失败:', e);
+                return originalPayload;
+              }
+            };
+            
             const jsonStr = JSON.stringify(pl);
-            let base = 'https://reader.adhdgofly.online';
+            let base = 'http://localhost:5173';
             try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
             const url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
             console.log('AGF→Reader: 打开Reader窗口', { bytes: jsonStr.length });
@@ -833,14 +849,19 @@ class ADHDHighlighter {
             let ready = false;
             let sentOnce = false;
             let confirmed = false;
-            const handler = (e) => {
+            const handler = async (e) => {
               const d = e && e.data;
               if (!d || typeof d !== 'object') return;
               if (d.type === 'AGF_READER_READY') {
                 console.log('AGF→Reader: 就绪握手收到');
                 ready = true;
                 if (!sentOnce) {
-                  try { w.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); sentOnce = true; console.log('AGF→Reader: 已发送'); } catch (_) {}
+                  try { 
+                    const freshPayload = await resignPayload(pl);
+                    w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                    sentOnce = true; 
+                    console.log('AGF→Reader: 已发送（新签名）'); 
+                  } catch (_) {}
                 }
               } else if (d.type === 'AGF_DOC_RECEIVED') {
                 confirmed = true;
@@ -849,16 +870,25 @@ class ADHDHighlighter {
               }
             };
             window.addEventListener('message', handler);
-            setTimeout(() => {
+            setTimeout(async () => {
               if (!ready && !sentOnce) {
-                try { w.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); sentOnce = true; console.log('AGF→Reader: 超时未就绪，已发送'); } catch (_) {}
+                try { 
+                  const freshPayload = await resignPayload(pl);
+                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                  sentOnce = true; 
+                  console.log('AGF→Reader: 超时未就绪，已发送（新签名）'); 
+                } catch (_) {}
               }
             }, 1200);
-            setTimeout(() => {
+            setTimeout(async () => {
               if (!confirmed && sentOnce) {
-                try { w.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*'); console.log('AGF→Reader: 未确认，重试一次'); } catch (_) {}
+                try { 
+                  const freshPayload = await resignPayload(pl);
+                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                  console.log('AGF→Reader: 未确认，重试一次（新签名）'); 
+                } catch (_) {}
               }
-            }, 1200);
+            }, 2400);
             sendResponse({ success: true, posted: true });
           } catch (error) {
             sendResponse({ success: false, error: error && error.message || 'open_send_failed' });
