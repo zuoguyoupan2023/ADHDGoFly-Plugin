@@ -681,6 +681,19 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'signPayload':
+          try {
+            if (!window.securityHelper) {
+              sendResponse({ success: false, error: 'security_helper_not_loaded' });
+              break;
+            }
+            const signedPayload = await window.securityHelper.signPayload(message.payload);
+            sendResponse({ success: true, signedPayload });
+          } catch (error) {
+            console.error('签名失败:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'getPageTextForReader':
           try {
             console.log('AGF→Reader: 获取全文开始');
@@ -796,7 +809,7 @@ class ADHDHighlighter {
             const pl = message && message.payload ? message.payload : null;
             if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
             const jsonStr = JSON.stringify(pl);
-            let base = 'http://localhost:5173';
+            let base = 'https://reader.adhdgofly.online';
             try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
             const url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
             console.log('AGF→Reader: 打开Reader窗口', { bytes: jsonStr.length });
