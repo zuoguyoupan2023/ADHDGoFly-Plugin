@@ -825,7 +825,7 @@ class ADHDHighlighter {
             };
             
             const jsonStr = JSON.stringify(pl);
-            let base = 'http://localhost:5173';
+            let base = 'https://reader.adhdgofly.online';
             try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
             const url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
             console.log('AGF→Reader: 打开Reader窗口', { bytes: jsonStr.length });
