@@ -1451,7 +1451,7 @@ class PopupController {
       const sourceUrl = tab.url || '';
       console.log('AGF→Reader: 文本与标题就绪', { title, length: (text || '').length });
 
-      const payload = {
+      let payload = {
         version: 'v1',
         title: title,
         content: `# ${title}\n\n${text}`,
@@ -1460,6 +1460,21 @@ class PopupController {
         lang: navigator.language && navigator.language.startsWith('zh') ? 'zh' : 'en',
         mime: 'text/plain'
       };
+
+      // 添加安全签名
+      try {
+        const securePayload = await chrome.tabs.sendMessage(tab.id, { 
+          action: 'signPayload', 
+          payload 
+        });
+        if (securePayload && securePayload.success) {
+          payload = securePayload.signedPayload;
+          console.log('AGF→Reader: 安全签名已添加');
+        }
+      } catch (e) {
+        console.warn('AGF→Reader: 签名失败，使用未签名payload', e);
+      }
+
       try {
         console.log('AGF→Reader: 首选内容脚本window.open发送');
         const r = await chrome.tabs.sendMessage(tab.id, { action: 'openReaderAndSend', payload });
