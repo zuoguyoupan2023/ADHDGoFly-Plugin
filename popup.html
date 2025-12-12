@@ -720,16 +720,16 @@
 
       .help-icon .help-tooltip {
         position: absolute;
-        top: 50%;
-        left: 110%;
-        transform: translateY(-50%);
+        right: 110%;
+        bottom: calc(100% + 6px);
         background: #2c3e50;
         color: white;
         padding: 8px 10px;
         border-radius: 6px;
         font-size: 12px;
         line-height: 1.4;
-        white-space: nowrap;
+        max-width: 240px;
+        white-space: normal;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         opacity: 0;
         visibility: hidden;
@@ -2469,12 +2469,12 @@
               <h4 style="margin:0; font-size:13px; color:#444" data-i18n="sendToReader.title">发送到 Reader</h4>
               <button id="sendToReaderBtn" class="toggle-btn" style="min-width:0; font-size:12px; padding:4px 8px; border-radius:6px; opacity:0.5; cursor:not-allowed" title="一键发送到Reader" data-i18n="sendToReader.btn" disabled>发送</button>
             </div>
-            <div style="margin-top:6px; font-size:12px; color:#666; display:flex; align-items:center; justify-content:space-between;">
-              <div>
+            <div style="margin-top:6px; font-size:12px; color:#666; display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div style="flex:1; min-width:0;">
                 <span data-i18n="sendToReader.alt.text">启用备用网址：</span>
-                <a href="https://readgofly.online/" target="_blank" style="color:#007aff; text-decoration:none;" data-i18n="sendToReader.alt.linkText" data-i18n-attr="href:sendToReader.alt.linkUrl">readgofly.online</a>
+                <a href="https://readgofly.online/" target="_blank" style="color:#007aff; text-decoration:none; word-break: break-all;" data-i18n="sendToReader.alt.linkText" data-i18n-attr="href:sendToReader.alt.linkUrl">readgofly.online</a>
               </div>
-              <span class="help-icon">?
+              <span class="help-icon" style="margin-left:auto;">?
                 <div class="help-tooltip">
                   <span data-i18n="sendToReader.help.text">具体参阅</span>
                   <a href="https://readgofly.online/v6tov7" target="_blank" data-i18n="sendToReader.help.linkText" data-i18n-attr="href:sendToReader.help.linkUrl">readgofly.online/v6tov7</a>
