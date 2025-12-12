@@ -372,7 +372,7 @@
         "wechat": "微信联系",
         "wechatId": "zuoguyoupan2023",
         "website": "反馈网站",
-        "websiteUrl": "https://feedback.adhdgofly.online"
+        "websiteUrl": "https://feedback.readgofly.online"
       },
       "content": {
         "q0": "插件是免费的吗？",
@@ -380,7 +380,7 @@
         "q1": "如何安装 ADHDGoFly 插件？",
         "a1": "Chrome浏览器：访问 Chrome网上应用店搜索\"ADHDGoFly\"，点击\"添加至Chrome\"\nEdge浏览器：访问 Microsoft Edge加载项商店搜索\"ADHDGoFly\"，点击\"获取\"\n手动安装：下载插件压缩包，在浏览器扩展管理页面开启\"开发者模式\"，选择\"加载已解压的扩展程序\"",
         "q2": "如何手动安装插件？",
-        "a2": "1. 访问 https://download.adhdgofly.online 下载对应浏览器的zip安装包\n2. 解压缩文件：Mac双击zip文件自动解压，Windows右键zip文件选择\"解压缩\"\n3. 打开浏览器扩展管理页面：Chrome访问 chrome://extensions/，Edge访问 edge://extensions/\n4. 开启\"开发者模式\"（Chrome）或\"开发人员模式\"（Edge）\n5. 点击\"加载未打包的扩展程序\"或\"加载解压缩的扩展\"\n6. 选择解压后的整个文件夹（不要选择文件夹内的单个文件）",
+        "a2": "1. 访问 https://download.readgofly.online 下载对应浏览器的zip安装包\n2. 解压缩文件：Mac双击zip文件自动解压，Windows右键zip文件选择\"解压缩\"\n3. 打开浏览器扩展管理页面：Chrome访问 chrome://extensions/，Edge访问 edge://extensions/\n4. 开启\"开发者模式\"（Chrome）或\"开发人员模式\"（Edge）\n5. 点击\"加载未打包的扩展程序\"或\"加载解压缩的扩展\"\n6. 选择解压后的整个文件夹（不要选择文件夹内的单个文件）",
         "q3": "安装后看不到插件图标怎么办？",
         "a3": "1. 检查浏览器右上角扩展程序图标（拼图样式 🧩）\n2. 在扩展程序列表中找到ADHDGoFly，点击\"固定\"图标（📌）\n3. 确保插件已启用（开关处于开启状态）",
         "q4": "插件支持哪些浏览器？",
@@ -396,7 +396,7 @@
         "q9": "可以添加自己的词汇吗？",
         "a9": "1. 在词典选项卡中展开\"自建词典\"，点击添加按钮\n2. 导入自建词典JSON文件\n3. 可修改词典名称、语言、领域类型（默认使用JSON文件设置）",
         "q10": "怎样自建词典？",
-        "a10": "1. 访问自建词典工具：https://dictionary.adhdgofly.online/\n2. 创建并导出JSON文件，然后导入到插件\n3. 添加后默认启用，可在对应语言词典列表中管理",
+        "a10": "1. 访问自建词典工具：https://dictionary.readgofly.online/\n2. 创建并导出JSON文件，然后导入到插件\n3. 添加后默认启用，可在对应语言词典列表中管理",
         "q11": "插件会影响网页加载速度吗？",
         "a11": "插件采用异步加载和智能缓存技术，对页面加载速度影响极小（通常<50ms）",
         "q12": "为什么有些页面部分内容不高亮？",
@@ -424,7 +424,7 @@
         "q23": "是否支持快捷键开启/关闭高亮？",
         "a23": "目前暂不支持快捷键功能，后续版本会考虑添加快捷键设置",
         "q24": "遇到问题如何获取技术支持？",
-        "a24": "1. 微信联系：zuoguyoupan2023\n2. 反馈网站：https://feedback.adhdgofly.online\n3. 在线文档：查看详细使用说明"
+        "a24": "1. 微信联系：zuoguyoupan2023\n2. 反馈网站：https://feedback.readgofly.online\n3. 在线文档：查看详细使用说明"
       }
     },
     "settings": {
@@ -502,7 +502,7 @@
      "feedback": {
        "title": "反馈与支持",
        "wechat": "微信 zuoguyoupan2023",
-       "websiteUrl": "https://feedback.adhdgofly.online"
+       "websiteUrl": "https://feedback.readgofly.online"
      },
      "about": {
        "title": "关于我们",

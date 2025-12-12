@@ -15,7 +15,7 @@ window.getInstallType = function() {
 
 window.getStoreUrl = function() {
     if (!window.ADHD_INSTALL_CONFIG) {
-        return 'https://feedback.adhdgofly.online/';
+        return 'https://feedback.readgofly.online/';
     }
     const config = window.ADHD_INSTALL_CONFIG;
     return config.storeUrl;

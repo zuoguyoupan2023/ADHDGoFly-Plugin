@@ -1959,7 +1959,7 @@ class PopupController {
     const dictionaryBtn = document.getElementById('dictionaryToolBtn');
     if (dictionaryBtn) {
       dictionaryBtn.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://dictionary.adhdgofly.online' });
+        chrome.tabs.create({ url: 'https://dictionary.readgofly.online' });
       });
     }
   }
@@ -2810,8 +2810,8 @@ class PopupController {
           feedbackLink.title = storeUrl;
         } else {
           // 手动安装版本，保持原来的反馈链接
-          feedbackLink.textContent = 'https://feedback.adhdgofly.online';
-          feedbackLink.title = 'https://feedback.adhdgofly.online';
+          feedbackLink.textContent = 'https://feedback.readgofly.online';
+          feedbackLink.title = 'https://feedback.readgofly.online';
         }
       }
     } catch (error) {
@@ -2985,7 +2985,7 @@ class PopupController {
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
         console.log('🔍 ReviewLightTower调试(Popup)：点击了去评价按钮');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);
@@ -3023,7 +3023,7 @@ class PopupController {
     stars.forEach((star, index) => {
       star.addEventListener('click', async () => {
         console.log('🔍 ReviewLightTower调试(Popup)：点击了星级评分');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);

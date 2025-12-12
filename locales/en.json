@@ -364,7 +364,7 @@
         "wechat": "WeChat Contact",
         "wechatId": "zuoguyoupan2023",
         "website": "Feedback Website",
-        "websiteUrl": "https://feedback.adhdgofly.online"
+        "websiteUrl": "https://feedback.readgofly.online"
       },
       "content": {
         "q0": "Is the plugin free?",
@@ -372,7 +372,7 @@
         "q1": "How to install ADHDGoFly plugin?",
         "a1": "Chrome Browser: Visit Chrome Web Store, search \"ADHDGoFly\", click \"Add to Chrome\"\nEdge Browser: Visit Microsoft Edge Add-ons Store, search \"ADHDGoFly\", click \"Get\"\nManual Installation: Download plugin zip package, enable \"Developer mode\" in browser extension management page, select \"Load unpacked extension\"",
         "q2": "How to manually install the plugin?",
-        "a2": "1. Visit https://download.adhdgofly.online to download the zip package for your browser\n2. Extract files: Mac double-click zip file to auto-extract, Windows right-click zip file and select \"Extract\"\n3. Open browser extension management page: Chrome visit chrome://extensions/, Edge visit edge://extensions/\n4. Enable \"Developer mode\" (Chrome) or \"Developer mode\" (Edge)\n5. Click \"Load unpacked\" or \"Load unpacked extension\"\n6. Select the entire extracted folder (don't select individual files within the folder)",
+        "a2": "1. Visit https://download.readgofly.online to download the zip package for your browser\n2. Extract files: Mac double-click zip file to auto-extract, Windows right-click zip file and select \"Extract\"\n3. Open browser extension management page: Chrome visit chrome://extensions/, Edge visit edge://extensions/\n4. Enable \"Developer mode\" (Chrome) or \"Developer mode\" (Edge)\n5. Click \"Load unpacked\" or \"Load unpacked extension\"\n6. Select the entire extracted folder (don't select individual files within the folder)",
         "q3": "Can't see plugin icon after installation?",
         "a3": "1. Check browser top-right corner extension icon (puzzle piece 🧩)\n2. Find ADHDGoFly in extension list, click \"Pin\" icon (📌)\n3. Ensure plugin is enabled (switch is in on position)",
         "q4": "Which browsers does the plugin support?",
@@ -388,7 +388,7 @@
         "q9": "Can I add my own vocabulary?",
         "a9": "1. In dictionary tab, expand \"Custom Dictionary\", click add button\n2. Import custom dictionary JSON file\n3. Can modify dictionary name, language, domain type (defaults to JSON file settings)",
         "q10": "How to create custom dictionary?",
-        "a10": "1. Visit custom dictionary tool: https://dictionary.adhdgofly.online/\n2. Create and export JSON file, then import to plugin\n3. After adding, enabled by default, can manage in corresponding language dictionary list",
+        "a10": "1. Visit custom dictionary tool: https://dictionary.readgofly.online/\n2. Create and export JSON file, then import to plugin\n3. After adding, enabled by default, can manage in corresponding language dictionary list",
         "q11": "Will the plugin affect webpage loading speed?",
         "a11": "Plugin uses asynchronous loading and intelligent caching technology, minimal impact on page loading speed (typically <50ms)",
         "q12": "Why don't some pages highlight partially?",
@@ -416,7 +416,7 @@
         "q23": "Does it support hotkeys to enable/disable highlighting?",
         "a23": "Currently hotkey functionality is not supported, future versions will consider adding hotkey settings",
         "q24": "How to get technical support when encountering problems?",
-        "a24": "1. WeChat contact: zuoguyoupan2023\n2. Feedback website: https://feedback.adhdgofly.online\n3. Online documentation: View detailed usage instructions"
+        "a24": "1. WeChat contact: zuoguyoupan2023\n2. Feedback website: https://feedback.readgofly.online\n3. Online documentation: View detailed usage instructions"
       }
     },
     "settings": {
@@ -494,7 +494,7 @@
       "feedback": {
         "title": "Feedback & Support",
         "wechat": "WeChat zuoguyoupan2023",
-        "websiteUrl": "https://feedback.adhdgofly.online"
+        "websiteUrl": "https://feedback.readgofly.online"
       },
        "about": {
          "title": "About Us",

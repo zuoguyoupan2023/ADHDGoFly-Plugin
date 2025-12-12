@@ -479,7 +479,7 @@ class SettingsManager {
             
             // 如果是官方商店安装，只显示当前版本和官网推广
             if (!this.versionInfo.isManualInstall) {
-                this.versionInfo.officialWebsite = 'https://adhdgofly.online';
+                this.versionInfo.officialWebsite = 'https://readgofly.online';
                 this.updateVersionUI();
                 return;
             }
@@ -772,8 +772,8 @@ class SettingsManager {
             <div class="promotion-content">
                 <h4>${this.i18nManager.t('version.officialWebsite')}</h4>
                 <p>${this.i18nManager.t('version.visitOfficialSite')}</p>
-                <a href="https://adhdgofly.online" target="_blank" class="official-website-link">
-                    🌐 adhdgofly.online
+                <a href="https://readgofly.online" target="_blank" class="official-website-link">
+                    🌐 readgofly.online
                 </a>
                 <p class="auto-update-note">${this.i18nManager.t('version.autoUpdateNote')}</p>
             </div>

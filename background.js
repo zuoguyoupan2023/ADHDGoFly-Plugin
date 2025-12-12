@@ -12,7 +12,7 @@ const privacyManager = new PrivacySettingsManager();
  * 新的独立安装统计使用 sendIndependentStatsToWorker 直接发送到 Worker
  */
 const INSTALLATION_CONFIG = {
-  API_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
+  API_URL: 'https://plugin-data.readgofly.online/api/plugin-data-analytics',
   FALLBACK_URL: 'https://plugin-data-analytics-worker.oliver-409.workers.dev',
   TIMEOUT: 10000,
   MAX_RETRIES: 10,
@@ -1132,8 +1132,8 @@ const versionChecker = new SimpleVersionChecker();
 
 // 插件埋点配置
 const ANALYTICS_CONFIG = {
-  PRIMARY_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
-  FALLBACK_URL: 'https://plugin-data.adhdgofly.online/api/plugin-data-analytics',
+  PRIMARY_URL: 'https://plugin-data.readgofly.online/api/plugin-data-analytics',
+  FALLBACK_URL: 'https://plugin-data.readgofly.online/api/plugin-data-analytics',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 2,
   RETRY_DELAY: 1000
