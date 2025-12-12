@@ -160,7 +160,7 @@
   "sendToReader": {
     "title": "Send to Reader",
     "btn": "Send",
-    "tooltipEnabled": "Send to Reader",
+    "tooltipEnabled": "Send to V7",
     "tooltipDisabled": "Send unavailable: ",
     "alt": {
       "text": "Enable backup site: ",
