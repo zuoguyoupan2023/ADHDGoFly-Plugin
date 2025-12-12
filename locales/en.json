@@ -149,7 +149,7 @@
     }
   },
   "legend": {
-    "title": "Part of Speech Colors",
+    "title": "Highlight Colors",
     "noun": "Noun",
     "verb": "Verb",
     "adjective": "Adjective"
