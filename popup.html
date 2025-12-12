@@ -702,6 +702,51 @@
         border-bottom: 6px solid #2c3e50;
       }
 
+      .help-icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border: 1px solid #999;
+        border-radius: 50%;
+        color: #666;
+        font-size: 12px;
+        cursor: help;
+        margin-left: 8px;
+        user-select: none;
+      }
+
+      .help-icon .help-tooltip {
+        position: absolute;
+        top: 50%;
+        left: 110%;
+        transform: translateY(-50%);
+        background: #2c3e50;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.4;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+      }
+
+      .help-icon:hover .help-tooltip {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .help-tooltip a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
       .tooltip-title {
         font-weight: 600;
         font-size: 13px;
@@ -2422,10 +2467,19 @@
           <div class="send-to-reader-section" style="margin-top:12px; padding-top:8px; border-top:1px solid #eee;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
               <h4 style="margin:0; font-size:13px; color:#444" data-i18n="sendToReader.title">发送到 Reader</h4>
-              <button id="sendToReaderBtn" class="toggle-btn" style="font-size:12px; padding:4px 8px; border-radius:6px; opacity:0.5; cursor:not-allowed" title="一键发送到Reader" data-i18n="sendToReader.btn" disabled>发送</button>
+              <button id="sendToReaderBtn" class="toggle-btn" style="min-width:0; font-size:12px; padding:4px 8px; border-radius:6px; opacity:0.5; cursor:not-allowed" title="一键发送到Reader" data-i18n="sendToReader.btn" disabled>发送</button>
             </div>
-            <div style="margin-top:6px; font-size:12px; color:#666;">
-              adhdgofly.online不可用，启用备用的 <a href="https://readgofly.online/" target="_blank" style="color:#007aff; text-decoration:none;">readgofly.online</a>
+            <div style="margin-top:6px; font-size:12px; color:#666; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <span data-i18n="sendToReader.alt.text">启用备用网址：</span>
+                <a href="https://readgofly.online/" target="_blank" style="color:#007aff; text-decoration:none;" data-i18n="sendToReader.alt.linkText" data-i18n-attr="href:sendToReader.alt.linkUrl">readgofly.online</a>
+              </div>
+              <span class="help-icon">?
+                <div class="help-tooltip">
+                  <span data-i18n="sendToReader.help.text">具体参阅</span>
+                  <a href="https://readgofly.online/v6tov7" target="_blank" data-i18n="sendToReader.help.linkText" data-i18n-attr="href:sendToReader.help.linkUrl">readgofly.online/v6tov7</a>
+                </div>
+              </span>
             </div>
           </div>
         </div>

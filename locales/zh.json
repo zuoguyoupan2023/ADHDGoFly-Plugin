@@ -158,7 +158,17 @@
     "title": "发送到 Reader",
     "btn": "发送",
     "tooltipEnabled": "一键发送到Reader",
-    "tooltipDisabled": "发送不可用："
+    "tooltipDisabled": "发送不可用：",
+    "alt": {
+      "text": "启用备用网址：",
+      "linkText": "readgofly.online",
+      "linkUrl": "https://readgofly.online/"
+    },
+    "help": {
+      "text": "具体参阅",
+      "linkText": "readgofly.online/v6tov7",
+      "linkUrl": "https://readgofly.online/v6tov7"
+    }
   },
   "pages": {
     "home": {

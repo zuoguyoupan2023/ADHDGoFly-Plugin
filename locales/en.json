@@ -161,7 +161,17 @@
     "title": "Send to Reader",
     "btn": "Send",
     "tooltipEnabled": "Send to Reader",
-    "tooltipDisabled": "Send unavailable: "
+    "tooltipDisabled": "Send unavailable: ",
+    "alt": {
+      "text": "Enable backup site: ",
+      "linkText": "readgofly.online",
+      "linkUrl": "https://readgofly.online/"
+    },
+    "help": {
+      "text": "See details at",
+      "linkText": "readgofly.online/v6tov7",
+      "linkUrl": "https://readgofly.online/v6tov7"
+    }
   },
   "pages": {
     "dict": {
