@@ -291,7 +291,7 @@ test_cors() {
     log_info "测试 CORS..."
     
     response=$(curl -s -w "%{http_code}" -X OPTIONS "$WORKER_URL/api/plugin-events" \
-        -H "Origin: https://adhdgofly.online" \
+        -H "Origin: https://readgofly.online" \
         -H "Access-Control-Request-Method: POST" \
         -H "Access-Control-Request-Headers: Content-Type" \
         -o /tmp/cors_test.json)

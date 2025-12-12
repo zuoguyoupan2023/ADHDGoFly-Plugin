@@ -681,6 +681,226 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'signPayload':
+          try {
+            if (!window.securityHelper) {
+              sendResponse({ success: false, error: 'security_helper_not_loaded' });
+              break;
+            }
+            const signedPayload = await window.securityHelper.signPayload(message.payload);
+            sendResponse({ success: true, signedPayload });
+          } catch (error) {
+            console.error('签名失败:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
+        case 'getPageTextForReader':
+          try {
+            console.log('AGF→Reader: 获取全文开始');
+            const pageUrl = window.location.href;
+            let canonicalUrl = pageUrl;
+            try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+            let saved = '';
+            try {
+              const bgRes = await new Promise((resolve) => {
+                try { chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl, canonicalUrl }, (res) => resolve(res)); } catch (_) { resolve(null); }
+              });
+              if (bgRes && bgRes.success && typeof bgRes.text === 'string') saved = String(bgRes.text || '');
+            } catch (_) {}
+            if (saved && saved.trim().length >= 50) {
+              console.log('AGF→Reader: 使用已保存全文', { length: saved.length });
+              const title = (document.title || '').trim();
+              sendResponse({ success: true, text: saved, title });
+              break;
+            }
+            let { text, title } = await this.extractBestTextAndTitle();
+            if ((!text || text.length < 200)) {
+              try {
+                const spans = Array.from(document.querySelectorAll('.textLayer span'));
+                if (spans.length) {
+                  const joined = spans.map(sp => this.normalizeText(sp.textContent || '')).filter(t => t && t.length > 1).join('\n');
+                  if (joined && joined.length > text.length) text = joined;
+                  console.log('AGF→Reader: PDF文本层复用', { spans: spans.length, length: (joined || '').length });
+                }
+              } catch (_) {}
+            }
+            console.log('AGF→Reader: 获取全文完成', { length: (text || '').length, title });
+            sendResponse({ success: true, text, title });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'extract_failed' });
+          }
+          break;
+        case 'canProvideVisibleText':
+          try {
+            const host = (() => { try { return new URL(window.location.href).hostname; } catch(_) { return ''; } })();
+            let blocked = [];
+            try { const s = await chrome.storage.local.get(['paywallBlockedDomains']); blocked = Array.isArray(s.paywallBlockedDomains) ? s.paywallBlockedDomains : []; } catch(_){ }
+            const DEFAULT_BLOCKED = [
+              'qidian.com','youdubook.com','webnovel.com','jjwxc.net','m.jjwxc.net','zongheng.com','17k.com','yunqi.qq.com','hongxiu.com','xxsy.net','faloo.com','ciweimao.com','weread.qq.com','zhangyue.com','shuqi.com','migu.cn','read.douban.com','read.amazon.com','kindlecloudreader.com'
+            ];
+            const blockedSet = new Set([ ...DEFAULT_BLOCKED, ...blocked ]);
+            if (host && blockedSet.has(host)) { sendResponse({ success: true, available: false, reason: '付费或受限站点' }); break; }
+            const hasPdfLayer = !!document.querySelector('.textLayer span');
+            let visibleLen = 0;
+            function textFrom(el){
+              if (!el) return '';
+              const style = getComputedStyle(el);
+              if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity || '1') === 0) return '';
+              const rect = el.getBoundingClientRect();
+              if (rect.width <= 0 || rect.height <= 0) return '';
+              return (el.innerText || '').trim();
+            }
+            if (hasPdfLayer) {
+              const spans = Array.from(document.querySelectorAll('.textLayer span'));
+              const joined = spans.map(sp => textFrom(sp)).filter(t => t && t.length > 0).join('\n');
+              visibleLen = joined.length;
+            } else {
+              const candidates = [ 'main', 'article', '[role="main"]' ];
+              let buf = '';
+              for (const sel of candidates) {
+                const el = document.querySelector(sel);
+                if (el) { buf += '\n' + textFrom(el); }
+              }
+              if (!buf || buf.length < 50) buf = textFrom(document.body);
+              visibleLen = (buf || '').length;
+            }
+            // 付费遮罩/文案检测
+            const paywallHints = ['付费','会员','订阅','登录后可阅读','购买后可读','仅会员可见','解锁全文'];
+            let hintBlocked = false;
+            try {
+              const bodyText = (document.body && document.body.innerText) ? document.body.innerText : '';
+              hintBlocked = paywallHints.some(h => bodyText.includes(h));
+            } catch(_){ }
+            // 大遮罩检测
+            let overlayBlocked = false;
+            try {
+              const els = Array.from(document.querySelectorAll('div,section'));
+              const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+              const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+              overlayBlocked = els.some(el => {
+                const st = getComputedStyle(el);
+                if (st.position !== 'fixed') return false;
+                const r = el.getBoundingClientRect();
+                const coverRatio = (Math.min(r.width, vw) * Math.min(r.height, vh)) / (vw * vh);
+                return coverRatio > 0.6 && parseInt(st.zIndex || '0', 10) >= 1000 && st.pointerEvents !== 'none';
+              });
+            } catch(_){ }
+            if (hintBlocked || overlayBlocked) { sendResponse({ success: true, available: false, reason: '站点限制' }); break; }
+            const available = visibleLen >= (hasPdfLayer ? 50 : 200);
+            sendResponse({ success: true, available, reason: available ? 'ok' : '内容不足', length: visibleLen });
+          } catch (error) {
+            sendResponse({ success: false, available: false, reason: '异常' });
+          }
+          break;
+        case 'deliverPayloadToReader':
+          try {
+            const pl = message && message.payload ? message.payload : null;
+            if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            console.log('AGF→Reader: 发送postMessage', { type: 'AGF_DOC_V1', title: pl && pl.title, length: (pl && pl.content ? String(pl.content).length : 0) });
+            window.postMessage({ type: 'AGF_DOC_V1', payload: pl }, '*');
+            console.log('AGF→Reader: postMessage已发出');
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'post_failed' });
+          }
+          break;
+        case 'openReaderAndSend':
+          try {
+            const pl = message && message.payload ? message.payload : null;
+            if (!pl || typeof pl !== 'object') { sendResponse({ success: false, error: 'no_payload' }); break; }
+            
+            // 辅助函数：重新签名payload（生成新的nonce和timestamp）
+            const resignPayload = async (originalPayload) => {
+              if (!window.securityHelper) return originalPayload;
+              try {
+                // 移除旧的安全信息
+                const cleanPayload = { ...originalPayload };
+                delete cleanPayload._security;
+                // 重新签名
+                return await window.securityHelper.signPayload(cleanPayload);
+              } catch (e) {
+                console.warn('重新签名失败:', e);
+                return originalPayload;
+              }
+            };
+            
+            const jsonStr = JSON.stringify(pl);
+            let base = 'https://v7.readgofly.online';
+            try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
+            const url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
+            console.log('AGF→Reader: 打开Reader窗口', { bytes: jsonStr.length });
+            const w = window.open(url);
+            if (!w) {
+              try {
+                const utf8 = new TextEncoder().encode(jsonStr);
+                let bin = '';
+                for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
+                const b64 = btoa(bin);
+                const fallbackUrl = base + (base.endsWith('/') ? '' : '/') + '?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+                console.log('AGF→Reader: 无法建立opener，使用URL备通道', { bytes: jsonStr.length });
+                window.open(fallbackUrl);
+                sendResponse({ success: true, posted: false, fallback: true });
+              } catch (e) {
+                sendResponse({ success: false, error: 'window_open_failed' });
+              }
+              break;
+            }
+            console.log('AGF→Reader: Reader窗口已打开，等待就绪');
+            let ready = false;
+            let sentOnce = false;
+            let confirmed = false;
+            const handler = async (e) => {
+              const d = e && e.data;
+              if (!d || typeof d !== 'object') return;
+              if (d.type === 'AGF_READER_READY') {
+                console.log('AGF→Reader: 就绪握手收到');
+                ready = true;
+                if (!sentOnce) {
+                  try { 
+                    const freshPayload = await resignPayload(pl);
+                    w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                    sentOnce = true; 
+                    console.log('AGF→Reader: 已发送（新签名）'); 
+                  } catch (_) {}
+                }
+              } else if (d.type === 'AGF_DOC_RECEIVED') {
+                confirmed = true;
+                console.log('AGF→Reader: 已确认接收');
+                try { window.removeEventListener('message', handler); } catch (_){ }
+              }
+            };
+            window.addEventListener('message', handler);
+            setTimeout(async () => {
+              if (!ready && !sentOnce) {
+                try { 
+                  const freshPayload = await resignPayload(pl);
+                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                  sentOnce = true; 
+                  console.log('AGF→Reader: 超时未就绪，已发送（新签名）'); 
+                } catch (_) {}
+              }
+            }, 1200);
+            setTimeout(async () => {
+              if (!confirmed && sentOnce) {
+                try { 
+                  const freshPayload = await resignPayload(pl);
+                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
+                  console.log('AGF→Reader: 未确认，重试一次（新签名）'); 
+                } catch (_) {}
+              }
+            }, 2400);
+            sendResponse({ success: true, posted: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error && error.message || 'open_send_failed' });
+          }
+          break;
+        case 'agfLogProgress':
+          try {
+            const text = (message && message.text) ? String(message.text) : '';
+            if (text) console.log('AGF→Reader:', text);
+            sendResponse && sendResponse({ ok: true });
+          } catch (e) { sendResponse && sendResponse({ ok: false }); }
+          break;
         case 'showAiSettingPanel':
           this.ensureAiSettingPanel();
           this.showAiSettingPanel();
@@ -2127,6 +2347,35 @@ class ADHDHighlighter {
         resolve(res && res.success ? { success: true } : { success: false, error: (res && res.error) || 'save_failed' });
       });
     });
+  }
+
+  async extractBestTextAndTitle() {
+    const pageUrl = window.location.href;
+    let canonicalUrl = pageUrl;
+    try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
+    let candidates = [];
+    try {
+      const sels = ['main','article','[role="main"]','.markdown-body','.theme-doc-markdown','.content','.post','.entry','.article','.docItemContainer','#content','#main','#article','#post','#entry','#detail'];
+      sels.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if (el && !this.isExtensionUi(el)) candidates.push(el); }); });
+    } catch (_) {}
+    if (!candidates.length) candidates = [document.body];
+    let best = '';
+    let bestLen = -1;
+    for (const el of candidates) {
+      try {
+        const t = String(el.innerText || el.textContent || '').trim();
+        const n = this.normalizeText(t);
+        if (n && n.length > bestLen) { best = n; bestLen = n.length; }
+      } catch (_) {}
+    }
+    if (!best || best.length < 10) {
+      try { const t = String(document.body && (document.body.innerText || document.body.textContent) || '').trim(); best = this.normalizeText(t); } catch (_) {}
+    }
+    const text = best || '';
+    let title = '';
+    try { const h1 = document.querySelector('h1'); if (h1 && h1.textContent) title = h1.textContent.trim(); } catch (_) {}
+    if (!title) title = (document.title || '').trim();
+    return { title, text, canonicalUrl };
   }
 
   /**

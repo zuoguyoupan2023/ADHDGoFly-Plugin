@@ -29,7 +29,7 @@ function getChromeStoreInfo(storeUrl) {
     // 检测是否包含占位符
     if (storeUrl.includes('CHROME_APP_ID')) {
         return {
-            url: 'https://feedback.adhdgofly.online/',
+            url: 'https://feedback.readgofly.online/',
             isPlaceholder: true,
             searchHint: 'ADHDGoFly'
         };
@@ -84,7 +84,7 @@ window.getInstallType = function() {
 // 获取商店链接的便捷函数（智能回退支持）
 window.getStoreUrl = function() {
     if (!window.ADHD_INSTALL_CONFIG) {
-        return 'https://feedback.adhdgofly.online/';
+        return 'https://feedback.readgofly.online/';
     }
     
     const config = window.ADHD_INSTALL_CONFIG;
@@ -134,7 +134,7 @@ const STORE_URLS = {
     [INSTALL_TYPES.FIREFOX_STORE]: 'https://addons.mozilla.org/firefox/addon/adhdgofly/reviews/',
     [INSTALL_TYPES.SAFARI_STORE]: 'https://apps.apple.com/app/adhdgofly',
     [INSTALL_TYPES.OPERA_STORE]: 'https://addons.opera.com/extensions/details/adhdgofly/',
-    [INSTALL_TYPES.SELF_INSTALL]: 'https://feedback.adhdgofly.online/'
+    [INSTALL_TYPES.SELF_INSTALL]: 'https://feedback.readgofly.online/'
 };
 
 // 浏览器配置
@@ -883,7 +883,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/plugin-download-data-collector';
+            const vercelEndpoint = 'https://download-collector.readgofly.online/api/plugin-download-data-collector';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);
@@ -1683,7 +1683,7 @@ async function main() {
             
             // 使用 Vercel + 自定义域名方案
             // 替换为您的自定义域名，避免被墙问题
-            const vercelEndpoint = 'https://download-collector.adhdgofly.online/api/plugin-download-data-collector';
+            const vercelEndpoint = 'https://download-collector.readgofly.online/api/plugin-download-data-collector';
             
             // 发送数据到 Vercel
             trackDownloadToVercel(data, vercelEndpoint);

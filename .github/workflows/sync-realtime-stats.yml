@@ -15,7 +15,7 @@ jobs:
         id: fetch-stats
         run: |
           # 尝试从 Workers 获取最新数据
-          if curl -f -m 10 -X GET "${{ secrets.WORKER_API_URL || 'https://plugin-download-data.adhdgofly.online/api/stats' }}" > temp-stats.json 2>/dev/null; then
+          if curl -f -m 10 -X GET "${{ secrets.WORKER_API_URL || 'https://plugin-download-data.readgofly.online/api/stats' }}" > temp-stats.json 2>/dev/null; then
             echo "source=cloudflare" >> $GITHUB_OUTPUT
             echo "✅ 成功从 Cloudflare Workers 获取数据"
           else

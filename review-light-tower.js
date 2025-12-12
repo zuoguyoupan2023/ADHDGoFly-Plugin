@@ -564,7 +564,7 @@ class ReviewLightTower {
       
       star.addEventListener('click', async () => {
         if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：点击了星级评分');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         window.open(storeUrl, '_blank');
         try {
           const v = await this.getCurrentVersion();
@@ -587,7 +587,7 @@ class ReviewLightTower {
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
         if (window.__LOG_DEV_MODE) console.log('🔍 ReviewLightTower调试(Content)：点击了去评价按钮');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         window.open(storeUrl, '_blank');
         try {
           const v = await this.getCurrentVersion();

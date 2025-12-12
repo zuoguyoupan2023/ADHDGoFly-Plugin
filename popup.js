@@ -301,6 +301,10 @@ class PopupController {
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => this.handleToggle());
     }
+    const sendBtn = document.getElementById('sendToReaderBtn');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', () => this.handleSendToReader());
+    }
     
     // 侧边栏按钮事件
     this.bindSidebarEvents();
@@ -332,6 +336,9 @@ class PopupController {
     this.loadColorSettings();
     this.loadTextSettings();
     this.loadHighlightingToggles();
+
+    // 更新发送按钮可用性
+    this.updateSendButtonAvailability();
 
   }
 
@@ -531,6 +538,7 @@ class PopupController {
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
+      if (pageId === 'home') this.updateSendButtonAvailability();
       
       // 如果是词典页面，初始化语言分组监听器
       if (pageId === 'dict') {
@@ -551,6 +559,39 @@ class PopupController {
         this.initFAQ();
       }
     }
+  }
+
+  async updateSendButtonAvailability() {
+    try {
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      if (!sendBtn) return;
+      // 默认禁用
+      sendBtn.disabled = true;
+      sendBtn.style.opacity = '0.5';
+      sendBtn.style.cursor = 'not-allowed';
+      try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.textContent = window.i18n.t('sendToReader.btn'); else sendBtn.textContent = '发送'; } catch(_){ sendBtn.textContent = '发送'; }
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) return;
+      let res;
+      try {
+        res = await chrome.tabs.sendMessage(tab.id, { action: 'canProvideVisibleText' });
+      } catch (_) {
+        res = null;
+      }
+      if (res && res.success && res.available === true) {
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '0.92';
+        sendBtn.style.cursor = 'pointer';
+        try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.title = window.i18n.t('sendToReader.tooltipEnabled'); else sendBtn.title = '一键发送到Reader'; } catch(_){ sendBtn.title = '一键发送到Reader'; }
+      } else {
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+        const reason = (res && res.reason) || '不可获取';
+        try { if (window.i18n && typeof window.i18n.t === 'function') sendBtn.title = (window.i18n.t('sendToReader.tooltipDisabled') || '发送不可用：') + reason; else sendBtn.title = `发送不可用：${reason}`; } catch(_){ sendBtn.title = `发送不可用：${reason}`; }
+      }
+    } catch (_) {}
   }
 
   bindDictEvents() {
@@ -1384,6 +1425,73 @@ class PopupController {
     }
   }
 
+  async handleSendToReader() {
+    try {
+      console.log('AGF→Reader: 开始一键发送');
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      const prevText = sendBtn ? sendBtn.textContent : '';
+      if (sendBtn) { sendBtn.textContent = '发送中…'; sendBtn.disabled = true; }
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) throw new Error('未检测到活动标签页');
+
+      // 优先获取选中文本
+      let selected = '';
+      try {
+        const resSel = await chrome.tabs.sendMessage(tab.id, { action: 'getSelectedText' });
+        if (resSel && resSel.success && typeof resSel.text === 'string') selected = resSel.text.trim();
+        console.log('AGF→Reader: 选中文本长度', selected.length || 0);
+      } catch (_) {}
+
+      // 获取页面最佳文本与标题
+      const res = await chrome.tabs.sendMessage(tab.id, { action: 'getPageTextForReader' });
+      if (!res || !res.success || typeof res.text !== 'string') throw new Error(res && res.error || '提取文本失败');
+      const text = selected && selected.length > 16 ? selected : res.text;
+      const title = res.title && typeof res.title === 'string' ? res.title : (tab.title || '未命名');
+      const sourceUrl = tab.url || '';
+      console.log('AGF→Reader: 文本与标题就绪', { title, length: (text || '').length });
+
+      let payload = {
+        version: 'v1',
+        title: title,
+        content: `# ${title}\n\n${text}`,
+        format: 'markdown',
+        sourceUrl: sourceUrl,
+        lang: navigator.language && navigator.language.startsWith('zh') ? 'zh' : 'en',
+        mime: 'text/plain'
+      };
+
+      // 添加安全签名
+      try {
+        const securePayload = await chrome.tabs.sendMessage(tab.id, { 
+          action: 'signPayload', 
+          payload 
+        });
+        if (securePayload && securePayload.success) {
+          payload = securePayload.signedPayload;
+          console.log('AGF→Reader: 安全签名已添加');
+        }
+      } catch (e) {
+        console.warn('AGF→Reader: 签名失败，使用未签名payload', e);
+      }
+
+      try {
+        console.log('AGF→Reader: 首选内容脚本window.open发送');
+        const r = await chrome.tabs.sendMessage(tab.id, { action: 'openReaderAndSend', payload });
+        if (!r || r.success !== true) throw new Error(r && r.error || 'content_send_failed');
+        console.log('AGF→Reader: 内容脚本发送完成');
+      } catch (e) {
+        console.warn('AGF→Reader: 内容脚本发送失败，转交后台', e && e.message);
+        await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
+      }
+    } catch (error) {
+      console.error('发送到Reader失败:', error);
+    } finally {
+      const sendBtn = document.getElementById('sendToReaderBtn');
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送到Reader'; }
+    }
+  }
+
   /**
    * 更新UI状态
    * 根据插件状态更新界面显示
@@ -1851,7 +1959,7 @@ class PopupController {
     const dictionaryBtn = document.getElementById('dictionaryToolBtn');
     if (dictionaryBtn) {
       dictionaryBtn.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://dictionary.adhdgofly.online' });
+        chrome.tabs.create({ url: 'https://dictionary.readgofly.online' });
       });
     }
   }
@@ -2702,8 +2810,8 @@ class PopupController {
           feedbackLink.title = storeUrl;
         } else {
           // 手动安装版本，保持原来的反馈链接
-          feedbackLink.textContent = 'https://feedback.adhdgofly.online';
-          feedbackLink.title = 'https://feedback.adhdgofly.online';
+          feedbackLink.textContent = 'https://feedback.readgofly.online';
+          feedbackLink.title = 'https://feedback.readgofly.online';
         }
       }
     } catch (error) {
@@ -2877,7 +2985,7 @@ class PopupController {
     if (goReviewBtn) {
       goReviewBtn.addEventListener('click', async () => {
         console.log('🔍 ReviewLightTower调试(Popup)：点击了去评价按钮');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);
@@ -2915,7 +3023,7 @@ class PopupController {
     stars.forEach((star, index) => {
       star.addEventListener('click', async () => {
         console.log('🔍 ReviewLightTower调试(Popup)：点击了星级评分');
-        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.adhdgofly.online';
+        const storeUrl = window.getStoreUrl ? window.getStoreUrl() : 'https://feedback.readgofly.online';
         try {
           const v = await window.reviewLightTower.getCurrentVersion();
           const major = parseInt(v.split('.')[0]);
