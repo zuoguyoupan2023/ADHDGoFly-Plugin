@@ -345,6 +345,11 @@
       },
       "changelog": {
         "title": "更新日志",
+        "v017": {
+          "title": "V7 联动与站点切换",
+          "feature1": "V7 版本与网站联动，可发送网页内容到网站保存",
+          "feature2": "站点调整：默认改为 readgofly.online；备用：adhdgofly.com"
+        },
         "v014": {
           "title": "词典功能与性能提升",
           "feature1": "增加自建词典功能",
