@@ -337,6 +337,11 @@
       },
       "changelog": {
         "title": "Update Log",
+        "v017": {
+          "title": "V7 Integration & Site Switch",
+          "feature1": "V7 release with website integration; send page content to site for saving",
+          "feature2": "Site update: default switched to readgofly.online; backup: adhdgofly.com"
+        },
         "v014": {
           "title": "Dictionary Features & Performance Enhancement",
           "feature1": "Added custom dictionary functionality",
