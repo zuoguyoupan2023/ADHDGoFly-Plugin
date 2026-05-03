@@ -2,7 +2,7 @@
   "appName": "ADHDGoFly",
   "promo": {
     "eatext": {
-      "desc": "我们的新插件，专注英文阅读体验",
+      "desc": "更主动的阅读插件",
       "btn": "了解更多"
     }
   },
@@ -166,7 +166,7 @@
     "tooltipEnabled": "一键发送到Reader",
     "tooltipDisabled": "发送不可用：",
     "alt": {
-      "text": "启用备用网址：",
+      "text": "插件官网：",
       "linkText": "adhdgofly.online",
       "linkUrl": "https://adhdgofly.online/"
     },
@@ -351,6 +351,12 @@
       },
       "changelog": {
         "title": "更新日志",
+        "v018": {
+          "title": "颜色优化与品牌升级",
+          "feature1": "名词高亮由蓝色调整为紫色，比较级由紫色调整为深蓝色，提升词性区分度",
+          "feature2": "官网域名切换至 adhdgofly.online",
+          "feature3": "推荐新插件 EaText — 更主动的阅读插件"
+        },
         "v017": {
           "title": "V7 联动与站点切换",
           "feature1": "V7 版本与网站联动，可发送网页内容到网站保存",

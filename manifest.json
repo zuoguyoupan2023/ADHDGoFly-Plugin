@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ADHDGoFly, highlight your sight",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Text highlighting for better reading",
   "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen", "scripting"],
   "host_permissions": [

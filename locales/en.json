@@ -2,7 +2,7 @@
   "appName": "ADHDGoFly",
   "promo": {
     "eatext": {
-      "desc": "Our new extension, focused on English reading experience",
+      "desc": "A more active reading extension",
       "btn": "Learn more"
     }
   },
@@ -169,7 +169,7 @@
     "tooltipEnabled": "Send to V7",
     "tooltipDisabled": "Send unavailable: ",
     "alt": {
-      "text": "Enable backup site: ",
+      "text": "Official website: ",
       "linkText": "adhdgofly.online",
       "linkUrl": "https://adhdgofly.online/"
     },
@@ -343,6 +343,12 @@
       },
       "changelog": {
         "title": "Update Log",
+        "v018": {
+          "title": "Color Optimization & Brand Upgrade",
+          "feature1": "Noun highlight changed from blue to purple, comparative from purple to dark blue for better distinction",
+          "feature2": "Official website switched to adhdgofly.online",
+          "feature3": "Recommended new extension EaText — a more active reading tool"
+        },
         "v017": {
           "title": "V7 Integration & Site Switch",
           "feature1": "V7 release with website integration; send page content to site for saving",
