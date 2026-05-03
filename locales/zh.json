@@ -1,5 +1,11 @@
 {
   "appName": "ADHDGoFly",
+  "promo": {
+    "eatext": {
+      "desc": "我们的新插件，专注英文阅读体验",
+      "btn": "了解更多"
+    }
+  },
   "status": {
     "checking": "状态检查中...",
     "enabled": "高亮已启用",
@@ -161,13 +167,13 @@
     "tooltipDisabled": "发送不可用：",
     "alt": {
       "text": "启用备用网址：",
-      "linkText": "readgofly.online",
-      "linkUrl": "https://readgofly.online/"
+      "linkText": "adhdgofly.online",
+      "linkUrl": "https://adhdgofly.online/"
     },
     "help": {
       "text": "具体参阅",
-      "linkText": "readgofly.online/v6tov7",
-      "linkUrl": "https://readgofly.online/v6tov7"
+      "linkText": "adhdgofly.online/v6tov7",
+      "linkUrl": "https://adhdgofly.online/v6tov7"
     }
   },
   "pages": {

@@ -73,7 +73,7 @@ class PopupController {
       };
     this.colorSchemes = {
       default: {
-        noun: '#0066cc',    // 蓝色
+        noun: '#8b5cf6',    // 紫色
         verb: '#cc0000',    // 红色
         adj: '#009933'      // 绿色
       },
@@ -1613,8 +1613,8 @@ class PopupController {
     // 定义各个颜色方案的颜色值 - 与HTML中的预览颜色保持一致
     const colorSchemes = {
       default: {
-        noun: '#0066cc',
-        verb: '#cc0000', 
+        noun: '#8b5cf6',
+        verb: '#cc0000',
         adj: '#009933'
       },
       warm: {
@@ -1648,7 +1648,7 @@ class PopupController {
     root.style.setProperty('--verb-color', colors.verb);
     root.style.setProperty('--adj-color', colors.adj);
     // 比较级/最高级颜色保持不变
-    root.style.setProperty('--comparative-color', '#9966cc');
+    root.style.setProperty('--comparative-color', '#1e3a8a');
     
     // 更新主页词性颜色图例
     this.updateHomeLegendColors(colors);
@@ -1674,8 +1674,8 @@ class PopupController {
     // 确保主页图例也反映当前颜色方案
     const colorSchemes = {
       default: {
-        noun: '#0066cc',
-        verb: '#cc0000', 
+        noun: '#8b5cf6',
+        verb: '#cc0000',
         adj: '#009933'
       },
       warm: {

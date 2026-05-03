@@ -1,7 +1,7 @@
 /* 词性高亮样式 */
 .adhd-n {
-  color: #0066cc !important;
-  background-color: rgba(0, 102, 204, 0.1) !important;
+  color: #8b5cf6 !important;
+  background-color: rgba(139, 92, 246, 0.1) !important;
   border-radius: 2px !important;
   padding: 1px 2px !important;
   margin: 0 1px !important;
@@ -32,7 +32,7 @@
 
 /* 悬停效果 */
 .adhd-n:hover {
-  background-color: rgba(0, 102, 204, 0.2) !important;
+  background-color: rgba(139, 92, 246, 0.2) !important;
 }
 
 .adhd-v:hover {
@@ -44,15 +44,15 @@
 }
 
 .adhd-comp {
-  color: #9966cc !important;
-  background-color: rgba(153, 102, 204, 0.1) !important;
+  color: #1e3a8a !important;
+  background-color: rgba(30, 58, 138, 0.1) !important;
   border-radius: 2px !important;
   padding: 1px 2px !important;
   margin: 0 1px !important;
 }
 
 .adhd-comp:hover {
-  background-color: rgba(153, 102, 204, 0.2) !important;
+  background-color: rgba(30, 58, 138, 0.2) !important;
 }
 
 /* 其他词性样式 - 当前支持名词、动词、形容词、比较级/最高级四种类型的高亮 */

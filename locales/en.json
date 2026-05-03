@@ -1,5 +1,11 @@
 {
   "appName": "ADHDGoFly",
+  "promo": {
+    "eatext": {
+      "desc": "Our new extension, focused on English reading experience",
+      "btn": "Learn more"
+    }
+  },
   "status": {
     "checking": "Checking status...",
     "enabled": "Highlighting enabled",
@@ -164,13 +170,13 @@
     "tooltipDisabled": "Send unavailable: ",
     "alt": {
       "text": "Enable backup site: ",
-      "linkText": "readgofly.online",
-      "linkUrl": "https://readgofly.online/"
+      "linkText": "adhdgofly.online",
+      "linkUrl": "https://adhdgofly.online/"
     },
     "help": {
       "text": "See details at",
-      "linkText": "readgofly.online/v6tov7",
-      "linkUrl": "https://readgofly.online/v6tov7"
+      "linkText": "adhdgofly.online/v6tov7",
+      "linkUrl": "https://adhdgofly.online/v6tov7"
     }
   },
   "pages": {
