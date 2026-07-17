@@ -2673,6 +2673,52 @@ class ADHDHighlighter {
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
+      /* ExamRoom floating workspace: keep the existing capabilities, clarify the reading flow. */
+      .agf-ai-overlay{background:#f7f8fb;border:1px solid #dfe5f2;border-radius:16px;box-shadow:0 22px 60px rgba(23,32,51,.24);overflow:hidden}
+      .agf-ai-header{min-height:58px;padding:12px 16px;background:#fff;border-bottom:1px solid #e5e9f0}
+      .agf-ai-title{gap:8px;color:#172033;font-size:15px}
+      .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
+      .agf-ai-title > span:first-child::after{content:'当前网页阅读工作台';font-size:10px;font-weight:500;color:#687386;padding:3px 7px;border:1px solid #e5e9f0;border-radius:999px;background:#f7f8fb}
+      .agf-ai-controls{gap:4px}
+      .agf-ai-controls button,.agf-ai-tabs button{height:28px;min-width:28px;border:1px solid transparent;border-radius:8px;color:#687386}
+      .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
+      .agf-fixed-bar{top:58px;margin:0 12px;padding:8px 10px;border:1px solid #e1e6ef;border-radius:10px;background:#fff;color:#687386;box-shadow:0 2px 8px rgba(23,32,51,.04)}
+      .agf-ai-body{padding:12px;gap:10px;background:#f7f8fb}
+      .agf-ai-view-chat{height:100%;gap:10px}
+      .agf-ai-display{border:1px solid #e1e6ef;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(23,32,51,.04)}
+      .agf-chat-list{padding:4px 0}
+      .agf-bubble{padding:12px 38px 12px 14px;font-size:13px;line-height:1.65}
+      .agf-msg.user .agf-bubble{background:#f5f7ff;color:#26345b}
+      .agf-msg.assistant .agf-bubble{background:#fff;color:#172033}
+      .agf-ai-input{border:1px solid #e1e6ef;border-radius:12px;padding:10px;background:#fff;box-shadow:0 2px 8px rgba(23,32,51,.04)}
+      .agf-composer{gap:8px}
+      .agf-composer-header{gap:6px;padding-bottom:2px}
+      .agf-field,.agf-select,.agf-input{border-color:#dfe5f2;border-radius:8px;color:#4b5870;background:#fff}
+      .agf-field:focus,.agf-input:focus,.agf-select:focus,.agf-input-editor:focus{outline:2px solid rgba(49,94,251,.16);outline-offset:1px;border-color:#315efb}
+      .agf-status{margin-left:auto}
+      .agf-status-btn,.agf-more-btn,.agf-send{border-color:#dfe5f2;border-radius:8px;background:#fff;color:#315efb;transition:all .16s ease}
+      .agf-status-btn:hover,.agf-more-btn:hover,.agf-send:hover{border-color:#315efb;background:#f5f7ff}
+      .agf-send{background:#315efb;color:#fff;border-color:#315efb;font-weight:600}
+      .agf-send:hover{background:#2447c7;color:#fff}
+      .agf-input-editor{border-color:#dfe5f2;border-radius:9px;min-height:70px;line-height:1.55}
+      .agf-settings-layout{grid-template-columns:142px 1fr;gap:10px}
+      .agf-settings-sidebar{gap:5px}
+      .agf-settings-tab{height:32px;border:1px solid transparent;border-radius:8px;color:#687386;background:transparent}
+      .agf-settings-tab:hover{background:#edf2ff;color:#315efb}
+      .agf-settings-tab.active{background:#e8eeff;border-color:#d7e0ff;color:#315efb}
+      .agf-settings-content{border:0;padding:0;background:transparent}
+      .agf-settings-row{gap:10px;margin-top:10px;align-items:flex-start}
+      .agf-label{min-width:72px;padding-top:7px;color:#687386;font-size:11px}
+      .agf-provider-meta{font-size:11px}
+      .agf-fulltext-panel,.agf-records-panel,.agf-colors-panel{inset:12px;border:1px solid #dfe5f2;border-radius:12px;box-shadow:0 14px 36px rgba(23,32,51,.16)}
+      .agf-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 0 8px;align-items:center}
+      .agf-quick-label{display:none}
+      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{height:28px;min-width:0;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+      .agf-quick-actions .agf-more-wrap{min-width:0;margin-left:0}
+      .agf-quick-actions .agf-more-panel{top:32px;right:0;grid-template-columns:1fr 1fr;min-width:190px}
+      .agf-composer-header{gap:5px;min-height:26px}
+      #agfSessionProvider,#agfSessionModel{height:26px;max-width:112px;padding:0 6px;font-size:11px}
+      .agf-composer-header .agf-status{margin-left:auto}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -2725,7 +2771,7 @@ class ADHDHighlighter {
                   </select>
                 <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button></div>
                 </div>
-                <div class="agf-quick-actions"><span class="agf-quick-label">当前网页 · 快速阅读</span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button><button id="agfBtnKeywords" class="agf-status-btn" disabled data-i18n="aiPanel.keywords">关键词</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button></div></div><button id="agfTestTextBtn" class="agf-status-btn" data-i18n="aiPanel.fullText">全文</button></div>
+                <div class="agf-quick-actions"><span class="agf-quick-label">当前网页 · 快速阅读</span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button><button id="agfBtnKeywords" class="agf-status-btn" disabled data-i18n="aiPanel.keywords">关键词</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button id="agfTestTextBtn" class="agf-btn" data-i18n="aiPanel.fullText">全文</button></div></div></div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
