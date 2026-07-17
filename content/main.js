@@ -2714,7 +2714,6 @@ class ADHDHighlighter {
       .agf-ai-header{min-height:58px;padding:12px 16px;background:#fff;border-bottom:1px solid #e5e9f0}
       .agf-ai-title{gap:8px;color:#172033;font-size:15px}
       .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
-      .agf-ai-title > span:first-child::after{content:'当前网页阅读工作台';font-size:10px;font-weight:500;color:#687386;padding:3px 7px;border:1px solid #e5e9f0;border-radius:999px;background:#f7f8fb}
       .agf-ai-controls{gap:4px}
       .agf-ai-controls button,.agf-ai-tabs button{height:28px;min-width:28px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
