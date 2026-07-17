@@ -3298,7 +3298,7 @@ class ADHDHighlighter {
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-4.6', 'glm-4.5']
+        models: ['glm-5.2', 'glm-5.1', 'glm-4.7', 'glm-4.6', 'glm-4.5']
       },
       minimax: {
         baseUrl: 'https://api.minimax.io/v1/chat/completions',
@@ -3367,7 +3367,7 @@ class ADHDHighlighter {
         fillModels(val);
         const base = (aiBaseUrlsState && aiBaseUrlsState[val]) || (PROVIDERS_CONFIG[val]?.baseUrl || '');
         if (baseUrlInput) baseUrlInput.value = base;
-        save({ aiProvider: val });
+        save({ aiProvider: val, aiModel: PROVIDERS_CONFIG[val]?.models?.[0] || '' });
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = 'none';
         if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
@@ -3401,7 +3401,10 @@ class ADHDHighlighter {
           currentProvider = cp;
           fallbackProvider = res.aiFallbackProvider || '';
           renderProviderButtons(currentProvider);
-          fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
+          const availableModels = PROVIDERS_CONFIG[currentProvider]?.models || [];
+          const selectedModel = availableModels.includes(res.aiModel) ? res.aiModel : (availableModels[0] || '');
+          fillModels(currentProvider, selectedModel);
+          if (selectedModel && selectedModel !== res.aiModel) save({ aiModel: selectedModel });
           const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
           if (baseUrlInput) baseUrlInput.value = base;
           const t = typeof res.aiTemperature === 'number' ? res.aiTemperature : 0.7;
@@ -4693,10 +4696,12 @@ class ADHDHighlighter {
       addedFullActive = false;
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
+      let configuredFallbackProvider = '';
       try {
         const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls','aiFallbackProvider'], resolve));
         const keys = res.aiKeys || {};
-        key = keys[prov] || '';
+        key = String(keys[prov] || '').trim();
+        configuredFallbackProvider = res.aiFallbackProvider || '';
         if (res.aiBaseUrls && res.aiBaseUrls[prov]) base = res.aiBaseUrls[prov];
       } catch (_) {}
       if (!key || String(key).trim().length === 0) { showStickyToast('暂时没有apikey，请点击上方的 🔧 设置'); return; }
@@ -4718,7 +4723,7 @@ class ADHDHighlighter {
       } else if (prov === 'deepseek' || prov === 'moonshot' || prov === 'openai' || prov === 'openrouter' || prov === 'groq' || prov === 'siliconflow' || prov === 'qwen' || prov === 'chatglm' || prov === 'grok') {
         try {
           startAssistantStream();
-          const fallback = res.aiFallbackProvider && res.aiFallbackProvider !== prov ? res.aiFallbackProvider : '';
+          const fallback = configuredFallbackProvider !== prov ? configuredFallbackProvider : '';
           const fallbackModel = fallback && PROVIDERS_CONFIG[fallback] && PROVIDERS_CONFIG[fallback].models ? PROVIDERS_CONFIG[fallback].models[0] : '';
           chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, fallbackProvider: fallback, fallbackModel, messages: toOpenAIStyle(subset) });
           return;

@@ -1477,6 +1477,11 @@ class PopupController {
       };
       const base = (ai.aiBaseUrls && ai.aiBaseUrls[provider]) || baseMap[provider];
       if (!base) throw new Error('当前供应商没有可用的 Base URL。');
+      const modelMap = {
+        deepseek: 'deepseek-chat', moonshot: 'moonshot-v1-8k', openai: 'gpt-4o-mini',
+        qwen: 'qwen-plus', chatglm: 'glm-5.2', grok: 'grok-2-mini'
+      };
+      const model = modelMap[provider] || 'gpt-4o-mini';
       state.textContent = `正在使用 ${provider} 分析“${title}”…`;
       const prompt = [
         '请分析下面这篇文章，提取最重要的 8-30 个关键词或术语。',
@@ -1490,14 +1495,17 @@ class PopupController {
       const response = await new Promise(resolve => chrome.runtime.sendMessage({
         action: 'aiChatRequest', url: base, method: 'POST', timeout: 60000,
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-        body: JSON.stringify({ model: ai.aiModel || (provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini'), messages: [{ role: 'user', content: prompt }], temperature: 0.2, stream: false })
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, stream: false })
       }, resolve));
-      if (!response || !response.success || response.status < 200 || response.status >= 300) throw new Error(`AI 请求失败（${response && response.status || '网络错误'}）`);
+      if (!response || !response.success || response.status < 200 || response.status >= 300) {
+        const detail = response && response.data && (response.data.error?.message || response.data.message || response.data.error);
+        throw new Error(`AI 请求失败（${response && response.status || '网络错误'}）${detail ? '：' + detail : ''}`);
+      }
       const raw = response.data && response.data.choices && response.data.choices[0] && response.data.choices[0].message && response.data.choices[0].message.content;
       const parsed = this.parseArticleDictionaryResponse(raw);
       const words = parsed.keywords;
       if (!words.length) throw new Error('AI 没有返回可用关键词，请重试。');
-      this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model: ai.aiModel || '' };
+      this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model };
       this.renderArticleDictionaryDraft(words);
       state.textContent = `已提取 ${words.length} 个关键词，请确认后应用。`;
       confirm.disabled = false;

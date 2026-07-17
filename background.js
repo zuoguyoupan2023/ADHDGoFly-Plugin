@@ -537,7 +537,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const res = await new Promise(r => chrome.storage.local.get(['aiBaseUrls','aiBaseUrl','aiProvider','aiKeys'], r));
           base = (res.aiBaseUrls && res.aiBaseUrls[prov]) || (prov === (res.aiProvider || '') ? (res.aiBaseUrl || '') : '');
           const ks = res.aiKeys || {};
-          key = ks[prov] || '';
+          key = String(ks[prov] || '').trim();
         } catch (_) {}
         function fallbackBase(p){
           switch(p){
@@ -555,7 +555,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           }
         }
         const url = base || fallbackBase(prov);
-        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+        const headers = { 'Content-Type': 'application/json' };
+        if (key) headers.Authorization = 'Bearer ' + key;
         const body = JSON.stringify({ model, messages: msgs, stream: true });
         let resp;
         try { resp = await fetch(url, { method: 'POST', headers, body }); } catch (e) { return handleErr(t, { network: true, error: e }); }
