@@ -2719,6 +2719,20 @@ class ADHDHighlighter {
       .agf-composer-header{gap:5px;min-height:26px}
       #agfSessionProvider,#agfSessionModel{height:26px;max-width:112px;padding:0 6px;font-size:11px}
       .agf-composer-header .agf-status{margin-left:auto}
+      .agf-ai-input{min-height:0;height:auto;padding:4px 6px}
+      .agf-composer{gap:4px}
+      .agf-quick-actions{height:28px;min-height:28px;padding:0;gap:5px}
+      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{height:26px;line-height:24px}
+      .agf-input-editor{min-height:48px;padding:8px 10px}
+      .agf-send-col{gap:4px}
+      #agfAddFullTextBtn{margin-top:0}
+      /* Do not let the composer grid stretch the toolbar into empty space. */
+      .agf-ai-input{height:auto!important;min-height:0!important}
+      .agf-composer{display:grid!important;grid-template-rows:auto auto auto!important;gap:4px!important;height:auto!important;min-height:0!important}
+      .agf-composer-header{height:26px!important;min-height:26px!important;padding:0!important;margin:0!important}
+      .agf-quick-actions{height:26px!important;min-height:26px!important;padding:0!important;margin:0!important}
+      .agf-composer-body{min-height:0!important;margin:0!important}
+      .agf-input-editor{min-height:44px!important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -2754,7 +2768,7 @@ class ADHDHighlighter {
             <div class="agf-ai-input">
               <div class="agf-composer">
                 <div class="agf-composer-header">
-                  <select class="agf-field" id="agfSessionProvider">
+                  <select class="agf-field" id="agfSessionProvider" title="AI 服务商" aria-label="AI 服务商">
                     <option>deepseek</option>
                     <option>moonshot</option>
                     <option>chatgpt</option>
@@ -2765,7 +2779,7 @@ class ADHDHighlighter {
                     <option>gemini</option>
                     <option>grok</option>
                   </select>
-                  <select class="agf-field" id="agfSessionModel">
+                  <select class="agf-field" id="agfSessionModel" title="AI 模型" aria-label="AI 模型">
                     <option>deepseek-chat</option>
                     <option>deepseek-reasoner</option>
                   </select>
@@ -3665,6 +3679,8 @@ class ADHDHighlighter {
       if (sessionProviderSelect.dataset.initialized === 'true') return;
       sessionProviderSelect.dataset.initialized = 'true';
       const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
+      sessionProviderSelect.title = providers.length > 1 ? '切换 AI 服务商' : '当前 AI 服务商已在插件设置中配置';
+      sessionProviderSelect.style.display = providers.length > 1 ? '' : 'none';
       sessionProviderSelect.innerHTML = '';
       providers.forEach(p => {
         const opt = document.createElement('option');
@@ -3674,6 +3690,16 @@ class ADHDHighlighter {
       });
       const selectedProv = providers.includes(currentProvider) ? currentProvider : (providers[0] || '');
       if (selectedProv) sessionProviderSelect.value = selectedProv;
+      if (!selectedProv) {
+        const empty = document.createElement('option');
+        empty.textContent = '请先配置 AI';
+        empty.disabled = true;
+        empty.selected = true;
+        sessionProviderSelect.appendChild(empty);
+        sessionProviderSelect.style.display = '';
+        sessionModelSelect.innerHTML = '<option>未配置模型</option>';
+        sessionModelSelect.disabled = true;
+      } else sessionModelSelect.disabled = false;
       const fillModelsForProv = (prov) => {
         sessionModelSelect.innerHTML = '';
         const ms = PROVIDERS_CONFIG[prov]?.models || [];
