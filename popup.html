@@ -2601,8 +2601,8 @@
       /* Side Panel shell: one continuous workspace, fewer nested frames. */
       body { width:100%; min-width:280px; height:100vh; min-height:100vh; overflow:hidden; }
       .main-content { min-width:0; background:#fff; }
-      .sidebar { width:88px; flex:0 0 88px; align-items:stretch; padding:12px 6px; gap:3px; background:#fff; border-left:1px solid #e9edf3; }
-      .sidebar-btn { width:100%; height:32px; justify-content:flex-start; padding:0 8px; border:0; border-radius:7px; background:transparent; color:#687386; font-size:12px; font-weight:500; }
+      .sidebar { width:76px; flex:0 0 76px; align-items:stretch; padding:12px 5px; gap:3px; background:#fff; border-left:1px solid #e9edf3; }
+      .sidebar-btn { width:100%; height:32px; justify-content:flex-start; padding:0 6px; border:0; border-radius:7px; background:transparent; color:#687386; font-size:12px; font-weight:500; }
       .sidebar-btn span { font-size:12px; }
       .sidebar-btn:hover { border:0; background:#f5f7fb; color:#315efb; transform:none; }
       .sidebar-btn.active { border:0; background:#edf2ff; color:#315efb; box-shadow:none; font-weight:700; }
@@ -2610,6 +2610,30 @@
       .home-scroll { padding:16px 16px 12px; }
       .page:not(#home-page) { padding:16px; background:#fff; }
       .page:not(#home-page) .header { padding-bottom:10px; border-bottom:1px solid #e9edf3; }
+
+      /* Side Panel layout: the page owns the gutter; inner content must not add another one. */
+      .home-content,
+      .dict-content,
+      .colors-content,
+      .text-content,
+      .ai-content,
+      .about-content,
+      .faq-content,
+      .settings-content {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        min-width: 0;
+      }
+
+      .page .header {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      #home-page .home-scroll {
+        padding: 0 16px 12px !important;
+      }
       .settings-section,.settings-content,.section-content { border:0!important; background:transparent!important; box-shadow:none!important; }
       .settings-section { margin-bottom:22px; padding:0!important; }
       .section-header { padding:0 0 10px!important; border-bottom:1px solid #e9edf3!important; background:transparent!important; }
