@@ -4,6 +4,11 @@ importScripts('privacy-settings-manager.js');
 // 初始化隐私设置管理器
 const privacyManager = new PrivacySettingsManager();
 
+// Make the plugin's main interface open as the browser-managed Side Panel.
+if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+}
+
 // ==================== 独立安装信息收集系统 ====================
 
 /**
@@ -396,17 +401,7 @@ class SimpleVersionChecker {
 
 // 消息监听器
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'openExamRoomSidePanel') {
-    (async () => {
-      try {
-        const tabId = request.tabId || (sender && sender.tab && sender.tab.id);
-        if (!tabId || !chrome.sidePanel) throw new Error('当前浏览器不支持右侧侧栏');
-        await chrome.sidePanel.open({ tabId });
-        sendResponse({ success: true });
-      } catch (error) { sendResponse({ success: false, error: error.message }); }
-    })();
-    return true;
-  } else if (request.action === 'openExtensionSettings') {
+  if (request.action === 'openExtensionSettings') {
     chrome.tabs.create({ url: chrome.runtime.getURL('popup.html#settings') }).then(() => sendResponse({ success: true })).catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   } else if (request.action === 'toggleExtension') {

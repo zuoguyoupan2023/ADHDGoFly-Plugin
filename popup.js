@@ -503,11 +503,7 @@ class PopupController {
         (async () => {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tabs[0]) return;
-          const pref = await chrome.storage.local.get({ examroomMode: 'sidepanel' });
-          if (pref.examroomMode === 'sidepanel') {
-            const response = await chrome.runtime.sendMessage({ action: 'openExamRoomSidePanel', tabId: tabs[0].id });
-            if (!response?.success) chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
-          } else chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
         })();
         break;
       case 'faq-btn':

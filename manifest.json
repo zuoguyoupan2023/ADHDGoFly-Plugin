@@ -80,7 +80,6 @@
     "128": "public/logo-300x300.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "public/logo-300x300.png",
       "32": "public/logo-300x300.png",
@@ -90,7 +89,7 @@
     "default_title": "打开 ADHDGoFly"
   },
   "side_panel": {
-    "default_path": "sidepanel.html"
+    "default_path": "popup.html"
   },
   "options_ui": {
     "page": "popup.html",
