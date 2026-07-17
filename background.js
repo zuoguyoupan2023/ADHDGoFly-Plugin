@@ -396,7 +396,20 @@ class SimpleVersionChecker {
 
 // 消息监听器
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'toggleExtension') {
+  if (request.action === 'openExamRoomSidePanel') {
+    (async () => {
+      try {
+        const tabId = request.tabId || (sender && sender.tab && sender.tab.id);
+        if (!tabId || !chrome.sidePanel) throw new Error('当前浏览器不支持右侧侧栏');
+        await chrome.sidePanel.open({ tabId });
+        sendResponse({ success: true });
+      } catch (error) { sendResponse({ success: false, error: error.message }); }
+    })();
+    return true;
+  } else if (request.action === 'openExtensionSettings') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html#settings') }).then(() => sendResponse({ success: true })).catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  } else if (request.action === 'toggleExtension') {
     // 向所有标签页的content script发送状态变化消息
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {

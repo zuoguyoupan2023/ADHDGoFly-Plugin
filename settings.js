@@ -20,6 +20,7 @@ class SettingsManager {
         
         // 隐私设置相关事件
         this.bindPrivacyEvents();
+        this.bindExamRoomEvents();
 
         // 重置按钮
         const resetBtn = document.getElementById('reset-all-btn');
@@ -28,6 +29,16 @@ class SettingsManager {
                 this.resetAllSettings();
             });
         }
+    }
+
+    bindExamRoomEvents() {
+        const select = document.getElementById('examroom-mode');
+        if (!select) return;
+        chrome.storage.local.get({ examroomMode: 'sidepanel' }).then((data) => { select.value = data.examroomMode; });
+        select.addEventListener('change', () => {
+            chrome.storage.local.set({ examroomMode: select.value });
+            this.showMessage(select.value === 'sidepanel' ? 'ExamRoom 已切换为右侧侧栏' : 'ExamRoom 已切换为网页悬浮层', 'success');
+        });
     }
 
     bindPrivacyEvents() {

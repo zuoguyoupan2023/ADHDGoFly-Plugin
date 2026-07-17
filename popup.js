@@ -266,6 +266,12 @@ class PopupController {
     
     // 绑定事件
     this.bindEvents();
+
+    if (window.location.hash === '#settings') {
+      this.showPage('settings');
+      document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.toggle('active', btn.id === 'settings-btn'));
+      if (typeof initSettings === 'function') initSettings();
+    }
     
     // 检查状态
     await this.checkStatus();
@@ -488,9 +494,12 @@ class PopupController {
       case 'chat-btn':
         (async () => {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
-          }
+          if (!tabs[0]) return;
+          const pref = await chrome.storage.local.get({ examroomMode: 'sidepanel' });
+          if (pref.examroomMode === 'sidepanel') {
+            const response = await chrome.runtime.sendMessage({ action: 'openExamRoomSidePanel', tabId: tabs[0].id });
+            if (!response?.success) chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
+          } else chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
         })();
         break;
       case 'faq-btn':

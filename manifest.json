@@ -3,7 +3,7 @@
   "name": "ADHDGoFly, highlight your sight",
   "version": "0.1.8",
   "description": "Text highlighting for better reading",
-  "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen", "scripting"],
+  "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen", "scripting", "sidePanel"],
   "host_permissions": [
     "https://api.github.com/*",
     "https://api.deepseek.com/*",
@@ -86,7 +86,15 @@
       "32": "public/logo-300x300.png",
       "48": "public/logo-300x300.png",
       "128": "public/logo-300x300.png"
-    }
+    },
+    "default_title": "打开 ADHDGoFly"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_ui": {
+    "page": "popup.html",
+    "open_in_tab": true
   },
   "web_accessible_resources": [{
     "resources": [

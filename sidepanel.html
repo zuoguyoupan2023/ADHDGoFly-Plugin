@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ExamRoom</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">ADHDGoFly</div>
+      <h1>ExamRoom</h1>
+    </div>
+    <button id="refresh" class="icon-button" title="刷新当前网页内容">↻</button>
+  </header>
+
+  <main>
+    <section class="page-context">
+      <div class="context-label">当前网页</div>
+      <h2 id="page-title">正在读取页面…</h2>
+      <div class="provider-line"><span id="provider-dot" class="dot"></span><span id="provider-label">未配置 AI 供应商</span><button id="open-settings" class="text-button">设置</button></div>
+    </section>
+
+    <section class="quick-actions">
+      <button class="primary-action" data-task="summary">总结文章</button>
+      <button data-task="keywords">提取关键词</button>
+      <button data-task="outline">提取大纲</button>
+      <button data-task="explain">通俗解读</button>
+    </section>
+
+    <section id="result" class="result empty">选择一个阅读操作开始分析。</section>
+
+    <section class="composer">
+      <textarea id="question" rows="3" placeholder="询问这篇文章…"></textarea>
+      <button id="send" class="send-button">发送</button>
+    </section>
+  </main>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
