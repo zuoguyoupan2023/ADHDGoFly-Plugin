@@ -2544,6 +2544,58 @@
       .page:not(#home-page) > .page-header {
         margin-bottom: 14px;
       }
+
+      .article-dict-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 9px 12px;
+        border: 1px solid #d7e0ff;
+        border-radius: 9px;
+        background: #fff;
+        color: #315efb;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .article-dict-btn:hover { background: #f5f7ff; border-color: #315efb; }
+      .article-dict-btn:disabled { opacity: .6; cursor: wait; }
+      .article-dict-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px;
+        background: rgba(23, 32, 51, .32);
+      }
+      .article-dict-dialog {
+        width: 100%;
+        max-height: 92%;
+        overflow: hidden;
+        border: 1px solid #dfe5f2;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgba(23,32,51,.22);
+      }
+      .article-dict-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:16px; border-bottom:1px solid #e5e9f0; }
+      .article-dict-kicker { color:#315efb; font-size:9px; font-weight:700; letter-spacing:.7px; }
+      .article-dict-header h3 { margin:4px 0 3px; color:#172033; font-size:16px; }
+      .article-dict-header p { margin:0; max-width:245px; overflow:hidden; color:#687386; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+      .article-dict-close { width:26px; height:26px; border:0; border-radius:7px; background:#f5f7fb; color:#687386; font-size:20px; line-height:20px; cursor:pointer; }
+      .article-dict-state { padding:10px 16px; color:#687386; font-size:11px; line-height:1.5; background:#f8f9fc; }
+      .article-dict-list { max-height:300px; overflow-y:auto; padding:8px 12px; }
+      .article-dict-item { display:grid; grid-template-columns:20px minmax(0,1fr) 70px; gap:7px; align-items:center; padding:7px 4px; border-bottom:1px solid #f0f2f6; }
+      .article-dict-item input { accent-color:#315efb; }
+      .article-dict-word { min-width:0; overflow:hidden; color:#172033; font-size:12px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+      .article-dict-reason { display:block; margin-top:2px; overflow:hidden; color:#8a94a6; font-size:10px; font-weight:400; text-overflow:ellipsis; white-space:nowrap; }
+      .article-dict-pos { width:70px; height:26px; border:1px solid #dfe5f2; border-radius:7px; color:#4b5870; background:#fff; font-size:11px; }
+      .article-dict-actions { display:flex; justify-content:flex-end; gap:8px; padding:10px 12px; border-top:1px solid #e5e9f0; }
+      .article-dict-actions button { min-height:30px; padding:0 12px; border-radius:8px; cursor:pointer; font-size:12px; }
+      .article-dict-secondary { border:1px solid #dfe5f2; background:#fff; color:#687386; }
+      .article-dict-primary { border:1px solid #315efb; background:#315efb; color:#fff; }
+      .article-dict-primary:disabled { opacity:.5; cursor:not-allowed; }
     </style>
     
   </head>
@@ -2665,6 +2717,9 @@
         <div class="main-actions">
           <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">
             切换高亮
+          </button>
+          <button id="generateArticleDictBtn" class="article-dict-btn" type="button">
+            AI 生成本文词典
           </button>
         </div>
 
@@ -4394,6 +4449,25 @@
     <div id="simple-notification" style="display: none;">
       <div data-i18n="pages.dict.custom.notification.line1">请刷新网页</div>
       <div data-i18n="pages.dict.custom.notification.line2">新加词典在对应语言，展开可见</div>
+    </div>
+
+    <div id="articleDictModal" class="article-dict-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="articleDictTitle">
+      <div class="article-dict-dialog">
+        <div class="article-dict-header">
+          <div>
+            <div class="article-dict-kicker">AI READING</div>
+            <h3 id="articleDictTitle">本文关键词词典</h3>
+            <p id="articleDictMeta">等待分析当前网页</p>
+          </div>
+          <button id="articleDictCloseBtn" class="article-dict-close" type="button" title="关闭">×</button>
+        </div>
+        <div id="articleDictState" class="article-dict-state">选择“生成”后，AI 会提取本文核心词汇。</div>
+        <div id="articleDictList" class="article-dict-list"></div>
+        <div class="article-dict-actions">
+          <button id="articleDictCancelBtn" class="article-dict-secondary" type="button">取消</button>
+          <button id="articleDictConfirmBtn" class="article-dict-primary" type="button" disabled>添加并应用</button>
+        </div>
+      </div>
     </div>
 
     <script src="privacy-settings-manager.js"></script>

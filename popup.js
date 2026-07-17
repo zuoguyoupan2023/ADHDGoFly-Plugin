@@ -307,6 +307,14 @@ class PopupController {
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => this.handleToggle());
     }
+    const articleDictBtn = document.getElementById('generateArticleDictBtn');
+    if (articleDictBtn) articleDictBtn.addEventListener('click', () => this.openArticleDictionaryFlow());
+    const articleDictCloseBtn = document.getElementById('articleDictCloseBtn');
+    const articleDictCancelBtn = document.getElementById('articleDictCancelBtn');
+    if (articleDictCloseBtn) articleDictCloseBtn.addEventListener('click', () => this.closeArticleDictionaryModal());
+    if (articleDictCancelBtn) articleDictCancelBtn.addEventListener('click', () => this.closeArticleDictionaryModal());
+    const articleDictConfirmBtn = document.getElementById('articleDictConfirmBtn');
+    if (articleDictConfirmBtn) articleDictConfirmBtn.addEventListener('click', () => this.confirmArticleDictionary());
     const sendBtn = document.getElementById('sendToReaderBtn');
     if (sendBtn) {
       sendBtn.addEventListener('click', () => this.handleSendToReader());
@@ -1315,9 +1323,11 @@ class PopupController {
               } else {
                 displayName = customDict.displayName;
               }
-            } else {
-              displayName = customDict.name;
-            }
+          } else {
+            displayName = customDict.name;
+          }
+          } else if (dictId.startsWith('article-')) {
+            displayName = '本文词典';
           }
         }
         
@@ -1431,6 +1441,149 @@ class PopupController {
       this.updateUI({ ...this.currentStatus, error: error.message });
     } finally {
       toggleBtn.disabled = false;
+    }
+  }
+
+  async openArticleDictionaryFlow() {
+    const modal = document.getElementById('articleDictModal');
+    const state = document.getElementById('articleDictState');
+    const list = document.getElementById('articleDictList');
+    const confirm = document.getElementById('articleDictConfirmBtn');
+    const trigger = document.getElementById('generateArticleDictBtn');
+    if (!modal || !state || !list || !confirm) return;
+    modal.style.display = 'flex';
+    state.textContent = '正在检查 AI 配置…';
+    list.innerHTML = '';
+    confirm.disabled = true;
+    this.articleDictionaryDraft = null;
+    if (trigger) trigger.disabled = true;
+    try {
+      const ai = await chrome.storage.local.get(['aiProvider', 'aiModel', 'aiKeys', 'aiBaseUrls']);
+      const provider = ai.aiProvider || 'deepseek';
+      const key = ai.aiKeys && ai.aiKeys[provider];
+      if (!key) throw new Error('尚未配置当前 AI 供应商的 API Key，请先进入 ExamRoom 设置。');
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) throw new Error('未找到当前网页。');
+      const page = await chrome.tabs.sendMessage(tab.id, { action: 'getPageTextForReader' });
+      const text = String(page && page.text || '').trim();
+      if (text.length < 80) throw new Error('当前网页正文过短或无法读取，暂时无法生成文章词典。');
+      const title = String(page.title || tab.title || '当前文章');
+      const language = /[\u3400-\u9fff]/.test(text.slice(0, 1200)) ? 'zh' : 'en';
+      const baseMap = {
+        deepseek: 'https://api.deepseek.com/v1/chat/completions', moonshot: 'https://api.moonshot.cn/v1/chat/completions',
+        openai: 'https://api.openai.com/v1/chat/completions', qwen: 'https://dashscope.aliyuncs.com/api/v1/chat/completions',
+        chatglm: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', grok: 'https://api.x.ai/v1/chat/completions'
+      };
+      const base = (ai.aiBaseUrls && ai.aiBaseUrls[provider]) || baseMap[provider];
+      if (!base) throw new Error('当前供应商没有可用的 Base URL。');
+      state.textContent = `正在使用 ${provider} 分析“${title}”…`;
+      const prompt = [
+        '请分析下面这篇文章，提取最重要的 8-30 个关键词或术语。',
+        '只返回严格 JSON，不要 Markdown，不要解释。',
+        'JSON 格式：{"language":"en","keywords":[{"word":"example","lemma":"example","pos":"noun","importance":0.86,"reason":"核心概念"}]}。',
+        'pos 只能是 noun、verb、adjective 之一；关键词必须来自正文或是正文中的明确词形。',
+        `文章标题：${title}`,
+        `文章语言提示：${language}`,
+        `正文：\n${text.slice(0, 18000)}`
+      ].join('\n\n');
+      const response = await new Promise(resolve => chrome.runtime.sendMessage({
+        action: 'aiChatRequest', url: base, method: 'POST', timeout: 60000,
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+        body: JSON.stringify({ model: ai.aiModel || (provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini'), messages: [{ role: 'user', content: prompt }], temperature: 0.2, stream: false })
+      }, resolve));
+      if (!response || !response.success || response.status < 200 || response.status >= 300) throw new Error(`AI 请求失败（${response && response.status || '网络错误'}）`);
+      const raw = response.data && response.data.choices && response.data.choices[0] && response.data.choices[0].message && response.data.choices[0].message.content;
+      const parsed = this.parseArticleDictionaryResponse(raw);
+      const words = parsed.keywords;
+      if (!words.length) throw new Error('AI 没有返回可用关键词，请重试。');
+      this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model: ai.aiModel || '' };
+      this.renderArticleDictionaryDraft(words);
+      state.textContent = `已提取 ${words.length} 个关键词，请确认后应用。`;
+      confirm.disabled = false;
+    } catch (error) {
+      state.textContent = error.message || '生成文章词典失败。';
+      state.style.color = '#b42318';
+    } finally { if (trigger) trigger.disabled = false; }
+  }
+
+  parseArticleDictionaryResponse(raw) {
+    let text = String(raw || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (_) { throw new Error('AI 返回的不是有效 JSON，请重试。'); }
+    const source = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.keywords) ? parsed.keywords : [];
+    const posMap = { noun: 'n', verb: 'v', adjective: 'adj', n: 'n', v: 'v', adj: 'adj' };
+    const seen = new Set();
+    const words = [];
+    source.forEach(item => {
+      const word = String(item && (item.word || item.lemma) || '').trim();
+      const pos = posMap[String(item && item.pos || '').toLowerCase()];
+      if (!word || !pos || word.length > 80 || /[<>\n\r]/.test(word)) return;
+      const key = word.toLowerCase();
+      if (seen.has(key) || words.length >= 40) return;
+      seen.add(key);
+      words.push({ word, pos, reason: String(item.reason || '').trim().slice(0, 120), checked: true });
+    });
+    return { language: String(parsed && parsed.language || '').toLowerCase(), keywords: words };
+  }
+
+  renderArticleDictionaryDraft(words) {
+    const list = document.getElementById('articleDictList');
+    if (!list) return;
+    list.innerHTML = '';
+    words.forEach((item, index) => {
+      const row = document.createElement('div'); row.className = 'article-dict-item'; row.dataset.index = String(index);
+      const check = document.createElement('input'); check.type = 'checkbox'; check.checked = item.checked; check.className = 'article-dict-check';
+      check.addEventListener('change', () => { item.checked = check.checked; });
+      const label = document.createElement('div'); label.className = 'article-dict-word'; label.textContent = item.word;
+      if (item.reason) { const reason = document.createElement('span'); reason.className = 'article-dict-reason'; reason.textContent = item.reason; label.appendChild(reason); }
+      const pos = document.createElement('select'); pos.className = 'article-dict-pos';
+      [['n','noun'],['v','verb'],['adj','adj']].forEach(([value, text]) => { const option = document.createElement('option'); option.value = value; option.textContent = text; option.selected = value === item.pos; pos.appendChild(option); });
+      pos.addEventListener('change', () => { item.pos = pos.value; });
+      row.append(check, label, pos); list.appendChild(row);
+    });
+  }
+
+  closeArticleDictionaryModal() {
+    const modal = document.getElementById('articleDictModal');
+    if (modal) modal.style.display = 'none';
+    this.articleDictionaryDraft = null;
+  }
+
+  async confirmArticleDictionary() {
+    const draft = this.articleDictionaryDraft;
+    const confirm = document.getElementById('articleDictConfirmBtn');
+    const state = document.getElementById('articleDictState');
+    if (!draft || !confirm) return;
+    const selected = draft.words.filter(item => item.checked);
+    if (!selected.length) { if (state) state.textContent = '请至少选择一个关键词。'; return; }
+    confirm.disabled = true;
+    try {
+      const id = 'article-' + Date.now().toString(36);
+      const now = new Date().toISOString();
+      const data = { meta: { id, name: id.toUpperCase(), displayName: '本文词典', language: draft.language === 'zh' ? 'zh' : 'en', type: 'article', source: 'article', sourceTitle: draft.title, sourceUrl: draft.sourceUrl, scope: 'page', createdAt: Date.now(), updatedAt: Date.now(), provider: draft.provider, model: draft.model }, version: '1.0', lastUpdated: now, words: {} };
+      selected.forEach(item => { data.words[item.word] = { pos: [item.pos] }; });
+      const storage = await chrome.storage.local.get(['customDictRegistry', 'dictSettings']);
+      const registry = storage.customDictRegistry || { version: '1.0.0', dictionaries: { preset: [], downloaded: [], local: [] }, local: [] };
+      if (!Array.isArray(registry.local)) registry.local = [];
+      const entry = { id, name: id.toUpperCase(), displayName: { zh: '本文词典', en: 'Article Dictionary' }, language: data.meta.language, type: 'local', source: 'external', domain: 'article', sourceUrl: draft.sourceUrl, filePath: '', enabled: true, priority: 100 };
+      registry.local = registry.local.filter(item => !(item.type === 'local' && item.source === 'external' && item.domain === 'article' && item.language === data.meta.language && item.sourceUrl === draft.sourceUrl));
+      registry.local.push(entry);
+      const previousSettings = storage.dictSettings || { 'zh-preset': true, 'en-preset': true };
+      const nextSettings = { ...previousSettings };
+      Object.keys(nextSettings).forEach(key => { if (key === `${data.meta.language}-preset` || key.startsWith(`${data.meta.language}-`)) nextSettings[key] = false; });
+      nextSettings[id] = true;
+      await chrome.storage.local.set({ customDictRegistry: registry, [`dictionary_${id}`]: data, dictSettings: nextSettings, activeArticleDictionaryId: id, articleDictionaryPreviousSettings: previousSettings });
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0] && tabs[0].id) await chrome.tabs.sendMessage(tabs[0].id, { action: 'applyArticleDictionary', dictionary: data, registryEntry: entry, dictSettings: nextSettings });
+      this.dictSettings = nextSettings;
+      this.updateDictUI();
+      this.updateDictTags();
+      if (state) state.textContent = `已添加并应用 ${selected.length} 个关键词。`;
+      setTimeout(() => this.closeArticleDictionaryModal(), 700);
+    } catch (error) {
+      if (state) state.textContent = '应用文章词典失败：' + (error.message || '未知错误');
+      confirm.disabled = false;
     }
   }
 

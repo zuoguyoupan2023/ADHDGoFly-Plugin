@@ -681,6 +681,15 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'applyArticleDictionary':
+          try {
+            const applied = await this.applyArticleDictionary(message.dictionary, message.registryEntry, message.dictSettings);
+            sendResponse({ success: applied });
+          } catch (error) {
+            console.error('应用文章词典失败:', error);
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'signPayload':
           try {
             if (!window.securityHelper) {
@@ -1150,6 +1159,23 @@ class ADHDHighlighter {
     const s = document.createElement('script');
     s.textContent = "(function(){ if (!window.__AGF_COLLECT_SEGMENTS__) { window.__AGF_COLLECT_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_SEGMENTS__) { window.__AGF_COLLECT_PDF_SEGMENTS__ = function(){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF' }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_DYNAMIC_SEGMENTS__) { window.__AGF_COLLECT_DYNAMIC_SEGMENTS__ = function(dur){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_DYNAMIC', durationMs: dur }, '*'); } catch(e){} }; } if (!window.__AGF_COLLECT_PDF_URL_SEGMENTS__) { window.__AGF_COLLECT_PDF_URL_SEGMENTS__ = function(url){ try { window.postMessage({ __agf: true, type: 'COLLECT_SEGMENTS_PDF_URL', url: url }, '*'); } catch(e){} }; } })();";
     (document.documentElement || document.head || document.body).appendChild(s);
+  }
+
+  async applyArticleDictionary(dictionary, registryEntry, dictSettings) {
+    if (!dictionary || !registryEntry || !this.dictionaryManager || !this.dictionaryManager.newManager) {
+      throw new Error('词典管理器尚未准备好');
+    }
+    const manager = this.dictionaryManager.newManager;
+    if (!manager.registry) await manager.loadRegistry();
+    if (!Array.isArray(manager.registry.local)) manager.registry.local = [];
+    const existing = manager.registry.local.findIndex(item => item.id === registryEntry.id);
+    if (existing >= 0) manager.registry.local[existing] = registryEntry;
+    else manager.registry.local.push(registryEntry);
+    manager.loadedDictionaries.set(registryEntry.id, dictionary);
+    this.dictionaryManager.updateEnabledDictionaries(dictSettings || {});
+    await chrome.storage.local.set({ dictSettings: dictSettings || {} });
+    if (this.enabled) await this.reprocessPage();
+    return true;
   }
 
   /**
