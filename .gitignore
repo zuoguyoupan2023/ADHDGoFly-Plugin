@@ -4,6 +4,8 @@
 # 开发和测试文件
 test*.html
 *.md
+!/docs2/
+!/docs2/*.md
 .vscode/
 /node_modules/
 /workers/download-tracker/wrangler.toml
