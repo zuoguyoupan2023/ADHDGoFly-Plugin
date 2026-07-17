@@ -596,6 +596,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           setTimeout(()=>{ t.retryCount = rc + 1; s.queue.unshift(t); dispatch(prov); }, delay);
           return;
         }
+        if (t.fallbackProvider && !t.fallbackTried) {
+          t.prov = t.fallbackProvider;
+          t.model = t.fallbackModel || t.model;
+          t.fallbackTried = true;
+          t.retryCount = 0;
+          const fallbackState = st(t.prov);
+          fallbackState.queue.unshift(t);
+          dispatch(t.prov);
+          return;
+        }
         if (tabId) try { chrome.tabs.sendMessage(tabId, { action: 'aiChatStreamError', error: (info && info.body) ? info.body : (info && info.error && info.error.message) ? info.error.message : String(status || 'error') }); } catch(_){ }
       }
       function dispatch(prov){
@@ -618,7 +628,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const model = request.model;
       const msgs = request.messages || [];
       const s = st(prov);
-      s.queue.push({ tabId, prov, model, msgs, retryCount: 0, maxRetries: 3 });
+      s.queue.push({ tabId, prov, model, msgs, fallbackProvider: request.fallbackProvider || '', fallbackModel: request.fallbackModel || '', fallbackTried: false, retryCount: 0, maxRetries: 3 });
       dispatch(prov);
       sendResponse({ success: true, queued: true });
     })();

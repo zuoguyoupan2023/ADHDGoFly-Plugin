@@ -2530,9 +2530,9 @@ class ADHDHighlighter {
     const style = document.createElement('style');
     style.id = 'agf-ai-setting-style';
     style.textContent = `
-      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#fff;border:1px solid #e0e0e0;z-index:2147483647;width:50vw;height:50vh;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:calc(100vw/3);min-height:calc(100vh * 2/3)}
-      .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e0e0e0;background:#f8f9fa}
-      .agf-ai-title{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center;gap:4px}
+      .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#f8f9fc;border:1px solid #dfe5f2;z-index:2147483647;width:min(760px,70vw);height:min(720px,78vh);box-shadow:0 18px 48px rgba(23,32,51,.22);min-width:420px;min-height:520px;border-radius:14px;overflow:hidden;color:#172033}
+      .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #e5e9f0;background:#fff}
+      .agf-ai-title{font-size:15px;font-weight:700;color:#172033;display:flex;align-items:center;gap:8px}
       .agf-ai-controls{display:inline-flex;gap:2px}
       .agf-ai-controls button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333;font-size:14px;line-height:24px;display:inline-flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
       .agf-status{display:inline-flex;align-items:center;gap:4px;margin-left:4px}
@@ -2544,10 +2544,10 @@ class ADHDHighlighter {
       @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
       .agf-ai-tabs{display:inline-flex;gap:2px;margin-left:2px}
       .agf-ai-tabs button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333}
-      .agf-ai-body{flex:1;padding:0;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
+      .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
-      .agf-ai-display{border:1px solid #e0e0e0;border-radius:4px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%}
+      .agf-ai-display{border:1px solid #e1e6ef;border-radius:12px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh;width:100%}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
       .agf-chat-title{font-size:12px;color:#666}
@@ -2578,7 +2578,7 @@ class ADHDHighlighter {
       .agf-composer{display:grid;grid-template-rows:auto 1fr auto auto;gap:0;height:100%}
       .agf-composer-extra{display:grid;grid-template-columns:1fr auto;align-items:start;margin-top:2px}
       .agf-composer-body{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
-      .agf-composer-header{display:inline-flex;align-items:center;gap:8px;margin:0;padding:0}
+      .agf-composer-header{display:flex;align-items:center;gap:8px;margin:0;padding:0;flex-wrap:wrap}
       .agf-field{height:24px;border:1px solid #e0e0e0;border-radius:8px;padding:0 8px;font-size:12px;color:#333;background:#fff}
       #agfCarryInput{height:20px;line-height:20px;padding:0 4px;border-radius:4px}
       .agf-mode-toggle{display:inline-flex;align-items:center;margin-left:0}
@@ -2636,12 +2636,23 @@ class ADHDHighlighter {
       
       .agf-toast{position:absolute;right:12px;bottom:12px;background:#333;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:3}
       .agf-toast-close{position:absolute;top:4px;right:6px;background:transparent;border:none;color:#fff;cursor:pointer;font-size:12px}
-      .agf-settings-group{border:1px solid #e0e0e0;border-radius:4px;padding:10px;background:#fff}
+      .agf-settings-group{border:1px solid #e1e6ef;border-radius:10px;padding:14px;background:#fff;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-settings-row{display:flex;align-items:center;gap:12px;margin-top:8px}
       .agf-label{min-width:64px;font-size:12px;color:#333}
       .agf-button-list{display:flex;flex-wrap:wrap;gap:8px}
-      .agf-btn{height:28px;padding:0 10px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:13px;cursor:pointer}
-      .agf-btn.active{background:#333;color:#fff;border-color:#333}
+      .agf-btn{height:30px;padding:0 10px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#4b5870;font-size:12px;cursor:pointer;transition:all .16s ease}
+      .agf-btn:hover{border-color:#315efb;color:#315efb;background:#f5f7ff}
+      .agf-btn.active{background:#315efb;color:#fff;border-color:#315efb;box-shadow:0 4px 10px rgba(49,94,251,.18)}
+      .agf-provider-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#687386;font-size:11px}
+      .agf-provider-dot{width:7px;height:7px;border-radius:50%;background:#c4cbd6;display:inline-block}
+      .agf-provider-dot.ready{background:#20a464}
+      .agf-provider-dot.warn{background:#d99000}
+      .agf-provider-test{height:28px;padding:0 9px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;cursor:pointer}
+      .agf-provider-test[disabled]{opacity:.55;cursor:wait}
+      .agf-quick-actions{display:flex;gap:7px;flex-wrap:wrap;padding:0 0 10px}
+      .agf-quick-label{width:100%;font-size:11px;color:#687386;font-weight:600}
+      .agf-quick-actions .agf-status-btn{height:30px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;padding:0 10px}
+      .agf-quick-actions .agf-status-btn:hover{background:#f5f7ff;border-color:#315efb}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       #agfApiKeyInput{width:280px;max-width:40%;flex:0 0 auto}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
@@ -2712,7 +2723,9 @@ class ADHDHighlighter {
                     <option>deepseek-chat</option>
                     <option>deepseek-reasoner</option>
                   </select>
-                  <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">保姆级解读</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button class="agf-btn" id="agfBtnKeywords" disabled data-i18n="aiPanel.keywords">提取关键词与术语</button></div></div><button id="agfTestTextBtn" class="agf-status-btn" data-i18n="aiPanel.fullText">全文</button></div>
+                <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button></div>
+                </div>
+                <div class="agf-quick-actions"><span class="agf-quick-label">当前网页 · 快速阅读</span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button><button id="agfBtnKeywords" class="agf-status-btn" disabled data-i18n="aiPanel.keywords">关键词</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button></div></div><button id="agfTestTextBtn" class="agf-status-btn" data-i18n="aiPanel.fullText">全文</button></div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
@@ -2750,6 +2763,10 @@ class ADHDHighlighter {
                         <div id="agfProviderList" class="agf-button-list"></div>
                       </div>
                       <div class="agf-settings-row">
+                        <div class="agf-label">连接状态</div>
+                        <div class="agf-provider-meta"><span id="agfProviderDot" class="agf-provider-dot"></span><span id="agfProviderStatus">未测试</span><button id="agfProviderTest" class="agf-provider-test">测试当前供应商</button></div>
+                      </div>
+                      <div class="agf-settings-row">
                         <div class="agf-label" data-i18n="aiPanel.settings.model">模型</div>
                         <div id="agfModelList" class="agf-button-list"></div>
                       </div>
@@ -2764,6 +2781,10 @@ class ADHDHighlighter {
                           <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.save">保存</button>
                           <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                         </div>
+                      </div>
+                      <div class="agf-settings-row">
+                        <div class="agf-label">备用供应商</div>
+                        <select id="agfFallbackProvider" class="agf-select"><option value="">不启用</option></select>
                       </div>
                       <div class="agf-settings-row">
                         <div class="agf-label">temperature</div>
@@ -2900,6 +2921,10 @@ class ADHDHighlighter {
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
     const modelList = document.getElementById('agfModelList');
+    const providerDot = document.getElementById('agfProviderDot');
+    const providerStatus = document.getElementById('agfProviderStatus');
+    const providerTestBtn = document.getElementById('agfProviderTest');
+    const fallbackProviderSelect = document.getElementById('agfFallbackProvider');
     const baseUrlInput = document.getElementById('agfBaseUrlInput');
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
@@ -3236,6 +3261,7 @@ class ADHDHighlighter {
     let currentProvider = null;
     let aiKeysState = {};
     let aiBaseUrlsState = {};
+    let fallbackProvider = '';
 
     const renderProviderButtons = (activeProv) => {
       const providerKeys = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
@@ -3254,12 +3280,25 @@ class ADHDHighlighter {
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = 'none';
         if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
+        if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[val] ? '已配置，待测试' : '未配置 API Key';
+        if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[val])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[val])); }
       }, labelMap);
+      if (fallbackProviderSelect) {
+        const previous = fallbackProviderSelect.value || fallbackProvider;
+        fallbackProviderSelect.innerHTML = '<option value="">不启用</option>';
+        providerKeys.filter(p => p !== activeProv && aiKeysState && aiKeysState[p]).forEach(p => {
+          const option = document.createElement('option');
+          option.value = p;
+          option.textContent = labelMap[p] || p;
+          fallbackProviderSelect.appendChild(option);
+        });
+        fallbackProviderSelect.value = previous;
+      }
     };
 
     const initFromStorage = () => {
       try {
-        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrls','aiBaseUrl','aiTemperature','aiKeys','chatColors'], (res) => {
+        chrome.storage.local.get(['aiProvider','aiModel','aiBaseUrls','aiBaseUrl','aiTemperature','aiKeys','chatColors','aiFallbackProvider'], (res) => {
           let cp = res.aiProvider || 'deepseek';
           aiKeysState = res.aiKeys || {};
           aiBaseUrlsState = res.aiBaseUrls || {};
@@ -3269,6 +3308,7 @@ class ADHDHighlighter {
             cp = candidates[0] || 'deepseek';
           }
           currentProvider = cp;
+          fallbackProvider = res.aiFallbackProvider || '';
           renderProviderButtons(currentProvider);
           fillModels(currentProvider, res.aiModel || (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || ''));
           const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
@@ -3277,6 +3317,8 @@ class ADHDHighlighter {
           if (tempInput) tempInput.value = t;
           if (keySavedBtn) keySavedBtn.style.display = 'none';
           if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
+          if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[currentProvider] ? '已配置，待测试' : '未配置 API Key';
+          if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[currentProvider])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[currentProvider])); }
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
           overlay.style.setProperty('--agf-q-bg', c.qBg || defaults.qBg);
@@ -3290,6 +3332,40 @@ class ADHDHighlighter {
     };
 
     const save = (obj) => { try { chrome.storage.local.set(obj); } catch (_) {} };
+
+    if (fallbackProviderSelect) {
+      fallbackProviderSelect.addEventListener('change', () => {
+        fallbackProvider = fallbackProviderSelect.value || '';
+        save({ aiFallbackProvider: fallbackProvider });
+      });
+    }
+
+    if (providerTestBtn) {
+      providerTestBtn.addEventListener('click', async () => {
+        const prov = currentProvider;
+        const key = aiKeysState && aiKeysState[prov];
+        const cfg = PROVIDERS_CONFIG[prov] || {};
+        const url = (aiBaseUrlsState && aiBaseUrlsState[prov]) || cfg.baseUrl || '';
+        if (!prov || !key || !url) { if (providerStatus) providerStatus.textContent = '请先填写 API Key 和 URL'; if (providerDot) providerDot.className = 'agf-provider-dot warn'; return; }
+        providerTestBtn.disabled = true;
+        if (providerStatus) providerStatus.textContent = '测试连接中…';
+        if (providerDot) providerDot.className = 'agf-provider-dot warn';
+        try {
+          const model = (PROVIDERS_CONFIG[prov]?.models || [])[0] || 'gpt-4o-mini';
+          const response = await new Promise(resolve => chrome.runtime.sendMessage({
+            action: 'aiChatRequest', url, method: 'POST', timeout: 15000,
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+            body: JSON.stringify({ model, messages: [{ role: 'user', content: 'Reply with OK.' }], max_tokens: 4, stream: false })
+          }, resolve));
+          const ok = response && response.success && response.status >= 200 && response.status < 300;
+          if (providerStatus) providerStatus.textContent = ok ? '连接成功' : ('连接失败 · HTTP ' + ((response && response.status) || '网络错误'));
+          if (providerDot) providerDot.className = 'agf-provider-dot ' + (ok ? 'ready' : 'warn');
+        } catch (error) {
+          if (providerStatus) providerStatus.textContent = '连接失败 · ' + (error.message || '未知错误');
+          if (providerDot) providerDot.className = 'agf-provider-dot warn';
+        } finally { providerTestBtn.disabled = false; }
+      });
+    }
 
     // provider/model buttons are handled in initFromStorage via renderButtons
 
@@ -3540,6 +3616,8 @@ class ADHDHighlighter {
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
+      if (sessionProviderSelect.dataset.initialized === 'true') return;
+      sessionProviderSelect.dataset.initialized = 'true';
       const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       sessionProviderSelect.innerHTML = '';
       providers.forEach(p => {
@@ -4513,7 +4591,7 @@ class ADHDHighlighter {
       let key = '';
       let base = PROVIDERS_CONFIG[prov]?.baseUrl || '';
       try {
-        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
+        const res = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls','aiFallbackProvider'], resolve));
         const keys = res.aiKeys || {};
         key = keys[prov] || '';
         if (res.aiBaseUrls && res.aiBaseUrls[prov]) base = res.aiBaseUrls[prov];
@@ -4537,7 +4615,9 @@ class ADHDHighlighter {
       } else if (prov === 'deepseek' || prov === 'moonshot' || prov === 'openai' || prov === 'openrouter' || prov === 'groq' || prov === 'siliconflow' || prov === 'qwen' || prov === 'chatglm' || prov === 'grok') {
         try {
           startAssistantStream();
-          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, messages: toOpenAIStyle(subset) });
+          const fallback = res.aiFallbackProvider && res.aiFallbackProvider !== prov ? res.aiFallbackProvider : '';
+          const fallbackModel = fallback && PROVIDERS_CONFIG[fallback] && PROVIDERS_CONFIG[fallback].models ? PROVIDERS_CONFIG[fallback].models[0] : '';
+          chrome.runtime.sendMessage({ action: 'aiChatStream', provider: prov, model, fallbackProvider: fallback, fallbackModel, messages: toOpenAIStyle(subset) });
           return;
         } catch (_) {}
       } else {
