@@ -1278,24 +1278,34 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     console.log('📊 启动独立安装统计收集');
     await sendIndependentInstallationStats(details);
 
+    // 默认开启插件
     await chrome.storage.local.set({ enabled: true });
+
+    // 自动打开新手引导页面
+    try {
+      await chrome.tabs.create({ url: 'https://adhdgofly.online/plugin/guide' });
+    } catch (e) {
+      // 静默失败，不影响安装流程
+    }
   }
-  
+
   // 获取存储的数据
   const result = await chrome.storage.local.get([
-    'installTime', 
-    'lastVersion', 
+    'installTime',
+    'lastVersion',
     'startupCount'
   ]);
-  
+
   if (details.reason === 'install') {
-    // 首次安装
+    // 首次安装 - 确保默认启用
+    await chrome.storage.local.set({ enabled: true });
+
     const installData = {
       installTime: now,
       lastVersion: currentVersion,
       startupCount: 0
     };
-    
+
     await chrome.storage.local.set(installData);
     
     console.log('🎯 📦 ADHDGoFly插件首次安装');
