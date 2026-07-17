@@ -2733,6 +2733,11 @@ class ADHDHighlighter {
       .agf-quick-actions{height:26px!important;min-height:26px!important;padding:0!important;margin:0!important}
       .agf-composer-body{min-height:0!important;margin:0!important}
       .agf-input-editor{min-height:44px!important}
+      .agf-composer-header{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:5px!important}
+      .agf-composer-header #agfSessionModel{flex:0 1 112px}
+      .agf-quick-actions{display:flex!important;align-items:center!important;flex:1 1 auto;gap:3px!important;height:26px!important;min-width:0!important}
+      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{flex:1 1 0;width:auto!important;min-width:0!important;padding:0 4px!important;font-size:10px!important}
+      .agf-composer-header .agf-status{margin-left:0!important;flex:0 0 auto}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -2784,8 +2789,8 @@ class ADHDHighlighter {
                     <option>deepseek-reasoner</option>
                   </select>
                 <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button></div>
-                </div>
                 <div class="agf-quick-actions"><span class="agf-quick-label">当前网页 · 快速阅读</span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button><button id="agfBtnKeywords" class="agf-status-btn" disabled data-i18n="aiPanel.keywords">关键词</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button id="agfTestTextBtn" class="agf-btn" data-i18n="aiPanel.fullText">全文</button></div></div></div>
+                </div>
                 </div>
                 <div class="agf-composer-body">
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
