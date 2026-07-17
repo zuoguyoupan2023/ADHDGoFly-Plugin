@@ -2619,6 +2619,86 @@
       .dict-item { padding-left:0!important; padding-right:0!important; }
       .custom-dict-item { border-bottom:1px solid #f0f2f6!important; border-radius:0!important; }
       .color-schemes,.text-controls,.ai-actions,.storage-stats { border:0!important; box-shadow:none!important; }
+
+      /* Content pages: keep hierarchy through spacing and dividers, not nested cards. */
+      #dict-page .custom-dict-section,
+      #dict-page .language-group,
+      #dict-page .professional-dicts,
+      #dict-page .dict-group,
+      #dict-page .custom-dict-list,
+      #dict-page .dict-actions,
+      #dict-page .dict-maker-tip,
+      #dict-page .add-dict-section {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      #dict-page .custom-dict-section,
+      #dict-page .language-group {
+        border-top: 1px solid #e9edf3 !important;
+        border-radius: 0 !important;
+        padding: 14px 0 !important;
+      }
+
+      #dict-page .section-header,
+      #dict-page .language-header {
+        padding: 0 0 8px !important;
+        background: transparent !important;
+      }
+
+      #dict-page .dict-item,
+      #dict-page .custom-dict-item {
+        border-radius: 0 !important;
+        border-bottom: 1px solid #f0f2f6 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      #data-panel-page .analysis-section,
+      #data-panel-page .stat-group,
+      #data-panel-page .stat-content,
+      #data-panel-page .stat-title-with-actions,
+      #data-panel-page .vocabulary-tools-section {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      #data-panel-page .stat-group {
+        border-top: 1px solid #e9edf3 !important;
+        border-radius: 0 !important;
+        padding: 14px 0 !important;
+      }
+
+      #data-panel-page .stat-title-with-actions {
+        padding: 0 0 8px !important;
+      }
+
+      #faq-page .faq-content,
+      #faq-page .faq-search,
+      #faq-page .faq-list,
+      #faq-page .faq-item,
+      #faq-page .faq-contact,
+      #faq-page .contact-methods {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      #faq-page .faq-item,
+      #faq-page .contact-link {
+        border-radius: 0 !important;
+        border-bottom: 1px solid #f0f2f6 !important;
+      }
+
+      #faq-page .faq-contact {
+        border-top: 1px solid #e9edf3 !important;
+        margin-top: 20px !important;
+        padding-top: 16px !important;
+      }
     </style>
     
   </head>
@@ -3744,7 +3824,7 @@
 
           <!-- 页面统计信息 -->
           <div class="analysis-section">
-            <h4 data-i18n="pages.ai.stats.title">📊 页面统计</h4>
+            <h4>统计</h4>
 
 
 
@@ -3788,7 +3868,7 @@
       <!-- FAQ页面 -->
       <div class="page" id="faq-page">
         <div class="header">
-          <h3 data-i18n="pages.faq.title">常见问题</h3>
+          <h3>关于</h3>
         </div>
         <div class="faq-content">
             <!-- 搜索框 -->
@@ -4446,10 +4526,10 @@
     <div class="sidebar">
       <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home" data-action="page"><span>主页</span></button>
       <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict" data-action="page"><span>词典</span></button>
-      <button class="sidebar-btn" id="ai-btn" title="AI 分析" data-i18n-title="sidebar.ai" data-action="page"><span>阅读分析</span></button>
-      <button class="sidebar-btn" id="chat-btn" title="AI 对话" data-i18n-title="sidebar.aiChat" data-action="page"><span>ExamRoom</span></button>
+      <button class="sidebar-btn" id="ai-btn" title="统计" data-action="page"><span>统计</span></button>
+      <button class="sidebar-btn" id="chat-btn" title="AI" data-action="page"><span>AI</span></button>
       <button class="sidebar-btn" id="style-btn" title="样式" data-i18n-title="sidebar.style" data-action="page"><span>阅读样式</span></button>
-      <button class="sidebar-btn" id="faq-btn" title="常见问题" data-i18n-title="sidebar.faq" data-action="page"><span>常见问题</span></button>
+      <button class="sidebar-btn" id="faq-btn" title="关于" data-action="page"><span>关于</span></button>
       <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings" data-action="page"><span>设置</span></button>
       <div class="language-switcher">
         <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language"><span>语言</span></button>
