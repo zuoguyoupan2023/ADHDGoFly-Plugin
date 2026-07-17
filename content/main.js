@@ -690,6 +690,16 @@ class ADHDHighlighter {
             sendResponse({ success: false, error: error.message });
           }
           break;
+        case 'removeArticleDictionary':
+          try {
+            this.dictionaryManager.updateEnabledDictionaries(message.dictSettings || {});
+            await chrome.storage.local.set({ dictSettings: message.dictSettings || {} });
+            if (this.enabled) await this.reprocessPage();
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'signPayload':
           try {
             if (!window.securityHelper) {

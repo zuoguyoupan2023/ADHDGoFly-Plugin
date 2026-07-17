@@ -2582,6 +2582,7 @@
       .article-dict-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:16px; border-bottom:1px solid #e5e9f0; }
       .article-dict-kicker { color:#315efb; font-size:9px; font-weight:700; letter-spacing:.7px; }
       .article-dict-header h3 { margin:4px 0 3px; color:#172033; font-size:16px; }
+      .article-dict-name-input { width:220px; max-width:100%; margin:2px 0 4px; padding:4px 6px; border:1px solid #dfe5f2; border-radius:6px; color:#172033; font-size:12px; }
       .article-dict-header p { margin:0; max-width:245px; overflow:hidden; color:#687386; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
       .article-dict-close { width:26px; height:26px; border:0; border-radius:7px; background:#f5f7fb; color:#687386; font-size:20px; line-height:20px; cursor:pointer; }
       .article-dict-state { padding:10px 16px; color:#687386; font-size:11px; line-height:1.5; background:#f8f9fc; }
@@ -2847,6 +2848,7 @@
                     <option value="es">Español</option>
                     <option value="ru">Русский</option>
                     <option value="ja">日本語</option>
+                    <option value="other">其他</option>
                   </select>
                 </div>
 
@@ -4457,6 +4459,7 @@
           <div>
             <div class="article-dict-kicker">AI READING</div>
             <h3 id="articleDictTitle">本文关键词词典</h3>
+            <input id="articleDictName" class="article-dict-name-input" type="text" placeholder="词典名称" />
             <p id="articleDictMeta">等待分析当前网页</p>
           </div>
           <button id="articleDictCloseBtn" class="article-dict-close" type="button" title="关闭">×</button>

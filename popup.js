@@ -1042,15 +1042,23 @@ class PopupController {
     listContainer.innerHTML = '';
 
     // 为每个词典创建元素并绑定事件
+    const languageNames = { zh: '中文', en: '英文', fr: '法语', ru: '俄语', es: '西班牙语', ja: '日语', other: '其他' };
     this.customDictionaries.forEach(dict => {
       const dictItem = document.createElement('div');
       dictItem.className = 'custom-dict-item';
+      const displayName = typeof dict.displayName === 'object' ? (dict.displayName.zh || dict.displayName.en || dict.name || dict.id) : (dict.displayName || dict.name || dict.id);
+      const isArticle = dict.domain === 'article' || dict.type === 'article';
       dictItem.innerHTML = `
         <div class="custom-dict-info">
-          <div class="custom-dict-name">${dict.displayName}</div>
-          <div class="custom-dict-meta">${dict.language.toUpperCase()} • ${dict.domain}</div>
+          <div class="custom-dict-name">${displayName}</div>
+          <div class="custom-dict-meta">${languageNames[dict.language] || '其他'} • ${isArticle ? '文章词典' : (dict.domain || '自定义')}</div>
         </div>
         <div class="custom-dict-actions">
+          <label class="custom-dict-toggle" title="开启/关闭">
+            <input type="checkbox" class="custom-dict-checkbox" ${this.dictSettings[dict.id] ? 'checked' : ''} />
+            <span></span>
+          </label>
+          ${isArticle ? '<button class="edit-dict-btn" type="button">编辑</button>' : ''}
           <button class="remove-dict-btn" data-i18n="pages.dict.custom.delete">
             删除
           </button>
@@ -1060,6 +1068,13 @@ class PopupController {
       // 绑定删除按钮事件
       const removeBtn = dictItem.querySelector('.remove-dict-btn');
       removeBtn.addEventListener('click', () => this.removeCustomDict(dict.id));
+      const checkbox = dictItem.querySelector('.custom-dict-checkbox');
+      if (checkbox) checkbox.addEventListener('change', async () => {
+        this.dictSettings[dict.id] = checkbox.checked;
+        await this.saveDictSettings();
+      });
+      const editBtn = dictItem.querySelector('.edit-dict-btn');
+      if (editBtn) editBtn.addEventListener('click', () => this.editArticleDictionary(dict.id));
       
       listContainer.appendChild(dictItem);
     });
@@ -1078,9 +1093,15 @@ class PopupController {
     try {
       // 从列表中移除
       this.customDictionaries = this.customDictionaries.filter(dict => dict.id !== dictId);
+      delete this.dictSettings[dictId];
 
       // 更新注册表
-      const result = await chrome.storage.local.get(['customDictRegistry']);
+      const result = await chrome.storage.local.get(['customDictRegistry', `articleDictionaryPreviousSettings_${dictId}`, 'activeArticleDictionaryId']);
+      const restoreSettings = result[`articleDictionaryPreviousSettings_${dictId}`];
+      if (restoreSettings && result.activeArticleDictionaryId === dictId) {
+        this.dictSettings = { ...restoreSettings };
+        await chrome.storage.local.set({ dictSettings: this.dictSettings, activeArticleDictionaryId: null });
+      }
       if (result.customDictRegistry) {
         const registry = result.customDictRegistry;
         if (registry.local) {
@@ -1091,8 +1112,13 @@ class PopupController {
         await chrome.storage.local.set({ customDictRegistry: registry });
         
         // 删除词典数据（使用统一的存储键名格式：dictionary_${id}）
-        await chrome.storage.local.remove([`dictionary_${dictId}`]);
+        await chrome.storage.local.remove([`dictionary_${dictId}`, `articleDictionaryPreviousSettings_${dictId}`]);
       }
+
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0] && tabs[0].id) await chrome.tabs.sendMessage(tabs[0].id, { action: 'removeArticleDictionary', dictId, dictSettings: this.dictSettings });
+      } catch (_) {}
 
       // 更新UI
       this.updateCustomDictList();
@@ -1448,7 +1474,8 @@ class PopupController {
     const modal = document.getElementById('articleDictModal');
     const state = document.getElementById('articleDictState');
     const list = document.getElementById('articleDictList');
-    const confirm = document.getElementById('articleDictConfirmBtn');
+      const confirm = document.getElementById('articleDictConfirmBtn');
+      const nameInput = document.getElementById('articleDictName');
     const trigger = document.getElementById('generateArticleDictBtn');
     if (!modal || !state || !list || !confirm) return;
     modal.style.display = 'flex';
@@ -1456,6 +1483,7 @@ class PopupController {
     list.innerHTML = '';
     confirm.disabled = true;
     this.articleDictionaryDraft = null;
+    this.articleDictionaryEditId = null;
     if (trigger) trigger.disabled = true;
     try {
       const ai = await chrome.storage.local.get(['aiProvider', 'aiModel', 'aiKeys', 'aiBaseUrls']);
@@ -1506,6 +1534,7 @@ class PopupController {
       const words = parsed.keywords;
       if (!words.length) throw new Error('AI 没有返回可用关键词，请重试。');
       this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model };
+      if (nameInput) nameInput.value = `${title} · 本文词典`;
       this.renderArticleDictionaryDraft(words);
       state.textContent = `已提取 ${words.length} 个关键词，请确认后应用。`;
       confirm.disabled = false;
@@ -1556,6 +1585,30 @@ class PopupController {
     const modal = document.getElementById('articleDictModal');
     if (modal) modal.style.display = 'none';
     this.articleDictionaryDraft = null;
+    this.articleDictionaryEditId = null;
+  }
+
+  async editArticleDictionary(dictId) {
+    const modal = document.getElementById('articleDictModal');
+    const state = document.getElementById('articleDictState');
+    const list = document.getElementById('articleDictList');
+    const confirm = document.getElementById('articleDictConfirmBtn');
+    const nameInput = document.getElementById('articleDictName');
+    if (!modal || !state || !list || !confirm) return;
+    try {
+      const data = await chrome.storage.local.get([`dictionary_${dictId}`]);
+      const dictionary = data[`dictionary_${dictId}`];
+      if (!dictionary || !dictionary.words) throw new Error('文章词典内容不存在。');
+      const words = Object.entries(dictionary.words).map(([word, info]) => ({ word, pos: Array.isArray(info.pos) ? info.pos[0] : 'n', reason: '', checked: true }));
+      this.articleDictionaryEditId = dictId;
+      this.articleDictionaryDraft = { words, language: dictionary.meta?.language || 'other', title: dictionary.meta?.sourceTitle || '当前文章', sourceUrl: dictionary.meta?.sourceUrl || '', provider: dictionary.meta?.provider || '', model: dictionary.meta?.model || '' };
+      if (nameInput) nameInput.value = dictionary.meta?.displayName || dictionary.meta?.name || '本文词典';
+      this.renderArticleDictionaryDraft(words);
+      state.style.color = '#687386';
+      state.textContent = `编辑 ${words.length} 个词条，可修改词性后保存。`;
+      confirm.disabled = false;
+      modal.style.display = 'flex';
+    } catch (error) { this.showError(error.message || '打开文章词典失败'); }
   }
 
   async confirmArticleDictionary() {
@@ -1567,24 +1620,31 @@ class PopupController {
     if (!selected.length) { if (state) state.textContent = '请至少选择一个关键词。'; return; }
     confirm.disabled = true;
     try {
-      const id = 'article-' + Date.now().toString(36);
+      const nameInput = document.getElementById('articleDictName');
+      const dictionaryName = String(nameInput && nameInput.value || '').trim() || `${draft.title} · 本文词典`;
+      const id = this.articleDictionaryEditId || ('article-' + Date.now().toString(36));
       const now = new Date().toISOString();
-      const data = { meta: { id, name: id.toUpperCase(), displayName: '本文词典', language: draft.language === 'zh' ? 'zh' : 'en', type: 'article', source: 'article', sourceTitle: draft.title, sourceUrl: draft.sourceUrl, scope: 'page', createdAt: Date.now(), updatedAt: Date.now(), provider: draft.provider, model: draft.model }, version: '1.0', lastUpdated: now, words: {} };
+      const normalizedLanguage = ['zh','en','fr','ru','es','ja'].includes(draft.language) ? draft.language : 'other';
+      const data = { meta: { id, name: id.toUpperCase(), displayName: dictionaryName, language: normalizedLanguage, type: 'article', source: 'article', sourceTitle: draft.title, sourceUrl: draft.sourceUrl, scope: 'page', createdAt: Date.now(), updatedAt: Date.now(), provider: draft.provider, model: draft.model }, version: '1.0', lastUpdated: now, words: {} };
       selected.forEach(item => { data.words[item.word] = { pos: [item.pos] }; });
       const storage = await chrome.storage.local.get(['customDictRegistry', 'dictSettings']);
       const registry = storage.customDictRegistry || { version: '1.0.0', dictionaries: { preset: [], downloaded: [], local: [] }, local: [] };
       if (!Array.isArray(registry.local)) registry.local = [];
-      const entry = { id, name: id.toUpperCase(), displayName: { zh: '本文词典', en: 'Article Dictionary' }, language: data.meta.language, type: 'local', source: 'external', domain: 'article', sourceUrl: draft.sourceUrl, filePath: '', enabled: true, priority: 100 };
+      const entry = { id, name: dictionaryName, displayName: dictionaryName, language: data.meta.language, type: 'local', source: 'external', domain: 'article', sourceUrl: draft.sourceUrl, filePath: '', enabled: true, priority: 100 };
       registry.local = registry.local.filter(item => !(item.type === 'local' && item.source === 'external' && item.domain === 'article' && item.language === data.meta.language && item.sourceUrl === draft.sourceUrl));
       registry.local.push(entry);
-      const previousSettings = storage.dictSettings || { 'zh-preset': true, 'en-preset': true };
+      const previousSettings = storage[`articleDictionaryPreviousSettings_${id}`] || storage.dictSettings || { 'zh-preset': true, 'en-preset': true };
       const nextSettings = { ...previousSettings };
       Object.keys(nextSettings).forEach(key => { if (key === `${data.meta.language}-preset` || key.startsWith(`${data.meta.language}-`)) nextSettings[key] = false; });
       nextSettings[id] = true;
-      await chrome.storage.local.set({ customDictRegistry: registry, [`dictionary_${id}`]: data, dictSettings: nextSettings, activeArticleDictionaryId: id, articleDictionaryPreviousSettings: previousSettings });
+      await chrome.storage.local.set({ customDictRegistry: registry, [`dictionary_${id}`]: data, dictSettings: nextSettings, activeArticleDictionaryId: id, [`articleDictionaryPreviousSettings_${id}`]: previousSettings });
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0] && tabs[0].id) await chrome.tabs.sendMessage(tabs[0].id, { action: 'applyArticleDictionary', dictionary: data, registryEntry: entry, dictSettings: nextSettings });
       this.dictSettings = nextSettings;
+      const registryEntryForUi = { ...entry, displayName: dictionaryName, name: dictionaryName };
+      this.customDictionaries = this.customDictionaries.filter(item => item.id !== id);
+      this.customDictionaries.push(registryEntryForUi);
+      this.updateCustomDictList();
       this.updateDictUI();
       this.updateDictTags();
       if (state) state.textContent = `已添加并应用 ${selected.length} 个关键词。`;
