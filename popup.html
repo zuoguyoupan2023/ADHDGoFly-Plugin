@@ -2583,6 +2583,8 @@
       .article-dict-kicker { color:#315efb; font-size:9px; font-weight:700; letter-spacing:.7px; }
       .article-dict-header h3 { margin:4px 0 3px; color:#172033; font-size:16px; }
       .article-dict-name-input { width:220px; max-width:100%; margin:2px 0 4px; padding:4px 6px; border:1px solid #dfe5f2; border-radius:6px; color:#172033; font-size:12px; }
+      .article-dict-options { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+      .article-dict-select { height:26px; border:1px solid #dfe5f2; border-radius:7px; background:#fff; color:#4b5870; font-size:11px; padding:0 6px; }
       .article-dict-header p { margin:0; max-width:245px; overflow:hidden; color:#687386; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
       .article-dict-close { width:26px; height:26px; border:0; border-radius:7px; background:#f5f7fb; color:#687386; font-size:20px; line-height:20px; cursor:pointer; }
       .article-dict-state { padding:10px 16px; color:#687386; font-size:11px; line-height:1.5; background:#f8f9fc; }
@@ -3850,7 +3852,15 @@
           <div class="analysis-section">
             <h4>统计</h4>
 
-
+            <div class="stat-group">
+              <div class="stat-title-with-actions">
+                <div class="stat-title">太学复习</div>
+                <button class="dictionary-tool-btn" id="reviewInTaixueBtn">在太学中复习</button>
+              </div>
+              <div class="stat-content" id="taixueReviewStats">
+                <div class="loading">读取测试记录...</div>
+              </div>
+            </div>
 
             <!-- 高亮统计UI已隐藏 - 逻辑代码保留但不显示UI -->
 
@@ -4573,6 +4583,17 @@
             <div class="article-dict-kicker">AI READING</div>
             <h3 id="articleDictTitle">本文关键词词典</h3>
             <input id="articleDictName" class="article-dict-name-input" type="text" placeholder="词典名称" />
+            <div class="article-dict-options">
+              <select id="articleDictLimit" class="article-dict-select" title="候选词数量">
+                <option value="30">30词</option>
+                <option value="60">60词</option>
+                <option value="100">100词</option>
+              </select>
+              <select id="articleDictMode" class="article-dict-select" title="应用模式">
+                <option value="replace">只用本文词典</option>
+                <option value="merge">叠加基础词典</option>
+              </select>
+            </div>
             <p id="articleDictMeta">等待分析当前网页</p>
           </div>
           <button id="articleDictCloseBtn" class="article-dict-close" type="button" title="关闭">×</button>

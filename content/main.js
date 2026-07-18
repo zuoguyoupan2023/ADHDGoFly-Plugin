@@ -681,6 +681,23 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
+        case 'openTaixue':
+          try {
+            this.ensureAiSettingPanel();
+            this.showAiSettingPanel();
+            this.__pendingTaixueOpen = {
+              module: message.module || 'chat',
+              contextSource: message.contextSource || 'full_article'
+            };
+            if (typeof this.__openTaixueModule === 'function') {
+              this.__openTaixueModule(this.__pendingTaixueOpen);
+              this.__pendingTaixueOpen = null;
+            }
+            sendResponse({ success: true });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+          break;
         case 'applyArticleDictionary':
           try {
             const applied = await this.applyArticleDictionary(message.dictionary, message.registryEntry, message.dictSettings);
@@ -3261,6 +3278,19 @@ class ADHDHighlighter {
     const bubbleDown = (e) => { try { const rect = bubble.getBoundingClientRect(); bDragging = true; bMoved = false; bStartX = e.clientX; bStartY = e.clientY; bStartLeft = rect.left; bStartTop = rect.top; bubble.style.left = bStartLeft + 'px'; bubble.style.top = bStartTop + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; document.addEventListener('mousemove', bubbleMove); document.addEventListener('mouseup', bubbleUp); } catch (_) {} };
     bubble.addEventListener('mousedown', bubbleDown);
     const TAIXUE_CONTEXT_MAX_WARN_CHARS = 12000;
+    const estimateTaixueTokens = (text) => {
+      const raw = String(text || '');
+      const cjk = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/.test(raw);
+      return Math.ceil(raw.length * (cjk ? 1 : 0.75));
+    };
+    const limitTaixueText = (text, maxChars = 70000) => {
+      const raw = String(text || '');
+      if (raw.length <= maxChars) return { text: raw, truncated: false, originalLength: raw.length, approxTokens: estimateTaixueTokens(raw) };
+      const head = raw.slice(0, Math.floor(maxChars * 0.62));
+      const tail = raw.slice(Math.max(0, raw.length - Math.floor(maxChars * 0.28)));
+      const limited = `${head}\n\n[...中间内容已按预算省略，原文约 ${raw.length} 字...]\n\n${tail}`;
+      return { text: limited, truncated: true, originalLength: raw.length, approxTokens: estimateTaixueTokens(limited) };
+    };
     const getSelectedTextSafe = () => {
       try {
         if (typeof this.getSelectedText === 'function') return this.getSelectedText();
@@ -3335,6 +3365,8 @@ class ADHDHighlighter {
           pageTitle: getMetaTitle(),
           pageUrl: u.pageUrl,
           canonicalUrl: u.canonicalUrl,
+          textLength: text.length,
+          approxTokens: estimateTaixueTokens(text),
           createdAt: Date.now()
         };
       }
@@ -3445,12 +3477,15 @@ class ADHDHighlighter {
         pageUrl: ctx.pageUrl,
         canonicalUrl: ctx.canonicalUrl,
         createdAt: ctx.createdAt,
-        textLength: String(ctx.text || '').length
+        textLength: String(ctx.text || '').length,
+        approxTokens: ctx.approxTokens || estimateTaixueTokens(ctx.text)
       };
-      const text = String(ctx.text || '').trim();
+      const limitedContext = limitTaixueText(ctx.text, 70000);
+      const text = String(limitedContext.text || '').trim();
       if (!text) throw new Error('当前页面没有可分析的正文');
       const requestedCount = quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3;
-      const prompt = `你是严格的阅读理解题目设计者。请基于下面材料生成${requestedCount}道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据材料，不使用材料外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。正确答案位置要尽量均匀分布，选项长度相近，干扰项必须有文章依据但不能成立。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(必须与options等长的字符串数组，逐项解释为什么正确或错误)。\n\n材料：\n${text.slice(0, 70000)}`;
+      const budgetNote = limitedContext.truncated ? `注意：材料已按请求预算截取，原文约 ${limitedContext.originalLength} 字；题目只能依据下方可见材料。` : '';
+      const prompt = `你是严格的阅读理解题目设计者。请基于下面材料生成${requestedCount}道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据材料，不使用材料外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。正确答案位置要尽量均匀分布，选项长度相近，干扰项必须有文章依据但不能成立。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(必须与options等长的字符串数组，逐项解释为什么正确或错误)。${budgetNote ? '\n' + budgetNote : ''}\n\n材料：\n${text}`;
       try {
         const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: requestedCount >= 10 ? 3600 : 2200, temperature: 0.35 });
         const parsed = parseJsonPayload(output);
@@ -3602,14 +3637,25 @@ class ADHDHighlighter {
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     updateContextControls('full_article');
-    try {
-      chrome.storage.local.get(['agfTaixueLastModule'], res => {
-        const last = res && res.agfTaixueLastModule;
-        if (last === 'quiz') showQuiz();
-        else showChat();
-      });
-    } catch (_) {
-      showChat();
+    this.__openTaixueModule = (request = {}) => {
+      updateContextControls(request.contextSource || 'full_article');
+      if (request.module === 'quiz') showQuiz();
+      else showChat();
+    };
+    const pendingOpen = this.__pendingTaixueOpen || null;
+    this.__pendingTaixueOpen = null;
+    if (pendingOpen) {
+      this.__openTaixueModule(pendingOpen);
+    } else {
+      try {
+        chrome.storage.local.get(['agfTaixueLastModule'], res => {
+          const last = res && res.agfTaixueLastModule;
+          if (last === 'quiz') showQuiz();
+          else showChat();
+        });
+      } catch (_) {
+        showChat();
+      }
     }
     let recordsScope = 'all';
     let recordsSearch = '';
@@ -5564,13 +5610,16 @@ class ADHDHighlighter {
       hideFulltextPanel();
       await updateStorageStatusUI();
       const ctx = await taixueContext.resolve(taixueState.contextSource);
-      const raw = String(ctx.text || '');
-      if (raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
-        showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
+      const limitedContext = limitTaixueText(ctx.text, 50000);
+      const raw = String(limitedContext.text || '');
+      if (limitedContext.truncated || raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
+        showToast(limitedContext.truncated ? '文章较长，已按预算保留开头和结尾发送。' : '目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
       }
       const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ';
       const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
-      const parts = [title, pageLabel + ctx.canonicalUrl, bodyLabel, raw];
+      const parts = [title, pageLabel + ctx.canonicalUrl];
+      if (limitedContext.truncated) parts.push(`预算提示：原文约 ${limitedContext.originalLength} 字，本次发送已截取。`);
+      parts.push(bodyLabel, raw);
       if (extra) parts.push(extra);
       if (includeLangHint) parts.push(getTaixueLangHint());
       const prompt = parts.join('\n');

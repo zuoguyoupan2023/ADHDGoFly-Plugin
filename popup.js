@@ -1494,6 +1494,8 @@ class PopupController {
       if (text.length < 80) throw new Error('当前网页正文过短或无法读取，暂时无法生成文章词典。');
       const title = String(page.title || tab.title || '当前文章');
       const language = /[\u3400-\u9fff]/.test(text.slice(0, 1200)) ? 'zh' : 'en';
+      const limitSelect = document.getElementById('articleDictLimit');
+      const requestedLimit = limitSelect ? Math.max(30, Math.min(100, parseInt(String(limitSelect.value || '30'), 10) || 30)) : 30;
       const baseMap = {
         deepseek: 'https://api.deepseek.com/v1/chat/completions', moonshot: 'https://api.moonshot.cn/v1/chat/completions',
         openai: 'https://api.openai.com/v1/chat/completions', qwen: 'https://dashscope.aliyuncs.com/api/v1/chat/completions',
@@ -1508,10 +1510,10 @@ class PopupController {
       const model = modelMap[provider] || 'gpt-4o-mini';
       state.textContent = `正在使用 ${provider} 分析“${title}”…`;
       const prompt = [
-        '请分析下面这篇文章，提取最重要的 8-30 个关键词或术语。',
+        `请分析下面这篇文章，提取最重要的 8-${requestedLimit} 个关键词或术语。`,
         '只返回严格 JSON，不要 Markdown，不要解释。',
         'JSON 格式：{"language":"en","keywords":[{"word":"example","lemma":"example","pos":"noun","importance":0.86,"reason":"核心概念"}]}。',
-        'pos 只能是 noun、verb、adjective 之一；关键词必须来自正文或是正文中的明确词形。',
+        'pos 只能是 noun、verb、adjective 之一；关键词必须来自正文或是正文中的明确词形。优先覆盖高频、关键概念、不同段落和不同词性。',
         `文章标题：${title}`,
         `文章语言提示：${language}`,
         `正文：\n${text.slice(0, 18000)}`
@@ -1526,10 +1528,10 @@ class PopupController {
         throw new Error(`AI 请求失败（${response && response.status || '网络错误'}）${detail ? '：' + detail : ''}`);
       }
       const raw = response.data && response.data.choices && response.data.choices[0] && response.data.choices[0].message && response.data.choices[0].message.content;
-      const parsed = this.parseArticleDictionaryResponse(raw);
+      const parsed = this.parseArticleDictionaryResponse(raw, requestedLimit);
       const words = parsed.keywords;
       if (!words.length) throw new Error('AI 没有返回可用关键词，请重试。');
-      this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model };
+      this.articleDictionaryDraft = { words, language: parsed.language || language, title, sourceUrl: tab.url || '', provider, model, requestedLimit };
       if (nameInput) nameInput.value = `${title} · 本文词典`;
       this.renderArticleDictionaryDraft(words);
       state.textContent = `已提取 ${words.length} 个关键词，请确认后应用。`;
@@ -1540,7 +1542,7 @@ class PopupController {
     } finally { if (trigger) trigger.disabled = false; }
   }
 
-  parseArticleDictionaryResponse(raw) {
+  parseArticleDictionaryResponse(raw, limit = 40) {
     let text = String(raw || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
     let parsed;
     try { parsed = JSON.parse(text); } catch (_) { throw new Error('AI 返回的不是有效 JSON，请重试。'); }
@@ -1553,7 +1555,7 @@ class PopupController {
       const pos = posMap[String(item && item.pos || '').toLowerCase()];
       if (!word || !pos || word.length > 80 || /[<>\n\r]/.test(word)) return;
       const key = word.toLowerCase();
-      if (seen.has(key) || words.length >= 40) return;
+      if (seen.has(key) || words.length >= limit) return;
       seen.add(key);
       words.push({ word, pos, reason: String(item.reason || '').trim().slice(0, 120), checked: true });
     });
@@ -1617,11 +1619,13 @@ class PopupController {
     confirm.disabled = true;
     try {
       const nameInput = document.getElementById('articleDictName');
+      const modeSelect = document.getElementById('articleDictMode');
       const dictionaryName = String(nameInput && nameInput.value || '').trim() || `${draft.title} · 本文词典`;
+      const applyMode = modeSelect && modeSelect.value === 'merge' ? 'merge' : 'replace';
       const id = this.articleDictionaryEditId || ('article-' + Date.now().toString(36));
       const now = new Date().toISOString();
       const normalizedLanguage = ['zh','en','fr','ru','es','ja'].includes(draft.language) ? draft.language : 'other';
-      const data = { meta: { id, name: id.toUpperCase(), displayName: dictionaryName, language: normalizedLanguage, type: 'article', source: 'article', sourceTitle: draft.title, sourceUrl: draft.sourceUrl, scope: 'page', createdAt: Date.now(), updatedAt: Date.now(), provider: draft.provider, model: draft.model }, version: '1.0', lastUpdated: now, words: {} };
+      const data = { meta: { id, name: id.toUpperCase(), displayName: dictionaryName, language: normalizedLanguage, type: 'article', source: 'article', sourceTitle: draft.title, sourceUrl: draft.sourceUrl, scope: 'page', lifecycle: 'page', applyMode, requestedLimit: draft.requestedLimit || selected.length, createdAt: Date.now(), updatedAt: Date.now(), provider: draft.provider, model: draft.model }, version: '1.0', lastUpdated: now, words: {} };
       selected.forEach(item => { data.words[item.word] = { pos: [item.pos] }; });
       const storage = await chrome.storage.local.get(['customDictRegistry', 'dictSettings']);
       const registry = storage.customDictRegistry || { version: '1.0.0', dictionaries: { preset: [], downloaded: [], local: [] }, local: [] };
@@ -1631,7 +1635,9 @@ class PopupController {
       registry.local.push(entry);
       const previousSettings = storage[`articleDictionaryPreviousSettings_${id}`] || storage.dictSettings || { 'zh-preset': true, 'en-preset': true };
       const nextSettings = { ...previousSettings };
-      Object.keys(nextSettings).forEach(key => { if (key === `${data.meta.language}-preset` || key.startsWith(`${data.meta.language}-`)) nextSettings[key] = false; });
+      if (applyMode === 'replace') {
+        Object.keys(nextSettings).forEach(key => { if (key === `${data.meta.language}-preset` || key.startsWith(`${data.meta.language}-`)) nextSettings[key] = false; });
+      }
       nextSettings[id] = true;
       await chrome.storage.local.set({ customDictRegistry: registry, [`dictionary_${id}`]: data, dictSettings: nextSettings, activeArticleDictionaryId: id, [`articleDictionaryPreviousSettings_${id}`]: previousSettings });
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -2188,6 +2194,10 @@ class PopupController {
         chrome.tabs.create({ url: 'https://dictionary.readgofly.online' });
       });
     }
+    const reviewInTaixueBtn = document.getElementById('reviewInTaixueBtn');
+    if (reviewInTaixueBtn) {
+      reviewInTaixueBtn.addEventListener('click', () => this.openTaixueReview());
+    }
   }
 
   /**
@@ -2486,9 +2496,53 @@ class PopupController {
     
     // 显示词汇统计
     this.displayVocabularyStats(data.vocabulary || null);
+    this.displayTaixueReviewStats();
     
     // 显示推荐
     // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
+  }
+
+  async openTaixueReview() {
+    const btn = document.getElementById('reviewInTaixueBtn');
+    const prev = btn ? btn.textContent : '';
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = '打开中...'; }
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      if (!tab || !tab.id) throw new Error('未检测到当前网页');
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'openTaixue', module: 'quiz', contextSource: 'full_article' });
+      if (!response || !response.success) throw new Error(response && response.error || '无法打开太学');
+      window.close();
+    } catch (error) {
+      this.showError(error.message || '打开太学失败');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = prev || '在太学中复习'; }
+    }
+  }
+
+  async displayTaixueReviewStats() {
+    const container = document.getElementById('taixueReviewStats');
+    if (!container) return;
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs && tabs[0];
+      const currentUrl = tab && tab.url || '';
+      const storage = await chrome.storage.local.get(['agfQuizHistory']);
+      const history = Array.isArray(storage.agfQuizHistory) ? storage.agfQuizHistory : [];
+      const samePage = history.filter(item => {
+        const ctx = item && item.context || {};
+        return [ctx.canonicalUrl, ctx.pageUrl, item.pageUrl].filter(Boolean).some(url => String(url) === String(currentUrl));
+      });
+      const latest = samePage[0] || null;
+      if (!samePage.length) {
+        container.innerHTML = '<div class="no-data">当前页面还没有测试记录。</div>';
+        return;
+      }
+      const score = latest && latest.completedAt ? `${latest.score}/${latest.total}` : '未完成';
+      container.innerHTML = `<div class="highlight-summary"><p>当前页面测试次数: <strong>${samePage.length}</strong></p><p>最近一次得分: <strong>${score}</strong></p></div>`;
+    } catch (error) {
+      container.innerHTML = '<div class="no-data">暂时无法读取测试记录。</div>';
+    }
   }
 
 
