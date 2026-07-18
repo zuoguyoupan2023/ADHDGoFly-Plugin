@@ -47,7 +47,7 @@
     "resetAll": "重置所有设置"
   },
     "aiPanel": {
-    "title": "🏠ExamRoom",
+    "title": "太学",
     "returnToChat": "返回聊天视图",
     "refresh": "刷新",
     "statusHintNone": "灰色: 未获取该页面文本",

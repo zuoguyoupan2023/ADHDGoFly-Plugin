@@ -1485,7 +1485,7 @@ class PopupController {
       const ai = await chrome.storage.local.get(['aiProvider', 'aiModel', 'aiKeys', 'aiBaseUrls']);
       const provider = ai.aiProvider || 'deepseek';
       const key = ai.aiKeys && ai.aiKeys[provider];
-      if (!key) throw new Error('尚未配置当前 AI 供应商的 API Key，请先进入 ExamRoom 设置。');
+      if (!key) throw new Error('尚未配置当前 AI 供应商的 API Key，请先进入太学设置。');
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tab = tabs && tabs[0];
       if (!tab || !tab.id) throw new Error('未找到当前网页。');
