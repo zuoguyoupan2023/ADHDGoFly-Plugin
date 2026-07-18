@@ -3299,7 +3299,9 @@ class ADHDHighlighter {
       quizQuestion.textContent = q.question;
       quizOptions.innerHTML = '';
       quizFeedback.style.display = 'none'; quizFeedback.textContent = '';
-      quizSubmit.disabled = true; quizNext.style.display = 'none';
+      quizSubmit.disabled = true;
+      quizSubmit.style.display = 'inline-block';
+      quizNext.style.display = 'none';
       quizProgressText.textContent = `${quizIndex + 1} / ${quizItems.length}`;
       quizProgressBar.style.width = `${((quizIndex + 1) / quizItems.length) * 100}%`;
       q.options.slice(0, 4).forEach((option, index) => {
