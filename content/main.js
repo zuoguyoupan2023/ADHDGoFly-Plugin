@@ -3205,14 +3205,13 @@ class ADHDHighlighter {
       hideFulltextPanel();
       if (!addedFullActive) {
         await updateStorageStatusUI();
-        const MAX_WARN_CHARS = 12000;
-        const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
-        const raw = String(body || '');
-        if (raw.length > MAX_WARN_CHARS) {
+        const ctx = await taixueContext.resolve('full_article');
+        const raw = String(ctx.text || '');
+        if (raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
           showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
         }
         addedFullText = raw;
-        const link = String(location && location.href || '');
+        const link = String(ctx.canonicalUrl || ctx.pageUrl || (location && location.href) || '');
         const previewRaw = String(addedFullText||'');
         const preview = previewRaw.slice(0, 20) + (previewRaw.length > 20 ? '...' : '');
         addedFullDisplayPrefix = '我的问题是： ';
@@ -3239,9 +3238,103 @@ class ADHDHighlighter {
     const bubbleUp = () => { if (!bDragging) return; bDragging = false; document.removeEventListener('mousemove', bubbleMove); document.removeEventListener('mouseup', bubbleUp); if (bMoved) { this.__bubblePos = { left: parseInt(bubble.style.left, 10) || 0, top: parseInt(bubble.style.top, 10) || 0 }; bMoved = false; } else { this.restoreAiSettingPanel(); } };
     const bubbleDown = (e) => { try { const rect = bubble.getBoundingClientRect(); bDragging = true; bMoved = false; bStartX = e.clientX; bStartY = e.clientY; bStartLeft = rect.left; bStartTop = rect.top; bubble.style.left = bStartLeft + 'px'; bubble.style.top = bStartTop + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; document.addEventListener('mousemove', bubbleMove); document.addEventListener('mouseup', bubbleUp); } catch (_) {} };
     bubble.addEventListener('mousedown', bubbleDown);
+    const TAIXUE_CONTEXT_MAX_WARN_CHARS = 12000;
+    const getSelectedTextSafe = () => {
+      try {
+        if (typeof this.getSelectedText === 'function') return this.getSelectedText();
+        const selection = window.getSelection();
+        return selection ? String(selection.toString() || '').trim() : '';
+      } catch (_) {
+        return '';
+      }
+    };
+    const taixueState = {
+      currentModule: 'chat',
+      taskStatus: 'idle',
+      contextSource: 'full_article',
+      setModule(moduleName) {
+        this.currentModule = moduleName || 'chat';
+      },
+      setTaskStatus(status) {
+        this.taskStatus = status || 'idle';
+      },
+      setContextSource(source) {
+        this.contextSource = source || 'full_article';
+      },
+      getProviderState() {
+        return {
+          provider: sessionProviderSelect ? sessionProviderSelect.value : '',
+          model: sessionModelSelect ? sessionModelSelect.value : ''
+        };
+      }
+    };
+    const taixueContext = {
+      async resolve(source = taixueState.contextSource, options = {}) {
+        taixueState.setTaskStatus('preparing_context');
+        const u = getCanonicalUrl();
+        const selected = String(getSelectedTextSafe() || '').trim();
+        const preferredSource = source === 'selection' && selected ? 'selection' : source;
+        let text = '';
+        if (preferredSource === 'selection') {
+          text = selected;
+        } else if (preferredSource === 'manual') {
+          text = String(options.text || '').trim();
+        } else {
+          text = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
+        }
+        text = String(text || '').trim();
+        const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'manual' ? 'manual' : 'full_article');
+        taixueState.setContextSource(sourceName);
+        taixueState.setTaskStatus(text ? 'ready' : 'failed');
+        return {
+          source: sourceName,
+          text,
+          selectedText: selected,
+          pageTitle: getMetaTitle(),
+          pageUrl: u.pageUrl,
+          canonicalUrl: u.canonicalUrl,
+          createdAt: Date.now()
+        };
+      }
+    };
+    const taixueTask = {
+      async requestJsonText({ prompt, timeout = 60000, maxTokens = 1800, temperature = 0.4 }) {
+        const { provider: prov, model } = taixueState.getProviderState();
+        const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
+        const key = String((stored.aiKeys || {})[prov] || '').trim();
+        if (!key) throw new Error('当前供应商尚未配置 API Key');
+        let base = (stored.aiBaseUrls || {})[prov] || PROVIDERS_CONFIG[prov]?.baseUrl || '';
+        let headers = { 'Content-Type': 'application/json' };
+        let requestBody;
+        if (prov === 'anthropic') {
+          headers['x-api-key'] = key; headers['anthropic-version'] = '2023-06-01';
+          requestBody = JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] });
+        } else if (prov === 'gemini') {
+          base = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+          requestBody = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+        } else {
+          headers.Authorization = 'Bearer ' + key;
+          requestBody = JSON.stringify({ model, temperature, messages: [{ role: 'user', content: prompt }] });
+        }
+        taixueState.setTaskStatus('requesting');
+        const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: base, method: 'POST', headers, body: requestBody, timeout }, resolve));
+        if (!resp || !resp.success) {
+          taixueState.setTaskStatus('failed');
+          throw new Error('AI 请求失败，请检查供应商、模型和 API Key');
+        }
+        const data = resp.data || {};
+        let output = '';
+        if (prov === 'anthropic') output = data.content?.[0]?.text || '';
+        else if (prov === 'gemini') output = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+        else output = data.choices?.[0]?.message?.content || '';
+        taixueState.setTaskStatus('completed');
+        return output;
+      }
+    };
     let currentView = 'chat';
     const setView = (which) => {
       currentView = which;
+      taixueState.setModule(which);
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
@@ -3255,6 +3348,7 @@ class ADHDHighlighter {
     let quizSelected = -1;
     let quizDifficulty = 'easy';
     let quizAnswered = false;
+    let quizContextRef = null;
     const parseJsonPayload = (text) => {
       const raw = String(text || '').replace(/```json|```/gi, '').trim();
       try { return JSON.parse(raw); } catch (_) {}
@@ -3263,35 +3357,19 @@ class ADHDHighlighter {
       return null;
     };
     const requestQuiz = async (difficulty) => {
-      const bodyText = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
-      const text = String(bodyText || '').trim();
+      const ctx = await taixueContext.resolve('full_article');
+      quizContextRef = {
+        source: ctx.source,
+        pageTitle: ctx.pageTitle,
+        pageUrl: ctx.pageUrl,
+        canonicalUrl: ctx.canonicalUrl,
+        createdAt: ctx.createdAt,
+        textLength: String(ctx.text || '').length
+      };
+      const text = String(ctx.text || '').trim();
       if (!text) throw new Error('当前页面没有可分析的正文');
       const prompt = `你是严格的阅读理解题目设计者。请基于下面文章生成3道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据文章，不使用文章外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(与options等长的字符串数组，逐项解释为什么正确或错误)。\n\n文章：\n${text.slice(0, 70000)}`;
-      const prov = sessionProviderSelect.value;
-      const model = sessionModelSelect.value;
-      const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
-      const key = String((stored.aiKeys || {})[prov] || '').trim();
-      if (!key) throw new Error('当前供应商尚未配置 API Key');
-      let base = (stored.aiBaseUrls || {})[prov] || PROVIDERS_CONFIG[prov]?.baseUrl || '';
-      let headers = { 'Content-Type': 'application/json' };
-      let requestBody;
-      if (prov === 'anthropic') {
-        headers['x-api-key'] = key; headers['anthropic-version'] = '2023-06-01';
-        requestBody = JSON.stringify({ model, max_tokens: 1800, messages: [{ role: 'user', content: prompt }] });
-      } else if (prov === 'gemini') {
-        base = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
-        requestBody = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
-      } else {
-        headers.Authorization = 'Bearer ' + key;
-        requestBody = JSON.stringify({ model, temperature: 0.4, messages: [{ role: 'user', content: prompt }] });
-      }
-      const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: base, method: 'POST', headers, body: requestBody, timeout: 60000 }, resolve));
-      if (!resp || !resp.success) throw new Error('AI 请求失败，请检查供应商、模型和 API Key');
-      const data = resp.data || {};
-      let output = '';
-      if (prov === 'anthropic') output = data.content?.[0]?.text || '';
-      else if (prov === 'gemini') output = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-      else output = data.choices?.[0]?.message?.content || '';
+      const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: 1800, temperature: 0.4 });
       const parsed = parseJsonPayload(output);
       const items = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.questions) ? parsed.questions : []);
       if (!items.length) throw new Error('AI 返回的题目格式无法识别');
@@ -3302,7 +3380,7 @@ class ADHDHighlighter {
     const saveQuizHistory = async (completed = false) => {
       if (!quizItems.length) return;
       const url = String(location.href || '');
-      const record = { id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pageUrl: url, pageTitle: getMetaTitle(), createdAt: quizStartedAt || Date.now(), completedAt: completed ? Date.now() : 0, provider: sessionProviderSelect.value, model: sessionModelSelect.value, difficulty: quizDifficulty, score: quizScore, total: quizItems.length, questions: quizItems.map((q, i) => ({ ...q, selected: q.selected, isCorrect: q.isCorrect, markedForReview: q.markedForReview || false })) };
+      const record = { id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pageUrl: url, pageTitle: getMetaTitle(), createdAt: quizStartedAt || Date.now(), completedAt: completed ? Date.now() : 0, provider: sessionProviderSelect.value, model: sessionModelSelect.value, difficulty: quizDifficulty, score: quizScore, total: quizItems.length, context: quizContextRef || { source: taixueState.contextSource, pageUrl: url, pageTitle: getMetaTitle() }, questions: quizItems.map((q, i) => ({ ...q, selected: q.selected, isCorrect: q.isCorrect, markedForReview: q.markedForReview || false })) };
       const history = await getQuizHistory();
       const currentId = quizRecordId;
       const index = currentId ? history.findIndex(item => item.id === currentId) : -1;
@@ -3317,7 +3395,7 @@ class ADHDHighlighter {
       if (!history.length) { quizResult.innerHTML = '<h3>测试历史</h3><p>还没有测试记录。</p><div class="agf-quiz-actions"><button id="agfQuizHistoryBack">返回测试</button></div>'; document.getElementById('agfQuizHistoryBack').onclick = () => { quizStartActions.style.display = 'flex'; quizResult.innerHTML = ''; }; return; }
       quizResult.innerHTML = '<h3>测试历史</h3><div class="agf-quiz-history-list"></div><div class="agf-quiz-actions"><button id="agfQuizHistoryBack">返回测试</button></div>';
       const list = quizResult.querySelector('.agf-quiz-history-list');
-      history.forEach(item => { const row = document.createElement('div'); row.className = 'agf-quiz-history-row'; row.innerHTML = `<div><strong>${String(item.pageTitle || '当前文章')}</strong><small>${new Date(item.createdAt).toLocaleString()} · ${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? `${item.score}/${item.total}` : '未完成'}</small></div><button type="button">查看</button>`; row.querySelector('button').onclick = () => { quizItems = item.questions || []; quizIndex = 0; quizScore = Number(item.score || 0); quizDifficulty = item.difficulty || 'easy'; quizRecordId = item.id; quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }; list.appendChild(row); });
+      history.forEach(item => { const row = document.createElement('div'); row.className = 'agf-quiz-history-row'; row.innerHTML = `<div><strong>${String(item.pageTitle || '当前文章')}</strong><small>${new Date(item.createdAt).toLocaleString()} · ${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? `${item.score}/${item.total}` : '未完成'}</small></div><button type="button">查看</button>`; row.querySelector('button').onclick = () => { quizItems = item.questions || []; quizIndex = 0; quizScore = Number(item.score || 0); quizDifficulty = item.difficulty || 'easy'; quizContextRef = item.context || null; quizRecordId = item.id; quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }; list.appendChild(row); });
       document.getElementById('agfQuizHistoryBack').onclick = () => { quizStartActions.style.display = 'flex'; quizResult.innerHTML = ''; };
     };
     const renderQuizQuestion = () => {
@@ -5343,14 +5421,41 @@ class ADHDHighlighter {
       } catch (_) {}
     };
 
+    const getTaixueLangHint = () => (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+    const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false }) => {
+      hideFulltextPanel();
+      await updateStorageStatusUI();
+      const ctx = await taixueContext.resolve('full_article');
+      const raw = String(ctx.text || '');
+      if (raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
+        showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
+      }
+      const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ';
+      const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
+      const parts = [title, pageLabel + ctx.canonicalUrl, bodyLabel, raw];
+      if (extra) parts.push(extra);
+      if (includeLangHint) parts.push(getTaixueLangHint());
+      const prompt = parts.join('\n');
+      if (inputUser) { inputUser.innerText = prompt; }
+      if (composerHidden) composerHidden.value = prompt;
+      if (morePanel) morePanel.style.display = 'none';
+      nextPromptIsGenerated = true;
+      currentPrefix = prefix;
+      currentPageUrl = ctx.pageUrl;
+      currentCanonicalUrl = ctx.canonicalUrl;
+      currentPageTitle = ctx.pageTitle;
+      currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || '');
+      showChat();
+      sendChat();
+    };
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const sumTitle = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。'; const prompt = [sumTitle + u.canonicalUrl, bodyLabel, raw, langHint].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (beginnerExplainBtn) beginnerExplainBtn.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerTitle') : '读者为初学者研究生，基础薄弱，需在明天组会做 PPT 文献汇报。请用最通俗、循序渐进、非常详细的方式解读这篇文献，确保我能彻底看懂。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const extra = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerOutput') : '输出: 背景与动机；术语科普；方法流程分步骤；关键实验与结果；逐张图解；贡献与局限；改进方向；PPT 大纲与每页要点；可能被问到的问题与回答；最后给出 TL;DR。'; const langHint = (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw, extra, langHint].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.beginnerExplain') : '保姆级解读'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结', includeLangHint: true }); });
+    if (beginnerExplainBtn) beginnerExplainBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerTitle') : '读者为初学者研究生，基础薄弱，需在明天组会做 PPT 文献汇报。请用最通俗、循序渐进、非常详细的方式解读这篇文献，确保我能彻底看懂。'; const extra = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerOutput') : '输出: 背景与动机；术语科普；方法流程分步骤；关键实验与结果；逐张图解；贡献与局限；改进方向；PPT 大纲与每页要点；可能被问到的问题与回答；最后给出 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.beginnerExplain') : '保姆级解读', extra, includeLangHint: true }); });
     if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'grid' : 'none'; } });
-    if (btnStructured) btnStructured.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { hideFulltextPanel(); await updateStorageStatusUI(); const u = getCanonicalUrl(); const body = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints(); const raw = String(body || ''); if (raw.length > 12000) { showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); } const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: '; const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:'; const prompt = [title, pageLabel + u.canonicalUrl, bodyLabel, raw].join('\n'); if (inputUser) { inputUser.innerText = prompt; } if (composerHidden) composerHidden.value = prompt; if (morePanel) morePanel.style.display = 'none'; nextPromptIsGenerated = true; currentPrefix = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词'; currentPageUrl = u.pageUrl; currentCanonicalUrl = u.canonicalUrl; currentPageTitle = getMetaTitle(); currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat(); sendChat(); });
+    if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
+    if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
+    if (btnOutline) btnOutline.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲' }); });
+    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词' }); });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
