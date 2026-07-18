@@ -2583,6 +2583,32 @@ class ADHDHighlighter {
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
+      .agf-ai-view-quiz{display:none;height:100%;min-height:0;overflow:auto}
+      .agf-quiz-shell{max-width:680px;margin:0 auto;padding:8px 4px 20px;color:#172033}
+      .agf-quiz-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;color:#687386;font-size:12px}
+      .agf-quiz-progress{height:5px;flex:1;border-radius:99px;background:#e7ebf2;overflow:hidden}
+      .agf-quiz-progress span{display:block;height:100%;background:#315efb;border-radius:inherit;transition:width .2s ease}
+      .agf-quiz-card{background:#fff;border:1px solid #e1e6ef;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(23,32,51,.04)}
+      .agf-quiz-type{font-size:11px;color:#315efb;font-weight:700;margin-bottom:8px}
+      .agf-quiz-question{font-size:16px;line-height:1.55;font-weight:700;margin-bottom:16px}
+      .agf-quiz-options{display:grid;gap:8px}
+      .agf-quiz-option{display:flex;align-items:flex-start;gap:8px;width:100%;padding:10px 12px;border:1px solid #dfe5f2;border-radius:9px;background:#fff;color:#27344f;text-align:left;font-size:13px;line-height:1.45;cursor:pointer}
+      .agf-quiz-option:hover{border-color:#8da7ff;background:#f7f9ff}
+      .agf-quiz-option.selected{border-color:#315efb;background:#edf2ff;color:#2447c7}
+      .agf-quiz-option.correct{border-color:#20a464;background:#effaf4;color:#176b45}
+      .agf-quiz-option.wrong{border-color:#d9534f;background:#fff3f2;color:#a32926}
+      .agf-quiz-option:disabled{cursor:default}
+      .agf-quiz-letter{font-weight:700;min-width:18px}
+      .agf-quiz-feedback{margin-top:14px;padding-top:12px;border-top:1px solid #edf0f5;font-size:12px;line-height:1.6;color:#4b5870}
+      .agf-quiz-evidence{margin-top:8px;padding:8px 10px;border-left:3px solid #9db4ff;background:#f7f9ff;color:#687386}
+      .agf-quiz-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+      .agf-quiz-actions button{height:30px;padding:0 12px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;cursor:pointer;font-size:12px}
+      .agf-quiz-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}
+      .agf-quiz-actions button:disabled{opacity:.45;cursor:not-allowed}
+      .agf-quiz-result{display:none;text-align:center;padding:28px 12px}
+      .agf-quiz-result h3{margin-bottom:8px;font-size:18px}
+      .agf-quiz-result p{color:#687386;font-size:12px;line-height:1.6}
+      .agf-quiz-result .agf-quiz-actions{justify-content:center;flex-wrap:wrap}
       .agf-ai-display{border:1px solid #e1e6ef;border-radius:12px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh;width:100%}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
@@ -2783,6 +2809,7 @@ class ADHDHighlighter {
         <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">🏠ExamRoom</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
         <div style="display:flex;align-items:center;gap:4px;">
           <div class="agf-ai-tabs">
+            <button id="agfAiTabQuiz" title="文章测试">测试</button>
             <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabDoc">📃</button>
             <button id="agfAiTabWrench">🔧</button>
@@ -2837,6 +2864,20 @@ class ADHDHighlighter {
                 <input type="hidden" id="agfComposerHidden" />
                 <div id="agfRefreshHint" class="agf-refresh-hint" style="display:none" data-i18n="aiPanel.refreshHint">刷新以采取全文</div>
               </div>
+            </div>
+          </div>
+          <div class="agf-ai-view-quiz" id="agfAiViewQuiz">
+            <div class="agf-quiz-shell">
+              <div class="agf-quiz-top"><span id="agfQuizModeLabel">文章理解测试</span><div class="agf-quiz-progress"><span id="agfQuizProgressBar" style="width:0%"></span></div><span id="agfQuizProgressText">准备中</span></div>
+              <div class="agf-quiz-card" id="agfQuizCard" style="display:none">
+                <div class="agf-quiz-type" id="agfQuizType"></div>
+                <div class="agf-quiz-question" id="agfQuizQuestion"></div>
+                <div class="agf-quiz-options" id="agfQuizOptions"></div>
+                <div class="agf-quiz-feedback" id="agfQuizFeedback" style="display:none"></div>
+                <div class="agf-quiz-actions"><button id="agfQuizSubmit" class="primary" disabled>提交答案</button><button id="agfQuizNext" style="display:none">下一题</button></div>
+              </div>
+              <div class="agf-quiz-result" id="agfQuizResult"></div>
+              <div class="agf-quiz-actions" id="agfQuizStartActions"><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3017,6 +3058,19 @@ class ADHDHighlighter {
     const tabDoc = document.getElementById('agfAiTabDoc');
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
+    const viewQuiz = document.getElementById('agfAiViewQuiz');
+    const quizTab = document.getElementById('agfAiTabQuiz');
+    const quizCard = document.getElementById('agfQuizCard');
+    const quizResult = document.getElementById('agfQuizResult');
+    const quizStartActions = document.getElementById('agfQuizStartActions');
+    const quizType = document.getElementById('agfQuizType');
+    const quizQuestion = document.getElementById('agfQuizQuestion');
+    const quizOptions = document.getElementById('agfQuizOptions');
+    const quizFeedback = document.getElementById('agfQuizFeedback');
+    const quizSubmit = document.getElementById('agfQuizSubmit');
+    const quizNext = document.getElementById('agfQuizNext');
+    const quizProgressText = document.getElementById('agfQuizProgressText');
+    const quizProgressBar = document.getElementById('agfQuizProgressBar');
     const statusText = document.getElementById('agfStatusText');
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
@@ -3183,11 +3237,90 @@ class ADHDHighlighter {
     const setView = (which) => {
       currentView = which;
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
+      if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
     };
     const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} try { focusUserCaretEnd(); } catch (_) {} };
+    let quizItems = [];
+    let quizIndex = 0;
+    let quizScore = 0;
+    let quizSelected = -1;
+    let quizDifficulty = 'easy';
+    let quizAnswered = false;
+    const parseJsonPayload = (text) => {
+      const raw = String(text || '').replace(/```json|```/gi, '').trim();
+      try { return JSON.parse(raw); } catch (_) {}
+      const start = raw.indexOf('['); const end = raw.lastIndexOf(']');
+      if (start >= 0 && end > start) { try { return JSON.parse(raw.slice(start, end + 1)); } catch (_) {} }
+      return null;
+    };
+    const requestQuiz = async (difficulty) => {
+      const bodyText = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
+      const text = String(bodyText || '').trim();
+      if (!text) throw new Error('当前页面没有可分析的正文');
+      const prompt = `你是严格的阅读理解题目设计者。请基于下面文章生成3道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据文章，不使用文章外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph)。\n\n文章：\n${text.slice(0, 70000)}`;
+      const prov = sessionProviderSelect.value;
+      const model = sessionModelSelect.value;
+      const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
+      const key = String((stored.aiKeys || {})[prov] || '').trim();
+      if (!key) throw new Error('当前供应商尚未配置 API Key');
+      let base = (stored.aiBaseUrls || {})[prov] || PROVIDERS_CONFIG[prov]?.baseUrl || '';
+      let headers = { 'Content-Type': 'application/json' };
+      let requestBody;
+      if (prov === 'anthropic') {
+        headers['x-api-key'] = key; headers['anthropic-version'] = '2023-06-01';
+        requestBody = JSON.stringify({ model, max_tokens: 1800, messages: [{ role: 'user', content: prompt }] });
+      } else if (prov === 'gemini') {
+        base = base.replace('{model}', model) + '?key=' + encodeURIComponent(key);
+        requestBody = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+      } else {
+        headers.Authorization = 'Bearer ' + key;
+        requestBody = JSON.stringify({ model, temperature: 0.4, messages: [{ role: 'user', content: prompt }] });
+      }
+      const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: base, method: 'POST', headers, body: requestBody, timeout: 60000 }, resolve));
+      if (!resp || !resp.success) throw new Error('AI 请求失败，请检查供应商、模型和 API Key');
+      const data = resp.data || {};
+      let output = '';
+      if (prov === 'anthropic') output = data.content?.[0]?.text || '';
+      else if (prov === 'gemini') output = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+      else output = data.choices?.[0]?.message?.content || '';
+      const parsed = parseJsonPayload(output);
+      const items = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.questions) ? parsed.questions : []);
+      if (!items.length) throw new Error('AI 返回的题目格式无法识别');
+      return items.filter(q => q && String(q.question || '').trim() && Array.isArray(q.options) && q.options.length >= 4 && Number.isInteger(Number(q.answer))).slice(0, 5);
+    };
+    const renderQuizQuestion = () => {
+      const q = quizItems[quizIndex];
+      if (!q) return;
+      quizSelected = -1; quizAnswered = false;
+      quizType.textContent = q.type || '文章理解';
+      quizQuestion.textContent = q.question;
+      quizOptions.innerHTML = '';
+      quizFeedback.style.display = 'none'; quizFeedback.textContent = '';
+      quizSubmit.disabled = true; quizNext.style.display = 'none';
+      quizProgressText.textContent = `${quizIndex + 1} / ${quizItems.length}`;
+      quizProgressBar.style.width = `${((quizIndex + 1) / quizItems.length) * 100}%`;
+      q.options.slice(0, 4).forEach((option, index) => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'agf-quiz-option';
+        button.innerHTML = `<span class="agf-quiz-letter">${String.fromCharCode(65 + index)}</span><span>${String(option)}</span>`;
+        button.addEventListener('click', () => { if (quizAnswered) return; quizSelected = index; quizOptions.querySelectorAll('button').forEach(b => b.classList.remove('selected')); button.classList.add('selected'); quizSubmit.disabled = false; });
+        quizOptions.appendChild(button);
+      });
+    };
+    const showQuiz = () => { setView('quiz'); if (quizItems.length) renderQuizQuestion(); };
+    const startQuiz = async (difficulty = quizDifficulty) => {
+      quizDifficulty = difficulty; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = '<p>正在基于当前文章生成题目...</p>';
+      try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }
+      catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
+    };
+    if (quizSubmit) quizSubmit.addEventListener('click', () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); if (quizSelected === answer) quizScore++; quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${quizSelected === answer ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; });
+    if (quizNext) quizNext.addEventListener('click', () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizChat').onclick = showChat; } });
+    if (quizTab) quizTab.addEventListener('click', () => showQuiz());
+    if (document.getElementById('agfQuizStart')) document.getElementById('agfQuizStart').onclick = () => startQuiz('easy');
+    if (document.getElementById('agfQuizEasy')) document.getElementById('agfQuizEasy').onclick = () => startQuiz('easy');
+    if (document.getElementById('agfQuizHard')) document.getElementById('agfQuizHard').onclick = () => startQuiz('hard');
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
       const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
