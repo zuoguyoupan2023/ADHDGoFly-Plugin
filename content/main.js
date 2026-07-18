@@ -2580,6 +2580,12 @@ class ADHDHighlighter {
       @keyframes agf-breath{0%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}50%{box-shadow:0 0 8px 4px rgba(255,210,77,0.25)}100%{box-shadow:0 0 0 0 rgba(255,210,77,0.25)}}
       .agf-ai-tabs{display:inline-flex;gap:2px;margin-left:2px}
       .agf-ai-tabs button{height:24px;min-width:24px;border:none;border-radius:0;background:transparent;color:#333}
+      .agf-ai-tabs button.active{background:#edf2ff;color:#2447c7}
+      .agf-framework-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #e5e9f0;background:#fff;color:#687386;font-size:12px}
+      .agf-context-tools{display:flex;align-items:center;gap:4px;min-width:0}
+      .agf-context-btn{height:24px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#4b5870;font-size:12px;cursor:pointer}
+      .agf-context-btn.active{border-color:#315efb;background:#edf2ff;color:#2447c7}
+      .agf-context-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:80px;flex:1}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2614,6 +2620,8 @@ class ADHDHighlighter {
       .agf-quiz-history-row strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px}
       .agf-quiz-history-row small{display:block;margin-top:3px;color:#687386}
       .agf-quiz-history-row button{height:28px;padding:0 9px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;cursor:pointer}
+      .agf-quiz-history-row .danger{color:#b42318;border-color:#ffd6d1}
+      .agf-quiz-select{height:30px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#27344f;font-size:12px;padding:0 8px}
       .agf-ai-display{border:1px solid #e1e6ef;border-radius:12px;padding:0;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:0;background:var(--agf-display-bg,#fff);width:100%;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-ai-input{border:1px solid #e0e0e0;border-radius:4px;padding:0 8px 8px 8px;font-size:14px;color:#333;overflow:auto;box-sizing:border-box;min-height:96px;height:auto;max-height:50vh;width:100%}
       .agf-chat{display:flex;flex-direction:column;height:100%;gap:0}
@@ -2814,6 +2822,7 @@ class ADHDHighlighter {
         <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">太学</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
         <div style="display:flex;align-items:center;gap:4px;">
           <div class="agf-ai-tabs">
+            <button id="agfAiTabChat" title="Chat">Chat</button>
             <button id="agfAiTabQuiz" title="文章测试">测试</button>
             <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabDoc">📃</button>
@@ -2827,6 +2836,14 @@ class ADHDHighlighter {
           </div>
         </div>
         
+      </div>
+      <div class="agf-framework-bar">
+        <div class="agf-context-tools">
+          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article">全文</button>
+          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection">选中</button>
+          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph">段落</button>
+        </div>
+        <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
       </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
@@ -2879,10 +2896,10 @@ class ADHDHighlighter {
                 <div class="agf-quiz-question" id="agfQuizQuestion"></div>
                 <div class="agf-quiz-options" id="agfQuizOptions"></div>
                 <div class="agf-quiz-feedback" id="agfQuizFeedback" style="display:none"></div>
-                <div class="agf-quiz-actions"><button id="agfQuizSubmit" class="primary" disabled>提交答案</button><button id="agfQuizNext" style="display:none">下一题</button></div>
+                <div class="agf-quiz-actions"><button id="agfQuizBackHistory" style="display:none">返回历史</button><button id="agfQuizSubmit" class="primary" disabled>提交答案</button><button id="agfQuizNext" style="display:none">下一题</button></div>
               </div>
               <div class="agf-quiz-result" id="agfQuizResult"></div>
-              <div class="agf-quiz-actions" id="agfQuizStartActions"><button id="agfQuizHistory">测试历史</button><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
+              <div class="agf-quiz-actions" id="agfQuizStartActions"><button id="agfQuizHistory">测试历史</button><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3058,6 +3075,7 @@ class ADHDHighlighter {
     const miniBtn = document.getElementById('agfAiMini');
     const closeBtn = document.getElementById('agfAiClose');
     const titleLabel = document.getElementById('agfTitleLabel');
+    const tabChat = document.getElementById('agfAiTabChat');
     const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
     const tabDoc = document.getElementById('agfAiTabDoc');
@@ -3072,11 +3090,15 @@ class ADHDHighlighter {
     const quizQuestion = document.getElementById('agfQuizQuestion');
     const quizOptions = document.getElementById('agfQuizOptions');
     const quizFeedback = document.getElementById('agfQuizFeedback');
+    const quizBackHistory = document.getElementById('agfQuizBackHistory');
     const quizSubmit = document.getElementById('agfQuizSubmit');
     const quizNext = document.getElementById('agfQuizNext');
     const quizProgressText = document.getElementById('agfQuizProgressText');
     const quizProgressBar = document.getElementById('agfQuizProgressBar');
     const quizHistoryBtn = document.getElementById('agfQuizHistory');
+    const quizCountSelect = document.getElementById('agfQuizCount');
+    const contextSummary = document.getElementById('agfContextSummary');
+    const contextButtons = Array.from(overlay.querySelectorAll('.agf-context-btn'));
     const statusText = document.getElementById('agfStatusText');
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
@@ -3248,6 +3270,24 @@ class ADHDHighlighter {
         return '';
       }
     };
+    const getCurrentParagraphText = () => {
+      try {
+        const selection = window.getSelection();
+        let node = selection && selection.anchorNode;
+        if (node && node.nodeType === 3) node = node.parentElement;
+        let el = node && node.closest ? node.closest('p,li,blockquote,article,section,div') : null;
+        if (!el) {
+          const centerX = Math.floor(window.innerWidth / 2);
+          const centerY = Math.floor(window.innerHeight / 2);
+          const hit = document.elementFromPoint(centerX, centerY);
+          el = hit && hit.closest ? hit.closest('p,li,blockquote,article,section,div') : null;
+        }
+        if (!el || this.isExtensionUi(el)) return '';
+        return this.normalizeText(el.innerText || el.textContent || '');
+      } catch (_) {
+        return '';
+      }
+    };
     const taixueState = {
       currentModule: 'chat',
       taskStatus: 'idle',
@@ -3273,17 +3313,19 @@ class ADHDHighlighter {
         taixueState.setTaskStatus('preparing_context');
         const u = getCanonicalUrl();
         const selected = String(getSelectedTextSafe() || '').trim();
-        const preferredSource = source === 'selection' && selected ? 'selection' : source;
+        const preferredSource = source === 'selection' ? (selected ? 'selection' : 'full_article') : source;
         let text = '';
         if (preferredSource === 'selection') {
           text = selected;
+        } else if (preferredSource === 'paragraph') {
+          text = getCurrentParagraphText();
         } else if (preferredSource === 'manual') {
           text = String(options.text || '').trim();
         } else {
           text = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
         }
         text = String(text || '').trim();
-        const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'manual' ? 'manual' : 'full_article');
+        const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'paragraph' ? 'paragraph' : (preferredSource === 'manual' ? 'manual' : 'full_article'));
         taixueState.setContextSource(sourceName);
         taixueState.setTaskStatus(text ? 'ready' : 'failed');
         return {
@@ -3335,13 +3377,32 @@ class ADHDHighlighter {
     const setView = (which) => {
       currentView = which;
       taixueState.setModule(which);
+      if (which === 'chat' || which === 'quiz') {
+        try { chrome.storage.local.set({ agfTaixueLastModule: which }); } catch (_) {}
+      }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
+      if (tabChat) tabChat.classList.toggle('active', which === 'chat');
+      if (quizTab) quizTab.classList.toggle('active', which === 'quiz');
+      if (tabWrench) tabWrench.classList.toggle('active', which === 'settings');
     };
     const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} try { focusUserCaretEnd(); } catch (_) {} };
+    const updateContextControls = async (source = taixueState.contextSource) => {
+      taixueState.setContextSource(source);
+      contextButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.source === taixueState.contextSource));
+      if (!contextSummary) return;
+      const labels = { full_article: '全文', selection: '选中内容', paragraph: '当前段落', manual: '手动内容' };
+      let preview = '';
+      try {
+        if (source === 'selection') preview = getSelectedTextSafe().slice(0, 30);
+        else if (source === 'paragraph') preview = getCurrentParagraphText().slice(0, 30);
+      } catch (_) {}
+      contextSummary.textContent = `当前上下文：${labels[source] || '全文'}${preview ? ` · ${preview}` : ''}`;
+    };
+    contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let quizItems = [];
     let quizIndex = 0;
     let quizScore = 0;
@@ -3349,6 +3410,8 @@ class ADHDHighlighter {
     let quizDifficulty = 'easy';
     let quizAnswered = false;
     let quizContextRef = null;
+    let quizFromHistory = false;
+    let quizHistoryFilterCurrent = false;
     const parseJsonPayload = (text) => {
       const raw = String(text || '').replace(/```json|```/gi, '').trim();
       try { return JSON.parse(raw); } catch (_) {}
@@ -3356,8 +3419,26 @@ class ADHDHighlighter {
       if (start >= 0 && end > start) { try { return JSON.parse(raw.slice(start, end + 1)); } catch (_) {} }
       return null;
     };
-    const requestQuiz = async (difficulty) => {
-      const ctx = await taixueContext.resolve('full_article');
+    const normalizeQuizItems = (items, requestedCount) => {
+      const out = (Array.isArray(items) ? items : []).filter(q => {
+        if (!q || !String(q.question || '').trim()) return false;
+        if (!Array.isArray(q.options) || q.options.length !== 4) return false;
+        if (!Number.isInteger(Number(q.answer))) return false;
+        const answer = Number(q.answer);
+        if (answer < 0 || answer > 3) return false;
+        if (!Array.isArray(q.optionReasons) || q.optionReasons.length !== q.options.length) return false;
+        if (q.optionReasons.some(reason => !String(reason || '').trim())) return false;
+        return true;
+      }).slice(0, requestedCount);
+      if (out.length < Math.min(3, requestedCount)) throw new Error('AI 返回的题目格式无法识别');
+      const counts = [0, 0, 0, 0];
+      out.forEach(q => { counts[Number(q.answer)] += 1; });
+      const max = Math.max.apply(null, counts);
+      if (out.length >= 4 && max > Math.ceil(out.length / 2)) throw new Error('正确答案分布过于集中');
+      return out;
+    };
+    const requestQuiz = async (difficulty, retryCount = 1) => {
+      const ctx = await taixueContext.resolve(taixueState.contextSource);
       quizContextRef = {
         source: ctx.source,
         pageTitle: ctx.pageTitle,
@@ -3368,15 +3449,21 @@ class ADHDHighlighter {
       };
       const text = String(ctx.text || '').trim();
       if (!text) throw new Error('当前页面没有可分析的正文');
-      const prompt = `你是严格的阅读理解题目设计者。请基于下面文章生成3道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据文章，不使用文章外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(与options等长的字符串数组，逐项解释为什么正确或错误)。\n\n文章：\n${text.slice(0, 70000)}`;
-      const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: 1800, temperature: 0.4 });
-      const parsed = parseJsonPayload(output);
-      const items = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.questions) ? parsed.questions : []);
-      if (!items.length) throw new Error('AI 返回的题目格式无法识别');
-      return items.filter(q => q && String(q.question || '').trim() && Array.isArray(q.options) && q.options.length >= 4 && Number.isInteger(Number(q.answer))).slice(0, 5);
+      const requestedCount = quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3;
+      const prompt = `你是严格的阅读理解题目设计者。请基于下面材料生成${requestedCount}道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据材料，不使用材料外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。正确答案位置要尽量均匀分布，选项长度相近，干扰项必须有文章依据但不能成立。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(必须与options等长的字符串数组，逐项解释为什么正确或错误)。\n\n材料：\n${text.slice(0, 70000)}`;
+      try {
+        const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: requestedCount >= 10 ? 3600 : 2200, temperature: 0.35 });
+        const parsed = parseJsonPayload(output);
+        const items = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.questions) ? parsed.questions : []);
+        return normalizeQuizItems(items, requestedCount);
+      } catch (error) {
+        if (retryCount > 0) return requestQuiz(difficulty, retryCount - 1);
+        throw error;
+      }
     };
     const quizHistoryKey = 'agfQuizHistory';
     const getQuizHistory = async () => new Promise(resolve => chrome.storage.local.get([quizHistoryKey], res => resolve(Array.isArray(res[quizHistoryKey]) ? res[quizHistoryKey] : [])));
+    const setQuizHistory = async (history) => new Promise(resolve => chrome.storage.local.set({ [quizHistoryKey]: Array.isArray(history) ? history.slice(0, 30) : [] }, resolve));
     const saveQuizHistory = async (completed = false) => {
       if (!quizItems.length) return;
       const url = String(location.href || '');
@@ -3391,11 +3478,50 @@ class ADHDHighlighter {
     let quizRecordId = '';
     const showQuizHistory = async () => {
       const history = await getQuizHistory();
+      const currentCanonical = getCanonicalUrl().canonicalUrl;
+      const visibleHistory = quizHistoryFilterCurrent ? history.filter(item => {
+        const ctx = item && item.context || {};
+        return String(ctx.canonicalUrl || item.canonicalUrl || item.pageUrl || '') === String(currentCanonical || location.href || '');
+      }) : history;
       quizCard.style.display = 'none'; quizStartActions.style.display = 'none'; quizResult.style.display = 'block';
-      if (!history.length) { quizResult.innerHTML = '<h3>测试历史</h3><p>还没有测试记录。</p><div class="agf-quiz-actions"><button id="agfQuizHistoryBack">返回测试</button></div>'; document.getElementById('agfQuizHistoryBack').onclick = () => { quizStartActions.style.display = 'flex'; quizResult.innerHTML = ''; }; return; }
-      quizResult.innerHTML = '<h3>测试历史</h3><div class="agf-quiz-history-list"></div><div class="agf-quiz-actions"><button id="agfQuizHistoryBack">返回测试</button></div>';
+      if (!visibleHistory.length) { quizResult.innerHTML = `<h3>测试历史</h3><p>${quizHistoryFilterCurrent ? '当前文章还没有测试记录。' : '还没有测试记录。'}</p><div class="agf-quiz-actions"><button id="agfQuizHistoryFilter">${quizHistoryFilterCurrent ? '显示全部' : '仅当前文章'}</button><button id="agfQuizHistoryBack">返回测试</button></div>`; document.getElementById('agfQuizHistoryFilter').onclick = () => { quizHistoryFilterCurrent = !quizHistoryFilterCurrent; showQuizHistory(); }; document.getElementById('agfQuizHistoryBack').onclick = () => { quizStartActions.style.display = 'flex'; quizResult.innerHTML = ''; }; return; }
+      quizResult.innerHTML = `<h3>测试历史</h3><div class="agf-quiz-history-list"></div><div class="agf-quiz-actions"><button id="agfQuizHistoryFilter">${quizHistoryFilterCurrent ? '显示全部' : '仅当前文章'}</button><button id="agfQuizHistoryClear" class="danger">清空历史</button><button id="agfQuizHistoryBack">返回测试</button></div>`;
       const list = quizResult.querySelector('.agf-quiz-history-list');
-      history.forEach(item => { const row = document.createElement('div'); row.className = 'agf-quiz-history-row'; row.innerHTML = `<div><strong>${String(item.pageTitle || '当前文章')}</strong><small>${new Date(item.createdAt).toLocaleString()} · ${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? `${item.score}/${item.total}` : '未完成'}</small></div><button type="button">查看</button>`; row.querySelector('button').onclick = () => { quizItems = item.questions || []; quizIndex = 0; quizScore = Number(item.score || 0); quizDifficulty = item.difficulty || 'easy'; quizContextRef = item.context || null; quizRecordId = item.id; quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }; list.appendChild(row); });
+      visibleHistory.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'agf-quiz-history-row';
+        const meta = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = String(item.pageTitle || '当前文章');
+        const small = document.createElement('small');
+        small.textContent = `${new Date(item.createdAt).toLocaleString()} · ${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? `${item.score}/${item.total}` : '未完成'}`;
+        meta.appendChild(title); meta.appendChild(small);
+        const actions = document.createElement('div');
+        actions.style.display = 'flex'; actions.style.gap = '6px';
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button'; openBtn.textContent = item.completedAt ? '查看' : '继续';
+        openBtn.onclick = () => {
+          quizItems = item.questions || [];
+          const firstOpen = quizItems.findIndex(q => typeof q.isCorrect !== 'boolean');
+          quizIndex = firstOpen >= 0 ? firstOpen : 0;
+          quizScore = Number(item.score || 0);
+          quizDifficulty = item.difficulty || 'easy';
+          quizContextRef = item.context || null;
+          quizRecordId = item.id;
+          quizFromHistory = true;
+          quizResult.style.display = 'none';
+          quizCard.style.display = 'block';
+          renderQuizQuestion();
+        };
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button'; deleteBtn.className = 'danger'; deleteBtn.textContent = '删除';
+        deleteBtn.onclick = async () => { await setQuizHistory(history.filter(record => record.id !== item.id)); showQuizHistory(); };
+        actions.appendChild(openBtn); actions.appendChild(deleteBtn);
+        row.appendChild(meta); row.appendChild(actions);
+        list.appendChild(row);
+      });
+      document.getElementById('agfQuizHistoryFilter').onclick = () => { quizHistoryFilterCurrent = !quizHistoryFilterCurrent; showQuizHistory(); };
+      document.getElementById('agfQuizHistoryClear').onclick = async () => { await setQuizHistory([]); showQuizHistory(); };
       document.getElementById('agfQuizHistoryBack').onclick = () => { quizStartActions.style.display = 'flex'; quizResult.innerHTML = ''; };
     };
     const renderQuizQuestion = () => {
@@ -3407,6 +3533,7 @@ class ADHDHighlighter {
       quizQuestion.textContent = q.question;
       quizOptions.innerHTML = '';
       quizFeedback.style.display = quizAnswered ? 'block' : 'none'; quizFeedback.textContent = '';
+      if (quizBackHistory) quizBackHistory.style.display = quizFromHistory ? 'inline-block' : 'none';
       quizSubmit.disabled = quizAnswered || quizSelected < 0;
       quizSubmit.style.display = 'inline-block';
       quizNext.style.display = 'none';
@@ -3427,12 +3554,13 @@ class ADHDHighlighter {
     };
     const showQuiz = () => { setView('quiz'); if (quizItems.length) renderQuizQuestion(); };
     const startQuiz = async (difficulty = quizDifficulty) => {
-      quizDifficulty = difficulty; quizStartedAt = Date.now(); quizRecordId = ''; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = '<p>正在基于当前文章生成题目...</p>';
+      quizFromHistory = false; if (quizBackHistory) quizBackHistory.style.display = 'none'; quizDifficulty = difficulty; quizStartedAt = Date.now(); quizRecordId = ''; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = '<p>正在基于当前上下文生成题目...</p>';
       try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }
       catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
     };
     if (quizSubmit) quizSubmit.addEventListener('click', async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; });
     if (quizNext) quizNext.addEventListener('click', async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } });
+    if (quizBackHistory) quizBackHistory.addEventListener('click', () => { quizCard.style.display = 'none'; showQuizHistory(); });
     if (quizTab) quizTab.addEventListener('click', () => showQuiz());
     if (document.getElementById('agfQuizStart')) document.getElementById('agfQuizStart').onclick = () => startQuiz('easy');
     if (document.getElementById('agfQuizEasy')) document.getElementById('agfQuizEasy').onclick = () => startQuiz('easy');
@@ -3470,9 +3598,19 @@ class ADHDHighlighter {
       }
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
+    if (tabChat) tabChat.addEventListener('click', () => { hideFulltextPanel(); showChat(); });
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
-    showChat();
+    updateContextControls('full_article');
+    try {
+      chrome.storage.local.get(['agfTaixueLastModule'], res => {
+        const last = res && res.agfTaixueLastModule;
+        if (last === 'quiz') showQuiz();
+        else showChat();
+      });
+    } catch (_) {
+      showChat();
+    }
     let recordsScope = 'all';
     let recordsSearch = '';
     const setRecordsScope = (scope) => {
@@ -5425,7 +5563,7 @@ class ADHDHighlighter {
     const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false }) => {
       hideFulltextPanel();
       await updateStorageStatusUI();
-      const ctx = await taixueContext.resolve('full_article');
+      const ctx = await taixueContext.resolve(taixueState.contextSource);
       const raw = String(ctx.text || '');
       if (raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
         showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
