@@ -2609,6 +2609,12 @@ class ADHDHighlighter {
       .agf-task-btn{height:26px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;font-size:12px;white-space:nowrap;cursor:pointer}
       .agf-task-btn:hover{background:#f7f9ff;border-color:#9db4ff}
       .agf-task-btn[disabled]{opacity:.5;cursor:not-allowed}
+      .agf-ai-view-module{padding:16px;overflow:auto;background:#f8faff}
+      .agf-module-card{max-width:760px;margin:0 auto;background:#fff;border:1px solid #dfe5f2;border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(23,32,51,.07)}
+      .agf-module-heading{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700;color:#172033;margin-bottom:12px}
+      .agf-module-meta{font-size:11px;font-weight:400;color:#687386}.agf-module-result{min-height:150px;line-height:1.7;color:#26345b;white-space:normal}
+      .agf-module-result .agf-vocab-card{border:1px solid #e1e6ef;border-radius:10px;padding:12px;margin:8px 0}.agf-vocab-card button{margin-top:8px}
+      .agf-module-actions{display:flex;gap:8px;margin-top:14px}.agf-module-actions button{border:1px solid #dfe5f2;border-radius:8px;background:#fff;padding:7px 11px;color:#315efb;cursor:pointer}.agf-module-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}.agf-module-actions button:disabled{opacity:.5;cursor:not-allowed}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2829,6 +2835,8 @@ class ADHDHighlighter {
           <div class="agf-ai-tabs">
             <button id="agfAiTabChat" title="Chat">Chat</button>
             <button id="agfAiTabQuiz" title="文章测试">测试</button>
+            <button id="agfAiTabExplain" title="选区解释">解释</button>
+            <button id="agfAiTabVocab" title="词汇复习">词汇</button>
             <button id="agfAiTabPencil">✏️</button>
             <button id="agfAiTabDoc">📃</button>
             <button id="agfAiTabWrench">🔧</button>
@@ -2917,6 +2925,20 @@ class ADHDHighlighter {
               </div>
               <div class="agf-quiz-result" id="agfQuizResult"></div>
               <div class="agf-quiz-actions" id="agfQuizStartActions"><button id="agfQuizHistory">测试历史</button><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
+            </div>
+          </div>
+          <div class="agf-ai-view-module" id="agfAiViewExplain" style="display:none">
+            <div class="agf-module-card">
+              <div class="agf-module-heading"><span>选区解释</span><span id="agfExplainSource" class="agf-module-meta"></span></div>
+              <div id="agfExplainResult" class="agf-module-result"><p>请先在网页中选中文本，再点击“选区解释”。</p></div>
+              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div>
+            </div>
+          </div>
+          <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
+            <div class="agf-module-card">
+              <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
+              <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
+              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3099,7 +3121,19 @@ class ADHDHighlighter {
     const tabWrench = document.getElementById('agfAiTabWrench');
     const viewChat = document.getElementById('agfAiViewChat');
     const viewQuiz = document.getElementById('agfAiViewQuiz');
+    const viewExplain = document.getElementById('agfAiViewExplain');
+    const viewVocab = document.getElementById('agfAiViewVocab');
     const quizTab = document.getElementById('agfAiTabQuiz');
+    const explainTab = document.getElementById('agfAiTabExplain');
+    const vocabTab = document.getElementById('agfAiTabVocab');
+    const explainResult = document.getElementById('agfExplainResult');
+    const explainSource = document.getElementById('agfExplainSource');
+    const explainToChat = document.getElementById('agfExplainToChat');
+    const explainRetry = document.getElementById('agfExplainRetry');
+    const vocabResult = document.getElementById('agfVocabResult');
+    const vocabStats = document.getElementById('agfVocabStats');
+    const vocabStart = document.getElementById('agfVocabStart');
+    const vocabReset = document.getElementById('agfVocabReset');
     const quizCard = document.getElementById('agfQuizCard');
     const quizResult = document.getElementById('agfQuizResult');
     const quizStartActions = document.getElementById('agfQuizStartActions');
@@ -3414,11 +3448,15 @@ class ADHDHighlighter {
       }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
+      if (viewExplain) viewExplain.style.display = which === 'explain' ? 'block' : 'none';
+      if (viewVocab) viewVocab.style.display = which === 'vocab' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
       if (tabChat) tabChat.classList.toggle('active', which === 'chat');
       if (quizTab) quizTab.classList.toggle('active', which === 'quiz');
+      if (explainTab) explainTab.classList.toggle('active', which === 'explain');
+      if (vocabTab) vocabTab.classList.toggle('active', which === 'vocab');
       if (tabWrench) tabWrench.classList.toggle('active', which === 'settings');
     };
     const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} try { focusUserCaretEnd(); } catch (_) {} };
@@ -5608,6 +5646,37 @@ class ADHDHighlighter {
     };
 
     const getTaixueLangHint = () => (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+    let explainContext = null;
+    let vocabCards = [];
+    let vocabIndex = 0;
+    const explainSelection = async () => {
+      const ctx = await taixueContext.resolve('selection');
+      if (!ctx.text) throw new Error('请先在网页中选中一段文本。');
+      explainContext = ctx; setView('explain');
+      explainSource.textContent = `${ctx.text.length} 字 · ${ctx.pageTitle || '当前页面'}`;
+      explainResult.innerHTML = '<p>正在生成解释…</p>'; explainToChat.disabled = true; explainRetry.disabled = true;
+      const output = await taixueTask.requestJsonText({ prompt: `请解释下面选中文本。输出简洁但完整，包含：1.通俗释义 2.上下文作用 3.关键术语 4.必要时给出改写或例句。请用中文。\n\n选中文本：\n${ctx.text}`, maxTokens: 1800, temperature: .35 });
+      explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g, '<br>');
+      explainToChat.disabled = false; explainRetry.disabled = false;
+    };
+    const vocabKey = 'agfTaixueVocabularyReview';
+    const loadVocab = () => new Promise(resolve => chrome.storage.local.get([vocabKey], r => resolve(Array.isArray(r[vocabKey]) ? r[vocabKey] : [])));
+    const saveVocab = records => new Promise(resolve => chrome.storage.local.set({ [vocabKey]: records.slice(0, 200) }, resolve));
+    const renderVocabCard = () => {
+      const card = vocabCards[vocabIndex]; if (!card) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
+      const mastery = Number(card.mastery || 0); vocabStats.textContent = `基础掌握度 ${mastery}% · ${vocabIndex + 1}/${vocabCards.length}`;
+      vocabResult.innerHTML = `<div class="agf-vocab-card"><strong>${String(card.word)}</strong><p>${String(card.meaning || '请回忆这个词的含义')}</p><p><em>${String(card.example || '')}</em></p><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
+      const answer = async remembered => { card.reviewCount = Number(card.reviewCount || 0) + 1; card.lastReviewedAt = Date.now(); card.mastery = Math.max(0, Math.min(100, mastery + (remembered ? 20 : -10))); const all = await loadVocab(); const i = all.findIndex(x => x.word === card.word && x.pageUrl === card.pageUrl); if (i >= 0) all[i] = card; else all.unshift(card); await saveVocab(all); vocabIndex++; renderVocabCard(); };
+      document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
+    };
+    const startVocabReview = async () => {
+      setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>';
+      const ctx = await taixueContext.resolve('full_article');
+      const output = await taixueTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitTaixueText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
+      const parsed = parseJsonPayload(output); const old = await loadVocab();
+      vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
+      vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard();
+    };
     const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false, contextSource = taixueState.contextSource }) => {
       hideFulltextPanel();
       await updateStorageStatusUI();
@@ -5646,8 +5715,14 @@ class ADHDHighlighter {
         showToast('请先在网页中选中一段文本。');
         return;
       }
-      await runArticleChatTask({ title: '请解释以下选中文本的含义、上下文作用、关键术语，并给出必要的改写或例句。', prefix: '选区解释', contextSource: 'selection', includeLangHint: true });
+      try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
+    if (explainTab) explainTab.onclick = () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); };
+    if (explainRetry) explainRetry.onclick = () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
+    if (explainToChat) explainToChat.onclick = () => { if (!explainContext) return; runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); };
+    if (vocabTab) vocabTab.onclick = () => setView('vocab');
+    if (vocabStart) vocabStart.onclick = () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
+    if (vocabReset) vocabReset.onclick = () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; };
     if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
     if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
     if (btnOutline) btnOutline.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲' }); });
