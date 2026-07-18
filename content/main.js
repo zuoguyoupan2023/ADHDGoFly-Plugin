@@ -2603,6 +2603,12 @@ class ADHDHighlighter {
       .agf-context-btn{height:24px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#4b5870;font-size:12px;cursor:pointer}
       .agf-context-btn.active{border-color:#315efb;background:#edf2ff;color:#2447c7}
       .agf-context-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:80px;flex:1}
+      .agf-task-bar{display:flex;align-items:center;gap:4px;padding:6px 12px;border-bottom:1px solid #e5e9f0;background:#fbfcff}
+      .agf-task-label{flex:0 0 auto;color:#687386;font-size:12px}
+      .agf-task-actions{display:flex;align-items:center;gap:4px;min-width:0;overflow:auto}
+      .agf-task-btn{height:26px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;font-size:12px;white-space:nowrap;cursor:pointer}
+      .agf-task-btn:hover{background:#f7f9ff;border-color:#9db4ff}
+      .agf-task-btn[disabled]{opacity:.5;cursor:not-allowed}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2741,10 +2747,6 @@ class ADHDHighlighter {
       .agf-provider-dot.warn{background:#d99000}
       .agf-provider-test{height:28px;padding:0 9px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;cursor:pointer}
       .agf-provider-test[disabled]{opacity:.55;cursor:wait}
-      .agf-quick-actions{display:flex;gap:7px;flex-wrap:wrap;padding:0 0 10px}
-      .agf-quick-label{width:100%;font-size:11px;color:#687386;font-weight:600}
-      .agf-quick-actions .agf-status-btn{height:30px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;padding:0 10px}
-      .agf-quick-actions .agf-status-btn:hover{background:#f5f7ff;border-color:#315efb}
       .agf-input{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
       #agfApiKeyInput{width:280px;max-width:40%;flex:0 0 auto}
       .agf-select{height:28px;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:13px;color:#333;background:#fff}
@@ -2758,10 +2760,6 @@ class ADHDHighlighter {
       .agf-ok-btn{height:28px;min-width:28px;border:1px solid #27ae60;border-radius:6px;background:#27ae60;color:#fff;display:none}
       .agf-ai-bubble{position:fixed;right:12px;bottom:12px;width:40px;height:40px;display:none;align-items:center;justify-content:center;border-radius:50%;background:#333;color:#fff;font-weight:700;z-index:2147483647}
       .agf-ai-header{position:sticky;top:0;z-index:99}
-      .agf-more-wrap{position:relative;display:inline-block;margin-left:4px}
-      .agf-more-btn{height:22px;min-width:56px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-more-panel{position:absolute;top:26px;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;padding:8px;z-index:10;grid-template-columns:repeat(2,max-content);gap:6px 12px}
-      .agf-more-panel .agf-btn{display:inline-block;width:auto;text-align:left;margin:0}
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
@@ -2802,18 +2800,11 @@ class ADHDHighlighter {
       .agf-label{min-width:72px;padding-top:7px;color:#687386;font-size:11px}
       .agf-provider-meta{font-size:11px}
       .agf-fulltext-panel,.agf-records-panel,.agf-colors-panel{inset:12px;border:1px solid #dfe5f2;border-radius:12px;box-shadow:0 14px 36px rgba(23,32,51,.16)}
-      .agf-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 0 8px;align-items:center}
-      .agf-quick-label{display:none}
-      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{height:28px;min-width:0;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
-      .agf-quick-actions .agf-more-wrap{min-width:0;margin-left:0}
-      .agf-quick-actions .agf-more-panel{top:32px;right:0;grid-template-columns:1fr 1fr;min-width:190px}
       .agf-composer-header{gap:5px;min-height:26px}
       #agfSessionProvider,#agfSessionModel{height:26px;max-width:112px;padding:0 6px;font-size:11px}
       .agf-composer-header .agf-status{margin-left:auto}
       .agf-ai-input{min-height:0;height:auto;padding:4px 6px}
       .agf-composer{gap:4px}
-      .agf-quick-actions{height:28px;min-height:28px;padding:0;gap:5px}
-      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{height:26px;line-height:24px}
       .agf-input-editor{min-height:48px;padding:8px 10px}
       .agf-send-col{gap:4px}
       #agfAddFullTextBtn{margin-top:0}
@@ -2821,13 +2812,10 @@ class ADHDHighlighter {
       .agf-ai-input{height:auto!important;min-height:0!important}
       .agf-composer{display:grid!important;grid-template-rows:auto auto auto!important;gap:4px!important;height:auto!important;min-height:0!important}
       .agf-composer-header{height:26px!important;min-height:26px!important;padding:0!important;margin:0!important}
-      .agf-quick-actions{height:26px!important;min-height:26px!important;padding:0!important;margin:0!important}
       .agf-composer-body{min-height:0!important;margin:0!important}
       .agf-input-editor{min-height:44px!important}
       .agf-composer-header{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:5px!important}
       .agf-composer-header #agfSessionModel{flex:0 1 112px}
-      .agf-quick-actions{display:flex!important;align-items:center!important;flex:1 1 auto;gap:3px!important;height:26px!important;min-width:0!important}
-      .agf-quick-actions .agf-status-btn,.agf-quick-actions .agf-more-btn{flex:1 1 0;width:auto!important;min-width:0!important;padding:0 4px!important;font-size:10px!important}
       .agf-composer-header .agf-status{margin-left:0!important;flex:0 0 auto}
     `;
     document.documentElement.appendChild(style);
@@ -2862,6 +2850,19 @@ class ADHDHighlighter {
         </div>
         <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
       </div>
+      <div class="agf-task-bar">
+        <span class="agf-task-label">任务</span>
+        <div class="agf-task-actions">
+          <button id="agfQuickSummaryBtn" class="agf-task-btn" disabled data-i18n="aiPanel.summary">总结</button>
+          <button id="agfBeginnerExplainBtn" class="agf-task-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button>
+          <button id="agfBtnTranslate" class="agf-task-btn" disabled>翻译</button>
+          <button id="agfBtnSelectionExplain" class="agf-task-btn" disabled>选区解释</button>
+          <button id="agfBtnKeywords" class="agf-task-btn" disabled data-i18n="aiPanel.keywords">关键词</button>
+          <button class="agf-task-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button>
+          <button class="agf-task-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button>
+          <button class="agf-task-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button>
+        </div>
+      </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
@@ -2889,8 +2890,7 @@ class ADHDHighlighter {
                     <option>deepseek-chat</option>
                     <option>deepseek-reasoner</option>
                   </select>
-                <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button></div>
-                <div class="agf-quick-actions"><span class="agf-quick-label">当前网页 · 快速阅读</span><button id="agfQuickSummaryBtn" class="agf-status-btn" disabled data-i18n="aiPanel.summary">总结</button><button id="agfBeginnerExplainBtn" class="agf-status-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button><button id="agfBtnKeywords" class="agf-status-btn" disabled data-i18n="aiPanel.keywords">关键词</button><div class="agf-more-wrap"><button id="agfMoreBtn" class="agf-more-btn" disabled data-i18n="aiPanel.more">更多</button><div id="agfMorePanel" class="agf-more-panel"><button class="agf-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button><button class="agf-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button><button class="agf-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button><button id="agfTestTextBtn" class="agf-btn" data-i18n="aiPanel.fullText">全文</button></div></div></div>
+                <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfTestTextBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.fullText">文</button></div>
                 </div>
                 </div>
                 <div class="agf-composer-body">
@@ -3142,8 +3142,8 @@ class ADHDHighlighter {
     const refreshBtn = document.getElementById('agfRefreshBtn');
     const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
     const beginnerExplainBtn = document.getElementById('agfBeginnerExplainBtn');
-    const moreBtn = document.getElementById('agfMoreBtn');
-    const morePanel = document.getElementById('agfMorePanel');
+    const btnTranslate = document.getElementById('agfBtnTranslate');
+    const btnSelectionExplain = document.getElementById('agfBtnSelectionExplain');
     const btnStructured = document.getElementById('agfBtnStructured');
     const btnExplain = document.getElementById('agfBtnExplain');
     const btnOutline = document.getElementById('agfBtnOutline');
@@ -5292,7 +5292,8 @@ class ADHDHighlighter {
       }
       if (quickSummaryBtn) { quickSummaryBtn.disabled = !has; }
       if (beginnerExplainBtn) { beginnerExplainBtn.disabled = !has; }
-      if (moreBtn) { moreBtn.disabled = !has; }
+      if (btnTranslate) btnTranslate.disabled = !has;
+      if (btnSelectionExplain) btnSelectionExplain.disabled = !has;
       if (btnStructured) btnStructured.disabled = !has;
       if (btnExplain) btnExplain.disabled = !has;
       if (btnOutline) btnOutline.disabled = !has;
@@ -5309,7 +5310,8 @@ class ADHDHighlighter {
       if (refreshHint) refreshHint.style.display = 'none';
       if (quickSummaryBtn) quickSummaryBtn.disabled = true;
       if (beginnerExplainBtn) beginnerExplainBtn.disabled = true;
-      if (moreBtn) moreBtn.disabled = true;
+      if (btnTranslate) btnTranslate.disabled = true;
+      if (btnSelectionExplain) btnSelectionExplain.disabled = true;
       if (btnStructured) btnStructured.disabled = true;
       if (btnExplain) btnExplain.disabled = true;
       if (btnOutline) btnOutline.disabled = true;
@@ -5606,10 +5608,10 @@ class ADHDHighlighter {
     };
 
     const getTaixueLangHint = () => (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
-    const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false }) => {
+    const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false, contextSource = taixueState.contextSource }) => {
       hideFulltextPanel();
       await updateStorageStatusUI();
-      const ctx = await taixueContext.resolve(taixueState.contextSource);
+      const ctx = await taixueContext.resolve(contextSource);
       const limitedContext = limitTaixueText(ctx.text, 50000);
       const raw = String(limitedContext.text || '');
       if (limitedContext.truncated || raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
@@ -5625,7 +5627,6 @@ class ADHDHighlighter {
       const prompt = parts.join('\n');
       if (inputUser) { inputUser.innerText = prompt; }
       if (composerHidden) composerHidden.value = prompt;
-      if (morePanel) morePanel.style.display = 'none';
       nextPromptIsGenerated = true;
       currentPrefix = prefix;
       currentPageUrl = ctx.pageUrl;
@@ -5638,7 +5639,15 @@ class ADHDHighlighter {
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
     if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结', includeLangHint: true }); });
     if (beginnerExplainBtn) beginnerExplainBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerTitle') : '读者为初学者研究生，基础薄弱，需在明天组会做 PPT 文献汇报。请用最通俗、循序渐进、非常详细的方式解读这篇文献，确保我能彻底看懂。'; const extra = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerOutput') : '输出: 背景与动机；术语科普；方法流程分步骤；关键实验与结果；逐张图解；贡献与局限；改进方向；PPT 大纲与每页要点；可能被问到的问题与回答；最后给出 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.beginnerExplain') : '保姆级解读', extra, includeLangHint: true }); });
-    if (moreBtn) moreBtn.addEventListener('click', () => { if (morePanel) { morePanel.style.display = morePanel.style.display === 'none' || !morePanel.style.display ? 'grid' : 'none'; } });
+    if (btnTranslate) btnTranslate.addEventListener('click', async () => { await runArticleChatTask({ title: '请翻译以下内容，保留术语和段落结构。', prefix: '翻译', extra: '输出要求：如果原文是中文，请翻译成英文；如果原文不是中文，请翻译成中文。' }); });
+    if (btnSelectionExplain) btnSelectionExplain.addEventListener('click', async () => {
+      if (!getSelectedTextSafe()) {
+        updateContextControls('selection');
+        showToast('请先在网页中选中一段文本。');
+        return;
+      }
+      await runArticleChatTask({ title: '请解释以下选中文本的含义、上下文作用、关键术语，并给出必要的改写或例句。', prefix: '选区解释', contextSource: 'selection', includeLangHint: true });
+    });
     if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
     if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
     if (btnOutline) btnOutline.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲' }); });
