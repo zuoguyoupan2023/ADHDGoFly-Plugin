@@ -2604,6 +2604,7 @@ class ADHDHighlighter {
       .agf-context-btn.active{border-color:#315efb;background:#edf2ff;color:#2447c7}
       .agf-context-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:80px;flex:1}
       .agf-task-bar{display:flex;align-items:center;gap:4px;padding:6px 12px;border-bottom:1px solid #e5e9f0;background:#fbfcff}
+      .agf-function-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid #e5e9f0;background:#fff;min-width:0}.agf-function-bar .agf-ai-tabs{flex:0 0 auto}.agf-function-bar .agf-context-tools{display:flex;gap:4px;margin-left:auto}.agf-function-bar .agf-context-summary{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .agf-task-label{flex:0 0 auto;color:#687386;font-size:12px}
       .agf-task-actions{display:flex;align-items:center;gap:4px;min-width:0;overflow:auto}
       .agf-task-btn{height:26px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;font-size:12px;white-space:nowrap;cursor:pointer}
@@ -2615,6 +2616,7 @@ class ADHDHighlighter {
       .agf-module-meta{font-size:11px;font-weight:400;color:#687386}.agf-module-result{min-height:150px;line-height:1.7;color:#26345b;white-space:normal}
       .agf-module-result .agf-vocab-card{border:1px solid #e1e6ef;border-radius:10px;padding:12px;margin:8px 0}.agf-vocab-card button{margin-top:8px}
       .agf-module-actions{display:flex;gap:8px;margin-top:14px}.agf-module-actions button{border:1px solid #dfe5f2;border-radius:8px;background:#fff;padding:7px 11px;color:#315efb;cursor:pointer}.agf-module-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}.agf-module-actions button:disabled{opacity:.5;cursor:not-allowed}
+      .agf-module-history{margin-top:18px;border-top:1px solid #edf0f6;padding-top:10px}.agf-history-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f6;font-size:12px}.agf-history-row button{padding:4px 7px;font-size:11px}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2831,26 +2833,21 @@ class ADHDHighlighter {
     overlay.innerHTML = `
       <div class="agf-ai-header">
         <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">太学</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div class="agf-ai-tabs">
-            <button id="agfAiTabChat" title="Chat">Chat</button>
-            <button id="agfAiTabQuiz" title="文章测试">测试</button>
-            <button id="agfAiTabExplain" title="选区解释">解释</button>
-            <button id="agfAiTabVocab" title="词汇复习">词汇</button>
-            <button id="agfAiTabPencil">✏️</button>
-            <button id="agfAiTabDoc">📃</button>
-            <button id="agfAiTabWrench">🔧</button>
-          </div>
-          <div class="agf-ai-controls">
-            <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
-            <button id="agfAiHalf" data-i18n="aiPanel.size.half">中</button>
-            <button id="agfAiMini" data-i18n="aiPanel.size.mini">小</button>
-            <button id="agfAiClose">X</button>
-          </div>
+        <div class="agf-ai-controls">
+          <button id="agfAiTabWrench" title="太学设置">🔧</button>
+          <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
+          <button id="agfAiHalf" data-i18n="aiPanel.size.half">中</button>
+          <button id="agfAiMini" data-i18n="aiPanel.size.mini">小</button>
+          <button id="agfAiClose">X</button>
         </div>
-        
       </div>
-      <div class="agf-framework-bar">
+      <div class="agf-function-bar">
+        <div class="agf-ai-tabs">
+          <button id="agfAiTabChat" title="Chat">Chat</button>
+          <button id="agfAiTabQuiz" title="文章测试">测试</button>
+          <button id="agfAiTabExplain" title="选区解释">解释</button>
+          <button id="agfAiTabVocab" title="词汇复习">词汇</button>
+        </div>
         <div class="agf-context-tools">
           <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article">全文</button>
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection">选中</button>
@@ -2869,6 +2866,7 @@ class ADHDHighlighter {
           <button class="agf-task-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button>
           <button class="agf-task-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button>
           <button class="agf-task-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button>
+          <button class="agf-task-btn" id="agfModuleHistoryBtn">📃 历史记录</button>
         </div>
       </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
@@ -2931,14 +2929,14 @@ class ADHDHighlighter {
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>选区解释</span><span id="agfExplainSource" class="agf-module-meta"></span></div>
               <div id="agfExplainResult" class="agf-module-result"><p>请先在网页中选中文本，再点击“选区解释”。</p></div>
-              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div>
+              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
               <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
-              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div>
+              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history"></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3130,10 +3128,12 @@ class ADHDHighlighter {
     const explainSource = document.getElementById('agfExplainSource');
     const explainToChat = document.getElementById('agfExplainToChat');
     const explainRetry = document.getElementById('agfExplainRetry');
+    const explainHistory = document.getElementById('agfExplainHistory');
     const vocabResult = document.getElementById('agfVocabResult');
     const vocabStats = document.getElementById('agfVocabStats');
     const vocabStart = document.getElementById('agfVocabStart');
     const vocabReset = document.getElementById('agfVocabReset');
+    const vocabHistory = document.getElementById('agfVocabHistory');
     const quizCard = document.getElementById('agfQuizCard');
     const quizResult = document.getElementById('agfQuizResult');
     const quizStartActions = document.getElementById('agfQuizStartActions');
@@ -3182,6 +3182,7 @@ class ADHDHighlighter {
     const btnExplain = document.getElementById('agfBtnExplain');
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
+    const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
     const testTextBtn = document.getElementById('agfTestTextBtn');
     const fulltextPanel = document.getElementById('agfFulltextPanel');
     const fulltextContent = document.getElementById('agfFulltextContent');
@@ -3440,9 +3441,19 @@ class ADHDHighlighter {
       }
     };
     let currentView = 'chat';
+    const updateTaskBar = (which) => {
+      const groups = {
+        chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline'],
+        quiz: [], explain: ['agfBtnSelectionExplain'], vocab: []
+      };
+      const visible = new Set(groups[which] || []);
+      ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
+      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['explain','vocab','chat','quiz'].includes(which) ? '' : 'none';
+    };
     const setView = (which) => {
       currentView = which;
       taixueState.setModule(which);
+      updateTaskBar(which);
       if (which === 'chat' || which === 'quiz') {
         try { chrome.storage.local.set({ agfTaixueLastModule: which }); } catch (_) {}
       }
@@ -5649,6 +5660,10 @@ class ADHDHighlighter {
     let explainContext = null;
     let vocabCards = [];
     let vocabIndex = 0;
+    const explainHistoryKey = 'agfTaixueExplainHistory';
+    const getExplainHistory = () => new Promise(resolve => chrome.storage.local.get([explainHistoryKey], r => resolve(Array.isArray(r[explainHistoryKey]) ? r[explainHistoryKey] : [])));
+    const renderExplainHistory = async () => { const rows = await getExplainHistory(); if (!explainHistory) return; explainHistory.innerHTML = `<strong>解释历史</strong>` + (rows.length ? rows.slice(0,20).map((r,i) => `<div class="agf-history-row"><span>${String(r.text).slice(0,45)} · ${new Date(r.createdAt).toLocaleString()}</span><button data-explain-index="${i}">查看</button></div>`).join('') : '<p>暂无解释记录。</p>'); explainHistory.querySelectorAll('[data-explain-index]').forEach(btn => btn.onclick = () => { const r = rows[Number(btn.dataset.explainIndex)]; explainContext = r.context; explainSource.textContent = `${r.text.length} 字 · ${r.context.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(r.output) : String(r.output).replace(/\n/g,'<br>'); explainToChat.disabled = false; explainRetry.disabled = false; }); };
+    const renderVocabHistory = async () => { const rows = await loadVocab(); if (!vocabHistory) return; const grouped = rows.slice(0,30); vocabHistory.innerHTML = `<strong>词汇掌握记录</strong>` + (grouped.length ? grouped.map(r => `<div class="agf-history-row"><span>${String(r.word)} · 掌握度 ${Number(r.mastery || 0)}% · ${Number(r.reviewCount || 0)} 次</span></div>`).join('') : '<p>暂无复习记录。</p>'); };
     const explainSelection = async () => {
       const ctx = await taixueContext.resolve('selection');
       if (!ctx.text) throw new Error('请先在网页中选中一段文本。');
@@ -5656,8 +5671,10 @@ class ADHDHighlighter {
       explainSource.textContent = `${ctx.text.length} 字 · ${ctx.pageTitle || '当前页面'}`;
       explainResult.innerHTML = '<p>正在生成解释…</p>'; explainToChat.disabled = true; explainRetry.disabled = true;
       const output = await taixueTask.requestJsonText({ prompt: `请解释下面选中文本。输出简洁但完整，包含：1.通俗释义 2.上下文作用 3.关键术语 4.必要时给出改写或例句。请用中文。\n\n选中文本：\n${ctx.text}`, maxTokens: 1800, temperature: .35 });
+      const explainRows = await getExplainHistory(); explainRows.unshift({ id: `explain-${Date.now()}`, text: ctx.text, output, context: ctx, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ [explainHistoryKey]: explainRows.slice(0, 30) }, resolve));
       explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g, '<br>');
       explainToChat.disabled = false; explainRetry.disabled = false;
+      renderExplainHistory();
     };
     const vocabKey = 'agfTaixueVocabularyReview';
     const loadVocab = () => new Promise(resolve => chrome.storage.local.get([vocabKey], r => resolve(Array.isArray(r[vocabKey]) ? r[vocabKey] : [])));
@@ -5675,7 +5692,7 @@ class ADHDHighlighter {
       const output = await taixueTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitTaixueText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
       const parsed = parseJsonPayload(output); const old = await loadVocab();
       vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
-      vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard();
+      vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
     const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false, contextSource = taixueState.contextSource }) => {
       hideFulltextPanel();
@@ -5720,9 +5737,10 @@ class ADHDHighlighter {
     if (explainTab) explainTab.onclick = () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); };
     if (explainRetry) explainRetry.onclick = () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
     if (explainToChat) explainToChat.onclick = () => { if (!explainContext) return; runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); };
-    if (vocabTab) vocabTab.onclick = () => setView('vocab');
+    if (vocabTab) vocabTab.onclick = () => { setView('vocab'); renderVocabHistory(); };
     if (vocabStart) vocabStart.onclick = () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
     if (vocabReset) vocabReset.onclick = () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; };
+    if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { if (currentView === 'quiz') showQuizHistory(); else if (currentView === 'explain') { setView('explain'); renderExplainHistory(); } else if (currentView === 'vocab') { setView('vocab'); renderVocabHistory(); } else showRecords(); };
     if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
     if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
     if (btnOutline) btnOutline.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲' }); });
@@ -5934,8 +5952,6 @@ class ADHDHighlighter {
     };
     initComposerAutosize();
     if (titleLabel) titleLabel.addEventListener('click', () => { hideFulltextPanel(); });
-    if (tabPencil) tabPencil.addEventListener('click', async () => { hideFulltextPanel(); try { await newConversation(); showToast(((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.newConversation') : '已创建新对话')); } catch (_) {} showChat(); });
-    if (tabDoc) tabDoc.addEventListener('click', () => { hideFulltextPanel(); showRecords(); });
     let resizing = null, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0, rStartL = 0;
     const minW = Math.floor(window.innerWidth / 3), minH = Math.floor(window.innerHeight * 2 / 3);
     const onResizeDownRight = (e) => { resizing = 'right'; rStartX = e.clientX; rStartY = e.clientY; rStartW = overlay.offsetWidth; rStartH = overlay.offsetHeight; };
