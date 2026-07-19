@@ -5,6 +5,7 @@
   "description": "Text highlighting for better reading",
   "permissions": ["activeTab", "storage", "management", "alarms", "tabs", "offscreen", "scripting", "sidePanel"],
   "host_permissions": [
+    "<all_urls>",
     "https://api.github.com/*",
     "https://api.deepseek.com/*",
     "https://api.moonshot.cn/*",
