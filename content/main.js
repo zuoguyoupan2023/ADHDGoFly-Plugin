@@ -2843,6 +2843,13 @@ class ADHDHighlighter {
       .agf-composer-header{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:5px!important}
       .agf-composer-header #agfSessionModel{flex:0 1 112px}
       .agf-composer-header .agf-status{margin-left:0!important;flex:0 0 auto}
+      /* Composer layout: attachment gets a full row; editor and actions keep stable widths. */
+      .agf-composer-body{display:grid!important;grid-template-columns:minmax(0,1fr) 52px!important;grid-template-rows:auto minmax(44px,auto)!important;gap:5px!important;align-items:stretch!important}
+      .agf-composer-body #agfMediaAttachment{grid-column:1 / -1!important;grid-row:1!important;min-width:0!important;width:100%!important;box-sizing:border-box!important;margin:0!important}
+      .agf-composer-body .agf-input-editor{grid-column:1!important;grid-row:2!important;min-width:0!important;width:auto!important;box-sizing:border-box!important}
+      .agf-composer-body .agf-send-col{grid-column:2!important;grid-row:2!important;width:52px!important;min-width:52px!important;box-sizing:border-box!important;height:auto!important;gap:4px!important}
+      .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
+      .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -3623,6 +3630,7 @@ class ADHDHighlighter {
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
     let currentMediaBatch = [];
+    let activeChatImageContext = null;
     const renderMediaAttachment = () => {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;
@@ -3856,6 +3864,11 @@ class ADHDHighlighter {
       ctx.metadata = { ...(ctx.metadata || {}), historyId };
       history.unshift({ id: historyId, name: ctx.image?.name || `图片 ${index + 1}`, output: ctx.recognition?.text || '', context: ctx, createdAt: Date.now() });
       await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
+    };
+    const saveVisionChatHistory = async (ctx, text, provider, model) => {
+      if (!ctx?.image || !text) return;
+      const saved = { ...ctx, recognition: { model: `${provider}/${model}`, status: 'completed', text, ocrText: text, createdAt: Date.now(), source: 'chat_vision' }, metadata: { ...(ctx.metadata || {}), visionSource: 'chat', provider, model } };
+      await saveImageRecognitionHistory(saved, 0);
     };
     const processSelectedWorkspaceImages = async () => {
       const checked = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check:checked') : []);
@@ -5938,6 +5951,8 @@ class ADHDHighlighter {
       currentReplyModel = model;
       let mediaPlan = { mode: 'none', context: null };
       try { mediaPlan = await prepareMediaForChat(prov, model, mediaModeSelect?.value || 'auto'); } catch (e) { showToast(e.message || '图片识别失败'); return; }
+      activeChatImageContext = mediaPlan.mode === 'image_and_recognition' ? mediaPlan.context : null;
+      if (activeChatImageContext) activeChatImageContext.metadata = { ...(activeChatImageContext.metadata || {}), visionRequestStartedAt: Date.now(), visionProvider: prov, visionModel: model };
       if (mediaStrategy && mediaPlan.context) mediaStrategy.textContent = mediaPlan.mode === 'image_and_recognition' ? '将发送原图+识别结果' : '将发送识别结果';
       if (mediaPlan.requestedMode === 'image_and_recognition' && mediaPlan.mode !== 'image_and_recognition') showToast('当前 Chat 模型不支持图片，已降级为仅发送识别结果。');
       let q = (composerHidden.value || '').trim();
@@ -6086,6 +6101,7 @@ class ADHDHighlighter {
       const aIndex = chatMessages.length;
       chatMessages.push({ role: 'assistant', content: text, provider: currentReplyProvider, model: currentReplyModel });
       appendMessage('assistant', text, { highlight: true, msgIndex: aIndex });
+      if (activeChatImageContext) { try { await saveVisionChatHistory(activeChatImageContext, text, currentReplyProvider, currentReplyModel); } catch (_) {} activeChatImageContext = null; }
       try { await saveConversationSnapshot(); } catch (_) {}
     };
 
@@ -6461,6 +6477,7 @@ class ADHDHighlighter {
         chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });
         if (streamingContentEl) streamingContentEl.dataset.msgIndex = String(idx);
         (async ()=>{ try { await saveConversationSnapshot(); } catch(_){} })();
+        if (activeChatImageContext) { const ctx = activeChatImageContext; const text = streamingText; const provider = currentReplyProvider; const model = currentReplyModel; (async ()=>{ try { await saveVisionChatHistory(ctx, text, provider, model); } catch (_) {} })(); activeChatImageContext = null; }
       }
       streamingText = '';
       streamingBubble = null;
