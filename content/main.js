@@ -3481,7 +3481,7 @@ class ADHDHighlighter {
         const key = String(stored.glmVisionApiKey || '').trim();
         if (!key) throw new Error('请先在太学设置中填写 GLM-4V-Flash Key');
         if (!String(imageDataUrl || '').startsWith('data:image/')) throw new Error('当前上下文不是有效图片');
-        const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1800 });
+        const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1024 });
         const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body, timeout: 60000 }, resolve));
         if (!resp || !resp.success || (typeof resp.status === 'number' && (resp.status < 200 || resp.status >= 300))) { const detail = resp?.data?.error?.message || resp?.data?.message || resp?.error || ''; throw new Error(`GLM 图片识别失败${detail ? `：${detail}` : '，请检查 Key、模型名称或图片大小'}`); }
         const content = resp.data?.choices?.[0]?.message?.content ?? resp.data?.choices?.[0]?.text ?? resp.data?.output?.text ?? resp.data?.data ?? '';
@@ -3590,11 +3590,13 @@ class ADHDHighlighter {
       const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('读取媒体失败')); reader.readAsDataURL(file);
     });
     const chooseMedia = async (kind, file) => {
+      if (kind === 'image' && imageWorkspaceStatus) imageWorkspaceStatus.textContent = file ? '正在读取图片…' : '未选择图片';
       const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
-      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
+      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
       const allow = await new Promise(resolve => { const ok = window.confirm(`${kind === 'image' ? '图片' : '音频'}将仅在你确认后发送给已选择的 AI 服务商。是否继续？`); resolve(ok); });
-      if (!allow) return;
+      if (!allow) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已取消'; return; }
       const dataUrl = await readMediaFile(file, kind);
+      if (kind === 'image' && imageWorkspaceStatus) imageWorkspaceStatus.textContent = '图片已读取，正在请求 GLM-4V-Flash…';
       currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
       if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
       if (mediaModeSelect) mediaModeSelect.disabled = false;
@@ -3610,7 +3612,7 @@ class ADHDHighlighter {
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
     if (mediaModeSelect) mediaModeSelect.onchange = () => { if (mediaStrategy && currentMediaContext) mediaStrategy.textContent = mediaModeSelect.value === 'recognition_only' ? '将发送识别结果' : mediaModeSelect.value === 'image_and_recognition' ? '将尝试发送原图+识别结果' : '发送时自动判断模型能力'; };
     if (imageChooseBtn) imageChooseBtn.onclick = () => workspaceImageInput && workspaceImageInput.click();
-    if (workspaceImageInput) workspaceImageInput.onchange = () => { const file = workspaceImageInput.files && workspaceImageInput.files[0]; if (file) chooseMedia('image', file); };
+    if (workspaceImageInput) workspaceImageInput.onchange = () => { const file = workspaceImageInput.files && workspaceImageInput.files[0]; if (file) chooseMedia('image', file).catch(e => { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '处理失败'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = `<p class="agf-error">${String(e.message || e)}</p>`; showToast(e.message || '图片处理失败'); }); };
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); const file = e.dataTransfer?.files?.[0]; if (file) chooseMedia('image', file); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
     const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row"><span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; } }); };
