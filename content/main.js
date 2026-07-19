@@ -2854,6 +2854,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph">段落</button>
         </div>
         <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label">任务</span>
@@ -3025,6 +3026,9 @@ class ADHDHighlighter {
                         <div class="agf-label" data-i18n="aiPanel.settings.privacyFilter">隐私过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
                       </div>
+                      <div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div>
+                      <div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div>
+                      <div class="agf-hint">图片或音频发送给 AI 前会再次确认；默认只保存解析后的文字结果，不保存原始媒体。</div>
                       <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3150,6 +3154,10 @@ class ADHDHighlighter {
     const quizCountSelect = document.getElementById('agfQuizCount');
     const contextSummary = document.getElementById('agfContextSummary');
     const contextButtons = Array.from(overlay.querySelectorAll('.agf-context-btn'));
+    const imageContextBtn = document.getElementById('agfImageContextBtn');
+    const audioContextBtn = document.getElementById('agfAudioContextBtn');
+    const imageContextInput = document.getElementById('agfImageContextInput');
+    const audioContextInput = document.getElementById('agfAudioContextInput');
     const statusText = document.getElementById('agfStatusText');
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
@@ -3166,6 +3174,8 @@ class ADHDHighlighter {
     const tempInput = document.getElementById('agfTempInput');
     const pdfToggle = document.getElementById('agfPdfParseToggle');
     const sensitiveToggle = document.getElementById('agfSensitiveToggle');
+    const mediaPermissionToggle = document.getElementById('agfMediaPermissionToggle');
+    const mediaUploadToggle = document.getElementById('agfMediaUploadToggle');
     const manualParseBtn = document.getElementById('agfManualParseBtn');
     const retentionDaysInput = document.getElementById('agfRetentionDaysInput');
     const foldThresholdInput = document.getElementById('agfFoldThresholdInput');
@@ -3373,11 +3383,29 @@ class ADHDHighlighter {
         };
       }
     };
+    const taixueHash = (value) => {
+      const text = String(value || ''); let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+      return ('00000000' + (hash >>> 0).toString(16)).slice(-8);
+    };
+    const createTaixueContext = ({ source = 'manual', text = '', image = null, audio = null, chart = null, sourceUrl = '', confirmed = false, metadata = {} } = {}) => {
+      const normalizedText = String(text || '').trim();
+      const mediaText = [image && image.ocrText, audio && audio.transcript, chart && chart.dsl].filter(Boolean).join('\n');
+      return {
+        source, text: normalizedText, image: image || null, audio: audio || null, chart: chart || null,
+        sourceUrl: sourceUrl || String(location.href || ''), pageUrl: String(location.href || ''), pageTitle: getMetaTitle(),
+        createdAt: Date.now(), contentHash: taixueHash(normalizedText || mediaText || JSON.stringify({ image, audio, chart })), confirmed: Boolean(confirmed), metadata
+      };
+    };
     const taixueContext = {
       async resolve(source = taixueState.contextSource, options = {}) {
         taixueState.setTaskStatus('preparing_context');
         const u = getCanonicalUrl();
         const selected = String(getSelectedTextSafe() || '').trim();
+        if ((source === 'image' || source === 'audio') && currentMediaContext && currentMediaContext.source === source) {
+          taixueState.setContextStatus?.('ready');
+          return currentMediaContext;
+        }
         const preferredSource = source === 'selection' ? (selected ? 'selection' : 'full_article') : source;
         let text = '';
         if (preferredSource === 'selection') {
@@ -3393,20 +3421,33 @@ class ADHDHighlighter {
         const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'paragraph' ? 'paragraph' : (preferredSource === 'manual' ? 'manual' : 'full_article'));
         taixueState.setContextSource(sourceName);
         taixueState.setTaskStatus(text ? 'ready' : 'failed');
-        return {
-          source: sourceName,
-          text,
-          selectedText: selected,
-          pageTitle: getMetaTitle(),
-          pageUrl: u.pageUrl,
-          canonicalUrl: u.canonicalUrl,
-          textLength: text.length,
-          approxTokens: estimateTaixueTokens(text),
-          createdAt: Date.now()
-        };
+        return { ...createTaixueContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), selectedText: selected, canonicalUrl: u.canonicalUrl, textLength: text.length, approxTokens: estimateTaixueTokens(text) };
       }
     };
+    const taixueTaskProtocol = {
+      taskType: 'string', context: 'object', provider: 'string', model: 'string', budget: 'object', outputSchema: 'object', allowNetwork: 'boolean', allowPersistence: 'boolean', retryPolicy: 'object'
+    };
+    const validateTaixueTaskRequest = (request) => {
+      if (!request || typeof request !== 'object') throw new Error('任务请求必须是对象');
+      if (!String(request.taskType || '').trim()) throw new Error('任务类型不能为空');
+      if (!request.context || typeof request.context !== 'object') throw new Error('任务上下文不能为空');
+      if (request.allowNetwork === true && !request.context.confirmed && (request.context.image || request.context.audio)) throw new Error('媒体内容上传前需要用户确认');
+      return { ...request, allowNetwork: request.allowNetwork !== false, allowPersistence: request.allowPersistence === true, budget: request.budget || {}, outputSchema: request.outputSchema || { type: 'text' }, retryPolicy: request.retryPolicy || { maxRetries: 1 } };
+    };
+    const validateTaixueOutput = (output, schema = { type: 'text' }) => {
+      if (schema.type === 'text') return String(output || '').trim();
+      const parsed = parseJsonPayload(output);
+      if (schema.type === 'array' && !Array.isArray(parsed)) throw new Error('AI 输出不是有效数组');
+      if (schema.type === 'object' && (!parsed || Array.isArray(parsed) || typeof parsed !== 'object')) throw new Error('AI 输出不是有效对象');
+      return parsed;
+    };
     const taixueTask = {
+      async requestStructured(request) {
+        const safeRequest = validateTaixueTaskRequest(request);
+        if (!safeRequest.allowNetwork) throw new Error('该任务未允许联网请求');
+        const output = await this.requestJsonText({ prompt: safeRequest.prompt || '', timeout: safeRequest.budget.timeout || 60000, maxTokens: safeRequest.budget.maxTokens || 1800, temperature: safeRequest.budget.temperature || 0.4 });
+        return { taskType: safeRequest.taskType, context: safeRequest.context, output: validateTaixueOutput(output, safeRequest.outputSchema), createdAt: Date.now(), persisted: false };
+      },
       async requestJsonText({ prompt, timeout = 60000, maxTokens = 1800, temperature = 0.4 }) {
         const { provider: prov, model } = taixueState.getProviderState();
         const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
@@ -3484,6 +3525,25 @@ class ADHDHighlighter {
       contextSummary.textContent = `当前上下文：${labels[source] || '全文'}${preview ? ` · ${preview}` : ''}`;
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
+    let currentMediaContext = null;
+    const readMediaFile = (file, kind) => new Promise((resolve, reject) => {
+      if (!file) return reject(new Error('没有选择文件'));
+      const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('读取媒体失败')); reader.readAsDataURL(file);
+    });
+    const chooseMedia = async (kind, file) => {
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
+      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
+      const allow = await new Promise(resolve => { const ok = window.confirm(`${kind === 'image' ? '图片' : '音频'}将仅在你确认后发送给已选择的 AI 服务商。是否继续？`); resolve(ok); });
+      if (!allow) return;
+      const dataUrl = await readMediaFile(file, kind);
+      currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      if (contextSummary) contextSummary.textContent = `当前上下文：${kind === 'image' ? '图片' : '音频'} · ${file.name}`;
+      showToast(`${kind === 'image' ? '图片' : '音频'}已加入上下文，发送前仍会再次检查权限。`);
+    };
+    if (imageContextBtn) imageContextBtn.onclick = () => imageContextInput && imageContextInput.click();
+    if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
+    if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
+    if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
     let quizItems = [];
     let quizIndex = 0;
     let quizScore = 0;
@@ -4067,7 +4127,7 @@ class ADHDHighlighter {
       let auto = true;
       let sensitive = true;
       try {
-        const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled']);
+        const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled','taixueMediaPermissionEnabled','taixueMediaUploadEnabled']);
         auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
         if (s.privacySensitiveFilterEnabled === undefined) {
           try { await chrome.storage.local.set({ privacySensitiveFilterEnabled: true }); } catch(_){ }
@@ -4099,6 +4159,17 @@ class ADHDHighlighter {
         const on = val === 'on';
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
+      const mediaPermission = s.taixueMediaPermissionEnabled !== false;
+      const mediaUpload = s.taixueMediaUploadEnabled === true;
+      const mediaMap = { on: '开启', off: '关闭' };
+      renderButtons(mediaPermissionToggle, ['on','off'], mediaPermission ? 'on' : 'off', async (val, btn) => {
+        Array.from(mediaPermissionToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
+        await chrome.storage.local.set({ taixueMediaPermissionEnabled: val === 'on' });
+      }, mediaMap);
+      renderButtons(mediaUploadToggle, ['on','off'], mediaUpload ? 'on' : 'off', async (val, btn) => {
+        Array.from(mediaUploadToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
+        await chrome.storage.local.set({ taixueMediaUploadEnabled: val === 'on' });
+      }, mediaMap);
       if (manualParseBtn) {
         manualParseBtn.style.display = auto ? 'none' : 'inline-block';
         manualParseBtn.addEventListener('click', async () => {
