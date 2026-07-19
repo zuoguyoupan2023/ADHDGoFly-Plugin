@@ -3577,6 +3577,7 @@ class ADHDHighlighter {
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
+    let currentMediaBatch = [];
     const renderMediaAttachment = () => {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;
@@ -3617,17 +3618,43 @@ class ADHDHighlighter {
       if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); history.unshift({ id: `image-${Date.now()}`, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
       else showToast('音频已加入上下文，音频转写功能尚未开启。');
     };
+    const processImageBatch = async (files) => {
+      const list = Array.from(files || []).filter(f => f && String(f.type || '').startsWith('image/'));
+      if (!list.length) return;
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
+      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
+      if (!window.confirm(`将依次识别 ${list.length} 张图片，并发送给 GLM-4V-Flash。预计需要更长时间，是否继续？`)) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已取消'; return; }
+      currentMediaBatch = []; currentMediaContext = null; if (imageAddToChat) imageAddToChat.disabled = true; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
+      for (let i = 0; i < list.length; i++) {
+        const file = list[i];
+        try {
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在读取第 ${i + 1}/${list.length} 张…`;
+          const dataUrl = await readMediaFile(file, 'image');
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在识别第 ${i + 1}/${list.length} 张…`;
+          const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `这是第 ${i + 1} 张图片。请完成图片 OCR 与视觉理解，先输出图片文字，再输出图片说明；不确定内容请明确标注。` });
+          const context = createTaixueContext({ source: 'upload', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+          context.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
+          currentMediaBatch.push(context); if (!currentMediaContext) currentMediaContext = context;
+          const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : [])));
+          history.unshift({ id: `image-${Date.now()}-${i}`, name: file.name, output, context, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
+          if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div class="agf-vocab-card"><strong>${i + 1}/${list.length} · ${String(file.name)}</strong><div style="margin-top:8px"><img src="${dataUrl}" alt="${String(file.name)}" style="max-width:180px;max-height:120px;border-radius:8px"></div><div style="margin-top:8px">${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`;
+        } catch (e) { if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<p class="agf-error">${i + 1}/${list.length} 识别失败：${String(e.message || e)}</p>`; }
+      }
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `完成 ${currentMediaBatch.length}/${list.length} 张`;
+      if (imageAddToChat) imageAddToChat.disabled = currentMediaBatch.length === 0;
+      if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false;
+    };
     if (imageContextBtn) imageContextBtn.onclick = () => setView('image');
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
     if (mediaModeSelect) mediaModeSelect.onchange = () => { if (mediaStrategy && currentMediaContext) mediaStrategy.textContent = mediaModeSelect.value === 'recognition_only' ? '将发送识别结果' : mediaModeSelect.value === 'image_and_recognition' ? '将尝试发送原图+识别结果' : '发送时自动判断模型能力'; };
     if (imageChooseBtn) imageChooseBtn.onclick = () => workspaceImageInput && workspaceImageInput.click();
-    if (workspaceImageInput) workspaceImageInput.onchange = () => { const file = workspaceImageInput.files && workspaceImageInput.files[0]; if (file) chooseMedia('image', file).catch(e => { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '处理失败'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = `<p class="agf-error">${String(e.message || e)}</p>`; showToast(e.message || '图片处理失败'); }); };
-    if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); const file = e.dataTransfer?.files?.[0]; if (file) chooseMedia('image', file); }; }
+    if (workspaceImageInput) workspaceImageInput.onchange = () => processImageBatch(workspaceImageInput.files).catch(e => { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '处理失败'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = `<p class="agf-error">${String(e.message || e)}</p>`; showToast(e.message || '图片处理失败'); });
+    if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); processImageBatch(e.dataTransfer?.files).catch(err => showToast(err.message || '图片处理失败')); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
     const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
-    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaContext?.recognition?.text) return; renderMediaAttachment(); if (inputUser) inputUser.innerText = '请基于这张图片及其识别结果回答我的问题：'; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
+    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaBatch.length && !currentMediaContext?.recognition?.text) return; if (!currentMediaContext && currentMediaBatch[0]) currentMediaContext = currentMediaBatch[0]; renderMediaAttachment(); const results = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).map((x, i) => `[图片 ${i + 1} 识别结果]\n${x.recognition?.text || ''}`).join('\n\n'); if (inputUser) inputUser.innerText = '请基于以下图片及其识别结果回答我的问题：\n\n' + results; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
     if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
     if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
     let quizItems = [];
