@@ -2955,6 +2955,7 @@ class ADHDHighlighter {
                   <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
                   <button id="agfSettingsTabParse" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.parse">解析与过滤</button>
+                  <button id="agfSettingsTabSpeak" class="agf-settings-tab">朗读</button>
                   <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
                 <div class="agf-settings-content">
@@ -3032,9 +3033,6 @@ class ADHDHighlighter {
                       <div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div>
                       <div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div>
                       <div class="agf-hint">图片或音频发送给 AI 前会再次确认；默认只保存解析后的文字结果，不保存原始媒体。</div>
-                      <div class="agf-settings-row"><div class="agf-label">朗读语言</div><select id="agfSpeakLanguage" class="agf-select"><option value="auto">自动识别</option><option value="zh-CN">中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option></select></div>
-                      <div class="agf-settings-row"><div class="agf-label">朗读音色</div><select id="agfSpeakVoice" class="agf-select"><option value="">跟随语言默认音色</option></select></div>
-                      <div class="agf-settings-row"><div class="agf-label">朗读语速</div><input id="agfSpeakRate" class="agf-input" type="number" min="0.5" max="2" step="0.1" value="1" /><span class="agf-hint">0.5–2.0</span></div>
                       <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3045,6 +3043,7 @@ class ADHDHighlighter {
                       </div>
                     </div>
                   </div>
+                  <div id="agfSettingsContentSpeak" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">朗读设置</div><div class="agf-settings-row"><div class="agf-label">朗读语言</div><select id="agfSpeakLanguage" class="agf-select"><option value="auto">自动识别</option><option value="zh-CN">中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读音色</div><select id="agfSpeakVoice" class="agf-select"><option value="">跟随语言默认音色</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读语速</div><input id="agfSpeakRate" class="agf-input" type="number" min="0.5" max="2" step="0.1" value="1" /><span class="agf-hint">0.5–2.0</span></div><div class="agf-settings-row"><button id="agfSpeakSample" class="agf-btn">试听当前音色</button></div><div class="agf-hint">浏览器提供哪些音色，取决于当前操作系统和浏览器；插件不会上传朗读文本。</div></div></div>
                   <div id="agfSettingsContentDisplay" style="display:none;">
                     <div class="agf-settings-group">
                       <div style="font-size:13px;color:#333;font-weight:600;">显示与折叠</div>
@@ -3206,6 +3205,7 @@ class ADHDHighlighter {
     const speakLanguageSelect = document.getElementById('agfSpeakLanguage');
     const speakVoiceSelect = document.getElementById('agfSpeakVoice');
     const speakRateInput = document.getElementById('agfSpeakRate');
+    const speakSampleBtn = document.getElementById('agfSpeakSample');
     const testTextBtn = document.getElementById('agfTestTextBtn');
     const fulltextPanel = document.getElementById('agfFulltextPanel');
     const fulltextContent = document.getElementById('agfFulltextContent');
@@ -3256,10 +3256,12 @@ class ADHDHighlighter {
     const settingsTabColors = document.getElementById('agfSettingsTabColors');
     const settingsTabParse = document.getElementById('agfSettingsTabParse');
     const settingsTabDisplay = document.getElementById('agfSettingsTabDisplay');
+    const settingsTabSpeak = document.getElementById('agfSettingsTabSpeak');
     const settingsContentApi = document.getElementById('agfSettingsContentApi');
     const settingsContentColors = document.getElementById('agfSettingsContentColors');
     const settingsContentParse = document.getElementById('agfSettingsContentParse');
     const settingsContentDisplay = document.getElementById('agfSettingsContentDisplay');
+    const settingsContentSpeak = document.getElementById('agfSettingsContentSpeak');
     if (settingsTabDisplay) settingsTabDisplay.style.display = 'none';
     if (settingsContentDisplay) settingsContentDisplay.style.display = 'none';
     const colorQBg2 = document.getElementById('agfColorQBg2');
@@ -3810,10 +3812,12 @@ class ADHDHighlighter {
       if (settingsTabApi) settingsTabApi.classList.toggle('active', which === 'api');
       if (settingsTabColors) settingsTabColors.classList.toggle('active', which === 'colors');
       if (settingsTabParse) settingsTabParse.classList.toggle('active', which === 'parse');
+      if (settingsTabSpeak) settingsTabSpeak.classList.toggle('active', which === 'speak');
       if (settingsTabDisplay) settingsTabDisplay.classList.toggle('active', which === 'display');
       if (settingsContentApi) settingsContentApi.style.display = which === 'api' ? 'block' : 'none';
       if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
       if (settingsContentParse) settingsContentParse.style.display = which === 'parse' ? 'block' : 'none';
+      if (settingsContentSpeak) settingsContentSpeak.style.display = which === 'speak' ? 'block' : 'none';
       if (settingsContentDisplay) settingsContentDisplay.style.display = which === 'display' ? 'block' : 'none';
       if (which === 'colors') fillColorsInputs2();
     };
@@ -4105,6 +4109,7 @@ class ADHDHighlighter {
     if (speakVoiceSelect) speakVoiceSelect.addEventListener('change', persistSpeakSettings);
     if (speakRateInput) speakRateInput.addEventListener('change', persistSpeakSettings);
     if ('speechSynthesis' in window) { window.speechSynthesis.addEventListener('voiceschanged', refreshSpeakVoices); initSpeakSettings(); }
+    if (speakSampleBtn) speakSampleBtn.onclick = () => { if (!('speechSynthesis' in window)) return; const lang = speakLanguageSelect?.value || 'auto'; const sample = lang === 'zh-CN' || (lang === 'auto' && (!speakVoiceSelect?.value || speakVoiceSelect.value.toLowerCase().includes('zh'))) ? '这是太学朗读试听。你可以在这里确认当前语言、音色和语速。' : 'This is a Taixue reading sample. You can check the selected language, voice, and reading speed here.'; const u = new SpeechSynthesisUtterance(sample); const v = availableSpeakVoices.find(x => (x.voiceURI || x.name) === (speakVoiceSelect?.value || '')); u.voice = v || null; u.lang = v?.lang || (lang === 'auto' ? 'en-US' : lang); u.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); speechSynthesis.cancel(); speechSynthesis.speak(u); };
 
     initFromStorage();
 
@@ -4313,6 +4318,7 @@ class ADHDHighlighter {
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
     if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
     if (settingsTabParse) settingsTabParse.addEventListener('click', () => setActiveSettingsTab('parse'));
+    if (settingsTabSpeak) settingsTabSpeak.addEventListener('click', () => setActiveSettingsTab('speak'));
     if (settingsTabDisplay) settingsTabDisplay.addEventListener('click', () => setActiveSettingsTab('display'));
 
     function initComposerSelects() {
@@ -5865,7 +5871,8 @@ class ADHDHighlighter {
       if (!('speechSynthesis' in window)) { showToast('当前浏览器不支持本地朗读'); return; }
       if (speechSynthesis.speaking && !speechSynthesis.paused) { speechSynthesis.pause(); speakBtn.textContent = '继续朗读'; return; }
       if (speechSynthesis.paused) { speechSynthesis.resume(); speakBtn.textContent = '暂停朗读'; return; }
-      const selected = getSelectedTextSafe(); const text = selected || String((chatMessages.length && chatMessages[chatMessages.length - 1]?.content) || '').trim() || String(document.querySelector('.agf-chat-list')?.innerText || '').trim();
+      const selected = getSelectedTextSafe(); let text = selected;
+      if (!text) { try { const fullContext = await taixueContext.resolve('full_article'); text = String(fullContext.text || '').trim(); } catch (_) {} }
       if (!text) { showToast('没有可朗读的文本'); return; }
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); const selectedLang = speakLanguageSelect?.value || 'auto'; utterance.lang = selectedLang === 'auto' ? (/^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US') : selectedLang; const selectedVoiceId = speakVoiceSelect?.value || ''; const selectedVoice = availableSpeakVoices.find(v => (v.voiceURI || v.name) === selectedVoiceId); if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; } utterance.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
     };
