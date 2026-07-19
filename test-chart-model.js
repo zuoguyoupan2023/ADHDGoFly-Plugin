@@ -18,4 +18,5 @@ assert.deepEqual(parseJsonObject('```json\n{"title":"包裹"}\n```'), { title: '
 assert.deepEqual(parseJsonObject('说明文字 {"title":"提取"} 结束'), { title: '提取' });
 assert.throws(() => parseJsonObject(''), /空内容/);
 assert.throws(() => parseJsonObject('{"title":'), /不完整/);
+assert.throws(() => parseJsonObject('{"title":"未结束'), /不完整/);
 console.log('chart model tests passed');

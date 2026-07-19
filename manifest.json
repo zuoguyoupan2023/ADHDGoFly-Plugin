@@ -71,6 +71,7 @@
         "content/storage/review-counter.js",
         "review-light-tower.js",
         "content/chart-model.js",
+        "content/chart-layout.js",
         "content/chart-workspace.js",
         "content/main.js",
         "content/dynamic-collector.js"

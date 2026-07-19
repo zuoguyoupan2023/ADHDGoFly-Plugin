@@ -112,7 +112,7 @@
       if (start >= 0 && end > start) {
         try { return JSON.parse(body.slice(start, end + 1)); } catch (_) {}
       }
-      const looksTruncated = firstError instanceof SyntaxError && /end of json input/i.test(firstError.message || '');
+      const looksTruncated = firstError instanceof SyntaxError && /end of json input|unterminated string/i.test(firstError.message || '');
       if (looksTruncated) throw new Error('AI 返回的图表 JSON 不完整，可能是输出被截断。请重试，或减少材料长度/换用更大输出额度的模型。');
       throw new Error(`AI 返回的内容不是有效 JSON：${firstError.message || firstError}`);
     }
