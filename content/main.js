@@ -2867,6 +2867,8 @@ class ADHDHighlighter {
           <button class="agf-task-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button>
           <button class="agf-task-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button>
           <button class="agf-task-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button>
+          <button class="agf-task-btn" id="agfBtnVisionOcr" disabled>图片识别/OCR</button>
+          <button class="agf-task-btn" id="agfBtnSpeak" disabled>朗读</button>
           <button class="agf-task-btn" id="agfModuleHistoryBtn">📃 历史记录</button>
         </div>
       </div>
@@ -2983,6 +2985,7 @@ class ADHDHighlighter {
                           <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                         </div>
                       </div>
+                      <div class="agf-settings-row"><div class="agf-label">GLM-4V-Flash Key</div><div style="display:flex;align-items:center;gap:8px;"><input id="agfGlmVisionKeyInput" class="agf-input" type="password" placeholder="单独用于图片识别/OCR" /><button id="agfSaveGlmVisionKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button></div></div>
                       <div class="agf-settings-row">
                         <div class="agf-label">备用供应商</div>
                         <select id="agfFallbackProvider" class="agf-select"><option value="">不启用</option></select>
@@ -3193,6 +3196,10 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
+    const visionOcrBtn = document.getElementById('agfBtnVisionOcr');
+    const speakBtn = document.getElementById('agfBtnSpeak');
+    const glmVisionKeyInput = document.getElementById('agfGlmVisionKeyInput');
+    const saveGlmVisionKeyBtn = document.getElementById('agfSaveGlmVisionKeyBtn');
     const testTextBtn = document.getElementById('agfTestTextBtn');
     const fulltextPanel = document.getElementById('agfFulltextPanel');
     const fulltextContent = document.getElementById('agfFulltextContent');
@@ -3442,6 +3449,16 @@ class ADHDHighlighter {
       return parsed;
     };
     const taixueTask = {
+      async requestGlmVision({ imageDataUrl, prompt = '请识别图片内容，并先输出图片中的文字，再补充简要说明。' }) {
+        const stored = await new Promise(resolve => chrome.storage.local.get(['glmVisionApiKey'], resolve));
+        const key = String(stored.glmVisionApiKey || '').trim();
+        if (!key) throw new Error('请先在太学设置中填写 GLM-4V-Flash Key');
+        if (!String(imageDataUrl || '').startsWith('data:image/')) throw new Error('当前上下文不是有效图片');
+        const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1800 });
+        const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body, timeout: 60000 }, resolve));
+        if (!resp || !resp.success) throw new Error('GLM 图片识别失败，请检查 Key 或图片大小');
+        return resp.data?.choices?.[0]?.message?.content || '';
+      },
       async requestStructured(request) {
         const safeRequest = validateTaixueTaskRequest(request);
         if (!safeRequest.allowNetwork) throw new Error('该任务未允许联网请求');
@@ -3484,11 +3501,11 @@ class ADHDHighlighter {
     let currentView = 'chat';
     const updateTaskBar = (which) => {
       const groups = {
-        chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline'],
+        chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak'],
         quiz: [], explain: ['agfBtnSelectionExplain'], vocab: []
       };
       const visible = new Set(groups[which] || []);
-      ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
+      ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['explain','vocab','chat','quiz'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
@@ -3537,6 +3554,7 @@ class ADHDHighlighter {
       if (!allow) return;
       const dataUrl = await readMediaFile(file, kind);
       currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
       if (contextSummary) contextSummary.textContent = `当前上下文：${kind === 'image' ? '图片' : '音频'} · ${file.name}`;
       showToast(`${kind === 'image' ? '图片' : '音频'}已加入上下文，发送前仍会再次检查权限。`);
     };
@@ -4060,6 +4078,10 @@ class ADHDHighlighter {
           saveKeyBtn.click();
         }
       });
+    }
+    if (saveGlmVisionKeyBtn && glmVisionKeyInput) {
+      saveGlmVisionKeyBtn.addEventListener('click', () => { const value = String(glmVisionKeyInput.value || '').trim(); if (!value) return; chrome.storage.local.set({ glmVisionApiKey: value }, () => { glmVisionKeyInput.value = ''; glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; showToast('GLM-4V-Flash Key 已保存'); }); });
+      chrome.storage.local.get(['glmVisionApiKey'], r => { if (r.glmVisionApiKey) glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; });
     }
 
     initFromStorage();
@@ -5418,6 +5440,8 @@ class ADHDHighlighter {
       if (btnExplain) btnExplain.disabled = !has;
       if (btnOutline) btnOutline.disabled = !has;
       if (btnKeywords) btnKeywords.disabled = !has;
+      if (visionOcrBtn) visionOcrBtn.disabled = !(currentMediaContext && currentMediaContext.source === 'image');
+      if (speakBtn) speakBtn.disabled = !has && !getSelectedTextSafe();
       if (addFullBtn) addFullBtn.disabled = !has;
       return segs;
     };
@@ -5811,6 +5835,18 @@ class ADHDHighlighter {
     if (vocabTab) vocabTab.onclick = () => { setView('vocab'); renderVocabHistory(); };
     if (vocabStart) vocabStart.onclick = () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
     if (vocabReset) vocabReset.onclick = () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; };
+    if (visionOcrBtn) visionOcrBtn.onclick = async () => {
+      if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
+      try { showChat(); const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
+    };
+    if (speakBtn) speakBtn.onclick = async () => {
+      if (!('speechSynthesis' in window)) { showToast('当前浏览器不支持本地朗读'); return; }
+      if (speechSynthesis.speaking && !speechSynthesis.paused) { speechSynthesis.pause(); speakBtn.textContent = '继续朗读'; return; }
+      if (speechSynthesis.paused) { speechSynthesis.resume(); speakBtn.textContent = '暂停朗读'; return; }
+      const selected = getSelectedTextSafe(); const text = selected || String((chatMessages.length && chatMessages[chatMessages.length - 1]?.content) || '').trim() || String(document.querySelector('.agf-chat-list')?.innerText || '').trim();
+      if (!text) { showToast('没有可朗读的文本'); return; }
+      const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); utterance.lang = /^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US'; utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
+    };
     if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { if (currentView === 'quiz') showQuizHistory(); else if (currentView === 'explain') { setView('explain'); renderExplainHistory(); } else if (currentView === 'vocab') { setView('vocab'); renderVocabHistory(); } else showRecords(); };
     if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
     if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
