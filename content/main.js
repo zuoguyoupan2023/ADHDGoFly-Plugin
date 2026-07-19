@@ -2618,6 +2618,7 @@ class ADHDHighlighter {
       .agf-module-actions{display:flex;gap:8px;margin-top:14px}.agf-module-actions button{border:1px solid #dfe5f2;border-radius:8px;background:#fff;padding:7px 11px;color:#315efb;cursor:pointer}.agf-module-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}.agf-module-actions button:disabled{opacity:.5;cursor:not-allowed}
       .agf-module-history{margin-top:18px;border-top:1px solid #edf0f6;padding-top:10px}.agf-history-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f6;font-size:12px}.agf-history-row button{padding:4px 7px;font-size:11px}
       .agf-image-dropzone{border:2px dashed #c9d5f2;border-radius:12px;padding:28px;text-align:center;color:#687386;background:#fbfcff}.agf-image-dropzone.dragover{border-color:#315efb;background:#f0f4ff}.agf-image-dropzone button{border:0;border-radius:8px;padding:8px 14px;background:#315efb;color:#fff;cursor:pointer}
+      .agf-media-attachment{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:5px;border:1px solid #dfe5f2;border-radius:9px;background:#f8faff;max-width:100%}.agf-media-attachment img{width:54px;height:54px;object-fit:cover;border-radius:6px}.agf-media-attachment-body{min-width:0;flex:1;font-size:11px;color:#4b5870}.agf-media-attachment-result{max-height:48px;overflow:auto;margin-top:3px;line-height:1.4}.agf-media-attachment-remove{border:0;background:transparent;color:#d33;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2904,6 +2905,7 @@ class ADHDHighlighter {
                 </div>
                 </div>
                 <div class="agf-composer-body">
+                  <div id="agfMediaAttachment" class="agf-media-attachment" style="display:none"></div>
                   <div class="agf-input-editor" id="agfComposerEditor" contenteditable="true"><span id="agfInputPrefix" contenteditable="true" style="display:none">我的问题是：</span><span id="agfInputUser" contenteditable="true"></span><span id="agfInputAffix" contenteditable="false" class="agf-input-affix" style="display:none"></span></div>
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
@@ -3226,6 +3228,7 @@ class ADHDHighlighter {
     const refreshHint = document.getElementById('agfRefreshHint');
     const chatList = overlay.querySelector('.agf-chat-list');
     const composerEditor = document.getElementById('agfComposerEditor');
+    const mediaAttachment = document.getElementById('agfMediaAttachment');
     const inputPrefix = document.getElementById('agfInputPrefix');
     const inputUser = document.getElementById('agfInputUser');
     const inputAffix = document.getElementById('agfInputAffix');
@@ -3574,6 +3577,14 @@ class ADHDHighlighter {
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
+    const renderMediaAttachment = () => {
+      if (!mediaAttachment) return;
+      const media = currentMediaContext?.image;
+      const result = currentMediaContext?.recognition?.text || '';
+      if (!media || !result) { mediaAttachment.style.display = 'none'; mediaAttachment.innerHTML = ''; return; }
+      mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong><div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div></div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
+      mediaAttachment.querySelector('.agf-media-attachment-remove').onclick = () => { currentMediaContext = null; renderMediaAttachment(); if (mediaStrategy) mediaStrategy.textContent = ''; if (visionOcrBtn) visionOcrBtn.disabled = true; };
+    };
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') return { mode: 'none', context: null };
       const capabilities = taixueTask.getModelCapabilities(provider, model);
@@ -3615,8 +3626,8 @@ class ADHDHighlighter {
     if (workspaceImageInput) workspaceImageInput.onchange = () => { const file = workspaceImageInput.files && workspaceImageInput.files[0]; if (file) chooseMedia('image', file).catch(e => { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '处理失败'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = `<p class="agf-error">${String(e.message || e)}</p>`; showToast(e.message || '图片处理失败'); }); };
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); const file = e.dataTransfer?.files?.[0]; if (file) chooseMedia('image', file); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
-    const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row"><span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; } }); };
-    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaContext?.recognition?.text) return; if (inputUser) inputUser.innerText = '请基于这张图片及其识别结果回答我的问题：\n\n[图片识别结果]\n' + currentMediaContext.recognition.text; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
+    const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
+    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaContext?.recognition?.text) return; renderMediaAttachment(); if (inputUser) inputUser.innerText = '请基于这张图片及其识别结果回答我的问题：'; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
     if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
     if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
     let quizItems = [];
@@ -5352,6 +5363,7 @@ class ADHDHighlighter {
       chatMessages.push({ role: 'user', content: prompt });
       appendMessage('user', displayPrompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
       currentMediaContext = null;
+      renderMediaAttachment();
       if (visionOcrBtn) visionOcrBtn.disabled = true;
       if (mediaModeSelect) { mediaModeSelect.value = 'auto'; mediaModeSelect.disabled = true; }
       if (mediaStrategy) mediaStrategy.textContent = '';
