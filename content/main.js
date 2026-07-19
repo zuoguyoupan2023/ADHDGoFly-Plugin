@@ -2954,7 +2954,7 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
-          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> 全选</label><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> 全选</label><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceClear">清除工作区</button><button id="agfImageWorkspaceDelete">删除并清理历史</button><button id="agfImageWorkspaceExport">导出</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3170,6 +3170,9 @@ class ADHDHighlighter {
     const imageProcessSelected = document.getElementById('agfImageProcessSelected');
     const imageAddToChat = document.getElementById('agfImageAddToChat');
     const imageWorkspaceRetry = document.getElementById('agfImageWorkspaceRetry');
+    const imageWorkspaceClearBtn = document.getElementById('agfImageWorkspaceClear');
+    const imageWorkspaceDeleteBtn = document.getElementById('agfImageWorkspaceDelete');
+    const imageWorkspaceExportBtn = document.getElementById('agfImageWorkspaceExport');
     const imageWorkspaceHistoryBtn = document.getElementById('agfImageWorkspaceHistory');
     const imageWorkspaceHistoryList = document.getElementById('agfImageWorkspaceHistoryList');
     const vocabHistory = document.getElementById('agfVocabHistory');
@@ -3685,6 +3688,21 @@ class ADHDHighlighter {
         return result.dataUrl;
       } finally { if (overlay) overlay.style.display = previousDisplay || ''; }
     };
+    const captureImageElementScreenshot = async (img) => {
+      if (!img) throw new Error('无法定位正文图片');
+      const previousScrollX = window.scrollX;
+      const previousScrollY = window.scrollY;
+      try {
+        img.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const rect = img.getBoundingClientRect();
+        if (rect.width < 2 || rect.height < 2) throw new Error('正文图片无法进入视口');
+        const full = await capturePageScreenshot();
+        return await cropImageDataUrl(full, { left: Math.max(0, rect.left - 12), top: Math.max(0, rect.top - 12), width: Math.min(window.innerWidth - Math.max(0, rect.left - 12), rect.width + 24), height: Math.min(window.innerHeight - Math.max(0, rect.top - 12), rect.height + 24) });
+      } finally {
+        window.scrollTo(previousScrollX, previousScrollY);
+      }
+    };
     const renderImageWorkspaceCard = (ctx, index, options = {}) => {
       if (!imageWorkspaceResult || !ctx?.image) return;
       const checked = options.checked !== false;
@@ -3780,9 +3798,10 @@ class ADHDHighlighter {
         return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
       } catch (error) { downloadError = error; }
       try {
-        ctx.image.dataUrl = await capturePageScreenshot();
+        const img = Array.from(document.images || []).find(x => (x.currentSrc || x.src) === imageUrl);
+        ctx.image.dataUrl = await captureImageElementScreenshot(img);
         ctx.image.delivery = 'screenshot';
-        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt: `${prompt}\n这是当前网页视窗截图兜底，请只识别截图中的网页正文内容，不要描述浏览器、插件侧边栏或太学浮层。` }), 75000);
+        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt: `${prompt}\n这是定位到正文图片后的截图兜底，请只识别目标图片内容，不要描述网页或太学浮层。` }), 75000);
       } catch (screenshotError) {
         throw new Error(`链接、下载、截图均失败：链接=${linkError?.message || linkError}；下载=${downloadError?.message || downloadError}；截图=${screenshotError.message || screenshotError}`);
       }
@@ -3813,7 +3832,9 @@ class ADHDHighlighter {
     };
     const saveImageRecognitionHistory = async (ctx, index) => {
       const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : [])));
-      history.unshift({ id: `image-${Date.now()}-${index}`, name: ctx.image?.name || `图片 ${index + 1}`, output: ctx.recognition?.text || '', context: ctx, createdAt: Date.now() });
+      const historyId = ctx.metadata?.historyId || `image-${Date.now()}-${index}`;
+      ctx.metadata = { ...(ctx.metadata || {}), historyId };
+      history.unshift({ id: historyId, name: ctx.image?.name || `图片 ${index + 1}`, output: ctx.recognition?.text || '', context: ctx, createdAt: Date.now() });
       await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
     };
     const processSelectedWorkspaceImages = async () => {
@@ -3872,12 +3893,13 @@ class ADHDHighlighter {
       const dataUrl = await readMediaFile(file, kind);
       if (kind === 'image' && imageWorkspaceStatus) imageWorkspaceStatus.textContent = '图片已读取，正在请求 GLM-4V-Flash…';
       currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      if (kind === 'image') currentMediaBatch = [currentMediaContext];
       if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
       if (mediaModeSelect) mediaModeSelect.disabled = false;
       if (mediaStrategy) mediaStrategy.textContent = '图片已加入，等待发送时判断模型能力';
       if (contextSummary) contextSummary.textContent = `当前上下文：${kind === 'image' ? '图片' : '音频'} · ${file.name}`;
       if (kind === 'image' && imageWorkspaceStatus) { imageWorkspaceStatus.textContent = '识别中…'; imageWorkspaceResult.innerHTML = `<p>已添加：${String(file.name)}</p><img src="${dataUrl}" alt="待识别图片" style="max-width:180px;max-height:120px;border-radius:8px"/>`; }
-      if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); history.unshift({ id: `image-${Date.now()}`, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
+      if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
       else showToast('音频已加入上下文，音频转写功能尚未开启。');
     };
     const processImageBatch = async (files) => {
@@ -3968,8 +3990,8 @@ class ADHDHighlighter {
           mask.style.display = 'none';
           const full = await capturePageScreenshot();
           const cropped = await cropImageDataUrl(full, rect);
-          cleanup();
           await addScreenshotToWorkspace(cropped, '网页选区截图');
+          cleanup();
         } catch (error) {
           cleanup();
           showToast(error.message || '网页截图失败');
@@ -4005,6 +4027,41 @@ class ADHDHighlighter {
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); processImageBatch(e.dataTransfer?.files).catch(err => showToast(err.message || '图片处理失败')); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
     const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
+    const clearImageWorkspace = () => {
+      currentMediaBatch = [];
+      currentMediaContext = null;
+      if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '工作区已清除，识别历史仍保留';
+      refreshImageWorkspaceActions();
+    };
+    const deleteImageWorkspaceAndHistory = async () => {
+      const ids = new Set(currentMediaBatch.map(ctx => ctx?.metadata?.historyId).filter(Boolean));
+      if (!ids.size || !window.confirm('将清除当前工作区，并删除这些图片对应的识别历史。此操作不可恢复，是否继续？')) return;
+      const history = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : [])));
+      await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: history.filter(item => !ids.has(item.id)) }, resolve));
+      clearImageWorkspace();
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '工作区和对应识别历史已删除';
+      renderImageHistory();
+    };
+    const safeExportName = name => String(name || 'image').replace(/[^a-z0-9._-]+/gi, '_').replace(/^\.+/, '') || 'image';
+    const downloadBlob = (blob, name) => { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+    const exportImageWorkspace = async () => {
+      if (!currentMediaBatch.length) { showToast('工作区没有图片可导出。'); return; }
+      for (let i = 0; i < currentMediaBatch.length; i++) {
+        const ctx = currentMediaBatch[i];
+        let dataUrl = ctx.image?.dataUrl || '';
+        if (!dataUrl && ctx.image?.sourceUrl) {
+          const img = Array.from(document.images || []).find(x => (x.currentSrc || x.src) === ctx.image.sourceUrl);
+          if (img) { try { dataUrl = await imageElementToDataUrl(img); } catch (_) {} }
+        }
+        if (!dataUrl) continue;
+        const base = `${String(i + 1).padStart(2, '0')}-${safeExportName(ctx.image?.name || '图片')}`;
+        const response = await fetch(dataUrl);
+        downloadBlob(await response.blob(), `${base}.png`);
+        if (ctx.recognition?.text) downloadBlob(new Blob([ctx.recognition.text], { type: 'text/plain;charset=utf-8' }), `${base}.txt`);
+      }
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已导出图片；已识别图片同时导出 TXT 文本';
+    };
     if (imageAddToChat) imageAddToChat.onclick = () => {
       const usable = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).filter(x => x?.recognition?.status === 'completed' && x.recognition.text);
       if (!usable.length) { showToast('还没有完成识别的图片。'); return; }
@@ -4017,6 +4074,9 @@ class ADHDHighlighter {
       showChat();
     };
     if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
+    if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = clearImageWorkspace;
+    if (imageWorkspaceDeleteBtn) imageWorkspaceDeleteBtn.onclick = () => deleteImageWorkspaceAndHistory().catch(e => showToast(e.message || '删除失败'));
+    if (imageWorkspaceExportBtn) imageWorkspaceExportBtn.onclick = () => exportImageWorkspace().catch(e => showToast(e.message || '导出失败'));
     if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
     let quizItems = [];
     let quizIndex = 0;
