@@ -3032,6 +3032,9 @@ class ADHDHighlighter {
                       <div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div>
                       <div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div>
                       <div class="agf-hint">图片或音频发送给 AI 前会再次确认；默认只保存解析后的文字结果，不保存原始媒体。</div>
+                      <div class="agf-settings-row"><div class="agf-label">朗读语言</div><select id="agfSpeakLanguage" class="agf-select"><option value="auto">自动识别</option><option value="zh-CN">中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option></select></div>
+                      <div class="agf-settings-row"><div class="agf-label">朗读音色</div><select id="agfSpeakVoice" class="agf-select"><option value="">跟随语言默认音色</option></select></div>
+                      <div class="agf-settings-row"><div class="agf-label">朗读语速</div><input id="agfSpeakRate" class="agf-input" type="number" min="0.5" max="2" step="0.1" value="1" /><span class="agf-hint">0.5–2.0</span></div>
                       <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3200,6 +3203,9 @@ class ADHDHighlighter {
     const speakBtn = document.getElementById('agfBtnSpeak');
     const glmVisionKeyInput = document.getElementById('agfGlmVisionKeyInput');
     const saveGlmVisionKeyBtn = document.getElementById('agfSaveGlmVisionKeyBtn');
+    const speakLanguageSelect = document.getElementById('agfSpeakLanguage');
+    const speakVoiceSelect = document.getElementById('agfSpeakVoice');
+    const speakRateInput = document.getElementById('agfSpeakRate');
     const testTextBtn = document.getElementById('agfTestTextBtn');
     const fulltextPanel = document.getElementById('agfFulltextPanel');
     const fulltextContent = document.getElementById('agfFulltextContent');
@@ -4083,6 +4089,22 @@ class ADHDHighlighter {
       saveGlmVisionKeyBtn.addEventListener('click', () => { const value = String(glmVisionKeyInput.value || '').trim(); if (!value) return; chrome.storage.local.set({ glmVisionApiKey: value }, () => { glmVisionKeyInput.value = ''; glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; showToast('GLM-4V-Flash Key 已保存'); }); });
       chrome.storage.local.get(['glmVisionApiKey'], r => { if (r.glmVisionApiKey) glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; });
     }
+    const speakSettingsKey = 'agfTaixueSpeakSettings';
+    let availableSpeakVoices = [];
+    const persistSpeakSettings = () => { try { chrome.storage.local.set({ [speakSettingsKey]: { language: speakLanguageSelect?.value || 'auto', voice: speakVoiceSelect?.value || '', rate: Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))) } }); } catch (_) {} };
+    const refreshSpeakVoices = () => {
+      if (!speakVoiceSelect || !('speechSynthesis' in window)) return;
+      availableSpeakVoices = window.speechSynthesis.getVoices() || [];
+      const lang = speakLanguageSelect?.value || 'auto'; const previous = speakVoiceSelect.value;
+      speakVoiceSelect.innerHTML = '<option value="">跟随语言默认音色</option>';
+      availableSpeakVoices.filter(v => lang === 'auto' || v.lang === lang || v.lang.toLowerCase().startsWith(lang.split('-')[0].toLowerCase())).forEach(v => { const opt = document.createElement('option'); opt.value = v.voiceURI || v.name; opt.textContent = `${v.name} (${v.lang})${v.default ? ' · 默认' : ''}`; speakVoiceSelect.appendChild(opt); });
+      if (Array.from(speakVoiceSelect.options).some(o => o.value === previous)) speakVoiceSelect.value = previous;
+    };
+    const initSpeakSettings = async () => { try { const r = await chrome.storage.local.get([speakSettingsKey]); const s = r[speakSettingsKey] || {}; if (speakLanguageSelect) speakLanguageSelect.value = s.language || 'auto'; if (speakRateInput) speakRateInput.value = String(s.rate || 1); refreshSpeakVoices(); if (speakVoiceSelect) speakVoiceSelect.value = s.voice || ''; } catch (_) { refreshSpeakVoices(); } };
+    if (speakLanguageSelect) speakLanguageSelect.addEventListener('change', () => { refreshSpeakVoices(); persistSpeakSettings(); });
+    if (speakVoiceSelect) speakVoiceSelect.addEventListener('change', persistSpeakSettings);
+    if (speakRateInput) speakRateInput.addEventListener('change', persistSpeakSettings);
+    if ('speechSynthesis' in window) { window.speechSynthesis.addEventListener('voiceschanged', refreshSpeakVoices); initSpeakSettings(); }
 
     initFromStorage();
 
@@ -5845,7 +5867,7 @@ class ADHDHighlighter {
       if (speechSynthesis.paused) { speechSynthesis.resume(); speakBtn.textContent = '暂停朗读'; return; }
       const selected = getSelectedTextSafe(); const text = selected || String((chatMessages.length && chatMessages[chatMessages.length - 1]?.content) || '').trim() || String(document.querySelector('.agf-chat-list')?.innerText || '').trim();
       if (!text) { showToast('没有可朗读的文本'); return; }
-      const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); utterance.lang = /^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US'; utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
+      const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); const selectedLang = speakLanguageSelect?.value || 'auto'; utterance.lang = selectedLang === 'auto' ? (/^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US') : selectedLang; const selectedVoiceId = speakVoiceSelect?.value || ''; const selectedVoice = availableSpeakVoices.find(v => (v.voiceURI || v.name) === selectedVoiceId); if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; } utterance.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
     };
     if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { if (currentView === 'quiz') showQuizHistory(); else if (currentView === 'explain') { setView('explain'); renderExplainHistory(); } else if (currentView === 'vocab') { setView('vocab'); renderVocabHistory(); } else showRecords(); };
     if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
