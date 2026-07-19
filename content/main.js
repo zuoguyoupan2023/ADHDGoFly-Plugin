@@ -3263,6 +3263,12 @@ class ADHDHighlighter {
     const composerHidden = document.getElementById('agfComposerHidden');
     const composerSend = document.getElementById('agfComposerSend');
     const addFullBtn = document.getElementById('agfAddFullTextBtn');
+    const chatImagePlusBtn = document.createElement('button');
+    chatImagePlusBtn.type = 'button'; chatImagePlusBtn.className = 'agf-send'; chatImagePlusBtn.textContent = '+'; chatImagePlusBtn.title = '添加图片到当前对话';
+    if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatImagePlusBtn, addFullBtn);
+    const chatImageInput = document.createElement('input');
+    chatImageInput.type = 'file'; chatImageInput.accept = 'image/*'; chatImageInput.style.display = 'none';
+    overlay.appendChild(chatImageInput);
     const carryWrap = document.getElementById('agfCarryWrap');
     const carryInput = document.getElementById('agfCarryInput');
     let carryEdited = false;
@@ -3621,8 +3627,8 @@ class ADHDHighlighter {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;
       const result = currentMediaContext?.recognition?.text || '';
-      if (!media || !result) { mediaAttachment.style.display = 'none'; mediaAttachment.innerHTML = ''; return; }
-      mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong><div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div></div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
+      if (!media) { mediaAttachment.style.display = 'none'; mediaAttachment.innerHTML = ''; return; }
+      mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl || media.sourceUrl || ''}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong>${result ? `<div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div>` : '<div class="agf-media-attachment-result">等待当前视觉模型直接理解</div>'}</div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
       mediaAttachment.querySelector('.agf-media-attachment-remove').onclick = () => { currentMediaContext = null; renderMediaAttachment(); if (mediaStrategy) mediaStrategy.textContent = ''; if (visionOcrBtn) visionOcrBtn.disabled = true; };
     };
     const pageImagesForSource = (source) => {
@@ -3887,8 +3893,11 @@ class ADHDHighlighter {
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
       if ((!currentMediaContext || currentMediaContext.source !== 'image') && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
       const capabilities = taixueTask.getModelCapabilities(provider, model);
-      const contexts = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).filter(ctx => ctx?.recognition?.status === 'completed' && ctx.recognition.text);
-      if (!contexts.length) throw new Error('图片还没有完成识别，请先在图像工作区发送勾选图片识别。');
+      const allContexts = currentMediaBatch.length ? currentMediaBatch : [currentMediaContext];
+      const contexts = capabilities.vision
+        ? allContexts.filter(ctx => ctx?.image?.dataUrl || ctx?.image?.sourceUrl)
+        : allContexts.filter(ctx => ctx?.recognition?.status === 'completed' && ctx.recognition.text);
+      if (!contexts.length) throw new Error(capabilities.vision ? '没有可发送的图片，请先在 Chat 中添加图片或从图像工作区选择图片。' : '当前模型不支持原图，请先使用 GLM-4V-Flash 完成图片识别。');
       currentMediaContext = contexts[0];
       const mode = requestedMode === 'auto' ? (capabilities.vision ? 'image_and_recognition' : 'recognition_only') : requestedMode;
       const finalMode = mode === 'image_and_recognition' && !capabilities.vision ? 'recognition_only' : mode;
@@ -3942,6 +3951,47 @@ class ADHDHighlighter {
       if (imageAddToChat) imageAddToChat.disabled = currentMediaBatch.length === 0;
       if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false;
     };
+    const attachDirectChatImage = async (file) => {
+      if (!file) return;
+      const dataUrl = await readMediaFile(file, 'image');
+      const context = createTaixueContext({ source: 'chat_image', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      context.recognition = { status: 'not_requested', text: '' };
+      currentMediaBatch = [context]; currentMediaContext = context;
+      renderMediaAttachment();
+      if (mediaModeSelect) mediaModeSelect.value = 'auto';
+      if (mediaStrategy) mediaStrategy.textContent = '已添加原图：视觉模型可直接理解，纯文本模型需先用 GLM 识别';
+      showToast('图片已添加到当前对话');
+    };
+    const attachWorkspaceImageToChat = async () => {
+      if (!currentMediaBatch.length) { showToast('图像工作区中还没有图片。'); return; }
+      const labels = currentMediaBatch.map((ctx, index) => `${index + 1}. ${ctx.image?.name || `图片 ${index + 1}`}（${ctx.recognition?.status === 'completed' ? '已识别' : '未识别'}）`).join('\n');
+      const selected = Number(window.prompt(`选择要添加到当前对话的图片编号：\n${labels}`, '1')) - 1;
+      const context = currentMediaBatch[selected];
+      if (!context?.image) return;
+      if (!context.image.dataUrl && context.image.sourceUrl) {
+        const img = Array.from(document.images || []).find(x => (x.currentSrc || x.src) === context.image.sourceUrl);
+        if (img) { try { context.image.dataUrl = await imageElementToDataUrl(img); } catch (_) {} }
+      }
+      currentMediaBatch = [context]; currentMediaContext = context; renderMediaAttachment();
+      if (mediaStrategy) mediaStrategy.textContent = '已从图像工作区添加图片到当前对话';
+    };
+    const showChatImageMenu = () => {
+      const menu = document.createElement('div');
+      menu.style.cssText = 'position:fixed;z-index:2147483647;background:#fff;border:1px solid #d6dce5;border-radius:8px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:4px;';
+      menu.innerHTML = '<button data-chat-image-upload>上传图片</button><button data-chat-image-workspace>从图像工作区选择</button>';
+      const rect = chatImagePlusBtn.getBoundingClientRect(); menu.style.left = `${Math.max(8, rect.left - 130)}px`; menu.style.top = `${Math.max(8, rect.top - 76)}px`; document.body.appendChild(menu);
+      const close = () => { try { menu.remove(); } catch (_) {} };
+      menu.querySelector('[data-chat-image-upload]').onclick = () => { close(); chatImageInput.click(); };
+      menu.querySelector('[data-chat-image-workspace]').onclick = () => { close(); attachWorkspaceImageToChat().catch(error => showToast(error.message || '添加工作区图片失败')); };
+      setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
+    };
+    chatImagePlusBtn.onclick = event => {
+      event.preventDefault(); event.stopPropagation();
+      const upload = window.confirm('点击“确定”上传一张图片；点击“取消”从图像工作区选择图片。');
+      if (upload) chatImageInput.click();
+      else attachWorkspaceImageToChat().catch(error => showToast(error.message || '添加工作区图片失败'));
+    };
+    chatImageInput.onchange = () => attachDirectChatImage(chatImageInput.files?.[0]).catch(error => showToast(error.message || '添加图片失败'));
     const addScreenshotToWorkspace = async (dataUrl, name = '网页截图') => {
       const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name, delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
       addMediaContextsToWorkspace([ctx], { reset: false, statusText: '截图已加入图像工作区，等待发送识别' });
