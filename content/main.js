@@ -3494,7 +3494,7 @@ class ADHDHighlighter {
         const stored = await new Promise(resolve => chrome.storage.local.get(['glmVisionApiKey'], resolve));
         const key = String(stored.glmVisionApiKey || '').trim();
         if (!key) throw new Error('请先在太学设置中填写 GLM-4V-Flash Key');
-        if (!String(imageDataUrl || '').startsWith('data:image/')) throw new Error('当前上下文不是有效图片');
+        if (!String(imageDataUrl || '').startsWith('data:image/') && !/^https?:\/\//i.test(String(imageDataUrl || ''))) throw new Error('当前上下文不是有效图片');
         const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1024 });
         const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body, timeout: 60000 }, resolve));
         if (!resp || !resp.success || (typeof resp.status === 'number' && (resp.status < 200 || resp.status >= 300))) { const detail = resp?.data?.error?.message || resp?.data?.message || resp?.error || ''; throw new Error(`GLM 图片识别失败${detail ? `：${detail}` : '，请检查 Key、模型名称或图片大小'}`); }
@@ -3609,32 +3609,86 @@ class ADHDHighlighter {
         return true;
       });
       const seen = new Set();
-      return imgs.filter(img => { const key = img.currentSrc || img.src; if (seen.has(key)) return false; seen.add(key); return img.naturalWidth >= 80 && img.naturalHeight >= 40; }).slice(0, 8);
+      const candidates = imgs.filter(img => { const key = img.currentSrc || img.src; if (seen.has(key)) return false; seen.add(key); const rect = img.getBoundingClientRect(); const width = Math.max(img.naturalWidth || 0, rect.width || 0); const height = Math.max(img.naturalHeight || 0, rect.height || 0); const inViewport = rect.bottom >= 0 && rect.right >= 0 && rect.top <= window.innerHeight && rect.left <= window.innerWidth; return width >= 80 && height >= 40 && (source !== 'selection' || inViewport); });
+      return { candidates, total: candidates.length, selected: candidates.slice(0, 8) };
     };
     const imageElementToDataUrl = async (img) => {
       if (String(img.currentSrc || img.src).startsWith('data:image/')) return img.currentSrc || img.src;
-      const response = await fetch(img.currentSrc || img.src, { credentials: 'include' });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      let response;
+      try { response = await fetch(img.currentSrc || img.src, { credentials: 'include', signal: controller.signal }); } catch (error) { throw new Error(error.name === 'AbortError' ? '图片下载超时' : `图片下载失败：${error.message || error}`); } finally { clearTimeout(timer); }
       if (!response.ok) throw new Error(`图片下载失败（${response.status}）`);
       const blob = await response.blob();
       return await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('图片读取失败')); reader.readAsDataURL(blob); });
     };
+    const withMediaTimeout = (promise, timeoutMs = 75000) => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`图片识别超时（>${Math.round(timeoutMs / 1000)}秒），已跳过此图`)), timeoutMs);
+      promise.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+    });
+    const capturePageScreenshot = async () => {
+      const overlay = document.getElementById('agfAiSettingOverlay');
+      const previousDisplay = overlay && overlay.style.display;
+      if (overlay) overlay.style.display = 'none';
+      try {
+        const result = await withMediaTimeout(new Promise(resolve => chrome.runtime.sendMessage({ action: 'captureVisibleTabScreenshot' }, resolve)), 15000);
+        if (!result?.success || !result.dataUrl) throw new Error(result?.error || '无法获取网页截图');
+        return result.dataUrl;
+      } finally { if (overlay) overlay.style.display = previousDisplay || ''; }
+    };
     const discoverAndConfirmPageImages = async (source) => {
-      const imgs = pageImagesForSource(source);
-      if (!imgs.length) return [];
+      const imageSet = pageImagesForSource(source);
+      const imgs = imageSet.selected;
+      if (!imgs.length) {
+        const useScreenshot = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}没有检测到可直接读取的图片。是否截图当前网页视窗并发送给 GLM-4V-Flash 识别？\n注意：截图不包含浏览器侧边栏，太学浮层会暂时隐藏。`);
+        if (!useScreenshot) return [];
+        try {
+          const dataUrl = await capturePageScreenshot();
+          const output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `请识别这张网页视窗截图中的主要图片、图表和文字内容。${source === 'selection' ? '重点关注用户选区附近的内容。' : ''}不要描述浏览器或插件界面。` }), 75000);
+          const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name: '当前网页视窗截图', delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
+          ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
+          return [ctx];
+        } catch (error) { showToast(`网页截图识别失败：${error.message || error}`); return []; }
+      }
       const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
       if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('发现网页图片，但媒体权限或上传开关未开启，将只使用文本。'); return []; }
-      const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imgs.length} 张图片。将使用 GLM-4V-Flash 逐张识别，并把图片发送给智谱 AI。是否识别并加入上下文？`);
+      const limitHint = imageSet.total > imgs.length ? `（实际发现 ${imageSet.total} 张，本次最多处理前 ${imgs.length} 张）` : '';
+      const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imageSet.total} 张可见图片${limitHint}。将使用 GLM-4V-Flash 逐张识别，并把图片发送给智谱 AI。是否识别并加入上下文？`);
       if (!ok) return [];
       const results = [];
       for (let i = 0; i < imgs.length; i++) {
         try {
           if (mediaStrategy) mediaStrategy.textContent = `正在识别网页图片 ${i + 1}/${imgs.length}…`;
-          const dataUrl = await imageElementToDataUrl(imgs[i]);
-          const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `这是网页${source === 'selection' ? '选区' : '全文'}中的第 ${i + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明。` });
-          const ctx = createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl, mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imgs[i].currentSrc || imgs[i].src }, confirmed: true, sourceUrl: location.href });
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在处理网页图片 ${i + 1}/${imgs.length}（下载与识别，最多约 75 秒）…`;
+          const imageUrl = imgs[i].currentSrc || imgs[i].src;
+          const prompt = `这是网页${source === 'selection' ? '选区' : '全文'}中的第 ${i + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明。`;
+          let dataUrl = '';
+          let delivery = 'link';
+          let output;
+          try {
+            output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: imageUrl, prompt }), 75000);
+          } catch (linkError) {
+            try {
+              dataUrl = await imageElementToDataUrl(imgs[i]);
+              delivery = 'download';
+              output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt }), 75000);
+            } catch (downloadError) {
+              try {
+                dataUrl = await capturePageScreenshot();
+                delivery = 'screenshot';
+                output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `${prompt}\n这是一张当前网页视窗截图，请只识别截图中对应的网页内容，不要描述浏览器或插件界面。` }), 75000);
+              } catch (screenshotError) {
+                throw new Error(`链接、下载、截图均失败：链接=${linkError.message || linkError}；下载=${downloadError.message || downloadError}；截图=${screenshotError.message || screenshotError}`);
+              }
+            }
+          }
+          const ctx = createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl, mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imageUrl, delivery }, confirmed: true, sourceUrl: location.href });
           ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
           results.push(ctx);
-        } catch (error) { results.push(createTaixueContext({ source, image: { name: `网页图片 ${i + 1}`, sourceUrl: imgs[i].src }, confirmed: true, sourceUrl: location.href, metadata: { recognitionError: String(error.message || error) } })); }
+        } catch (error) {
+          results.push(createTaixueContext({ source, image: { name: `网页图片 ${i + 1}`, sourceUrl: imgs[i].src }, confirmed: true, sourceUrl: location.href, metadata: { recognitionError: String(error.message || error) } }));
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `网页图片 ${i + 1}/${imgs.length} 失败，继续下一张…`;
+        }
       }
       if (mediaStrategy) mediaStrategy.textContent = `网页图片识别完成 ${results.filter(x => x.recognition?.status === 'completed').length}/${imgs.length} 张`;
       return results;
@@ -3714,7 +3768,10 @@ class ADHDHighlighter {
           if (imageAddToChat) imageAddToChat.disabled = false;
           if (visionOcrBtn) visionOcrBtn.disabled = false;
           setView('image');
-        } else if (contexts.length) showToast('网页图片均未能识别，请检查图片地址或 GLM Key。');
+        } else if (contexts.length) {
+          const errors = contexts.map((x, i) => `图片${i + 1}：${x.metadata?.recognitionError || '未知错误'}`).join('；');
+          showToast(`网页图片识别失败：${errors}`);
+        }
         else showToast('当前上下文没有发现可识别图片。');
       } catch (error) { showToast(error.message || '网页图片发现失败'); }
       pageImageDiscoverBtn.disabled = false;
@@ -4062,9 +4119,10 @@ class ADHDHighlighter {
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-5.3', 'glm-5', 'glm-4.7', 'glm-4.6'],
+        models: ['glm-5.2', 'glm-5.1', 'glm-5', 'glm-4.7', 'glm-4.6'],
         modelInfo: {
-          'glm-5.3': { label: 'GLM-5.3', contextWindow: 128000, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'needs_verification' },
+          'glm-5.2': { label: 'GLM-5.2', contextWindow: 1000000, maxOutputTokens: 131072, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'glm-5.1': { label: 'GLM-5.1', contextWindow: 200000, maxOutputTokens: 131072, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-5': { label: 'GLM-5', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-4.7': { label: 'GLM-4.7', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-4.6': { label: 'GLM-4.6', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }

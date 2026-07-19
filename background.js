@@ -490,7 +490,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     })();
     return true;
-    } else if (request.action === 'aiChatRequest') {
+  } else if (request.action === 'aiChatRequest') {
     (async () => {
       try {
         const controller = new AbortController();
@@ -512,6 +512,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, status: resp.status, data });
       } catch (error) {
         sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  } else if (request.action === 'captureVisibleTabScreenshot') {
+    (async () => {
+      try {
+        const tabId = sender && sender.tab && sender.tab.id;
+        if (!tabId) { sendResponse({ success: false, error: '无法确定当前网页标签页' }); return; }
+        const tab = await chrome.tabs.get(tabId);
+        const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+        sendResponse({ success: true, dataUrl });
+      } catch (error) {
+        sendResponse({ success: false, error: `网页截图失败：${error.message || error}` });
       }
     })();
     return true;
