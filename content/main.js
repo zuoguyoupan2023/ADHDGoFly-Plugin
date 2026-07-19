@@ -2617,6 +2617,7 @@ class ADHDHighlighter {
       .agf-module-result .agf-vocab-card{border:1px solid #e1e6ef;border-radius:10px;padding:12px;margin:8px 0}.agf-vocab-card button{margin-top:8px}
       .agf-module-actions{display:flex;gap:8px;margin-top:14px}.agf-module-actions button{border:1px solid #dfe5f2;border-radius:8px;background:#fff;padding:7px 11px;color:#315efb;cursor:pointer}.agf-module-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}.agf-module-actions button:disabled{opacity:.5;cursor:not-allowed}
       .agf-module-history{margin-top:18px;border-top:1px solid #edf0f6;padding-top:10px}.agf-history-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f6;font-size:12px}.agf-history-row button{padding:4px 7px;font-size:11px}
+      .agf-image-dropzone{border:2px dashed #c9d5f2;border-radius:12px;padding:28px;text-align:center;color:#687386;background:#fbfcff}.agf-image-dropzone.dragover{border-color:#315efb;background:#f0f4ff}.agf-image-dropzone button{border:0;border-radius:8px;padding:8px 14px;background:#315efb;color:#fff;cursor:pointer}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
@@ -2854,7 +2855,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph">段落</button>
         </div>
         <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><select id="agfMediaModeSelect" class="agf-select" title="图片发送方式"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label">任务</span>
@@ -2935,6 +2936,7 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div class="agf-module-actions"><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3128,6 +3130,7 @@ class ADHDHighlighter {
     const viewQuiz = document.getElementById('agfAiViewQuiz');
     const viewExplain = document.getElementById('agfAiViewExplain');
     const viewVocab = document.getElementById('agfAiViewVocab');
+    const viewImage = document.getElementById('agfAiViewImage');
     const quizTab = document.getElementById('agfAiTabQuiz');
     const explainTab = document.getElementById('agfAiTabExplain');
     const vocabTab = document.getElementById('agfAiTabVocab');
@@ -3140,6 +3143,15 @@ class ADHDHighlighter {
     const vocabStats = document.getElementById('agfVocabStats');
     const vocabStart = document.getElementById('agfVocabStart');
     const vocabReset = document.getElementById('agfVocabReset');
+    const imageDropzone = document.getElementById('agfImageDropzone');
+    const imageChooseBtn = document.getElementById('agfImageChooseBtn');
+    const workspaceImageInput = document.getElementById('agfWorkspaceImageInput');
+    const imageWorkspaceResult = document.getElementById('agfImageWorkspaceResult');
+    const imageWorkspaceStatus = document.getElementById('agfImageWorkspaceStatus');
+    const imageAddToChat = document.getElementById('agfImageAddToChat');
+    const imageWorkspaceRetry = document.getElementById('agfImageWorkspaceRetry');
+    const imageWorkspaceHistoryBtn = document.getElementById('agfImageWorkspaceHistory');
+    const imageWorkspaceHistoryList = document.getElementById('agfImageWorkspaceHistoryList');
     const vocabHistory = document.getElementById('agfVocabHistory');
     const quizCard = document.getElementById('agfQuizCard');
     const quizResult = document.getElementById('agfQuizResult');
@@ -3161,6 +3173,9 @@ class ADHDHighlighter {
     const audioContextBtn = document.getElementById('agfAudioContextBtn');
     const imageContextInput = document.getElementById('agfImageContextInput');
     const audioContextInput = document.getElementById('agfAudioContextInput');
+    const mediaModeSelect = document.getElementById('agfMediaModeSelect');
+    const mediaStrategy = document.getElementById('agfMediaStrategy');
+    if (mediaModeSelect) mediaModeSelect.disabled = true;
     const statusText = document.getElementById('agfStatusText');
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
@@ -3457,6 +3472,10 @@ class ADHDHighlighter {
       return parsed;
     };
     const taixueTask = {
+      getModelCapabilities(provider, model) {
+        const p = String(provider || '').toLowerCase(); const m = String(model || '').toLowerCase();
+        return { text: true, vision: (p === 'openai' && /^gpt-5|^gpt-4o/.test(m)) || (p === 'gemini' && !m.includes('tts') && !m.includes('embedding')) || (p === 'chatglm' && /4v|vision/.test(m)), audio: false, imageGeneration: false };
+      },
       async requestGlmVision({ imageDataUrl, prompt = '请识别图片内容，并先输出图片中的文字，再补充简要说明。' }) {
         const stored = await new Promise(resolve => chrome.storage.local.get(['glmVisionApiKey'], resolve));
         const key = String(stored.glmVisionApiKey || '').trim();
@@ -3510,7 +3529,7 @@ class ADHDHighlighter {
     const updateTaskBar = (which) => {
       const groups = {
         chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak'],
-        quiz: [], explain: ['agfBtnSelectionExplain'], vocab: []
+        quiz: [], explain: ['agfBtnSelectionExplain'], vocab: [], image: []
       };
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
@@ -3527,6 +3546,7 @@ class ADHDHighlighter {
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
       if (viewExplain) viewExplain.style.display = which === 'explain' ? 'block' : 'none';
       if (viewVocab) viewVocab.style.display = which === 'vocab' ? 'block' : 'none';
+      if (viewImage) viewImage.style.display = which === 'image' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
@@ -3551,6 +3571,17 @@ class ADHDHighlighter {
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
+    const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
+      if (!currentMediaContext || currentMediaContext.source !== 'image') return { mode: 'none', context: null };
+      const capabilities = taixueTask.getModelCapabilities(provider, model);
+      if (!currentMediaContext.recognition || currentMediaContext.recognition.status !== 'completed') {
+        const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”，尽量逐行保留原文；再输出“图片说明”，说明主要内容、布局和重要视觉信息。无法确认的内容请标注不确定。' });
+        currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
+      }
+      const mode = requestedMode === 'auto' ? (capabilities.vision ? 'image_and_recognition' : 'recognition_only') : requestedMode;
+      const finalMode = mode === 'image_and_recognition' && !capabilities.vision ? 'recognition_only' : mode;
+      return { mode: finalMode, requestedMode, context: currentMediaContext, capabilities };
+    };
     const readMediaFile = (file, kind) => new Promise((resolve, reject) => {
       if (!file) return reject(new Error('没有选择文件'));
       const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('读取媒体失败')); reader.readAsDataURL(file);
@@ -3563,13 +3594,26 @@ class ADHDHighlighter {
       const dataUrl = await readMediaFile(file, kind);
       currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
       if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
+      if (mediaModeSelect) mediaModeSelect.disabled = false;
+      if (mediaStrategy) mediaStrategy.textContent = '图片已加入，等待发送时判断模型能力';
       if (contextSummary) contextSummary.textContent = `当前上下文：${kind === 'image' ? '图片' : '音频'} · ${file.name}`;
-      showToast(`${kind === 'image' ? '图片' : '音频'}已加入上下文，发送前仍会再次检查权限。`);
+      if (kind === 'image' && imageWorkspaceStatus) { imageWorkspaceStatus.textContent = '识别中…'; imageWorkspaceResult.innerHTML = `<p>已添加：${String(file.name)}</p><img src="${dataUrl}" alt="待识别图片" style="max-width:180px;max-height:120px;border-radius:8px"/>`; }
+      if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); history.unshift({ id: `image-${Date.now()}`, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
+      else showToast('音频已加入上下文，音频转写功能尚未开启。');
     };
-    if (imageContextBtn) imageContextBtn.onclick = () => imageContextInput && imageContextInput.click();
+    if (imageContextBtn) imageContextBtn.onclick = () => setView('image');
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
+    if (mediaModeSelect) mediaModeSelect.onchange = () => { if (mediaStrategy && currentMediaContext) mediaStrategy.textContent = mediaModeSelect.value === 'recognition_only' ? '将发送识别结果' : mediaModeSelect.value === 'image_and_recognition' ? '将尝试发送原图+识别结果' : '发送时自动判断模型能力'; };
+    if (imageChooseBtn) imageChooseBtn.onclick = () => workspaceImageInput && workspaceImageInput.click();
+    if (workspaceImageInput) workspaceImageInput.onchange = () => { const file = workspaceImageInput.files && workspaceImageInput.files[0]; if (file) chooseMedia('image', file); };
+    if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); const file = e.dataTransfer?.files?.[0]; if (file) chooseMedia('image', file); }; }
+    const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
+    const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row"><span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; } }); };
+    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaContext?.recognition?.text) return; if (inputUser) inputUser.innerText = '请基于这张图片及其识别结果回答我的问题：\n\n[图片识别结果]\n' + currentMediaContext.recognition.text; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
+    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
+    if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
     let quizItems = [];
     let quizIndex = 0;
     let quizScore = 0;
@@ -5237,8 +5281,8 @@ class ADHDHighlighter {
     };
 
     const toOpenAIStyle = (arr) => (arr || chatMessages).map(m => ({ role: m.role, content: m.content }));
-    const toAnthropicStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: [{ type: 'text', text: m.content }] }));
-    const toGeminiStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: [{ text: m.content }] }));
+    const toAnthropicStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'assistant' : 'user'), content: Array.isArray(m.content) ? m.content.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: String(p.image_url?.url || '').split(';')[0].replace('data:', ''), data: String(p.image_url?.url || '').split(',')[1] || '' } } : { type: 'text', text: String(p.text || '') }) : [{ type: 'text', text: m.content }] }));
+    const toGeminiStyle = (arr) => (arr || chatMessages).map(m => ({ role: (m.role === 'assistant' ? 'model' : 'user'), parts: Array.isArray(m.content) ? m.content.map(p => p.type === 'image_url' ? { inline_data: { mime_type: String(p.image_url?.url || '').split(';')[0].replace('data:', ''), data: String(p.image_url?.url || '').split(',')[1] || '' } } : { text: String(p.text || '') }) : [{ text: m.content }] }));
     const buildCarryMessages = (x) => {
       const msgs = chatMessages.slice();
       const userIdxs = [];
@@ -5265,6 +5309,10 @@ class ADHDHighlighter {
       const model = sessionModelSelect.value;
       currentReplyProvider = prov;
       currentReplyModel = model;
+      let mediaPlan = { mode: 'none', context: null };
+      try { mediaPlan = await prepareMediaForChat(prov, model, mediaModeSelect?.value || 'auto'); } catch (e) { showToast(e.message || '图片识别失败'); return; }
+      if (mediaStrategy && mediaPlan.context) mediaStrategy.textContent = mediaPlan.mode === 'image_and_recognition' ? '将发送原图+识别结果' : '将发送识别结果';
+      if (mediaPlan.requestedMode === 'image_and_recognition' && mediaPlan.mode !== 'image_and_recognition') showToast('当前 Chat 模型不支持图片，已降级为仅发送识别结果。');
       let q = (composerHidden.value || '').trim();
       if (!q) {
         try {
@@ -5287,6 +5335,10 @@ class ADHDHighlighter {
         prompt = normPrefix + q + ',我和你的讨论是基于{' + addedFullText + '}';
         displayPrompt = normPrefix + q + (addedFullLinkPreview || '');
       }
+      if (mediaPlan.mode === 'recognition_only' && mediaPlan.context?.recognition?.text) {
+        prompt = `${prompt}\n\n[图片识别结果]\n${mediaPlan.context.recognition.text}`.trim();
+        displayPrompt = `${displayPrompt}\n\n[图片识别结果已加入]`;
+      }
       if (!prompt) return;
       if (!currentConversationId) { try { await newConversation(); } catch (_) {} }
       const bodyLabelDetect2 = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
@@ -5294,6 +5346,10 @@ class ADHDHighlighter {
       const userIndex = chatMessages.length;
       chatMessages.push({ role: 'user', content: prompt });
       appendMessage('user', displayPrompt, { highlight: !isGeneratedPrompt, msgIndex: userIndex });
+      currentMediaContext = null;
+      if (visionOcrBtn) visionOcrBtn.disabled = true;
+      if (mediaModeSelect) { mediaModeSelect.value = 'auto'; mediaModeSelect.disabled = true; }
+      if (mediaStrategy) mediaStrategy.textContent = '';
       nextPromptIsGenerated = false;
       if (inputUser) inputUser.innerText = '';
       if (composerHidden) composerHidden.value = '';
@@ -5331,6 +5387,10 @@ class ADHDHighlighter {
         const x = carryInput ? Math.max(0, Math.min(4, parseInt(String(carryInput.value||'0'),10)||0)) : 0;
         subset = buildCarryMessages(x);
       } catch (_) {}
+      if (mediaPlan.mode === 'image_and_recognition' && mediaPlan.context?.image?.dataUrl && subset.length) {
+        const last = subset[subset.length - 1];
+        if (last && last.role === 'user') last.content = [{ type: 'image_url', image_url: { url: mediaPlan.context.image.dataUrl } }, { type: 'text', text: String(last.content || '') + `\n\n[图片识别结果]\n${mediaPlan.context.recognition?.text || ''}` }];
+      }
       if (prov === 'anthropic') {
         headers['x-api-key'] = key;
         headers['anthropic-version'] = '2023-06-01';
