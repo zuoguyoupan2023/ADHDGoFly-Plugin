@@ -3477,7 +3477,16 @@ class ADHDHighlighter {
     const taixueTask = {
       getModelCapabilities(provider, model) {
         const p = String(provider || '').toLowerCase(); const m = String(model || '').toLowerCase();
-        return { text: true, vision: (p === 'openai' && /^gpt-5|^gpt-4o/.test(m)) || (p === 'gemini' && !m.includes('tts') && !m.includes('embedding')) || (p === 'chatglm' && /4v|vision/.test(m)), audio: false, imageGeneration: false };
+        const registered = {
+          'openai/gpt-4o': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
+          'openai/gpt-5': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
+          'gemini/gemini-1.5-pro': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
+          'gemini/gemini-1.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
+          'gemini/gemini-2.0-flash-001': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
+          'gemini/gemini-2.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }
+        };
+        const entry = registered[`${p}/${m}`] || {};
+        return { text: true, vision: entry.vision === true, audio: false, imageGeneration: false, supportsBatchVision: entry.supportsBatchVision === true, maxImagesPerRequest: entry.maxImagesPerRequest || 1, strategy: entry.vision ? 'vision' : 'recognition_then_text' };
       },
       async requestGlmVision({ imageDataUrl, prompt = '请识别图片内容，并先输出图片中的文字，再补充简要说明。' }) {
         const stored = await new Promise(resolve => chrome.storage.local.get(['glmVisionApiKey'], resolve));
@@ -3586,16 +3595,57 @@ class ADHDHighlighter {
       mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong><div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div></div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
       mediaAttachment.querySelector('.agf-media-attachment-remove').onclick = () => { currentMediaContext = null; renderMediaAttachment(); if (mediaStrategy) mediaStrategy.textContent = ''; if (visionOcrBtn) visionOcrBtn.disabled = true; };
     };
+    const pageImagesForSource = (source) => {
+      const root = source === 'selection' ? window.getSelection()?.anchorNode : document.body;
+      const selectedRoot = root && (root.nodeType === 1 ? root : root.parentElement);
+      const imgs = Array.from(document.images || []).filter(img => {
+        if (!img || !img.src || img.closest('#agfTaixuePanel')) return false;
+        if (source === 'selection') return selectedRoot && (selectedRoot.contains(img) || img.contains(selectedRoot));
+        return true;
+      });
+      const seen = new Set();
+      return imgs.filter(img => { const key = img.currentSrc || img.src; if (seen.has(key)) return false; seen.add(key); return img.naturalWidth >= 80 && img.naturalHeight >= 40; }).slice(0, 8);
+    };
+    const imageElementToDataUrl = async (img) => {
+      if (String(img.currentSrc || img.src).startsWith('data:image/')) return img.currentSrc || img.src;
+      const response = await fetch(img.currentSrc || img.src, { credentials: 'include' });
+      if (!response.ok) throw new Error(`图片下载失败（${response.status}）`);
+      const blob = await response.blob();
+      return await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('图片读取失败')); reader.readAsDataURL(blob); });
+    };
+    const discoverAndConfirmPageImages = async (source) => {
+      const imgs = pageImagesForSource(source);
+      if (!imgs.length) return [];
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
+      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('发现网页图片，但媒体权限或上传开关未开启，将只使用文本。'); return []; }
+      const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imgs.length} 张图片。将使用 GLM-4V-Flash 逐张识别，并把图片发送给智谱 AI。是否识别并加入上下文？`);
+      if (!ok) return [];
+      const results = [];
+      for (let i = 0; i < imgs.length; i++) {
+        try {
+          if (mediaStrategy) mediaStrategy.textContent = `正在识别网页图片 ${i + 1}/${imgs.length}…`;
+          const dataUrl = await imageElementToDataUrl(imgs[i]);
+          const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `这是网页${source === 'selection' ? '选区' : '全文'}中的第 ${i + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明。` });
+          const ctx = createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl, mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imgs[i].currentSrc || imgs[i].src }, confirmed: true, sourceUrl: location.href });
+          ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
+          results.push(ctx);
+        } catch (error) { results.push(createTaixueContext({ source, image: { name: `网页图片 ${i + 1}`, sourceUrl: imgs[i].src }, confirmed: true, sourceUrl: location.href, metadata: { recognitionError: String(error.message || error) } })); }
+      }
+      if (mediaStrategy) mediaStrategy.textContent = `网页图片识别完成 ${results.filter(x => x.recognition?.status === 'completed').length}/${imgs.length} 张`;
+      return results;
+    };
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
-      if (!currentMediaContext || currentMediaContext.source !== 'image') return { mode: 'none', context: null };
+      if ((!currentMediaContext || currentMediaContext.source !== 'image') && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
       const capabilities = taixueTask.getModelCapabilities(provider, model);
+      const contexts = currentMediaBatch.length ? currentMediaBatch : [currentMediaContext];
+      if (!currentMediaContext || currentMediaContext.source !== 'image') currentMediaContext = contexts[0];
       if (!currentMediaContext.recognition || currentMediaContext.recognition.status !== 'completed') {
         const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”，尽量逐行保留原文；再输出“图片说明”，说明主要内容、布局和重要视觉信息。无法确认的内容请标注不确定。' });
         currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
       }
       const mode = requestedMode === 'auto' ? (capabilities.vision ? 'image_and_recognition' : 'recognition_only') : requestedMode;
       const finalMode = mode === 'image_and_recognition' && !capabilities.vision ? 'recognition_only' : mode;
-      return { mode: finalMode, requestedMode, context: currentMediaContext, capabilities };
+      return { mode: finalMode, requestedMode, context: currentMediaContext, contexts, capabilities };
     };
     const readMediaFile = (file, kind) => new Promise((resolve, reject) => {
       if (!file) return reject(new Error('没有选择文件'));
@@ -3955,7 +4005,8 @@ class ADHDHighlighter {
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-4o', 'gpt-5', 'gpt-4']
+        models: ['gpt-4o', 'gpt-5', 'gpt-4'],
+        capabilities: { 'gpt-4o': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gpt-5': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 } }
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
@@ -3975,7 +4026,8 @@ class ADHDHighlighter {
       },
       gemini: {
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-        models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-001', 'gemini-2.5-flash']
+        models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-001', 'gemini-2.5-flash'],
+        capabilities: { 'gemini-1.5-pro': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-1.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-2.0-flash-001': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-2.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 } }
       },
       grok: {
         baseUrl: 'https://api.x.ai/v1/chat/completions',
@@ -5378,8 +5430,9 @@ class ADHDHighlighter {
         prompt = normPrefix + q + ',我和你的讨论是基于{' + addedFullText + '}';
         displayPrompt = normPrefix + q + (addedFullLinkPreview || '');
       }
-      if (mediaPlan.mode === 'recognition_only' && mediaPlan.context?.recognition?.text) {
-        prompt = `${prompt}\n\n[图片识别结果]\n${mediaPlan.context.recognition.text}`.trim();
+      if (mediaPlan.mode === 'recognition_only' && mediaPlan.contexts?.length) {
+        const recognized = mediaPlan.contexts.map((ctx, i) => ctx.recognition?.text ? `[图片 ${i + 1} 识别结果]\n${ctx.recognition.text}` : `[图片 ${i + 1} 识别失败]\n${ctx.metadata?.recognitionError || '无法获取识别结果'}`).join('\n\n');
+        prompt = `${prompt}\n\n${recognized}`.trim();
         displayPrompt = `${displayPrompt}\n\n[图片识别结果已加入]`;
       }
       if (!prompt) return;
@@ -5930,6 +5983,8 @@ class ADHDHighlighter {
       hideFulltextPanel();
       await updateStorageStatusUI();
       const ctx = await taixueContext.resolve(contextSource);
+      const discoveredImages = await discoverAndConfirmPageImages(contextSource === 'selection' ? 'selection' : 'full_article');
+      if (discoveredImages.length) { currentMediaBatch = discoveredImages.filter(x => x.recognition?.status === 'completed'); currentMediaContext = currentMediaBatch[0] || null; }
       const limitedContext = limitTaixueText(ctx.text, 50000);
       const raw = String(limitedContext.text || '');
       if (limitedContext.truncated || raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
