@@ -3175,6 +3175,12 @@ class ADHDHighlighter {
     const imageWorkspaceExportBtn = document.getElementById('agfImageWorkspaceExport');
     const imageWorkspaceHistoryBtn = document.getElementById('agfImageWorkspaceHistory');
     const imageWorkspaceHistoryList = document.getElementById('agfImageWorkspaceHistoryList');
+    const imageSelectPending = document.createElement('button');
+    const imageSelectFailed = document.createElement('button');
+    const imageSelectCompleted = document.createElement('button');
+    imageSelectPending.textContent = '未处理'; imageSelectFailed.textContent = '失败'; imageSelectCompleted.textContent = '已处理';
+    [imageSelectPending, imageSelectFailed, imageSelectCompleted].forEach(button => { button.type = 'button'; button.className = 'agf-image-filter-btn'; });
+    if (imageSelectAll?.parentElement) imageSelectAll.parentElement.after(imageSelectPending, imageSelectFailed, imageSelectCompleted);
     const vocabHistory = document.getElementById('agfVocabHistory');
     const quizCard = document.getElementById('agfQuizCard');
     const quizResult = document.getElementById('agfQuizResult');
@@ -3738,6 +3744,14 @@ class ADHDHighlighter {
       if (mediaModeSelect) mediaModeSelect.disabled = currentMediaBatch.length === 0;
       currentMediaContext = completed[0] || currentMediaBatch[0] || null;
     };
+    const selectWorkspaceByStatus = status => {
+      Array.from(imageWorkspaceResult?.querySelectorAll('.agf-page-image-check') || []).forEach(input => {
+        const ctx = currentMediaBatch[Number(input.dataset.imageIndex || '-1')];
+        const actual = ctx?.recognition?.status || (ctx?.metadata?.recognitionError ? 'failed' : 'pending');
+        input.checked = actual === status;
+      });
+      refreshImageWorkspaceActions();
+    };
     const addMediaContextsToWorkspace = (contexts, { reset = false, statusText: nextStatus = '' } = {}) => {
       if (reset) {
         currentMediaBatch = [];
@@ -4018,6 +4032,9 @@ class ADHDHighlighter {
       checks.forEach(input => { input.checked = imageSelectAll.checked; });
       refreshImageWorkspaceActions();
     };
+    imageSelectPending.onclick = () => selectWorkspaceByStatus('pending');
+    imageSelectFailed.onclick = () => selectWorkspaceByStatus('failed');
+    imageSelectCompleted.onclick = () => selectWorkspaceByStatus('completed');
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
@@ -4027,6 +4044,33 @@ class ADHDHighlighter {
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); processImageBatch(e.dataTransfer?.files).catch(err => showToast(err.message || '图片处理失败')); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
     const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
+    const enhanceImageHistoryControls = async () => {
+      if (!imageWorkspaceHistoryList) return;
+      if (!imageWorkspaceHistoryList.querySelector('[data-image-history-clear]')) {
+        const toolbar = document.createElement('div');
+        toolbar.style.cssText = 'display:flex;gap:6px;margin-bottom:8px;';
+        toolbar.innerHTML = '<button data-image-history-clear>清空历史</button>';
+        imageWorkspaceHistoryList.prepend(toolbar);
+        toolbar.querySelector('[data-image-history-clear]').onclick = async () => {
+          if (!window.confirm('确定清空全部图像识别历史吗？')) return;
+          await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: [] }, resolve));
+          await renderImageHistory(); await enhanceImageHistoryControls();
+        };
+      }
+      imageWorkspaceHistoryList.querySelectorAll('.agf-history-row').forEach(row => {
+        if (row.querySelector('[data-image-history-delete]')) return;
+        const view = row.querySelector('[data-image-history-id]');
+        if (!view) return;
+        const remove = document.createElement('button');
+        remove.textContent = '删除'; remove.dataset.imageHistoryDelete = view.dataset.imageHistoryId;
+        remove.onclick = async () => {
+          const history = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : [])));
+          await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: history.filter(item => item.id !== remove.dataset.imageHistoryDelete) }, resolve));
+          await renderImageHistory(); await enhanceImageHistoryControls();
+        };
+        row.appendChild(remove);
+      });
+    };
     const clearImageWorkspace = () => {
       currentMediaBatch = [];
       currentMediaContext = null;
@@ -4073,7 +4117,7 @@ class ADHDHighlighter {
       setView('chat');
       showChat();
     };
-    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
+    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = async () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; await renderImageHistory(); await enhanceImageHistoryControls(); };
     if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = clearImageWorkspace;
     if (imageWorkspaceDeleteBtn) imageWorkspaceDeleteBtn.onclick = () => deleteImageWorkspaceAndHistory().catch(e => showToast(e.message || '删除失败'));
     if (imageWorkspaceExportBtn) imageWorkspaceExportBtn.onclick = () => exportImageWorkspace().catch(e => showToast(e.message || '导出失败'));
