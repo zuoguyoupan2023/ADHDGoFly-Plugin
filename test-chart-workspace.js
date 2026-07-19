@@ -1,0 +1,7 @@
+const assert = require('node:assert/strict');
+const { renderSvg } = require('./content/chart-workspace.js');
+const svg = renderSvg({ intent: 'timeline', chartModel: { title: '发布历程', events: [{ date: '2026', label: '上线' }] } });
+assert.match(svg, /<svg/); assert.match(svg, /发布历程/); assert.match(svg, /上线/);
+const graph = renderSvg({ intent: 'relationship', chartModel: { title: '闭环', nodes: [{ id: 'a', label: '读' }, { id: 'b', label: '练' }], edges: [{ source: 'a', target: 'b', label: '转化' }] } });
+assert.match(graph, /marker-end/); assert.match(graph, /转化/);
+console.log('chart workspace tests passed');

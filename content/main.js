@@ -3248,6 +3248,7 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
+    const taskActions = overlay.querySelector('.agf-task-actions');
     const visionOcrBtn = document.getElementById('agfBtnVisionOcr');
     const speakBtn = document.getElementById('agfBtnSpeak');
     const glmVisionKeyInput = document.getElementById('agfGlmVisionKeyInput');
@@ -3631,6 +3632,35 @@ class ADHDHighlighter {
     let currentMediaContext = null;
     let currentMediaBatch = [];
     let activeChatImageContext = null;
+    let currentChartContext = null;
+    const chartButton = document.createElement('button');
+    chartButton.id = 'agfChartBtn'; chartButton.className = 'agf-task-btn'; chartButton.textContent = '图表'; chartButton.title = '从当前上下文生成关系图或时间线';
+    if (taskActions) taskActions.appendChild(chartButton);
+    const chartView = document.createElement('section');
+    chartView.id = 'agfChartView'; chartView.style.cssText = 'display:none;position:absolute;inset:0;background:#f8faff;z-index:5;overflow:auto;padding:16px;box-sizing:border-box;';
+    chartView.innerHTML = `<div style="max-width:900px;margin:0 auto;background:#fff;border:1px solid #dfe5f2;border-radius:14px;padding:16px;box-shadow:0 8px 22px rgba(23,32,51,.07)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><strong style="font-size:16px">图表工作区</strong><span id="agfChartMeta" style="font-size:11px;color:#687386;flex:1"></span><button id="agfChartBack" class="agf-task-btn">返回 Chat</button></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><select id="agfChartIntent" class="agf-field"><option value="relationship">关系图</option><option value="timeline">时间线</option></select><button id="agfChartGenerate" class="agf-task-btn">从当前上下文生成</button><button id="agfChartSave" class="agf-task-btn" disabled>保存</button><button id="agfChartPng" class="agf-task-btn" disabled>导出 PNG</button><button id="agfChartAttach" class="agf-task-btn" disabled>添加到 Chat</button></div>
+      <input id="agfChartTitle" class="agf-field" style="width:100%;box-sizing:border-box;margin-bottom:10px" placeholder="图表标题"><div id="agfChartCanvas" style="overflow:auto;border:1px solid #edf0f6;border-radius:9px;min-height:260px;padding:8px"></div><div id="agfChartNotice" style="font-size:12px;color:#687386;margin-top:8px"></div>
+      <div style="margin-top:16px;border-top:1px solid #edf0f6;padding-top:10px"><strong style="font-size:13px">已保存图表</strong><div id="agfChartHistory" style="margin-top:6px"></div></div></div>`;
+    overlay.appendChild(chartView);
+    const chartCanvas = chartView.querySelector('#agfChartCanvas');
+    const chartTitle = chartView.querySelector('#agfChartTitle');
+    const chartIntent = chartView.querySelector('#agfChartIntent');
+    const chartNotice = chartView.querySelector('#agfChartNotice');
+    const chartMeta = chartView.querySelector('#agfChartMeta');
+    const chartHistory = chartView.querySelector('#agfChartHistory');
+    const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach') };
+    const renderChartPreview = () => { if (!currentChartContext) return; chartTitle.value = currentChartContext.chartModel.title || ''; chartIntent.value = currentChartContext.intent; chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`; chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext); Object.values(chartButtons).forEach(button => { button.disabled = false; }); };
+    const loadChartHistory = async () => { try { const rows = await AgfChartWorkspace.list(); chartHistory.innerHTML = rows.length ? rows.slice(0, 12).map(row => `<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #f0f2f6;padding:7px 0;font-size:12px"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${String(row.chartModel?.title || '未命名')} · ${row.intent === 'timeline' ? '时间线' : '关系图'}</span><button class="agf-task-btn" data-chart-load="${row.id}">打开</button></div>`).join('') : '<span style="font-size:12px;color:#687386">暂无保存记录</span>'; chartHistory.querySelectorAll('[data-chart-load]').forEach(button => button.onclick = async () => { currentChartContext = await AgfChartWorkspace.get(button.dataset.chartLoad); renderChartPreview(); }); } catch (error) { chartNotice.textContent = error.message || '无法读取图表历史'; } };
+    const showChartView = () => { chartView.style.display = 'block'; chartButton.classList.add('active'); loadChartHistory(); };
+    chartButton.onclick = () => showChartView();
+    chartView.querySelector('#agfChartBack').onclick = () => { chartView.style.display = 'none'; chartButton.classList.remove('active'); showChat(); };
+    chartTitle.oninput = () => { if (currentChartContext) { currentChartContext.chartModel.title = chartTitle.value.trim() || '未命名图表'; currentChartContext.updatedAt = Date.now(); renderChartPreview(); } };
+    chartButtons.generate.onclick = async () => { try { chartNotice.textContent = '正在读取上下文并生成结构化图表…'; const ctx = await taixueContext.resolve(taixueState.contextSource); const intent = chartIntent.value; const prompt = `请根据以下材料生成${intent === 'timeline' ? '时间线' : '关系图'}，只返回严格JSON，不要Markdown。JSON必须包含 title, description, ${intent === 'timeline' ? 'events:[{id,date,label,description,sourceRefs}]' : 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]'}, sourceRefs。每个主要事件或节点都要尽量给出原文依据的短文本和段落定位；无法确定的关系放入warnings，不要编造。材料：\n${String(ctx.text || '').slice(0, 30000)}`; const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: 2600, temperature: .2 }); const model = typeof output === 'string' ? JSON.parse(output.replace(/^```json\s*|```$/g, '').trim()) : output; const checked = AgfChartModel.validateChartContext({ source: ctx.source === 'full_article' ? 'article' : ctx.source, intent, chartModel: model, sourceRefs: model.sourceRefs || [] }); if (!checked.valid) throw new Error(checked.errors.join('；')); currentChartContext = checked.value; renderChartPreview(); chartNotice.textContent = currentChartContext.chartModel.warnings.length ? `已生成，注意：${currentChartContext.chartModel.warnings.join('；')}` : '已生成，可保存、导出或添加到 Chat。'; } catch (error) { chartNotice.textContent = error.message || '图表生成失败'; } };
+    chartButtons.save.onclick = async () => { if (!currentChartContext) return; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = '已保存到 IndexedDB'; loadChartHistory(); };
+    chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(AgfChartWorkspace.renderSvg(currentChartContext)); const link = document.createElement('a'); link.href = png; link.download = `${(currentChartContext.chartModel.title || 'taixue-chart').replace(/[^\w\u4e00-\u9fff-]+/g, '-')}.png`; link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
+    chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(AgfChartWorkspace.renderSvg(currentChartContext)); currentMediaContext = createTaixueContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'taixue-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); chartView.style.display = 'none'; chartButton.classList.remove('active'); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
     const renderMediaAttachment = () => {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;
@@ -3904,7 +3934,8 @@ class ADHDHighlighter {
       refreshImageWorkspaceActions();
     };
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
-      if ((!currentMediaContext || currentMediaContext.source !== 'image') && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
+      const hasImageLikeContext = currentMediaContext && (currentMediaContext.source === 'image' || currentMediaContext.source === 'chart');
+      if (!hasImageLikeContext && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
       const capabilities = taixueTask.getModelCapabilities(provider, model);
       const allContexts = currentMediaBatch.length ? currentMediaBatch : [currentMediaContext];
       const contexts = capabilities.vision
