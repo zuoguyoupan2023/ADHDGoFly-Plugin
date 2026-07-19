@@ -3483,8 +3483,11 @@ class ADHDHighlighter {
         if (!String(imageDataUrl || '').startsWith('data:image/')) throw new Error('当前上下文不是有效图片');
         const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1800 });
         const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body, timeout: 60000 }, resolve));
-        if (!resp || !resp.success) throw new Error('GLM 图片识别失败，请检查 Key 或图片大小');
-        return resp.data?.choices?.[0]?.message?.content || '';
+        if (!resp || !resp.success || (typeof resp.status === 'number' && (resp.status < 200 || resp.status >= 300))) { const detail = resp?.data?.error?.message || resp?.data?.message || resp?.error || ''; throw new Error(`GLM 图片识别失败${detail ? `：${detail}` : '，请检查 Key、模型名称或图片大小'}`); }
+        const content = resp.data?.choices?.[0]?.message?.content ?? resp.data?.choices?.[0]?.text ?? resp.data?.output?.text ?? resp.data?.data ?? '';
+        const text = Array.isArray(content) ? content.map(x => typeof x === 'string' ? x : (x.text || '')).join('') : String(content || '');
+        if (!text.trim()) throw new Error('GLM 返回了空识别结果，请检查模型权限或图片格式');
+        return text;
       },
       async requestStructured(request) {
         const safeRequest = validateTaixueTaskRequest(request);
