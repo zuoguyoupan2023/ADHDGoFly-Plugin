@@ -3767,7 +3767,22 @@ class ADHDHighlighter {
         });
       });
     };
-    const renderChartPreview = () => { if (!currentChartContext) return; chartTitle.value = currentChartContext.chartModel.title || ''; chartIntent.value = currentChartContext.intent; if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg'); chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`; chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext); Object.values(chartButtons).forEach(button => { button.disabled = false; }); applyChartZoom(); attachChartInteractions(); };
+    const getCurrentChartSvg = async () => {
+      if (!currentChartContext) return '';
+      return AgfChartWorkspace.renderSvgAsync ? AgfChartWorkspace.renderSvgAsync(currentChartContext) : AgfChartWorkspace.renderSvg(currentChartContext);
+    };
+    const renderChartPreview = async () => {
+      if (!currentChartContext) return;
+      chartTitle.value = currentChartContext.chartModel.title || '';
+      chartIntent.value = currentChartContext.intent;
+      if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg');
+      chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`;
+      chartCanvas.innerHTML = '<div style="padding:18px;color:#687386;font-size:12px">正在渲染图表…</div>';
+      chartCanvas.innerHTML = await getCurrentChartSvg();
+      Object.values(chartButtons).forEach(button => { button.disabled = false; });
+      applyChartZoom();
+      attachChartInteractions();
+    };
     if (chartZoomOut) chartZoomOut.onclick = () => setChartZoom(chartZoom - 0.15);
     if (chartZoomIn) chartZoomIn.onclick = () => setChartZoom(chartZoom + 0.15);
     if (chartZoomReset) chartZoomReset.onclick = () => setChartZoom(1);
@@ -3860,8 +3875,8 @@ class ADHDHighlighter {
       }
     };
     chartButtons.save.onclick = async () => { if (!currentChartContext) return; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = '已保存到 IndexedDB'; loadChartHistory(); };
-    chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(AgfChartWorkspace.renderSvg(currentChartContext)); const link = document.createElement('a'); link.href = png; link.download = `${(currentChartContext.chartModel.title || 'taixue-chart').replace(/[^\w\u4e00-\u9fff-]+/g, '-')}.png`; link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
-    chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(AgfChartWorkspace.renderSvg(currentChartContext)); currentMediaContext = createTaixueContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'taixue-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
+    chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); const link = document.createElement('a'); link.href = png; link.download = `${(currentChartContext.chartModel.title || 'taixue-chart').replace(/[^\w\u4e00-\u9fff-]+/g, '-')}.png`; link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
+    chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createTaixueContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'taixue-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
     const renderMediaAttachment = () => {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;

@@ -23,6 +23,28 @@
     const k = n => Number(n).toFixed(1);
     return `M${k(x1)},${k(y1)} C${k((x1+x2)/2+3)},${k(y1-4)} ${k((x1+x2)/2-3)},${k(y2+4)} ${k(x2)},${k(y2)} M${k(x1+1.5)},${k(y1-1.2)} C${k((x1+x2)/2-4)},${k(y1+3)} ${k((x1+x2)/2+4)},${k(y2-3)} ${k(x2-1.5)},${k(y2+1.2)}`;
   };
+  function roughPaths(shape) {
+    if (!root.rough || !root.rough.generator) return '';
+    try {
+      return root.rough.generator().toPaths(shape).map(path => `<path d="${esc(path.d)}" stroke="${esc(path.stroke)}" stroke-width="${esc(path.strokeWidth)}" fill="${esc(path.fill)}"${path.fill === 'none' ? '' : ' opacity="0.95"'}/>`).join('');
+    } catch (_) {
+      return '';
+    }
+  }
+  function roughLineMarkup(x1, y1, x2, y2, options) {
+    if (root.rough?.generator) {
+      const markup = roughPaths(root.rough.generator({ options: { seed: 4 } }).line(x1, y1, x2, y2, options));
+      if (markup) return markup;
+    }
+    return `<path d="${roughLine(x1, y1, x2, y2)}" fill="none" stroke="${esc(options.stroke)}" stroke-width="${esc(options.strokeWidth || 1.5)}"/>`;
+  }
+  function roughRectMarkup(x, y, width, height, options) {
+    if (root.rough?.generator) {
+      const markup = roughPaths(root.rough.generator({ options: { seed: 7 } }).rectangle(x, y, width, height, options));
+      if (markup) return markup;
+    }
+    return `<path d="${roughLine(x, y + 8, x + width, y + 8)} ${roughLine(x + width, y + 8, x + width, y + height - 8)} ${roughLine(x + width, y + height - 8, x, y + height - 8)} ${roughLine(x, y + height - 8, x, y + 8)}" fill="${esc(options.fill || 'none')}" stroke="${esc(options.stroke)}" stroke-width="${esc(options.strokeWidth || 1.5)}"/>`;
+  }
 
   function openDb() {
     return new Promise((resolve, reject) => {
@@ -71,14 +93,16 @@
         const as = nodeSize(a), bs = nodeSize(b);
         const x1 = a.x + dx / len * (as.width / 2), y1 = a.y + dy / len * (as.height / 2), x2 = b.x - dx / len * (bs.width / 2), y2 = b.y - dy / len * (bs.height / 2);
         const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
-        const d = context.renderer === 'rough' ? roughLine(x1, y1, x2, y2) : `M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}`;
-        body += `<path class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" d="${d}" fill="none" stroke="${color}" stroke-width="${context.renderer === 'rough' ? '1.4' : '2.2'}" marker-end="url(#arrow)"/><text class="agf-chart-edge-label" data-edge-index="${laidEdges.indexOf(edge)}" x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}" style="cursor:text">${esc(truncate(edge.label, 18))}</text>`;
+        const edgeShape = context.renderer === 'rough'
+          ? `<g class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" marker-end="url(#arrow)">${roughLineMarkup(x1, y1, x2, y2, { roughness: 1.6, stroke: color, strokeWidth: 1.8, fill: 'none', seed: laidEdges.indexOf(edge) + 1 })}</g>`
+          : `<path class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" d="M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2" marker-end="url(#arrow)"/>`;
+        body += `${edgeShape}<text class="agf-chart-edge-label" data-edge-index="${laidEdges.indexOf(edge)}" x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}" style="cursor:text">${esc(truncate(edge.label, 18))}</text>`;
       });
       laidNodes.forEach(node => {
         const group = palette[(node._group || 0) % palette.length]; const scale = node._scale || 1;
         const size = nodeSize(node); const w = size.width * scale, h = size.height * scale, x = node.x - w / 2, y = node.y - h / 2;
         const shape = context.renderer === 'rough'
-          ? `<path d="${roughLine(x, y + 8, x + w, y + 8)} ${roughLine(x + w, y + 8, x + w, y + h - 8)} ${roughLine(x + w, y + h - 8, x, y + h - 8)} ${roughLine(x, y + h - 8, x, y + 8)}" fill="${group.fill}" stroke="${group.line}" stroke-width="1.5"/>`
+          ? roughRectMarkup(x, y, w, h, { roughness: 2.1, stroke: group.line, strokeWidth: 2, fill: group.fill, fillStyle: 'hachure', hachureAngle: 45, hachureGap: 5, fillWeight: 1.1, seed: laidNodes.indexOf(node) + 10 })
           : `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="18" fill="${group.fill}" stroke="${group.line}" stroke-width="2"/>`;
         const labelStart = node.y - h / 2 + 26;
         const descStart = labelStart + size.labelLines.length * 18 + 5;
@@ -98,6 +122,44 @@
     laidNodes.forEach(node => { const size = nodeSize(node); body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}"><rect x="${node.x-size.width/2}" y="${node.y-size.height/2}" width="${size.width}" height="${size.height}" rx="6" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/><text class="agf-chart-node-label" data-node-id="${esc(node.id)}" x="${node.x}" y="${node.y - 4}" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" font-weight="700" fill="#1f2937">${textLines(size.labelLines, node.x, node.y - 8)}</text></g>`; });
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#6b7280"/></marker></defs>${body}</svg>`;
   }
+  function loadScriptOnce(globalName, path) {
+    if (root[globalName]) return Promise.resolve(root[globalName]);
+    if (!root.document || !root.chrome?.runtime?.getURL) return Promise.resolve(null);
+    const marker = `agf-runtime-${globalName}`;
+    const existing = root.document.querySelector(`script[data-agf-runtime="${marker}"]`);
+    if (existing) {
+      return new Promise(resolve => {
+        existing.addEventListener('load', () => resolve(root[globalName] || null), { once: true });
+        existing.addEventListener('error', () => resolve(null), { once: true });
+      });
+    }
+    return new Promise(resolve => {
+      const script = root.document.createElement('script');
+      script.dataset.agfRuntime = marker;
+      script.src = root.chrome.runtime.getURL(path);
+      script.onload = () => resolve(root[globalName] || null);
+      script.onerror = () => resolve(null);
+      (root.document.head || root.document.documentElement).appendChild(script);
+    });
+  }
+  async function renderMermaidSvg(context) {
+    await loadScriptOnce('mermaid', 'lib/mermaid.min.js');
+    if (root.mermaid?.render) {
+      try {
+        root.mermaid.initialize?.({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+        const id = `agf-mermaid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        const result = await root.mermaid.render(id, toMermaidDsl(context));
+        return result.svg || renderMermaidStyleSvg(context);
+      } catch (error) {
+        return renderMermaidStyleSvg({ ...context, chartModel: { ...(context.chartModel || {}), title: `${context.chartModel?.title || 'Mermaid'}（渲染失败：${error.message || error}）` } });
+      }
+    }
+    return renderMermaidStyleSvg(context);
+  }
+  async function renderSvgAsync(context) {
+    if (context.renderer === 'mermaid' && graphIntents.has(context.intent)) return renderMermaidSvg(context);
+    return renderSvg(context);
+  }
   function toMermaidDsl(context) {
     const model = context.chartModel || {}; const nodes = model.nodes || []; const edges = model.edges || [];
     const label = id => esc((nodes.find(n => n.id === id) || {}).label || id).replace(/"/g, "'");
@@ -108,6 +170,6 @@
   async function svgToPng(svg, scale = 2) {
     return new Promise((resolve, reject) => { const blob = new Blob([svg], { type: 'image/svg+xml' }); const url = URL.createObjectURL(blob); const image = new Image(); image.onload = () => { const canvas = document.createElement('canvas'); canvas.width = image.width * scale; canvas.height = image.height * scale; canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')); }; image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('PNG 导出失败')); }; image.src = url; });
   }
-  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, svgToPng };
+  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng };
   if (typeof module !== 'undefined') module.exports = root.AgfChartWorkspace;
 })(typeof window !== 'undefined' ? window : globalThis);
