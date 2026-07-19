@@ -2955,6 +2955,7 @@ class ADHDHighlighter {
                   <button id="agfSettingsTabApi" class="agf-settings-tab active" data-i18n="aiPanel.settings.tabs.api">API Key</button>
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
                   <button id="agfSettingsTabParse" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.parse">解析与过滤</button>
+                  <button id="agfSettingsTabMedia" class="agf-settings-tab">媒体识别</button>
                   <button id="agfSettingsTabSpeak" class="agf-settings-tab">朗读</button>
                   <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
@@ -2986,7 +2987,6 @@ class ADHDHighlighter {
                           <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                         </div>
                       </div>
-                      <div class="agf-settings-row"><div class="agf-label">GLM-4V-Flash Key</div><div style="display:flex;align-items:center;gap:8px;"><input id="agfGlmVisionKeyInput" class="agf-input" type="password" placeholder="单独用于图片识别/OCR" /><button id="agfSaveGlmVisionKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button></div></div>
                       <div class="agf-settings-row">
                         <div class="agf-label">备用供应商</div>
                         <select id="agfFallbackProvider" class="agf-select"><option value="">不启用</option></select>
@@ -3030,9 +3030,6 @@ class ADHDHighlighter {
                         <div class="agf-label" data-i18n="aiPanel.settings.privacyFilter">隐私过滤</div>
                         <div id="agfSensitiveToggle" class="agf-button-list"></div>
                       </div>
-                      <div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div>
-                      <div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div>
-                      <div class="agf-hint">图片或音频发送给 AI 前会再次确认；默认只保存解析后的文字结果，不保存原始媒体。</div>
                       <div class="agf-hint" data-i18n="aiPanel.settings.privacyHint">隐私是指pdf材料中的名字 邮箱 电话等信息</div>
                       <div class="agf-settings-row">
                         <button id="agfManualParseBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.settings.manualParsePdf">立即解析当前PDF</button>
@@ -3043,6 +3040,7 @@ class ADHDHighlighter {
                       </div>
                     </div>
                   </div>
+                  <div id="agfSettingsContentMedia" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">媒体识别</div><div class="agf-hint">这里管理图片识别/OCR和音频上下文，不包含 PDF 解析。当前图片识别固定使用免费的 GLM-4V-Flash。</div><div class="agf-settings-row"><div class="agf-label">GLM-4V-Flash Key</div><div style="display:flex;align-items:center;gap:8px;"><input id="agfGlmVisionKeyInput" class="agf-input" type="password" placeholder="单独用于图片识别/OCR" /><button id="agfSaveGlmVisionKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button></div></div><div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div><div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div><div class="agf-hint">开启后，点击太学上下文区的“图片”或“音频”选择文件；发送给 AI 前仍会再次确认。默认不保存原始媒体，只保存必要的文字结果。</div></div></div>
                   <div id="agfSettingsContentSpeak" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">朗读设置</div><div class="agf-settings-row"><div class="agf-label">朗读语言</div><select id="agfSpeakLanguage" class="agf-select"><option value="auto">自动识别</option><option value="zh-CN">中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读音色</div><select id="agfSpeakVoice" class="agf-select"><option value="">跟随语言默认音色</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读语速</div><input id="agfSpeakRate" class="agf-input" type="number" min="0.5" max="2" step="0.1" value="1" /><span class="agf-hint">0.5–2.0</span></div><div class="agf-settings-row"><button id="agfSpeakSample" class="agf-btn">试听当前音色</button></div><div class="agf-hint">浏览器提供哪些音色，取决于当前操作系统和浏览器；插件不会上传朗读文本。</div></div></div>
                   <div id="agfSettingsContentDisplay" style="display:none;">
                     <div class="agf-settings-group">
@@ -3255,11 +3253,13 @@ class ADHDHighlighter {
     const settingsTabApi = document.getElementById('agfSettingsTabApi');
     const settingsTabColors = document.getElementById('agfSettingsTabColors');
     const settingsTabParse = document.getElementById('agfSettingsTabParse');
+    const settingsTabMedia = document.getElementById('agfSettingsTabMedia');
     const settingsTabDisplay = document.getElementById('agfSettingsTabDisplay');
     const settingsTabSpeak = document.getElementById('agfSettingsTabSpeak');
     const settingsContentApi = document.getElementById('agfSettingsContentApi');
     const settingsContentColors = document.getElementById('agfSettingsContentColors');
     const settingsContentParse = document.getElementById('agfSettingsContentParse');
+    const settingsContentMedia = document.getElementById('agfSettingsContentMedia');
     const settingsContentDisplay = document.getElementById('agfSettingsContentDisplay');
     const settingsContentSpeak = document.getElementById('agfSettingsContentSpeak');
     if (settingsTabDisplay) settingsTabDisplay.style.display = 'none';
@@ -3812,11 +3812,13 @@ class ADHDHighlighter {
       if (settingsTabApi) settingsTabApi.classList.toggle('active', which === 'api');
       if (settingsTabColors) settingsTabColors.classList.toggle('active', which === 'colors');
       if (settingsTabParse) settingsTabParse.classList.toggle('active', which === 'parse');
+      if (settingsTabMedia) settingsTabMedia.classList.toggle('active', which === 'media');
       if (settingsTabSpeak) settingsTabSpeak.classList.toggle('active', which === 'speak');
       if (settingsTabDisplay) settingsTabDisplay.classList.toggle('active', which === 'display');
       if (settingsContentApi) settingsContentApi.style.display = which === 'api' ? 'block' : 'none';
       if (settingsContentColors) settingsContentColors.style.display = which === 'colors' ? 'block' : 'none';
       if (settingsContentParse) settingsContentParse.style.display = which === 'parse' ? 'block' : 'none';
+      if (settingsContentMedia) settingsContentMedia.style.display = which === 'media' ? 'block' : 'none';
       if (settingsContentSpeak) settingsContentSpeak.style.display = which === 'speak' ? 'block' : 'none';
       if (settingsContentDisplay) settingsContentDisplay.style.display = which === 'display' ? 'block' : 'none';
       if (which === 'colors') fillColorsInputs2();
@@ -4175,8 +4177,10 @@ class ADHDHighlighter {
     const initParseToggles = async () => {
       let auto = true;
       let sensitive = true;
+      let mediaSettings = {};
       try {
         const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled','taixueMediaPermissionEnabled','taixueMediaUploadEnabled']);
+        mediaSettings = s || {};
         auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
         if (s.privacySensitiveFilterEnabled === undefined) {
           try { await chrome.storage.local.set({ privacySensitiveFilterEnabled: true }); } catch(_){ }
@@ -4208,8 +4212,8 @@ class ADHDHighlighter {
         const on = val === 'on';
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
-      const mediaPermission = s.taixueMediaPermissionEnabled !== false;
-      const mediaUpload = s.taixueMediaUploadEnabled === true;
+      const mediaPermission = mediaSettings.taixueMediaPermissionEnabled !== false;
+      const mediaUpload = mediaSettings.taixueMediaUploadEnabled === true;
       const mediaMap = { on: '开启', off: '关闭' };
       renderButtons(mediaPermissionToggle, ['on','off'], mediaPermission ? 'on' : 'off', async (val, btn) => {
         Array.from(mediaPermissionToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
@@ -4318,6 +4322,7 @@ class ADHDHighlighter {
     if (settingsTabApi) settingsTabApi.addEventListener('click', () => setActiveSettingsTab('api'));
     if (settingsTabColors) settingsTabColors.addEventListener('click', () => setActiveSettingsTab('colors'));
     if (settingsTabParse) settingsTabParse.addEventListener('click', () => setActiveSettingsTab('parse'));
+    if (settingsTabMedia) settingsTabMedia.addEventListener('click', () => setActiveSettingsTab('media'));
     if (settingsTabSpeak) settingsTabSpeak.addEventListener('click', () => setActiveSettingsTab('speak'));
     if (settingsTabDisplay) settingsTabDisplay.addEventListener('click', () => setActiveSettingsTab('display'));
 
