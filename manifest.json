@@ -61,6 +61,7 @@
         "content/storage/node-level-cache-manager.js",
         "content/debug/cache-performance-monitor.js",
         "content/streaming-page-processor.js",
+        "content/page-image-filter.js",
         "content/storage/event-cache-manager.js",
         "content/storage/adhdgofly-counter.js",
         "content/storage/review-timer.js",

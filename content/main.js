@@ -3627,9 +3627,18 @@ class ADHDHighlighter {
         }
         return true;
       });
-      const seen = new Set();
-      const candidates = imgs.filter(img => { const key = img.currentSrc || img.src; if (seen.has(key)) return false; seen.add(key); const rect = img.getBoundingClientRect(); const width = Math.max(img.naturalWidth || 0, rect.width || 0); const height = Math.max(img.naturalHeight || 0, rect.height || 0); const inViewport = rect.bottom >= 0 && rect.right >= 0 && rect.top <= window.innerHeight && rect.left <= window.innerWidth; return width >= 80 && height >= 40 && (source !== 'selection' || inViewport); });
-      return { candidates, total: candidates.length, selected: candidates };
+      const metas = imgs.map(img => {
+        const rect = img.getBoundingClientRect();
+        const width = Math.max(img.naturalWidth || 0, rect.width || 0);
+        const height = Math.max(img.naturalHeight || 0, rect.height || 0);
+        const article = img.closest('article, main, [role="main"], .article, .post, .entry-content, .article-content');
+        const parent = img.parentElement;
+        const ancestor = img.closest('a, figure, header, nav, aside, footer, section, div');
+        return { img, url: img.currentSrc || img.src, alt: img.alt, title: img.title, className: img.className, id: img.id, parentText: parent?.textContent?.slice(0, 180), ancestorText: ancestor?.textContent?.slice(0, 180), inArticle: Boolean(article), hasCaption: Boolean(img.closest('figure')?.querySelector('figcaption')), width, height, isTiny: width < 80 || height < 40, isSquare: Math.abs(width - height) / Math.max(width, height, 1) < 0.12, inViewport: rect.bottom >= 0 && rect.right >= 0 && rect.top <= window.innerHeight && rect.left <= window.innerWidth };
+      }).filter(meta => meta.url && (source !== 'selection' || meta.inViewport));
+      const filtered = (window.AgfPageImageFilter ? window.AgfPageImageFilter.filterImages(metas) : { kept: metas.map(item => ({ item })) });
+      const candidates = filtered.kept.map(entry => entry.item.img);
+      return { candidates, total: candidates.length, selected: candidates, rejected: filtered.rejected };
     };
     const imageElementToDataUrl = async (img) => {
       if (String(img.currentSrc || img.src).startsWith('data:image/')) return img.currentSrc || img.src;
