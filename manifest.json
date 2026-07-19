@@ -70,6 +70,7 @@
         "content/storage/adhdgofly-timer.js",
         "content/storage/review-counter.js",
         "review-light-tower.js",
+        "content/chart-model.js",
         "content/main.js",
         "content/dynamic-collector.js"
       ],
