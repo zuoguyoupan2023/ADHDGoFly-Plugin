@@ -2621,7 +2621,10 @@ class ADHDHighlighter {
       #agfAiViewImage{box-sizing:border-box}
       #agfAiViewImage .agf-module-card{min-height:0}
       #agfAiViewImage .agf-module-result{min-height:80px;padding-bottom:8px}
-      #agfAiViewImage .agf-module-actions{position:sticky;bottom:0;z-index:4;margin:8px -18px -18px;padding:10px 18px;background:rgba(255,255,255,.96);border-top:1px solid #e1e6ef;box-shadow:0 -6px 18px rgba(23,32,51,.06)}
+      #agfAiViewImage .agf-module-actions{position:sticky;bottom:0;z-index:4;margin:6px -18px -18px;padding:5px 12px;background:rgba(255,255,255,.96);border-top:1px solid #e1e6ef;box-shadow:0 -6px 18px rgba(23,32,51,.06);align-items:center;gap:6px}
+      #agfAiViewImage .agf-module-actions button{padding:4px 8px;min-height:24px;font-size:11px;border-radius:7px}
+      #agfAiViewImage .agf-image-select-all{display:inline-flex;align-items:center;gap:4px;margin-right:auto;color:#4b5870;font-size:11px;white-space:nowrap}
+      #agfAiViewImage .agf-image-select-all input{margin:0}
       #agfAiViewImage .agf-page-image-card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:start;padding:8px}
       #agfAiViewImage .agf-page-image-head{grid-column:1 / -1;display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:#26345b}
       #agfAiViewImage .agf-page-image-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2951,7 +2954,7 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
-          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> 全选</label><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3163,6 +3166,7 @@ class ADHDHighlighter {
     const workspaceImageInput = document.getElementById('agfWorkspaceImageInput');
     const imageWorkspaceResult = document.getElementById('agfImageWorkspaceResult');
     const imageWorkspaceStatus = document.getElementById('agfImageWorkspaceStatus');
+    const imageSelectAll = document.getElementById('agfImageSelectAll');
     const imageProcessSelected = document.getElementById('agfImageProcessSelected');
     const imageAddToChat = document.getElementById('agfImageAddToChat');
     const imageWorkspaceRetry = document.getElementById('agfImageWorkspaceRetry');
@@ -3688,11 +3692,18 @@ class ADHDHighlighter {
       if (preview && imageSrc) preview.onclick = () => window.open(String(imageSrc), '_blank');
     };
     const refreshImageWorkspaceActions = () => {
-      const hasPendingChecked = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check:checked') : []).some(input => {
+      const allChecks = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check') : []);
+      const checkedInputs = allChecks.filter(input => input.checked);
+      const hasPendingChecked = checkedInputs.some(input => {
         const ctx = currentMediaBatch[Number(input.dataset.imageIndex || '-1')];
         return ctx && ctx.image;
       });
       const completed = currentMediaBatch.filter(x => x?.recognition?.status === 'completed');
+      if (imageSelectAll) {
+        imageSelectAll.checked = allChecks.length > 0 && checkedInputs.length === allChecks.length;
+        imageSelectAll.indeterminate = checkedInputs.length > 0 && checkedInputs.length < allChecks.length;
+        imageSelectAll.disabled = allChecks.length === 0;
+      }
       if (imageProcessSelected) imageProcessSelected.disabled = !hasPendingChecked;
       if (imageAddToChat) imageAddToChat.disabled = completed.length === 0;
       if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = currentMediaBatch.length === 0;
@@ -3971,6 +3982,11 @@ class ADHDHighlighter {
     if (pageScreenshotBtn) pageScreenshotBtn.onclick = () => startPageScreenshotMode().catch(error => showToast(error.message || '网页截图失败'));
     if (imageProcessSelected) imageProcessSelected.onclick = () => processSelectedWorkspaceImages().catch(error => showToast(error.message || '图片识别失败'));
     if (imageWorkspaceResult) imageWorkspaceResult.addEventListener('change', event => { if (event.target && event.target.classList && event.target.classList.contains('agf-page-image-check')) refreshImageWorkspaceActions(); });
+    if (imageSelectAll) imageSelectAll.onchange = () => {
+      const checks = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check') : []);
+      checks.forEach(input => { input.checked = imageSelectAll.checked; });
+      refreshImageWorkspaceActions();
+    };
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
