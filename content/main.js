@@ -3701,6 +3701,11 @@ class ADHDHighlighter {
     const attachChartInteractions = () => {
       const svg = chartCanvas?.querySelector('svg');
       if (!svg || !currentChartContext?.chartModel?.nodes) return;
+      svg.querySelectorAll('.agf-chart-node').forEach(group => {
+        const nodeId = group.getAttribute('data-node-id');
+        const node = currentChartContext.chartModel.nodes.find(item => item.id === nodeId);
+        if (node) { node.x = Number(group.getAttribute('data-x')) || node.x; node.y = Number(group.getAttribute('data-y')) || node.y; }
+      });
       svg.addEventListener('wheel', event => { if (!event.ctrlKey && !event.metaKey) return; event.preventDefault(); setChartZoom(chartZoom + (event.deltaY > 0 ? -0.1 : 0.1)); }, { passive: false });
       Array.from(svg.querySelectorAll('.agf-chart-node')).forEach(group => {
         group.addEventListener('mousedown', event => {

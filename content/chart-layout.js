@@ -165,14 +165,14 @@
     assignGroups(nextNodes, nextEdges);
     calcDepths(nextNodes, nextEdges);
     const topology = detectTopology(nextNodes, nextEdges);
-    const hasStoredPositions = nextNodes.every(node => Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y)));
-    if (!hasStoredPositions) {
-      if (topology === 'chain') chainLayout(nextNodes, nextEdges, W, H);
-      else if (topology === 'tree') treeLayout(nextNodes, nextEdges, W, H);
-      else dagLayout(nextNodes, nextEdges, W, H);
-    } else {
-      nextNodes.forEach(node => { node.x = Number(node.x); node.y = Number(node.y); });
-    }
+    const storedPositions = {};
+    nextNodes.forEach(node => {
+      if (Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y))) storedPositions[node.id] = { x: Number(node.x), y: Number(node.y) };
+    });
+    if (topology === 'chain') chainLayout(nextNodes, nextEdges, W, H);
+    else if (topology === 'tree') treeLayout(nextNodes, nextEdges, W, H);
+    else dagLayout(nextNodes, nextEdges, W, H);
+    nextNodes.forEach(node => { if (storedPositions[node.id]) { node.x = storedPositions[node.id].x; node.y = storedPositions[node.id].y; } });
     nextNodes.forEach(node => { node._scale = Math.max(0.72, 1 - Math.min(node._depth || 0, 3) * 0.1); });
     return { nodes: nextNodes, edges: nextEdges, topology, palette: PALETTE };
   }

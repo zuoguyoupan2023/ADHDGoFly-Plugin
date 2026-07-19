@@ -20,5 +20,8 @@ assert.equal(layoutRelationship(dagNodes, dagEdges, 900, 520).topology, 'dag');
 const stored = layoutRelationship([{ id: 'a', x: 222, y: 333 }, { id: 'b', x: 444, y: 333 }], [{ source: 'a', target: 'b' }], 900, 520);
 assert.equal(stored.nodes.find(node => node.id === 'a').x, 222);
 assert.equal(stored.nodes.find(node => node.id === 'b').x, 444);
+const partialStored = layoutRelationship([{ id: 'a', x: 222, y: 333 }, { id: 'b' }, { id: 'c' }], [{ source: 'a', target: 'b' }, { source: 'b', target: 'c' }], 900, 520);
+assert.equal(partialStored.nodes.find(node => node.id === 'a').x, 222);
+assert.equal(partialStored.nodes.every(node => Number.isFinite(node.x) && Number.isFinite(node.y)), true);
 
 console.log('chart layout tests passed');
