@@ -2618,6 +2618,19 @@ class ADHDHighlighter {
       .agf-module-actions{display:flex;gap:8px;margin-top:14px}.agf-module-actions button{border:1px solid #dfe5f2;border-radius:8px;background:#fff;padding:7px 11px;color:#315efb;cursor:pointer}.agf-module-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}.agf-module-actions button:disabled{opacity:.5;cursor:not-allowed}
       .agf-module-history{margin-top:18px;border-top:1px solid #edf0f6;padding-top:10px}.agf-history-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f6;font-size:12px}.agf-history-row button{padding:4px 7px;font-size:11px}
       .agf-image-dropzone{border:2px dashed #c9d5f2;border-radius:12px;padding:28px;text-align:center;color:#687386;background:#fbfcff}.agf-image-dropzone.dragover{border-color:#315efb;background:#f0f4ff}.agf-image-dropzone button{border:0;border-radius:8px;padding:8px 14px;background:#315efb;color:#fff;cursor:pointer}
+      #agfAiViewImage{box-sizing:border-box}
+      #agfAiViewImage .agf-module-card{min-height:0}
+      #agfAiViewImage .agf-module-result{min-height:80px;padding-bottom:8px}
+      #agfAiViewImage .agf-module-actions{position:sticky;bottom:0;z-index:4;margin:8px -18px -18px;padding:10px 18px;background:rgba(255,255,255,.96);border-top:1px solid #e1e6ef;box-shadow:0 -6px 18px rgba(23,32,51,.06)}
+      #agfAiViewImage .agf-page-image-card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:start;padding:8px}
+      #agfAiViewImage .agf-page-image-head{grid-column:1 / -1;display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:#26345b}
+      #agfAiViewImage .agf-page-image-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      #agfAiViewImage .agf-page-image-badge{margin-left:auto;border:1px solid #dfe5f2;border-radius:999px;padding:1px 7px;font-size:11px;color:#687386;background:#f7f8fb;white-space:nowrap}
+      #agfAiViewImage .agf-page-image-badge.done{border-color:#bfe5cc;color:#1c7f41;background:#eefaf2}
+      #agfAiViewImage .agf-page-image-thumb img{width:96px;max-width:96px;height:68px;max-height:68px;object-fit:contain;border-radius:6px;background:#f7f8fb;border:1px solid #edf1f7}
+      #agfAiViewImage .agf-page-image-body{min-width:0;font-size:12px;line-height:1.55}
+      #agfAiViewImage .agf-page-image-status{margin-bottom:4px;color:#687386;font-size:11px}
+      #agfAiViewImage .agf-page-image-result{max-height:160px;overflow:auto}
       .agf-media-attachment{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:5px;border:1px solid #dfe5f2;border-radius:9px;background:#f8faff;max-width:100%}.agf-media-attachment img{width:54px;height:54px;object-fit:cover;border-radius:6px}.agf-media-attachment-body{min-width:0;flex:1;font-size:11px;color:#4b5870}.agf-media-attachment-result{max-height:48px;overflow:auto;margin-top:3px;line-height:1.4}.agf-media-attachment-remove{border:0;background:transparent;color:#d33;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
@@ -2938,7 +2951,7 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
-          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div class="agf-module-actions"><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3667,7 +3680,9 @@ class ADHDHighlighter {
       const resultHtml = ctx.recognition?.text
         ? (typeof markdownToHtml === 'function' ? markdownToHtml(ctx.recognition.text) : String(ctx.recognition.text).replace(/\n/g, '<br>'))
         : (ctx.metadata?.recognitionError ? `<p class="agf-error">${String(ctx.metadata.recognitionError)}</p>` : '<p>等待发送识别。</p>');
-      imageWorkspaceResult.insertAdjacentHTML('beforeend', `<div class="agf-vocab-card agf-page-image-card" data-image-card-index="${index}"><label><input type="checkbox" class="agf-page-image-check" ${checked ? 'checked' : ''} data-image-index="${index}"> 图片 ${index + 1} · ${String(ctx.image.name || '网页图片')}</label><div><img src="${String(imageSrc)}" alt="${String(ctx.image.alt || ctx.image.name || '图片')}" style="max-width:180px;max-height:120px;object-fit:contain;border-radius:8px;cursor:zoom-in" data-image-preview="${index}"></div><div class="agf-page-image-status">状态：${status === 'completed' ? '已识别' : status === 'failed' ? '失败，可重试' : '待识别'}</div><div class="agf-page-image-result">${resultHtml}</div></div>`);
+      const badgeText = status === 'completed' ? '已处理' : status === 'failed' ? '失败' : '待识别';
+      const statusText = status === 'completed' ? '已识别' : status === 'failed' ? '失败，可重试' : '待识别';
+      imageWorkspaceResult.insertAdjacentHTML('beforeend', `<div class="agf-vocab-card agf-page-image-card" data-image-card-index="${index}"><label class="agf-page-image-head"><input type="checkbox" class="agf-page-image-check" ${checked ? 'checked' : ''} data-image-index="${index}"><span class="agf-page-image-name">图片 ${index + 1} · ${String(ctx.image.name || '网页图片')}</span><span class="agf-page-image-badge ${status === 'completed' ? 'done' : ''}">${badgeText}</span></label><div class="agf-page-image-thumb"><img src="${String(imageSrc)}" alt="${String(ctx.image.alt || ctx.image.name || '图片')}" data-image-preview="${index}"></div><div class="agf-page-image-body"><div class="agf-page-image-status">状态：${statusText}</div><div class="agf-page-image-result">${resultHtml}</div></div></div>`);
       const card = imageWorkspaceResult.querySelector(`[data-image-card-index="${index}"]`);
       const preview = card && card.querySelector('[data-image-preview]');
       if (preview && imageSrc) preview.onclick = () => window.open(String(imageSrc), '_blank');
@@ -3760,8 +3775,14 @@ class ADHDHighlighter {
       const status = card.querySelector('.agf-page-image-status');
       const result = card.querySelector('.agf-page-image-result');
       const preview = card.querySelector('[data-image-preview]');
+      const badge = card.querySelector('.agf-page-image-badge');
       if (checkbox && ctx.recognition?.status === 'completed') checkbox.checked = false;
       if (status) status.textContent = ctx.recognition?.status === 'completed' ? `状态：已识别（${ctx.image.delivery || 'link'}）` : '状态：失败，可重新勾选';
+      if (badge) {
+        const done = ctx.recognition?.status === 'completed';
+        badge.textContent = done ? '已处理' : '失败';
+        badge.classList.toggle('done', done);
+      }
       if (result) result.innerHTML = ctx.recognition?.text
         ? (typeof markdownToHtml === 'function' ? markdownToHtml(ctx.recognition.text) : String(ctx.recognition.text).replace(/\n/g, '<br>'))
         : `<p class="agf-error">${String(ctx.metadata?.recognitionError || '识别失败')}</p>`;
@@ -3779,7 +3800,13 @@ class ADHDHighlighter {
       const checked = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check:checked') : []);
       const selected = checked.map(input => Number(input.dataset.imageIndex || '-1')).filter(i => i >= 0 && currentMediaBatch[i]?.image);
       if (!selected.length) { showToast('请先勾选要识别的图片。'); return; }
-      if (selected.length > 10) showToast('本次超过 10 张，会继续串行处理，可能等待较久。');
+      if (selected.length > 10) {
+        const ok = window.confirm(`本次勾选了 ${selected.length} 张图片，超过建议的 10 张。继续会串行发送，等待时间可能较长。\n\n确认继续发送；取消则停止发送，你可以先取消部分勾选后再试。`);
+        if (!ok) {
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `已停止发送：当前勾选 ${selected.length} 张，请调整到不超过 10 张或再次确认继续。`;
+          return;
+        }
+      }
       if (imageProcessSelected) imageProcessSelected.disabled = true;
       for (let n = 0; n < selected.length; n++) {
         const index = selected[n];
