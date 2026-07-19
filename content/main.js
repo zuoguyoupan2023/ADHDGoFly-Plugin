@@ -4454,10 +4454,10 @@ class ADHDHighlighter {
         }
       },
       moonshot: {
-        baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
+        baseUrl: 'https://api.moonshot.ai/v1/chat/completions',
         models: ['kimi-k3', 'kimi-k2.6', 'kimi-k2.5', 'moonshot-v1-128k'],
         modelInfo: {
-          'kimi-k3': { label: 'Kimi K3', contextWindow: 1000000, maxOutputTokens: 131072, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'kimi-k3': { label: 'Kimi K3', contextWindow: 1048576, maxOutputTokens: 1048576, capabilities: { text: true, vision: true, audio: false, video: true, tools: true, json: true }, supportsBatchVision: true, maxImagesPerRequest: 8, supportsParallelVision: false, reasoning: true, status: 'validation' },
           'kimi-k2.6': { label: 'Kimi K2.6', contextWindow: 1000000, maxOutputTokens: 65536, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'kimi-k2.5': { label: 'Kimi K2.5', contextWindow: 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'kimi-k2': { label: 'Kimi K2', contextWindow: 131072, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },

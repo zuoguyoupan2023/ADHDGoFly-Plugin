@@ -9,6 +9,7 @@
     "https://api.github.com/*",
     "https://api.deepseek.com/*",
     "https://api.moonshot.cn/*",
+    "https://api.moonshot.ai/*",
     "https://api.openai.com/*",
     "https://api.anthropic.com/*",
     "https://dashscope-intl.aliyuncs.com/*",

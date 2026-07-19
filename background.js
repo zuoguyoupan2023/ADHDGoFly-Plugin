@@ -550,7 +550,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         function fallbackBase(p){
           switch(p){
             case 'deepseek': return 'https://api.deepseek.com/v1/chat/completions';
-            case 'moonshot': return 'https://api.moonshot.cn/v1/chat/completions';
+            case 'moonshot': return 'https://api.moonshot.ai/v1/chat/completions';
             case 'openai': return 'https://api.openai.com/v1/chat/completions';
             case 'openrouter': return 'https://openrouter.ai/api/v1/chat/completions';
             case 'groq': return 'https://api.groq.com/openai/v1/chat/completions';
