@@ -159,12 +159,12 @@
     edges.forEach(e => { e._group = groupOf[edgeId(e.source)] || 0; });
   }
 
-  function layoutRelationship(nodes, edges, W = 900, H = 520) {
+  function layoutRelationship(nodes, edges, W = 900, H = 520, intent = 'relationship') {
     const nextNodes = nodes.map(n => ({ ...n }));
     const nextEdges = edges.map(e => ({ ...e }));
     assignGroups(nextNodes, nextEdges);
     calcDepths(nextNodes, nextEdges);
-    const topology = detectTopology(nextNodes, nextEdges);
+    const topology = intent === 'mindmap' ? 'tree' : (intent === 'flowchart' ? (detectTopology(nextNodes, nextEdges) === 'chain' ? 'chain' : 'dag') : detectTopology(nextNodes, nextEdges));
     const storedPositions = {};
     nextNodes.forEach(node => {
       if (Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y))) storedPositions[node.id] = { x: Number(node.x), y: Number(node.y) };

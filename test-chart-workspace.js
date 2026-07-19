@@ -6,4 +6,8 @@ assert.match(svg, /<svg/); assert.match(svg, /发布历程/); assert.match(svg, 
 const graph = renderSvg({ intent: 'relationship', chartModel: { title: '闭环', nodes: [{ id: 'a', label: '读' }, { id: 'b', label: '练' }], edges: [{ source: 'a', target: 'b', label: '转化' }] } });
 assert.match(graph, /marker-end/); assert.match(graph, /转化/);
 assert.match(graph, /布局：chain/);
+const mindmap = renderSvg({ intent: 'mindmap', chartModel: { title: '主题', nodes: [{ id: 'root', label: '主题' }, { id: 'a', label: '分支' }], edges: [{ source: 'root', target: 'a', label: '包含' }] } });
+assert.match(mindmap, /思维导图/);
+const flowchart = renderSvg({ intent: 'flowchart', chartModel: { title: '步骤', nodes: [{ id: 'a', label: '开始' }, { id: 'b', label: '结束' }], edges: [{ source: 'a', target: 'b', label: '' }] } });
+assert.match(flowchart, /流程图/);
 console.log('chart workspace tests passed');

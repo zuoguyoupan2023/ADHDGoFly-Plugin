@@ -4,7 +4,7 @@
 
   // The chart model is renderer-neutral. Mermaid/ECharts/SVG adapters should
   // consume this shape instead of becoming the product's data contract.
-  const INTENTS = new Set(['relationship', 'infographic', 'data', 'timeline']);
+  const INTENTS = new Set(['concept', 'relationship', 'mindmap', 'flowchart', 'infographic', 'data', 'timeline']);
   const SOURCES = new Set(['article', 'selection', 'image', 'manual', 'quiz']);
   const RENDERERS = new Set(['mermaid', 'echarts', 'svg', 'html']);
 
@@ -62,7 +62,7 @@
     const errors = [];
     if (!model || typeof model !== 'object') return ['chartModel 必须是对象'];
     if (!text(model.title)) errors.push('chartModel.title 不能为空');
-    if (intent === 'relationship' && !model.nodes.length) errors.push('关系图至少需要一个节点');
+    if (['concept', 'relationship', 'mindmap', 'flowchart'].includes(intent) && !model.nodes.length) errors.push('图表至少需要一个节点');
     if (intent === 'timeline' && !model.events.length) errors.push('时间线至少需要一个事件');
     if (intent === 'data' && !model.series.length) errors.push('数据图表至少需要一个数据系列');
     model.edges.forEach((edge, index) => {

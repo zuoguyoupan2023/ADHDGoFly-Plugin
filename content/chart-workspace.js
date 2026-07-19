@@ -38,12 +38,13 @@
       const nodes = model.nodes || []; const edges = model.edges || [];
       const graphHeight = Math.max(height, 170 + Math.ceil(Math.max(nodes.length, 1) / 3) * 120);
       height = graphHeight;
-      const layout = root.AgfChartLayout ? root.AgfChartLayout.layoutRelationship(nodes, edges, width, graphHeight) : null;
+      const layout = root.AgfChartLayout ? root.AgfChartLayout.layoutRelationship(nodes, edges, width, graphHeight, context.intent) : null;
       const laidNodes = layout ? layout.nodes : nodes.map((node, i) => ({ ...node, x: 160 + (i % 3) * 280, y: 130 + Math.floor(i / 3) * 120, _group: i % 4, _scale: 1 }));
       const laidEdges = layout ? layout.edges : edges;
       const palette = layout ? layout.palette : [{ fill: '#eef4ff', line: '#315efb', text: '#172033' }];
       const positions = Object.fromEntries(laidNodes.map(node => [node.id, node]));
-      body += `<text x="36" y="68" font-size="12" font-family="Arial,sans-serif" fill="#687386">布局：${esc(layout?.topology || 'grid')} · ${laidNodes.length} 节点 · ${laidEdges.length} 关系</text>`;
+      const typeLabel = { concept: '概念图', relationship: '关系图', mindmap: '思维导图', flowchart: '流程图' }[context.intent] || '关系图';
+      body += `<text x="36" y="68" font-size="12" font-family="Arial,sans-serif" fill="#687386">${typeLabel} · 布局：${esc(layout?.topology || 'grid')} · ${laidNodes.length} 节点 · ${laidEdges.length} 关系</text>`;
       laidEdges.forEach(edge => {
         const a = positions[edge.source]; const b = positions[edge.target]; if (!a || !b) return;
         const color = palette[edge._group % palette.length].line;
