@@ -3477,6 +3477,8 @@ class ADHDHighlighter {
     const taixueTask = {
       getModelCapabilities(provider, model) {
         const p = String(provider || '').toLowerCase(); const m = String(model || '').toLowerCase();
+        const configured = typeof PROVIDERS_CONFIG !== 'undefined' ? PROVIDERS_CONFIG[p]?.modelInfo?.[model] : null;
+        if (configured) return { ...configured.capabilities, ...configured, supportsBatchVision: configured.capabilities?.vision === true, maxImagesPerRequest: configured.capabilities?.vision === true ? 8 : 1, strategy: configured.capabilities?.vision === true ? 'vision' : 'recognition_then_text' };
         const registered = {
           'openai/gpt-4o': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
           'openai/gpt-5': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 },
@@ -3997,53 +3999,80 @@ class ADHDHighlighter {
     const PROVIDERS_CONFIG = {
       deepseek: {
         baseUrl: 'https://api.deepseek.com/v1/chat/completions',
-        models: ['deepseek-chat', 'deepseek-reasoner']
+        models: ['deepseek-v4-flash', 'deepseek-v4-pro'],
+        modelInfo: {
+          'deepseek-v4-flash': { label: 'DeepSeek V4 Flash', contextWindow: 1000000, maxOutputTokens: 384000, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'deepseek-v4-pro': { label: 'DeepSeek V4 Pro', contextWindow: 1000000, maxOutputTokens: 384000, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }
+        }
       },
       moonshot: {
         baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
-        models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k']
+        models: ['kimi-k2.5', 'kimi-k2', 'moonshot-v1-128k'],
+        modelInfo: {
+          'kimi-k2.5': { label: 'Kimi K2.5', contextWindow: 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'kimi-k2': { label: 'Kimi K2', contextWindow: 131072, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'moonshot-v1-128k': { label: 'Moonshot V1 128K (兼容)', contextWindow: 131072, maxOutputTokens: 8192, capabilities: { text: true, vision: false, audio: false, tools: false, json: false }, reasoning: false, status: 'legacy' }
+        }
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-4o', 'gpt-5', 'gpt-4'],
-        capabilities: { 'gpt-4o': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gpt-5': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 } }
+        models: ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'],
+        modelInfo: Object.fromEntries(['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'].map(model => [model, { label: model.toUpperCase(), contextWindow: 400000, maxOutputTokens: 128000, capabilities: { text: true, vision: model !== 'gpt-5-nano', audio: false, tools: true, json: true }, reasoning: model.startsWith('gpt-5'), status: 'stable' }]))
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
-        models: ['claude-4-sonnet', 'claude-4.5-sonnet']
+        models: ['claude-opus-4-1', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+        modelInfo: {
+          'claude-opus-4-1': { label: 'Claude Opus 4.1', contextWindow: 200000, maxOutputTokens: 32000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-sonnet-4-5': { label: 'Claude Sonnet 4.5', contextWindow: 200000, maxOutputTokens: 64000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-haiku-4-5': { label: 'Claude Haiku 4.5', contextWindow: 200000, maxOutputTokens: 64000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }
+        }
       },
       qwen: {
         baseUrl: 'https://dashscope.aliyuncs.com/api/v1/chat/completions',
-        models: ['qwen-plus', 'qwen-max', 'qwen-turbo', 'qwen-long']
+        models: ['qwen3.7-max', 'qwen3.6-plus', 'qwen3.6-flash', 'qwen3.5-plus', 'qwen3-coder-next', 'qwen3-vl-plus'],
+        modelInfo: Object.fromEntries([
+          ['qwen3.7-max', true, 128000], ['qwen3.6-plus', true, 128000], ['qwen3.6-flash', false, 128000], ['qwen3.5-plus', true, 128000], ['qwen3-coder-next', false, 128000], ['qwen3-vl-plus', true, 128000]
+        ].map(([model, reasoning, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 32768, capabilities: { text: true, vision: model.includes('vl') || model.includes('plus'), audio: false, tools: true, json: true }, reasoning, status: 'stable' }]))
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-5.2', 'glm-5.1', 'glm-4.7', 'glm-4.6', 'glm-4.5']
+        models: ['glm-5', 'glm-4.7', 'glm-4.6'],
+        modelInfo: {
+          'glm-5': { label: 'GLM-5', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'glm-4.7': { label: 'GLM-4.7', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'glm-4.6': { label: 'GLM-4.6', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }
+        }
       },
       minimax: {
         baseUrl: 'https://api.minimax.io/v1/chat/completions',
-        models: ['MiniMax-M2', 'MiniMax-M2-Stable']
+        models: ['MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'],
+        modelInfo: Object.fromEntries(['MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'].map(model => [model, { label: model, contextWindow: 196608, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       gemini: {
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-        models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-001', 'gemini-2.5-flash'],
-        capabilities: { 'gemini-1.5-pro': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-1.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-2.0-flash-001': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 }, 'gemini-2.5-flash': { vision: true, supportsBatchVision: true, maxImagesPerRequest: 8 } }
+        models: ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro', 'gemini-3-flash'],
+        modelInfo: Object.fromEntries([['gemini-3.5-flash', 1000000], ['gemini-3.1-flash-lite', 1000000], ['gemini-3.1-pro', 1000000], ['gemini-3-flash', 1000000]].map(([model, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 65536, capabilities: { text: true, vision: true, audio: true, tools: true, json: true }, reasoning: true, status: model === 'gemini-3.1-pro' ? 'preview' : 'stable' }]))
       },
       grok: {
         baseUrl: 'https://api.x.ai/v1/chat/completions',
-        models: ['grok-2', 'grok-2-mini']
+        models: ['grok-4.20', 'grok-4.5', 'grok-4.3'],
+        modelInfo: Object.fromEntries(['grok-4.20', 'grok-4.5', 'grok-4.3'].map(model => [model, { label: model, contextWindow: 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       openrouter: {
         baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
-        models: ['openai/gpt-4o', 'openai/gpt-4o-mini', 'deepseek-ai/DeepSeek-R1']
+        models: ['openai/gpt-5.1', 'anthropic/claude-sonnet-4.5', 'google/gemini-3.1-pro', 'deepseek/deepseek-v4-pro'],
+        modelInfo: Object.fromEntries([['openai/gpt-5.1', true], ['anthropic/claude-sonnet-4.5', true], ['google/gemini-3.1-pro', true], ['deepseek/deepseek-v4-pro', false]].map(([model, vision]) => [model, { label: model, contextWindow: 200000, maxOutputTokens: 32768, capabilities: { text: true, vision, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       groq: {
         baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
-        models: ['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'gemma2-9b-it']
+        models: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.6-27b', 'llama-3.3-70b-versatile'],
+        modelInfo: Object.fromEntries([['openai/gpt-oss-120b', 131072], ['openai/gpt-oss-20b', 131072], ['qwen/qwen3.6-27b', 131072], ['llama-3.3-70b-versatile', 131072]].map(([model, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 65536, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       siliconflow: {
         baseUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-        models: ['deepseek-ai/DeepSeek-R1', 'deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-7B-Instruct']
+        models: ['deepseek-ai/DeepSeek-V3.2', 'Qwen/Qwen3-235B-A22B-Thinking-2507', 'Qwen/Qwen3.5-397B-A17B'],
+        modelInfo: Object.fromEntries([['deepseek-ai/DeepSeek-V3.2', false], ['Qwen/Qwen3-235B-A22B-Thinking-2507', false], ['Qwen/Qwen3.5-397B-A17B', false]].map(([model, vision]) => [model, { label: model, contextWindow: 131072, maxOutputTokens: 32768, capabilities: { text: true, vision, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       }
     };
 
