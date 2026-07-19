@@ -2967,7 +2967,7 @@ class ADHDHighlighter {
             </div>
           </div>
           <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> 全选</label><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceClear">清除工作区</button><button id="agfImageWorkspaceDelete">删除并清理历史</button><button id="agfImageWorkspaceExport">导出</button><button id="agfImageWorkspaceHistory">识别历史</button></div></div></div>
-          <div class="agf-ai-view-module" id="agfAiViewChart" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图表工作区</span><span id="agfChartMeta" class="agf-module-meta">等待生成图表</span></div><div id="agfChartSkillBadge" class="agf-media-attachment" style="display:none"><div class="agf-media-attachment-body"><strong>内置图表 Skill</strong><div class="agf-media-attachment-result">你帮我做一个关系图来解释</div></div></div><textarea id="agfChartSourceText" class="agf-field" style="width:100%;box-sizing:border-box;min-height:96px;margin-bottom:10px;resize:vertical" placeholder="图表材料会自动填充，也可以在这里修改"></textarea><div class="agf-chart-toolbar"><select id="agfChartIntent" class="agf-field"><option value="concept">概念图</option><option value="relationship">关系图</option><option value="mindmap">思维导图</option><option value="flowchart">流程图</option><option value="timeline">时间线</option></select><button id="agfChartGenerate" class="agf-task-btn">根据工作区材料生成</button><button id="agfChartSave" class="agf-task-btn" disabled>保存</button><button id="agfChartPng" class="agf-task-btn" disabled>导出 PNG</button><button id="agfChartAttach" class="agf-task-btn" disabled>添加到 Chat</button><button id="agfChartZoomOut" class="agf-task-btn" title="缩小">－</button><button id="agfChartZoomReset" class="agf-task-btn" title="重置缩放">100%</button><button id="agfChartZoomIn" class="agf-task-btn" title="放大">＋</button></div><input id="agfChartTitle" class="agf-field agf-chart-title" placeholder="图表标题"><div id="agfChartCanvas" class="agf-chart-canvas"></div><div id="agfChartNotice" class="agf-module-meta" style="margin-top:8px"></div><div class="agf-module-history" style="margin-top:16px"><strong style="font-size:13px">已保存图表</strong><div id="agfChartHistory" style="margin-top:6px"></div></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewChart" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图表工作区</span><span id="agfChartMeta" class="agf-module-meta">等待生成图表</span></div><div id="agfChartSkillBadge" class="agf-media-attachment" style="display:none"><div class="agf-media-attachment-body"><strong>内置图表 Skill</strong><div class="agf-media-attachment-result">你帮我做一个关系图来解释</div></div></div><textarea id="agfChartSourceText" class="agf-field" style="width:100%;box-sizing:border-box;min-height:96px;margin-bottom:10px;resize:vertical" placeholder="图表材料会自动填充，也可以在这里修改"></textarea><div class="agf-chart-toolbar"><select id="agfChartIntent" class="agf-field"><option value="concept">概念图</option><option value="relationship">关系图</option><option value="mindmap">思维导图</option><option value="flowchart">流程图</option><option value="timeline">时间线</option></select><select id="agfChartRenderer" class="agf-field"><option value="svg">清爽 SVG</option><option value="rough">手绘风格</option><option value="mermaid">Mermaid 风格</option></select><button id="agfChartGenerate" class="agf-task-btn">根据工作区材料生成</button><button id="agfChartSave" class="agf-task-btn" disabled>保存</button><button id="agfChartPng" class="agf-task-btn" disabled>导出 PNG</button><button id="agfChartAttach" class="agf-task-btn" disabled>添加到 Chat</button><button id="agfChartZoomOut" class="agf-task-btn" title="缩小">－</button><button id="agfChartZoomReset" class="agf-task-btn" title="重置缩放">100%</button><button id="agfChartZoomIn" class="agf-task-btn" title="放大">＋</button></div><input id="agfChartTitle" class="agf-field agf-chart-title" placeholder="图表标题"><div id="agfChartCanvas" class="agf-chart-canvas"></div><div id="agfChartNotice" class="agf-module-meta" style="margin-top:8px"></div><div class="agf-module-history" style="margin-top:16px"><strong style="font-size:13px">已保存图表</strong><div id="agfChartHistory" style="margin-top:6px"></div></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3675,6 +3675,7 @@ class ADHDHighlighter {
     const chartSourceText = chartView.querySelector('#agfChartSourceText');
     const chartSkillBadge = chartView.querySelector('#agfChartSkillBadge');
     const chartIntent = chartView.querySelector('#agfChartIntent');
+    const chartRenderer = chartView.querySelector('#agfChartRenderer');
     const chartNotice = chartView.querySelector('#agfChartNotice');
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
@@ -3728,11 +3729,49 @@ class ADHDHighlighter {
           document.addEventListener('mouseup', up);
         });
       });
+      Array.from(svg.querySelectorAll('.agf-chart-node-label')).forEach(label => {
+        label.addEventListener('dblclick', event => {
+          event.stopPropagation();
+          const node = currentChartContext.chartModel.nodes.find(item => item.id === label.getAttribute('data-node-id'));
+          if (!node) return;
+          const next = window.prompt('修改节点文本', node.label || '');
+          if (next == null) return;
+          node.label = next.trim() || node.label;
+          currentChartContext.updatedAt = Date.now();
+          renderChartPreview();
+        });
+      });
+      Array.from(svg.querySelectorAll('.agf-chart-node-desc')).forEach(label => {
+        label.addEventListener('dblclick', event => {
+          event.stopPropagation();
+          const node = currentChartContext.chartModel.nodes.find(item => item.id === label.getAttribute('data-node-id'));
+          if (!node) return;
+          const next = window.prompt('修改节点说明', node.description || '');
+          if (next == null) return;
+          node.description = next.trim();
+          currentChartContext.updatedAt = Date.now();
+          renderChartPreview();
+        });
+      });
+      Array.from(svg.querySelectorAll('.agf-chart-edge-label')).forEach(label => {
+        label.addEventListener('dblclick', event => {
+          event.stopPropagation();
+          const index = Number(label.getAttribute('data-edge-index'));
+          const edge = currentChartContext.chartModel.edges && currentChartContext.chartModel.edges[index];
+          if (!edge) return;
+          const next = window.prompt('修改关系文本', edge.label || '');
+          if (next == null) return;
+          edge.label = next.trim();
+          currentChartContext.updatedAt = Date.now();
+          renderChartPreview();
+        });
+      });
     };
-    const renderChartPreview = () => { if (!currentChartContext) return; chartTitle.value = currentChartContext.chartModel.title || ''; chartIntent.value = currentChartContext.intent; chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`; chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext); Object.values(chartButtons).forEach(button => { button.disabled = false; }); applyChartZoom(); attachChartInteractions(); };
+    const renderChartPreview = () => { if (!currentChartContext) return; chartTitle.value = currentChartContext.chartModel.title || ''; chartIntent.value = currentChartContext.intent; if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg'); chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`; chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext); Object.values(chartButtons).forEach(button => { button.disabled = false; }); applyChartZoom(); attachChartInteractions(); };
     if (chartZoomOut) chartZoomOut.onclick = () => setChartZoom(chartZoom - 0.15);
     if (chartZoomIn) chartZoomIn.onclick = () => setChartZoom(chartZoom + 0.15);
     if (chartZoomReset) chartZoomReset.onclick = () => setChartZoom(1);
+    if (chartRenderer) chartRenderer.onchange = () => { if (!currentChartContext) return; currentChartContext.renderer = chartRenderer.value; currentChartContext.updatedAt = Date.now(); renderChartPreview(); };
     const loadChartHistory = async () => { try { const rows = await AgfChartWorkspace.list(); chartHistory.innerHTML = rows.length ? rows.slice(0, 12).map(row => `<div class="agf-chart-history-row"><span>${String(row.chartModel?.title || '未命名')} · ${row.intent === 'timeline' ? '时间线' : '关系图'}</span><button class="agf-task-btn" data-chart-load="${row.id}">打开</button></div>`).join('') : '<span style="font-size:12px;color:#687386">暂无保存记录</span>'; chartHistory.querySelectorAll('[data-chart-load]').forEach(button => button.onclick = async () => { currentChartContext = await AgfChartWorkspace.get(button.dataset.chartLoad); renderChartPreview(); }); } catch (error) { chartNotice.textContent = error.message || '无法读取图表历史'; } };
     const chartSourceName = source => source === 'full_article' ? 'article' : (source === 'paragraph' ? 'selection' : (source || 'manual'));
     const currentChartSkillMaterial = (fallbackText) => {
@@ -3809,7 +3848,7 @@ class ADHDHighlighter {
         const intent = chartIntent.value;
         const model = await requestChartModel(intent, material);
         const checked = AgfChartModel.validateChartContext({
-          source: chartSourceName(ctx.source), intent, chartModel: model,
+          source: chartSourceName(ctx.source), intent, renderer: chartRenderer?.value || 'svg', chartModel: model,
           sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }]
         });
         if (!checked.valid) throw new Error(checked.errors.join('；'));

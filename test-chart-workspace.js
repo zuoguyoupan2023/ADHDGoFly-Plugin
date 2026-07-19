@@ -10,4 +10,10 @@ const mindmap = renderSvg({ intent: 'mindmap', chartModel: { title: '主题', no
 assert.match(mindmap, /思维导图/);
 const flowchart = renderSvg({ intent: 'flowchart', chartModel: { title: '步骤', nodes: [{ id: 'a', label: '开始' }, { id: 'b', label: '结束' }], edges: [{ source: 'a', target: 'b', label: '' }] } });
 assert.match(flowchart, /流程图/);
+const rough = renderSvg({ intent: 'relationship', renderer: 'rough', chartModel: { title: '手绘', nodes: [{ id: 'a', label: '很长很长很长很长的节点文本' }, { id: 'b', label: '结束' }], edges: [{ source: 'a', target: 'b', label: '长关系文本' }] } });
+assert.match(rough, /agf-chart-node-label/);
+assert.match(rough, /C/);
+const mermaid = renderSvg({ intent: 'flowchart', renderer: 'mermaid', chartModel: { title: 'Mermaid', nodes: [{ id: 'a', label: '开始' }, { id: 'b', label: '结束' }], edges: [{ source: 'a', target: 'b', label: '下一步' }] } });
+assert.match(mermaid, /Mermaid 风格预览/);
+assert.match(mermaid, /flowchart TD/);
 console.log('chart workspace tests passed');

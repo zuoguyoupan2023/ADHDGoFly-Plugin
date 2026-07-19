@@ -17,6 +17,7 @@ assert.equal(timeline.valid, true);
 const data = validateChartContext({ source: 'manual', intent: 'data', chartModel: { title: '数据', series: [{ name: '数量', data: [1, 2] }] } });
 assert.equal(data.valid, true);
 assert.ok(data.value.chartModel.warnings.includes('数据图表缺少单位，精确比较可能受限'));
+assert.equal(validateChartContext({ source: 'article', intent: 'relationship', renderer: 'rough', chartModel: { title: '手绘', nodes: [{ id: 'a', label: 'A' }] } }).valid, true);
 assert.deepEqual(parseJsonObject('```json\n{"title":"包裹"}\n```'), { title: '包裹' });
 assert.deepEqual(parseJsonObject('说明文字 {"title":"提取"} 结束'), { title: '提取' });
 assert.throws(() => parseJsonObject(''), /空内容/);

@@ -6,7 +6,7 @@
   // consume this shape instead of becoming the product's data contract.
   const INTENTS = new Set(['concept', 'relationship', 'mindmap', 'flowchart', 'infographic', 'data', 'timeline']);
   const SOURCES = new Set(['article', 'selection', 'image', 'manual', 'quiz']);
-  const RENDERERS = new Set(['mermaid', 'echarts', 'svg', 'html']);
+  const RENDERERS = new Set(['mermaid', 'echarts', 'svg', 'rough', 'html']);
 
   const text = value => String(value == null ? '' : value).trim();
   const list = value => Array.isArray(value) ? value : [];

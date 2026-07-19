@@ -5,6 +5,24 @@
   const STORE = 'charts';
   const esc = value => String(value == null ? '' : value).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const truncate = (value, length) => { const text = String(value || ''); return text.length > length ? `${text.slice(0, length - 1)}…` : text; };
+  const graphIntents = new Set(['concept', 'relationship', 'mindmap', 'flowchart']);
+  const wrapText = (value, maxChars = 12, maxLines = 4) => {
+    const raw = String(value || '').trim();
+    const chunks = raw.match(new RegExp(`.{1,${maxChars}}`, 'g')) || [''];
+    const lines = chunks.slice(0, maxLines);
+    if (chunks.length > maxLines) lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, Math.max(1, maxChars - 1))}…`;
+    return lines;
+  };
+  const nodeSize = node => {
+    const labelLines = wrapText(node.label, 12, 3);
+    const descLines = wrapText(node.description, 18, 2).filter(Boolean);
+    return { labelLines, descLines, width: Math.max(156, Math.max(...labelLines.map(x => x.length), 6) * 13 + 38), height: 34 + labelLines.length * 19 + descLines.length * 15 };
+  };
+  const textLines = (lines, x, y, attrs = '') => lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}" ${attrs}>${esc(line)}</tspan>`).join('');
+  const roughLine = (x1, y1, x2, y2) => {
+    const k = n => Number(n).toFixed(1);
+    return `M${k(x1)},${k(y1)} C${k((x1+x2)/2+3)},${k(y1-4)} ${k((x1+x2)/2-3)},${k(y2+4)} ${k(x2)},${k(y2)} M${k(x1+1.5)},${k(y1-1.2)} C${k((x1+x2)/2-4)},${k(y1+3)} ${k((x1+x2)/2+4)},${k(y2-3)} ${k(x2-1.5)},${k(y2+1.2)}`;
+  };
 
   function openDb() {
     return new Promise((resolve, reject) => {
@@ -29,6 +47,7 @@
   const remove = id => transaction('readwrite', store => store.delete(id));
 
   function renderSvg(context) {
+    if (context.renderer === 'mermaid' && graphIntents.has(context.intent)) return renderMermaidStyleSvg(context);
     const model = context.chartModel || {}; const title = esc(model.title); const width = 900; let height = context.intent === 'timeline' ? Math.max(280, 150 + (model.events || []).length * 86) : Math.max(420, 190 + Math.ceil((model.nodes || []).length / 3) * 120);
     let body = `<rect width="100%" height="100%" fill="#ffffff"/><text x="36" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="#172033">${title}</text>`;
     if (context.intent === 'timeline') {
@@ -49,17 +68,42 @@
         const a = positions[edge.source]; const b = positions[edge.target]; if (!a || !b) return;
         const color = palette[edge._group % palette.length].line;
         const dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
-        const x1 = a.x + dx / len * 68, y1 = a.y + dy / len * 30, x2 = b.x - dx / len * 68, y2 = b.y - dy / len * 30;
+        const as = nodeSize(a), bs = nodeSize(b);
+        const x1 = a.x + dx / len * (as.width / 2), y1 = a.y + dy / len * (as.height / 2), x2 = b.x - dx / len * (bs.width / 2), y2 = b.y - dy / len * (bs.height / 2);
         const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
-        body += `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2" marker-end="url(#arrow)"/><text x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}">${esc(truncate(edge.label, 16))}</text>`;
+        const d = context.renderer === 'rough' ? roughLine(x1, y1, x2, y2) : `M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}`;
+        body += `<path class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" d="${d}" fill="none" stroke="${color}" stroke-width="${context.renderer === 'rough' ? '1.4' : '2.2'}" marker-end="url(#arrow)"/><text class="agf-chart-edge-label" data-edge-index="${laidEdges.indexOf(edge)}" x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}" style="cursor:text">${esc(truncate(edge.label, 18))}</text>`;
       });
       laidNodes.forEach(node => {
         const group = palette[(node._group || 0) % palette.length]; const scale = node._scale || 1;
-        const w = 176 * scale, h = 72 * scale, x = node.x - w / 2, y = node.y - h / 2;
-        body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}" style="cursor:grab"><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="18" fill="${group.fill}" stroke="${group.line}" stroke-width="2"/><text x="${node.x}" y="${(node.y - 8).toFixed(1)}" text-anchor="middle" font-size="${Math.max(13, 15 * scale).toFixed(1)}" font-family="Arial,sans-serif" font-weight="700" fill="${group.text}" pointer-events="none">${esc(truncate(node.label, 18))}</text><text x="${node.x}" y="${(node.y + 15).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="#687386" pointer-events="none">${esc(truncate(node.description || '', 24))}</text></g>`;
+        const size = nodeSize(node); const w = size.width * scale, h = size.height * scale, x = node.x - w / 2, y = node.y - h / 2;
+        const shape = context.renderer === 'rough'
+          ? `<path d="${roughLine(x, y + 8, x + w, y + 8)} ${roughLine(x + w, y + 8, x + w, y + h - 8)} ${roughLine(x + w, y + h - 8, x, y + h - 8)} ${roughLine(x, y + h - 8, x, y + 8)}" fill="${group.fill}" stroke="${group.line}" stroke-width="1.5"/>`
+          : `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="18" fill="${group.fill}" stroke="${group.line}" stroke-width="2"/>`;
+        const labelStart = node.y - h / 2 + 26;
+        const descStart = labelStart + size.labelLines.length * 18 + 5;
+        body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}" style="cursor:grab">${shape}<text class="agf-chart-node-label" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="${Math.max(13, 15 * scale).toFixed(1)}" font-family="Arial,sans-serif" font-weight="700" fill="${group.text}" style="cursor:text">${textLines(size.labelLines, node.x, labelStart)}</text><text class="agf-chart-node-desc" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="#687386" style="cursor:text">${textLines(size.descLines, node.x, descStart)}</text></g>`;
       });
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#687386"/></marker></defs>${body}</svg>`;
+  }
+  function renderMermaidStyleSvg(context) {
+    const model = context.chartModel || {}; const nodes = model.nodes || []; const edges = model.edges || []; const width = 900; const height = Math.max(420, 180 + Math.ceil(Math.max(nodes.length, 1) / 3) * 120);
+    const dsl = toMermaidDsl(context);
+    const layout = root.AgfChartLayout ? root.AgfChartLayout.layoutRelationship(nodes, edges, width, height, context.intent) : null;
+    const laidNodes = layout ? layout.nodes : nodes.map((node, i) => ({ ...node, x: 160 + (i % 3) * 280, y: 130 + Math.floor(i / 3) * 120, _group: i % 4 }));
+    const positions = Object.fromEntries(laidNodes.map(node => [node.id, node]));
+    let body = `<rect width="100%" height="100%" fill="#fbfcff"/><text x="36" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="#172033">${esc(model.title || 'Mermaid 图')}</text><text x="36" y="68" font-size="12" font-family="Arial,sans-serif" fill="#687386">Mermaid 风格预览 · 可复制 DSL</text><foreignObject x="610" y="24" width="250" height="110"><pre xmlns="http://www.w3.org/1999/xhtml" style="font:10px monospace;white-space:pre-wrap;margin:0;color:#687386;background:#f4f6fb;border:1px solid #dfe5f2;border-radius:8px;padding:8px">${esc(dsl)}</pre></foreignObject>`;
+    edges.forEach((edge, i) => { const a = positions[edge.source], b = positions[edge.target]; if (!a || !b) return; body += `<path class="agf-chart-edge" data-edge-index="${i}" d="M${a.x},${a.y} L${b.x},${b.y}" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/><text class="agf-chart-edge-label" data-edge-index="${i}" x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2 - 6}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="#4b5563">${esc(edge.label || '')}</text>`; });
+    laidNodes.forEach(node => { const size = nodeSize(node); body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}"><rect x="${node.x-size.width/2}" y="${node.y-size.height/2}" width="${size.width}" height="${size.height}" rx="6" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/><text class="agf-chart-node-label" data-node-id="${esc(node.id)}" x="${node.x}" y="${node.y - 4}" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" font-weight="700" fill="#1f2937">${textLines(size.labelLines, node.x, node.y - 8)}</text></g>`; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#6b7280"/></marker></defs>${body}</svg>`;
+  }
+  function toMermaidDsl(context) {
+    const model = context.chartModel || {}; const nodes = model.nodes || []; const edges = model.edges || [];
+    const label = id => esc((nodes.find(n => n.id === id) || {}).label || id).replace(/"/g, "'");
+    const header = context.intent === 'mindmap' ? 'mindmap' : 'flowchart TD';
+    if (context.intent === 'mindmap') return [header, ...nodes.map(n => `  ${n.id}["${String(n.label || n.id).replace(/"/g, "'")}"]`), ...edges.map(e => `  ${e.source} --> ${e.target}`)].join('\n');
+    return [header, ...nodes.map(n => `  ${n.id}["${String(n.label || n.id).replace(/"/g, "'")}"]`), ...edges.map(e => `  ${e.source} -->${e.label ? `|${String(e.label).replace(/"/g, "'")}|` : ''} ${e.target}`)].join('\n');
   }
   async function svgToPng(svg, scale = 2) {
     return new Promise((resolve, reject) => { const blob = new Blob([svg], { type: 'image/svg+xml' }); const url = URL.createObjectURL(blob); const image = new Image(); image.onload = () => { const canvas = document.createElement('canvas'); canvas.width = image.width * scale; canvas.height = image.height * scale; canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')); }; image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('PNG 导出失败')); }; image.src = url; });
