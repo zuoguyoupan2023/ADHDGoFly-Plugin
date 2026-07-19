@@ -2856,7 +2856,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph">段落</button>
         </div>
         <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" title="发现当前选区或全文中的图片">发现网页图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><select id="agfMediaModeSelect" class="agf-select" title="图片发送方式"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" title="发现当前选区或全文中的图片">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" title="截图当前网页视窗">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><select id="agfMediaModeSelect" class="agf-select" title="图片发送方式"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label">任务</span>
@@ -2938,7 +2938,7 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
-          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div class="agf-module-actions"><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span>图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p>拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div class="agf-module-actions"><button id="agfImageProcessSelected" class="primary" disabled>发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled>添加到对话框</button><button id="agfImageWorkspaceRetry" disabled>重新识别</button><button id="agfImageWorkspaceHistory">识别历史</button></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3150,6 +3150,7 @@ class ADHDHighlighter {
     const workspaceImageInput = document.getElementById('agfWorkspaceImageInput');
     const imageWorkspaceResult = document.getElementById('agfImageWorkspaceResult');
     const imageWorkspaceStatus = document.getElementById('agfImageWorkspaceStatus');
+    const imageProcessSelected = document.getElementById('agfImageProcessSelected');
     const imageAddToChat = document.getElementById('agfImageAddToChat');
     const imageWorkspaceRetry = document.getElementById('agfImageWorkspaceRetry');
     const imageWorkspaceHistoryBtn = document.getElementById('agfImageWorkspaceHistory');
@@ -3172,6 +3173,7 @@ class ADHDHighlighter {
     const contextSummary = document.getElementById('agfContextSummary');
     const contextButtons = Array.from(overlay.querySelectorAll('.agf-context-btn'));
     const imageContextBtn = document.getElementById('agfImageContextBtn');
+    const pageScreenshotBtn = document.getElementById('agfPageScreenshotBtn');
     const audioContextBtn = document.getElementById('agfAudioContextBtn');
     const imageContextInput = document.getElementById('agfImageContextInput');
     const audioContextInput = document.getElementById('agfAudioContextInput');
@@ -3610,7 +3612,7 @@ class ADHDHighlighter {
       });
       const seen = new Set();
       const candidates = imgs.filter(img => { const key = img.currentSrc || img.src; if (seen.has(key)) return false; seen.add(key); const rect = img.getBoundingClientRect(); const width = Math.max(img.naturalWidth || 0, rect.width || 0); const height = Math.max(img.naturalHeight || 0, rect.height || 0); const inViewport = rect.bottom >= 0 && rect.right >= 0 && rect.top <= window.innerHeight && rect.left <= window.innerWidth; return width >= 80 && height >= 40 && (source !== 'selection' || inViewport); });
-      return { candidates, total: candidates.length, selected: candidates.slice(0, 8) };
+      return { candidates, total: candidates.length, selected: candidates };
     };
     const imageElementToDataUrl = async (img) => {
       if (String(img.currentSrc || img.src).startsWith('data:image/')) return img.currentSrc || img.src;
@@ -3626,6 +3628,27 @@ class ADHDHighlighter {
       const timer = setTimeout(() => reject(new Error(`图片识别超时（>${Math.round(timeoutMs / 1000)}秒），已跳过此图`)), timeoutMs);
       promise.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
     });
+    const cropImageDataUrl = async (dataUrl, rect) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const ratioX = img.naturalWidth / Math.max(1, window.innerWidth);
+          const ratioY = img.naturalHeight / Math.max(1, window.innerHeight);
+          const sx = Math.max(0, Math.round(rect.left * ratioX));
+          const sy = Math.max(0, Math.round(rect.top * ratioY));
+          const sw = Math.max(1, Math.round(rect.width * ratioX));
+          const sh = Math.max(1, Math.round(rect.height * ratioY));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.min(sw, img.naturalWidth - sx);
+          canvas.height = Math.min(sh, img.naturalHeight - sy);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (error) { reject(error); }
+      };
+      img.onerror = () => reject(new Error('截图裁剪失败'));
+      img.src = dataUrl;
+    });
     const capturePageScreenshot = async () => {
       const overlay = document.getElementById('agfAiSettingOverlay');
       const previousDisplay = overlay && overlay.style.display;
@@ -3636,72 +3659,155 @@ class ADHDHighlighter {
         return result.dataUrl;
       } finally { if (overlay) overlay.style.display = previousDisplay || ''; }
     };
+    const renderImageWorkspaceCard = (ctx, index, options = {}) => {
+      if (!imageWorkspaceResult || !ctx?.image) return;
+      const checked = options.checked !== false;
+      const imageSrc = ctx.image.dataUrl || ctx.image.sourceUrl || '';
+      const status = ctx.recognition?.status || (ctx.metadata?.recognitionError ? 'failed' : 'pending');
+      const resultHtml = ctx.recognition?.text
+        ? (typeof markdownToHtml === 'function' ? markdownToHtml(ctx.recognition.text) : String(ctx.recognition.text).replace(/\n/g, '<br>'))
+        : (ctx.metadata?.recognitionError ? `<p class="agf-error">${String(ctx.metadata.recognitionError)}</p>` : '<p>等待发送识别。</p>');
+      imageWorkspaceResult.insertAdjacentHTML('beforeend', `<div class="agf-vocab-card agf-page-image-card" data-image-card-index="${index}"><label><input type="checkbox" class="agf-page-image-check" ${checked ? 'checked' : ''} data-image-index="${index}"> 图片 ${index + 1} · ${String(ctx.image.name || '网页图片')}</label><div><img src="${String(imageSrc)}" alt="${String(ctx.image.alt || ctx.image.name || '图片')}" style="max-width:180px;max-height:120px;object-fit:contain;border-radius:8px;cursor:zoom-in" data-image-preview="${index}"></div><div class="agf-page-image-status">状态：${status === 'completed' ? '已识别' : status === 'failed' ? '失败，可重试' : '待识别'}</div><div class="agf-page-image-result">${resultHtml}</div></div>`);
+      const card = imageWorkspaceResult.querySelector(`[data-image-card-index="${index}"]`);
+      const preview = card && card.querySelector('[data-image-preview]');
+      if (preview && imageSrc) preview.onclick = () => window.open(String(imageSrc), '_blank');
+    };
+    const refreshImageWorkspaceActions = () => {
+      const hasPendingChecked = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check:checked') : []).some(input => {
+        const ctx = currentMediaBatch[Number(input.dataset.imageIndex || '-1')];
+        return ctx && ctx.image;
+      });
+      const completed = currentMediaBatch.filter(x => x?.recognition?.status === 'completed');
+      if (imageProcessSelected) imageProcessSelected.disabled = !hasPendingChecked;
+      if (imageAddToChat) imageAddToChat.disabled = completed.length === 0;
+      if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = currentMediaBatch.length === 0;
+      if (visionOcrBtn) visionOcrBtn.disabled = currentMediaBatch.length === 0;
+      if (mediaModeSelect) mediaModeSelect.disabled = currentMediaBatch.length === 0;
+      currentMediaContext = completed[0] || currentMediaBatch[0] || null;
+    };
+    const addMediaContextsToWorkspace = (contexts, { reset = false, statusText: nextStatus = '' } = {}) => {
+      if (reset) {
+        currentMediaBatch = [];
+        currentMediaContext = null;
+        if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
+      }
+      const start = currentMediaBatch.length;
+      contexts.forEach((ctx, offset) => {
+        currentMediaBatch.push(ctx);
+        renderImageWorkspaceCard(ctx, start + offset, { checked: true });
+      });
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = nextStatus || `已加入 ${contexts.length} 张图片，等待勾选发送`;
+      if (mediaStrategy) mediaStrategy.textContent = currentMediaBatch.length > 10 ? '建议每次勾选不超过 10 张，避免等待过长。' : '勾选图片后发送给 GLM-4V-Flash 识别';
+      refreshImageWorkspaceActions();
+      setView('image');
+    };
     const discoverAndConfirmPageImages = async (source) => {
       const imageSet = pageImagesForSource(source);
       const imgs = imageSet.selected;
       if (!imgs.length) {
-        const useScreenshot = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}没有检测到可直接读取的图片。是否截图当前网页视窗并发送给 GLM-4V-Flash 识别？\n注意：截图不包含浏览器侧边栏，太学浮层会暂时隐藏。`);
+        const useScreenshot = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}没有检测到可直接读取的图片。是否截图当前网页视窗并加入图像工作区？\n注意：截图不包含浏览器侧边栏，太学浮层会暂时隐藏。`);
         if (!useScreenshot) return [];
         try {
           const dataUrl = await capturePageScreenshot();
-          const output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `请识别这张网页视窗截图中的主要图片、图表和文字内容。${source === 'selection' ? '重点关注用户选区附近的内容。' : ''}不要描述浏览器或插件界面。` }), 75000);
           const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name: '当前网页视窗截图', delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
-          ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
           return [ctx];
         } catch (error) { showToast(`网页截图识别失败：${error.message || error}`); return []; }
       }
       const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
       if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('发现网页图片，但媒体权限或上传开关未开启，将只使用文本。'); return []; }
-      const limitHint = imageSet.total > imgs.length ? `（实际发现 ${imageSet.total} 张，本次最多处理前 ${imgs.length} 张）` : '';
-      const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imageSet.total} 张可见图片${limitHint}。将使用 GLM-4V-Flash 逐张识别，并把图片发送给智谱 AI。是否识别并加入上下文？`);
+      const limitHint = imageSet.total > 10 ? '图片超过 10 张，全部串行处理可能需要较长时间；你可以取消后改用截图或分批处理。' : '';
+      const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imageSet.total} 张可见图片。将先加入图像工作区并默认勾选；点击“发送勾选图片识别”后会使用 GLM-4V-Flash 串行识别。${limitHint}\n是否继续？`);
       if (!ok) return [];
-      const results = [];
+      const contexts = [];
       for (let i = 0; i < imgs.length; i++) {
-        try {
-          if (mediaStrategy) mediaStrategy.textContent = `正在识别网页图片 ${i + 1}/${imgs.length}…`;
-          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在处理网页图片 ${i + 1}/${imgs.length}（下载与识别，最多约 75 秒）…`;
-          const imageUrl = imgs[i].currentSrc || imgs[i].src;
-          const prompt = `这是网页${source === 'selection' ? '选区' : '全文'}中的第 ${i + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明。`;
-          let dataUrl = '';
-          let delivery = 'link';
-          let output;
-          try {
-            output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: imageUrl, prompt }), 75000);
-          } catch (linkError) {
-            try {
-              dataUrl = await imageElementToDataUrl(imgs[i]);
-              delivery = 'download';
-              output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt }), 75000);
-            } catch (downloadError) {
-              try {
-                dataUrl = await capturePageScreenshot();
-                delivery = 'screenshot';
-                output = await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `${prompt}\n这是一张当前网页视窗截图，请只识别截图中对应的网页内容，不要描述浏览器或插件界面。` }), 75000);
-              } catch (screenshotError) {
-                throw new Error(`链接、下载、截图均失败：链接=${linkError.message || linkError}；下载=${downloadError.message || downloadError}；截图=${screenshotError.message || screenshotError}`);
-              }
-            }
-          }
-          const ctx = createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl, mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imageUrl, delivery }, confirmed: true, sourceUrl: location.href });
-          ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
-          results.push(ctx);
-        } catch (error) {
-          results.push(createTaixueContext({ source, image: { name: `网页图片 ${i + 1}`, sourceUrl: imgs[i].src }, confirmed: true, sourceUrl: location.href, metadata: { recognitionError: String(error.message || error) } }));
-          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `网页图片 ${i + 1}/${imgs.length} 失败，继续下一张…`;
-        }
+        const imageUrl = imgs[i].currentSrc || imgs[i].src;
+        contexts.push(createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl: '', mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imageUrl, delivery: 'link' }, confirmed: true, sourceUrl: location.href }));
       }
-      if (mediaStrategy) mediaStrategy.textContent = `网页图片识别完成 ${results.filter(x => x.recognition?.status === 'completed').length}/${imgs.length} 张`;
-      return results;
+      return contexts;
+    };
+    const recognizeImageContext = async (ctx, index, total) => {
+      const prompt = `这是第 ${index + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明；不确定内容请明确标注。`;
+      const imageUrl = ctx.image?.sourceUrl || '';
+      if (ctx.image?.dataUrl) {
+        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
+      }
+      let linkError = null;
+      try {
+        ctx.image.delivery = 'link';
+        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: imageUrl, prompt }), 75000);
+      } catch (error) { linkError = error; }
+      let downloadError = null;
+      try {
+        const img = Array.from(document.images || []).find(x => (x.currentSrc || x.src) === imageUrl);
+        if (!img) throw new Error('无法在当前页面定位图片元素');
+        ctx.image.dataUrl = await imageElementToDataUrl(img);
+        ctx.image.delivery = 'download';
+        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
+      } catch (error) { downloadError = error; }
+      try {
+        ctx.image.dataUrl = await capturePageScreenshot();
+        ctx.image.delivery = 'screenshot';
+        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt: `${prompt}\n这是当前网页视窗截图兜底，请只识别截图中的网页正文内容，不要描述浏览器、插件侧边栏或太学浮层。` }), 75000);
+      } catch (screenshotError) {
+        throw new Error(`链接、下载、截图均失败：链接=${linkError?.message || linkError}；下载=${downloadError?.message || downloadError}；截图=${screenshotError.message || screenshotError}`);
+      }
+    };
+    const updateImageCardAfterRecognition = (index) => {
+      const card = imageWorkspaceResult && imageWorkspaceResult.querySelector(`[data-image-card-index="${index}"]`);
+      const ctx = currentMediaBatch[index];
+      if (!card || !ctx) return;
+      const checkbox = card.querySelector('.agf-page-image-check');
+      const status = card.querySelector('.agf-page-image-status');
+      const result = card.querySelector('.agf-page-image-result');
+      const preview = card.querySelector('[data-image-preview]');
+      if (checkbox && ctx.recognition?.status === 'completed') checkbox.checked = false;
+      if (status) status.textContent = ctx.recognition?.status === 'completed' ? `状态：已识别（${ctx.image.delivery || 'link'}）` : '状态：失败，可重新勾选';
+      if (result) result.innerHTML = ctx.recognition?.text
+        ? (typeof markdownToHtml === 'function' ? markdownToHtml(ctx.recognition.text) : String(ctx.recognition.text).replace(/\n/g, '<br>'))
+        : `<p class="agf-error">${String(ctx.metadata?.recognitionError || '识别失败')}</p>`;
+      if (preview && ctx.image?.dataUrl) {
+        preview.setAttribute('src', ctx.image.dataUrl);
+        preview.onclick = () => window.open(String(ctx.image.dataUrl), '_blank');
+      }
+    };
+    const saveImageRecognitionHistory = async (ctx, index) => {
+      const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : [])));
+      history.unshift({ id: `image-${Date.now()}-${index}`, name: ctx.image?.name || `图片 ${index + 1}`, output: ctx.recognition?.text || '', context: ctx, createdAt: Date.now() });
+      await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
+    };
+    const processSelectedWorkspaceImages = async () => {
+      const checked = Array.from(imageWorkspaceResult ? imageWorkspaceResult.querySelectorAll('.agf-page-image-check:checked') : []);
+      const selected = checked.map(input => Number(input.dataset.imageIndex || '-1')).filter(i => i >= 0 && currentMediaBatch[i]?.image);
+      if (!selected.length) { showToast('请先勾选要识别的图片。'); return; }
+      if (selected.length > 10) showToast('本次超过 10 张，会继续串行处理，可能等待较久。');
+      if (imageProcessSelected) imageProcessSelected.disabled = true;
+      for (let n = 0; n < selected.length; n++) {
+        const index = selected[n];
+        const ctx = currentMediaBatch[index];
+        try {
+          if (mediaStrategy) mediaStrategy.textContent = `正在识别勾选图片 ${n + 1}/${selected.length}…`;
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在识别第 ${n + 1}/${selected.length} 张（总第 ${index + 1} 张）…`;
+          const output = await recognizeImageContext(ctx, index, selected.length);
+          ctx.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
+          if (ctx.metadata) delete ctx.metadata.recognitionError;
+          await saveImageRecognitionHistory(ctx, index);
+        } catch (error) {
+          ctx.recognition = { model: 'glm-4v-flash', status: 'failed', text: '', ocrText: '', createdAt: Date.now(), error: String(error.message || error) };
+          ctx.metadata = { ...(ctx.metadata || {}), recognitionError: String(error.message || error) };
+        }
+        updateImageCardAfterRecognition(index);
+      }
+      const completed = currentMediaBatch.filter(x => x.recognition?.status === 'completed').length;
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `识别完成 ${completed}/${currentMediaBatch.length} 张`;
+      if (mediaStrategy) mediaStrategy.textContent = `图像工作区：已完成 ${completed}/${currentMediaBatch.length} 张`;
+      refreshImageWorkspaceActions();
     };
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
       if ((!currentMediaContext || currentMediaContext.source !== 'image') && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
       const capabilities = taixueTask.getModelCapabilities(provider, model);
-      const contexts = currentMediaBatch.length ? currentMediaBatch : [currentMediaContext];
-      if (!currentMediaContext || currentMediaContext.source !== 'image') currentMediaContext = contexts[0];
-      if (!currentMediaContext.recognition || currentMediaContext.recognition.status !== 'completed') {
-        const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”，尽量逐行保留原文；再输出“图片说明”，说明主要内容、布局和重要视觉信息。无法确认的内容请标注不确定。' });
-        currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
-      }
+      const contexts = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).filter(ctx => ctx?.recognition?.status === 'completed' && ctx.recognition.text);
+      if (!contexts.length) throw new Error('图片还没有完成识别，请先在图像工作区发送勾选图片识别。');
+      currentMediaContext = contexts[0];
       const mode = requestedMode === 'auto' ? (capabilities.vision ? 'image_and_recognition' : 'recognition_only') : requestedMode;
       const finalMode = mode === 'image_and_recognition' && !capabilities.vision ? 'recognition_only' : mode;
       return { mode: finalMode, requestedMode, context: currentMediaContext, contexts, capabilities };
@@ -3753,6 +3859,76 @@ class ADHDHighlighter {
       if (imageAddToChat) imageAddToChat.disabled = currentMediaBatch.length === 0;
       if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false;
     };
+    const addScreenshotToWorkspace = async (dataUrl, name = '网页截图') => {
+      const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name, delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
+      addMediaContextsToWorkspace([ctx], { reset: false, statusText: '截图已加入图像工作区，等待发送识别' });
+    };
+    const startPageScreenshotMode = async () => {
+      const taixueOverlay = document.getElementById('agfAiSettingOverlay');
+      const previousDisplay = taixueOverlay && taixueOverlay.style.display;
+      if (taixueOverlay) taixueOverlay.style.display = 'none';
+      const mask = document.createElement('div');
+      mask.id = 'agfScreenshotSelectionMask';
+      mask.style.cssText = 'position:fixed;inset:0;z-index:2147483646;cursor:crosshair;background:rgba(20,30,40,.10);';
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;border:2px solid #4c8df6;background:rgba(76,141,246,.15);display:none;pointer-events:none;';
+      const actions = document.createElement('div');
+      actions.style.cssText = 'position:fixed;display:none;z-index:2147483647;background:#fff;border:1px solid #d6dce5;border-radius:8px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);';
+      actions.innerHTML = '<button data-agf-shot-confirm>确认截图</button><button data-agf-shot-cancel>取消</button>';
+      mask.appendChild(box);
+      mask.appendChild(actions);
+      document.body.appendChild(mask);
+      let startX = 0, startY = 0, currentRect = null, dragging = false;
+      const cleanup = () => {
+        try { mask.remove(); } catch (_) {}
+        if (taixueOverlay) taixueOverlay.style.display = previousDisplay || '';
+      };
+      const setRect = (x1, y1, x2, y2) => {
+        const left = Math.min(x1, x2);
+        const top = Math.min(y1, y2);
+        const width = Math.abs(x2 - x1);
+        const height = Math.abs(y2 - y1);
+        currentRect = { left, top, width, height };
+        box.style.display = 'block';
+        box.style.left = `${left}px`;
+        box.style.top = `${top}px`;
+        box.style.width = `${width}px`;
+        box.style.height = `${height}px`;
+      };
+      mask.onmousedown = (event) => {
+        if (event.target && event.target.closest && event.target.closest('[data-agf-shot-confirm],[data-agf-shot-cancel]')) return;
+        dragging = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        actions.style.display = 'none';
+        setRect(startX, startY, startX, startY);
+      };
+      mask.onmousemove = (event) => { if (dragging) setRect(startX, startY, event.clientX, event.clientY); };
+      mask.onmouseup = () => {
+        dragging = false;
+        if (!currentRect || currentRect.width < 8 || currentRect.height < 8) return;
+        actions.style.display = 'block';
+        actions.style.left = `${Math.min(window.innerWidth - 150, currentRect.left + currentRect.width + 8)}px`;
+        actions.style.top = `${Math.min(window.innerHeight - 44, currentRect.top + currentRect.height + 8)}px`;
+      };
+      const cancel = actions.querySelector('[data-agf-shot-cancel]');
+      const confirm = actions.querySelector('[data-agf-shot-confirm]');
+      if (cancel) cancel.onclick = cleanup;
+      if (confirm) confirm.onclick = async () => {
+        const rect = currentRect;
+        try {
+          if (!rect || rect.width < 8 || rect.height < 8) throw new Error('请选择网页中的截图区域');
+          mask.style.display = 'none';
+          const full = await capturePageScreenshot();
+          const cropped = await cropImageDataUrl(full, rect);
+          cleanup();
+          await addScreenshotToWorkspace(cropped, '网页选区截图');
+        } catch (error) {
+          cleanup();
+          showToast(error.message || '网页截图失败');
+        }
+      };
+    };
     if (imageContextBtn) imageContextBtn.onclick = () => setView('image');
     const pageImageDiscoverBtn = document.getElementById('agfPageImageDiscoverBtn');
     if (pageImageDiscoverBtn) pageImageDiscoverBtn.onclick = async () => {
@@ -3760,22 +3936,14 @@ class ADHDHighlighter {
       pageImageDiscoverBtn.disabled = true;
       try {
         const contexts = await discoverAndConfirmPageImages(source);
-        currentMediaBatch = contexts.filter(x => x.recognition?.status === 'completed');
-        currentMediaContext = currentMediaBatch[0] || null;
-        if (currentMediaBatch.length) {
-          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `网页图片识别完成 ${currentMediaBatch.length}/${contexts.length} 张`;
-          if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = currentMediaBatch.map((x, i) => `<div class="agf-vocab-card"><strong>网页图片 ${i + 1} · ${String(x.image?.name || '')}</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.recognition.text) : String(x.recognition.text).replace(/\n/g, '<br>')}</div></div>`).join('');
-          if (imageAddToChat) imageAddToChat.disabled = false;
-          if (visionOcrBtn) visionOcrBtn.disabled = false;
-          setView('image');
-        } else if (contexts.length) {
-          const errors = contexts.map((x, i) => `图片${i + 1}：${x.metadata?.recognitionError || '未知错误'}`).join('；');
-          showToast(`网页图片识别失败：${errors}`);
-        }
+        if (contexts.length) addMediaContextsToWorkspace(contexts, { reset: true, statusText: `已发现 ${contexts.length} 张图片，默认勾选，等待发送识别` });
         else showToast('当前上下文没有发现可识别图片。');
       } catch (error) { showToast(error.message || '网页图片发现失败'); }
       pageImageDiscoverBtn.disabled = false;
     };
+    if (pageScreenshotBtn) pageScreenshotBtn.onclick = () => startPageScreenshotMode().catch(error => showToast(error.message || '网页截图失败'));
+    if (imageProcessSelected) imageProcessSelected.onclick = () => processSelectedWorkspaceImages().catch(error => showToast(error.message || '图片识别失败'));
+    if (imageWorkspaceResult) imageWorkspaceResult.addEventListener('change', event => { if (event.target && event.target.classList && event.target.classList.contains('agf-page-image-check')) refreshImageWorkspaceActions(); });
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
@@ -3785,7 +3953,17 @@ class ADHDHighlighter {
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); processImageBatch(e.dataTransfer?.files).catch(err => showToast(err.message || '图片处理失败')); }; }
     const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
     const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
-    if (imageAddToChat) imageAddToChat.onclick = () => { if (!currentMediaBatch.length && !currentMediaContext?.recognition?.text) return; if (!currentMediaContext && currentMediaBatch[0]) currentMediaContext = currentMediaBatch[0]; renderMediaAttachment(); const results = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).map((x, i) => `[图片 ${i + 1} 识别结果]\n${x.recognition?.text || ''}`).join('\n\n'); if (inputUser) inputUser.innerText = '请基于以下图片及其识别结果回答我的问题：\n\n' + results; if (composerHidden) composerHidden.value = inputUser.innerText; setView('chat'); showChat(); };
+    if (imageAddToChat) imageAddToChat.onclick = () => {
+      const usable = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).filter(x => x?.recognition?.status === 'completed' && x.recognition.text);
+      if (!usable.length) { showToast('还没有完成识别的图片。'); return; }
+      currentMediaContext = usable[0];
+      renderMediaAttachment();
+      const results = usable.map((x, i) => `[图片 ${i + 1} 识别结果]\n${x.recognition.text}`).join('\n\n');
+      if (inputUser) inputUser.innerText = '请基于以下图片及其识别结果回答我的问题：\n\n' + results;
+      if (composerHidden) composerHidden.value = inputUser.innerText;
+      setView('chat');
+      showChat();
+    };
     if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; renderImageHistory(); };
     if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
     let quizItems = [];
@@ -6097,7 +6275,7 @@ class ADHDHighlighter {
       await updateStorageStatusUI();
       const ctx = await taixueContext.resolve(contextSource);
       const discoveredImages = await discoverAndConfirmPageImages(contextSource === 'selection' ? 'selection' : 'full_article');
-      if (discoveredImages.length) { currentMediaBatch = discoveredImages.filter(x => x.recognition?.status === 'completed'); currentMediaContext = currentMediaBatch[0] || null; }
+      if (discoveredImages.length) addMediaContextsToWorkspace(discoveredImages, { reset: true, statusText: `已发现 ${discoveredImages.length} 张图片，可在图像工作区勾选识别` });
       const limitedContext = limitTaixueText(ctx.text, 50000);
       const raw = String(limitedContext.text || '');
       if (limitedContext.truncated || raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
