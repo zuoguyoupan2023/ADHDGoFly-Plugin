@@ -2856,7 +2856,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph">段落</button>
         </div>
         <div class="agf-context-summary" id="agfContextSummary">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><select id="agfMediaModeSelect" class="agf-select" title="图片发送方式"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn">图片</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" title="发现当前选区或全文中的图片">发现网页图片</button><button id="agfAudioContextBtn" class="agf-context-btn">音频</button><select id="agfMediaModeSelect" class="agf-select" title="图片发送方式"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label">任务</span>
@@ -3598,11 +3598,14 @@ class ADHDHighlighter {
       mediaAttachment.querySelector('.agf-media-attachment-remove').onclick = () => { currentMediaContext = null; renderMediaAttachment(); if (mediaStrategy) mediaStrategy.textContent = ''; if (visionOcrBtn) visionOcrBtn.disabled = true; };
     };
     const pageImagesForSource = (source) => {
-      const root = source === 'selection' ? window.getSelection()?.anchorNode : document.body;
+      const selection = source === 'selection' ? window.getSelection() : null;
+      const root = source === 'selection' ? selection?.anchorNode : document.body;
       const selectedRoot = root && (root.nodeType === 1 ? root : root.parentElement);
       const imgs = Array.from(document.images || []).filter(img => {
-        if (!img || !img.src || img.closest('#agfTaixuePanel')) return false;
-        if (source === 'selection') return selectedRoot && (selectedRoot.contains(img) || img.contains(selectedRoot));
+        if (!img || !img.src || img.closest('#agfTaixuePanel, #agfAiSettingOverlay')) return false;
+        if (source === 'selection') {
+          try { return Boolean(selection?.rangeCount && selection.getRangeAt(0).intersectsNode(img)); } catch (_) { return selectedRoot && (selectedRoot.contains(img) || img.contains(selectedRoot)); }
+        }
         return true;
       });
       const seen = new Set();
@@ -3697,6 +3700,25 @@ class ADHDHighlighter {
       if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false;
     };
     if (imageContextBtn) imageContextBtn.onclick = () => setView('image');
+    const pageImageDiscoverBtn = document.getElementById('agfPageImageDiscoverBtn');
+    if (pageImageDiscoverBtn) pageImageDiscoverBtn.onclick = async () => {
+      const source = taixueState.contextSource === 'selection' && getSelectedTextSafe() ? 'selection' : 'full_article';
+      pageImageDiscoverBtn.disabled = true;
+      try {
+        const contexts = await discoverAndConfirmPageImages(source);
+        currentMediaBatch = contexts.filter(x => x.recognition?.status === 'completed');
+        currentMediaContext = currentMediaBatch[0] || null;
+        if (currentMediaBatch.length) {
+          if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `网页图片识别完成 ${currentMediaBatch.length}/${contexts.length} 张`;
+          if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = currentMediaBatch.map((x, i) => `<div class="agf-vocab-card"><strong>网页图片 ${i + 1} · ${String(x.image?.name || '')}</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.recognition.text) : String(x.recognition.text).replace(/\n/g, '<br>')}</div></div>`).join('');
+          if (imageAddToChat) imageAddToChat.disabled = false;
+          if (visionOcrBtn) visionOcrBtn.disabled = false;
+          setView('image');
+        } else if (contexts.length) showToast('网页图片均未能识别，请检查图片地址或 GLM Key。');
+        else showToast('当前上下文没有发现可识别图片。');
+      } catch (error) { showToast(error.message || '网页图片发现失败'); }
+      pageImageDiscoverBtn.disabled = false;
+    };
     if (audioContextBtn) audioContextBtn.onclick = () => audioContextInput && audioContextInput.click();
     if (imageContextInput) imageContextInput.onchange = () => chooseMedia('image', imageContextInput.files && imageContextInput.files[0]).catch(e => showToast(e.message));
     if (audioContextInput) audioContextInput.onchange = () => chooseMedia('audio', audioContextInput.files && audioContextInput.files[0]).catch(e => showToast(e.message));
@@ -4007,8 +4029,10 @@ class ADHDHighlighter {
       },
       moonshot: {
         baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
-        models: ['kimi-k2.5', 'kimi-k2', 'moonshot-v1-128k'],
+        models: ['kimi-k3', 'kimi-k2.6', 'kimi-k2.5', 'moonshot-v1-128k'],
         modelInfo: {
+          'kimi-k3': { label: 'Kimi K3', contextWindow: 1000000, maxOutputTokens: 131072, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'kimi-k2.6': { label: 'Kimi K2.6', contextWindow: 1000000, maxOutputTokens: 65536, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'kimi-k2.5': { label: 'Kimi K2.5', contextWindow: 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'kimi-k2': { label: 'Kimi K2', contextWindow: 131072, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'moonshot-v1-128k': { label: 'Moonshot V1 128K (兼容)', contextWindow: 131072, maxOutputTokens: 8192, capabilities: { text: true, vision: false, audio: false, tools: false, json: false }, reasoning: false, status: 'legacy' }
@@ -4016,15 +4040,16 @@ class ADHDHighlighter {
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'],
-        modelInfo: Object.fromEntries(['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'].map(model => [model, { label: model.toUpperCase(), contextWindow: 400000, maxOutputTokens: 128000, capabilities: { text: true, vision: model !== 'gpt-5-nano', audio: false, tools: true, json: true }, reasoning: model.startsWith('gpt-5'), status: 'stable' }]))
+        models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.1', 'gpt-4.1', 'gpt-4o'],
+        modelInfo: Object.fromEntries([['gpt-5.6-sol', 1050000], ['gpt-5.6-terra', 1050000], ['gpt-5.6-luna', 1050000], ['gpt-5.1', 400000], ['gpt-4.1', 1047576], ['gpt-4o', 128000]].map(([model, contextWindow]) => [model, { label: model.toUpperCase(), contextWindow, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
-        models: ['claude-opus-4-1', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+        models: ['claude-fable-5', 'claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'],
         modelInfo: {
-          'claude-opus-4-1': { label: 'Claude Opus 4.1', contextWindow: 200000, maxOutputTokens: 32000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
-          'claude-sonnet-4-5': { label: 'Claude Sonnet 4.5', contextWindow: 200000, maxOutputTokens: 64000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-fable-5': { label: 'Claude Fable 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-opus-4-8': { label: 'Claude Opus 4.8', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-sonnet-5': { label: 'Claude Sonnet 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'claude-haiku-4-5': { label: 'Claude Haiku 4.5', contextWindow: 200000, maxOutputTokens: 64000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }
         }
       },
@@ -4037,8 +4062,9 @@ class ADHDHighlighter {
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-        models: ['glm-5', 'glm-4.7', 'glm-4.6'],
+        models: ['glm-5.3', 'glm-5', 'glm-4.7', 'glm-4.6'],
         modelInfo: {
+          'glm-5.3': { label: 'GLM-5.3', contextWindow: 128000, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'needs_verification' },
           'glm-5': { label: 'GLM-5', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-4.7': { label: 'GLM-4.7', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-4.6': { label: 'GLM-4.6', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }
