@@ -128,17 +128,22 @@
     const marker = `agf-runtime-${globalName}`;
     const existing = root.document.querySelector(`script[data-agf-runtime="${marker}"]`);
     if (existing) {
+      if (existing.dataset.loaded === 'true' || root[globalName]) return Promise.resolve(root[globalName] || null);
       return new Promise(resolve => {
+        const timer = root.setTimeout(() => resolve(root[globalName] || null), 3000);
         existing.addEventListener('load', () => resolve(root[globalName] || null), { once: true });
         existing.addEventListener('error', () => resolve(null), { once: true });
+        existing.addEventListener('load', () => root.clearTimeout(timer), { once: true });
+        existing.addEventListener('error', () => root.clearTimeout(timer), { once: true });
       });
     }
     return new Promise(resolve => {
+      const timer = root.setTimeout(() => resolve(root[globalName] || null), 5000);
       const script = root.document.createElement('script');
       script.dataset.agfRuntime = marker;
       script.src = root.chrome.runtime.getURL(path);
-      script.onload = () => resolve(root[globalName] || null);
-      script.onerror = () => resolve(null);
+      script.onload = () => { root.clearTimeout(timer); script.dataset.loaded = 'true'; resolve(root[globalName] || null); };
+      script.onerror = () => { root.clearTimeout(timer); script.dataset.loaded = 'error'; resolve(null); };
       (root.document.head || root.document.documentElement).appendChild(script);
     });
   }

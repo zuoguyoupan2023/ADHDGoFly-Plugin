@@ -3699,6 +3699,50 @@ class ADHDHighlighter {
       point.x = event.clientX; point.y = event.clientY;
       return point.matrixTransform(svg.getScreenCTM().inverse());
     };
+    const openChartInlineEditor = (target, value, onCommit, options = {}) => {
+      if (!chartCanvas || !target) return;
+      chartCanvas.querySelectorAll('.agf-chart-inline-editor').forEach(item => item.remove());
+      const svg = chartCanvas.querySelector('svg');
+      const canvasRect = chartCanvas.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const editor = document.createElement(options.multiline ? 'textarea' : 'input');
+      editor.className = 'agf-chart-inline-editor';
+      editor.value = value || '';
+      editor.style.position = 'absolute';
+      editor.style.left = `${targetRect.left - canvasRect.left - Math.max(0, (options.width || 160) - targetRect.width) / 2 + chartCanvas.scrollLeft}px`;
+      editor.style.top = `${targetRect.top - canvasRect.top - 6 + chartCanvas.scrollTop}px`;
+      editor.style.width = `${options.width || Math.max(120, targetRect.width + 36)}px`;
+      editor.style.minHeight = options.multiline ? '58px' : '28px';
+      editor.style.padding = '5px 8px';
+      editor.style.border = `1px solid ${options.color || '#315efb'}`;
+      editor.style.borderRadius = '8px';
+      editor.style.background = '#ffffff';
+      editor.style.color = '#172033';
+      editor.style.font = `${options.fontSize || 13}px Arial,sans-serif`;
+      editor.style.boxShadow = '0 10px 24px rgba(15,23,42,.18)';
+      editor.style.zIndex = '10';
+      editor.style.outline = 'none';
+      editor.style.resize = options.multiline ? 'vertical' : 'none';
+      editor.style.textAlign = options.align || 'center';
+      chartCanvas.style.position = chartCanvas.style.position || 'relative';
+      chartCanvas.appendChild(editor);
+      if (svg) svg.style.pointerEvents = 'none';
+      const close = commit => {
+        if (!editor.isConnected) return;
+        const next = editor.value;
+        editor.remove();
+        if (svg) svg.style.pointerEvents = '';
+        if (commit) onCommit(next);
+      };
+      editor.addEventListener('mousedown', event => event.stopPropagation());
+      editor.addEventListener('click', event => event.stopPropagation());
+      editor.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && (!options.multiline || event.metaKey || event.ctrlKey)) { event.preventDefault(); close(true); }
+        if (event.key === 'Escape') { event.preventDefault(); close(false); }
+      });
+      editor.addEventListener('blur', () => close(true));
+      setTimeout(() => { editor.focus(); editor.select(); }, 0);
+    };
     const attachChartInteractions = () => {
       const svg = chartCanvas?.querySelector('svg');
       if (!svg || !currentChartContext?.chartModel?.nodes) return;
@@ -3710,6 +3754,7 @@ class ADHDHighlighter {
       svg.addEventListener('wheel', event => { if (!event.ctrlKey && !event.metaKey) return; event.preventDefault(); setChartZoom(chartZoom + (event.deltaY > 0 ? -0.1 : 0.1)); }, { passive: false });
       Array.from(svg.querySelectorAll('.agf-chart-node')).forEach(group => {
         group.addEventListener('mousedown', event => {
+          if (event.target?.closest?.('.agf-chart-node-label,.agf-chart-node-desc,.agf-chart-edge-label')) return;
           event.preventDefault();
           const nodeId = group.getAttribute('data-node-id');
           const node = currentChartContext.chartModel.nodes.find(item => item.id === nodeId);
@@ -3730,40 +3775,46 @@ class ADHDHighlighter {
         });
       });
       Array.from(svg.querySelectorAll('.agf-chart-node-label')).forEach(label => {
+        label.addEventListener('mousedown', event => event.stopPropagation());
         label.addEventListener('dblclick', event => {
           event.stopPropagation();
+          event.preventDefault();
           const node = currentChartContext.chartModel.nodes.find(item => item.id === label.getAttribute('data-node-id'));
           if (!node) return;
-          const next = window.prompt('修改节点文本', node.label || '');
-          if (next == null) return;
-          node.label = next.trim() || node.label;
-          currentChartContext.updatedAt = Date.now();
-          renderChartPreview();
+          openChartInlineEditor(label, node.label || '', next => {
+            node.label = next.trim() || node.label;
+            currentChartContext.updatedAt = Date.now();
+            renderChartPreview();
+          }, { width: 180, color: '#315efb', fontSize: 14 });
         });
       });
       Array.from(svg.querySelectorAll('.agf-chart-node-desc')).forEach(label => {
+        label.addEventListener('mousedown', event => event.stopPropagation());
         label.addEventListener('dblclick', event => {
           event.stopPropagation();
+          event.preventDefault();
           const node = currentChartContext.chartModel.nodes.find(item => item.id === label.getAttribute('data-node-id'));
           if (!node) return;
-          const next = window.prompt('修改节点说明', node.description || '');
-          if (next == null) return;
-          node.description = next.trim();
-          currentChartContext.updatedAt = Date.now();
-          renderChartPreview();
+          openChartInlineEditor(label, node.description || '', next => {
+            node.description = next.trim();
+            currentChartContext.updatedAt = Date.now();
+            renderChartPreview();
+          }, { width: 220, color: '#687386', fontSize: 12, multiline: true, align: 'left' });
         });
       });
       Array.from(svg.querySelectorAll('.agf-chart-edge-label')).forEach(label => {
+        label.addEventListener('mousedown', event => event.stopPropagation());
         label.addEventListener('dblclick', event => {
           event.stopPropagation();
+          event.preventDefault();
           const index = Number(label.getAttribute('data-edge-index'));
           const edge = currentChartContext.chartModel.edges && currentChartContext.chartModel.edges[index];
           if (!edge) return;
-          const next = window.prompt('修改关系文本', edge.label || '');
-          if (next == null) return;
-          edge.label = next.trim();
-          currentChartContext.updatedAt = Date.now();
-          renderChartPreview();
+          openChartInlineEditor(label, edge.label || '', next => {
+            edge.label = next.trim();
+            currentChartContext.updatedAt = Date.now();
+            renderChartPreview();
+          }, { width: 130, color: label.getAttribute('fill') || '#315efb', fontSize: 12 });
         });
       });
     };
@@ -3771,14 +3822,28 @@ class ADHDHighlighter {
       if (!currentChartContext) return '';
       return AgfChartWorkspace.renderSvgAsync ? AgfChartWorkspace.renderSvgAsync(currentChartContext) : AgfChartWorkspace.renderSvg(currentChartContext);
     };
+    let chartRenderToken = 0;
     const renderChartPreview = async () => {
       if (!currentChartContext) return;
+      const token = ++chartRenderToken;
+      const contextAtStart = currentChartContext;
       chartTitle.value = currentChartContext.chartModel.title || '';
       chartIntent.value = currentChartContext.intent;
       if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg');
       chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`;
       chartCanvas.innerHTML = '<div style="padding:18px;color:#687386;font-size:12px">正在渲染图表…</div>';
-      chartCanvas.innerHTML = await getCurrentChartSvg();
+      try {
+        const svg = await Promise.race([
+          getCurrentChartSvg(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('图表渲染超时')), 6000))
+        ]);
+        if (token !== chartRenderToken || currentChartContext !== contextAtStart) return;
+        chartCanvas.innerHTML = svg;
+      } catch (error) {
+        if (token !== chartRenderToken || currentChartContext !== contextAtStart) return;
+        chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext);
+        chartNotice.textContent = `${error.message || '图表渲染失败'}，已切换到基础 SVG 预览。`;
+      }
       Object.values(chartButtons).forEach(button => { button.disabled = false; });
       applyChartZoom();
       attachChartInteractions();
