@@ -4106,6 +4106,41 @@ class ADHDHighlighter {
       }
       if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已导出图片；已识别图片同时导出 TXT 文本';
     };
+    const renderImageHistoryManager = async () => {
+      if (!imageWorkspaceHistoryList) return;
+      const history = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : [])));
+      imageWorkspaceHistoryList.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><input data-image-history-search placeholder="搜索图片名、来源或识别文本" style="flex:1;min-width:180px"><select data-image-history-age><option value="0">全部时间</option><option value="7">最近 7 天</option><option value="30">最近 30 天</option><option value="180">最近 6 个月</option><option value="365">最近 1 年</option></select><button data-image-history-export>批量导出</button><button data-image-history-clean>按时间清理</button></div><label style="font-size:12px;display:block;margin-bottom:8px"><input type="checkbox" data-image-history-original checked> 导出/清理时保留原图</label><div data-image-history-rows></div>`;
+      const search = imageWorkspaceHistoryList.querySelector('[data-image-history-search]');
+      const age = imageWorkspaceHistoryList.querySelector('[data-image-history-age]');
+      const keepOriginal = imageWorkspaceHistoryList.querySelector('[data-image-history-original]');
+      const rows = imageWorkspaceHistoryList.querySelector('[data-image-history-rows]');
+      const renderRows = () => {
+        const term = String(search.value || '').trim().toLowerCase();
+        const cutoff = Number(age.value || 0) ? Date.now() - Number(age.value) * 86400000 : 0;
+        const visible = history.filter(item => (!cutoff || Number(item.createdAt || 0) >= cutoff) && (!term || [item.name, item.output, item.context?.sourceUrl, item.context?.image?.sourceUrl].some(value => String(value || '').toLowerCase().includes(term))));
+        rows.innerHTML = visible.length ? visible.map(item => `<div class="agf-history-row"><span>${String(item.name || '图片')} · ${new Date(item.createdAt).toLocaleString()}${item.output ? ' · 已识别' : ' · 未识别'}</span><button data-image-history-view="${item.id}">查看</button><button data-image-history-delete="${item.id}">删除</button></div>`).join('') : '<p>没有匹配的历史记录。</p>';
+        rows.querySelectorAll('[data-image-history-view]').forEach(button => button.onclick = () => { const item = history.find(x => x.id === button.dataset.imageHistoryView); if (!item) return; currentMediaContext = item.context; currentMediaBatch = [item.context]; imageWorkspaceResult.innerHTML = `${item.context?.image?.dataUrl ? `<img src="${item.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(item.output || '尚未识别') : String(item.output || '尚未识别').replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = !item.output; renderMediaAttachment(); });
+        rows.querySelectorAll('[data-image-history-delete]').forEach(button => button.onclick = async () => { const next = history.filter(x => x.id !== button.dataset.imageHistoryDelete); await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: next }, resolve)); renderImageHistoryManager(); });
+        return visible;
+      };
+      search.oninput = renderRows; age.onchange = renderRows; renderRows();
+      imageWorkspaceHistoryList.querySelector('[data-image-history-export]').onclick = async () => {
+        const visible = renderRows();
+        for (let i = 0; i < visible.length; i++) { const item = visible[i]; const base = `${String(i + 1).padStart(2, '0')}-${safeExportName(item.name || '图片')}`; if (keepOriginal.checked && item.context?.image?.dataUrl) { const image = await fetch(item.context.image.dataUrl); downloadBlob(await image.blob(), `${base}.png`); } if (item.output) downloadBlob(new Blob([item.output], { type: 'text/plain;charset=utf-8' }), `${base}.txt`); }
+        if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `已批量导出 ${visible.length} 条历史记录`;
+      };
+      imageWorkspaceHistoryList.querySelector('[data-image-history-clean]').onclick = async () => {
+        const days = Number(age.value || 0);
+        if (!days) { showToast('请先选择要清理的时间范围。'); return; }
+        const cutoff = Date.now() - days * 86400000;
+        const targets = history.filter(item => Number(item.createdAt || 0) < cutoff);
+        if (!targets.length || !window.confirm(`将清理 ${targets.length} 条 ${days} 天以前的历史记录，是否继续？`)) return;
+        const next = history.filter(item => Number(item.createdAt || 0) >= cutoff).map(item => { if (!keepOriginal.checked && item.context?.image) { const context = { ...item.context, image: { ...item.context.image, dataUrl: '' } }; return { ...item, context }; } return item; });
+        await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: next }, resolve));
+        renderImageHistoryManager();
+        if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `已清理 ${targets.length} 条历史记录`;
+      };
+    };
     if (imageAddToChat) imageAddToChat.onclick = () => {
       const usable = (currentMediaBatch.length ? currentMediaBatch : [currentMediaContext]).filter(x => x?.recognition?.status === 'completed' && x.recognition.text);
       if (!usable.length) { showToast('还没有完成识别的图片。'); return; }
@@ -4117,7 +4152,7 @@ class ADHDHighlighter {
       setView('chat');
       showChat();
     };
-    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = async () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; await renderImageHistory(); await enhanceImageHistoryControls(); };
+    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = async () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; if (imageWorkspaceHistoryList.style.display !== 'none') await renderImageHistoryManager(); };
     if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = clearImageWorkspace;
     if (imageWorkspaceDeleteBtn) imageWorkspaceDeleteBtn.onclick = () => deleteImageWorkspaceAndHistory().catch(e => showToast(e.message || '删除失败'));
     if (imageWorkspaceExportBtn) imageWorkspaceExportBtn.onclick = () => exportImageWorkspace().catch(e => showToast(e.message || '导出失败'));
