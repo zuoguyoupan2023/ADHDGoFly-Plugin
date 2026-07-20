@@ -503,17 +503,9 @@ class PopupController {
         (async () => {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tabs[0]) return;
-          const tab = tabs[0];
-          const open = message => new Promise(resolve => chrome.tabs.sendMessage(tab.id, message, response => { const error = chrome.runtime.lastError; resolve({ response, error: error?.message || '' }); }));
-          const result = await open({ action: 'openTaixue', module: 'chat', contextSource: 'full_article' });
-          if (result.error) {
-            console.warn('无法打开太学：', result.error, tab.url || '');
-          } else if (!result.response?.success) {
-            console.warn('太学返回失败：', result.response?.error || 'unknown');
-          } else {
-            // 兼容旧内容脚本：openTaixue 已负责创建面板，补发显示消息确保旧版本也能显示。
-            setTimeout(() => open({ action: 'showAiSettingPanel' }), 80);
-          }
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'openTaixue', module: 'chat', contextSource: 'full_article' }, () => {
+            if (chrome.runtime.lastError) console.warn('无法打开太学：', chrome.runtime.lastError.message);
+          });
         })();
         break;
       case 'faq-btn':
