@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { JixiaState, parseQuizPayload, normalizeQuizItems, createChatModule, createQuizModule, createExplainModule, createVocabularyReviewModule, createVocabularyModule } = require('./content/jixia-modules.js');
+const { JixiaState, parseQuizPayload, normalizeQuizItems, createChatModule, createQuizModule, createExplainModule, createVocabularyReviewModule, createVocabularyModule, createStructuredReadingModule, createWritingModule, createFactCheckModule } = require('./content/jixia-modules.js');
 (async () => {
 
 const state = new JixiaState({ currentModule: 'quiz' });
@@ -12,6 +12,9 @@ assert.throws(() => normalizeQuizItems([{ question: 'bad', options: ['A'], answe
 assert.equal(createChatModule({ run() {} }).name, 'chat');
 assert.equal(createExplainModule({ explain() {} }).name, 'explain');
 assert.equal(createVocabularyModule({ review() {} }).name, 'vocab');
+assert.equal(createStructuredReadingModule().name, 'structured-reading');
+assert.equal(createWritingModule().name, 'writing');
+assert.equal(createFactCheckModule().name, 'fact-check');
 let sentPrompt = '';
 const fakeContext = { resolve: async source => ({ source, text: '材料', canonicalUrl: 'https://example.test', pageUrl: 'https://example.test' }) };
 const chat = createChatModule({ context: fakeContext, limitText: text => ({ text, truncated: false }), send: async prompt => { sentPrompt = prompt; return 'ok'; } });
@@ -24,5 +27,11 @@ await explain.explainSelection(); assert.equal(explained, true);
 let cards = null;
 const vocabReview = createVocabularyReviewModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify([{ word: 'term', meaning: '含义', example: '例句' }]) }, load: async () => [], save: async () => {}, onCards: value => { cards = value; } });
 await vocabReview.startReview(); assert.equal(cards.length, 1); await vocabReview.answer(true); assert.equal(cards[0].mastery, 20);
+const structured = createStructuredReadingModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ thesis: '主旨', arguments: [], causalRelations: [], controversies: [], keyEvidence: [] }) } });
+assert.equal((await structured.run()).result.thesis, '主旨');
+const writing = createWritingModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ title: '摘要', sections: [], citations: [], draft: '草稿' }) } });
+assert.equal((await writing.run('summary')).result.draft, '草稿');
+const facts = createFactCheckModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ claims: [{ text: '说法', classification: 'fact', confidence: 1.2 }] }) } });
+assert.equal((await facts.run()).result.claims[0].confidence, 1);
 console.log('jixia module tests passed');
 })();

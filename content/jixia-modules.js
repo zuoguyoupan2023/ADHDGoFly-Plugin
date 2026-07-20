@@ -119,6 +119,23 @@
     };
   }
 
+  function parseObjectPayload(value) {
+    const raw = String(value || '').replace(/```json|```/gi, '').trim();
+    try { return JSON.parse(raw); } catch (_) {}
+    const start = raw.indexOf('{'), end = raw.lastIndexOf('}');
+    if (start >= 0 && end > start) { try { return JSON.parse(raw.slice(start, end + 1)); } catch (_) {} }
+    throw new Error('AI 返回的结构化结果无法识别');
+  }
+  function createStructuredReadingModule({ context, task, onResult } = {}) {
+    return { name: 'structured-reading', async run() { const ctx = await context.resolve('full_article'); const output = await task.requestJsonText({ prompt: `请分析下面文章，返回严格JSON对象，不要Markdown。字段必须包含 thesis（主旨字符串）、arguments（论点数组，每项含 claim、evidence 数组、confidence）、causalRelations（因果关系数组，每项含 cause、effect、evidence）、controversies（争议点数组，每项含 claim、positions 数组、uncertainty）、keyEvidence（证据数组，每项含 quote、supports、locator）。没有依据的字段使用空数组，并标记 uncertainty，不要编造。\n\n文章：\n${String(ctx.text || '').slice(0, 60000)}`, maxTokens: 3000, temperature: .25 }); const result = parseObjectPayload(output); if (!String(result.thesis || '').trim()) throw new Error('结构化阅读结果缺少主旨'); result.arguments = Array.isArray(result.arguments) ? result.arguments : []; result.causalRelations = Array.isArray(result.causalRelations) ? result.causalRelations : []; result.controversies = Array.isArray(result.controversies) ? result.controversies : []; result.keyEvidence = Array.isArray(result.keyEvidence) ? result.keyEvidence : []; onResult?.(result, ctx); return { result, context: ctx }; } };
+  }
+  function createWritingModule({ context, task, onResult } = {}) {
+    return { name: 'writing', async run(kind = 'summary', instructions = '') { const ctx = await context.resolve('full_article'); const prompts = { summary: '写一版忠实、简洁的文章摘要，并列出3个核心要点。', notes: '把文章整理成可复习的结构化笔记，包含标题、要点、疑问和行动项。', outline: '生成可直接用于写作的分级提纲，包含每节目标和要点。', citations: '提取可引用的关键论据，逐条给出原文短引、用途和来源定位。', reflection: '写一篇读后感草稿，区分文章内容概述、个人理解、认同/疑问和延伸思考。' }; const output = await task.requestJsonText({ prompt: `请根据文章完成写作辅助任务：${prompts[kind] || prompts.summary}\n${instructions}\n返回严格JSON，不要Markdown。字段包含 title、sections（数组，每项含 heading、content、bullets 数组）、citations（数组，可为空）、draft。不要虚构原文。\n\n文章：\n${String(ctx.text || '').slice(0, 60000)}`, maxTokens: 3200, temperature: .35 }); const result = parseObjectPayload(output); result.sections = Array.isArray(result.sections) ? result.sections : []; result.citations = Array.isArray(result.citations) ? result.citations : []; onResult?.(result, ctx); return { result, context: ctx }; } };
+  }
+  function createFactCheckModule({ context, task, onResult } = {}) {
+    return { name: 'fact-check', async run() { const ctx = await context.resolve('full_article'); const output = await task.requestJsonText({ prompt: `请识别文章中的陈述，返回严格JSON对象，不要Markdown。字段 claims 为数组，每项包含 text、classification（只能是 fact/inference/opinion/unverified）、evidence（原文短引）、reason、confidence（0到1数字）、locator。fact=文章明确陈述的事实，inference=由文章推导出的结论，opinion=评价/立场，unverified=文章声称但缺乏足够依据或需要外部核验的说法。不要把文章观点当成已验证事实。\n\n文章：\n${String(ctx.text || '').slice(0, 60000)}`, maxTokens: 3000, temperature: .2 }); const result = parseObjectPayload(output); result.claims = Array.isArray(result.claims) ? result.claims.filter(item => item && ['fact', 'inference', 'opinion', 'unverified'].includes(item.classification)).map(item => ({ ...item, confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)) })) : []; onResult?.(result, ctx); return { result, context: ctx }; } };
+  }
+
   const createModule = (name, actions = {}) => Object.freeze({ name, ...actions });
   const api = {
     JixiaState,
@@ -132,6 +149,10 @@
     createQuizModule,
     createExplainModule,
     createVocabularyReviewModule: createVocabularyModule
+    ,createStructuredReadingModule: actions => createStructuredReadingModule(actions)
+    ,createWritingModule: actions => createWritingModule(actions)
+    ,createFactCheckModule: actions => createFactCheckModule(actions)
+    ,parseObjectPayload
   };
   root.JixiaModules = api;
   if (typeof module !== 'undefined') module.exports = api;

@@ -3633,11 +3633,11 @@ class ADHDHighlighter {
     let currentView = 'chat';
     const updateTaskBar = (which) => {
       const groups = {
-        chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak','agfBtnChartSkill'],
+        chat: ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'],
         quiz: [], explain: ['agfBtnSelectionExplain','agfBtnChartSkill'], vocab: [], image: [], chart: []
       };
       const visible = new Set(groups[which] || []);
-      ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak','agfBtnChartSkill'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
+      ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnSpeak','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['explain','vocab','chat','quiz'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
@@ -3653,6 +3653,7 @@ class ADHDHighlighter {
       if (viewVocab) viewVocab.style.display = which === 'vocab' ? 'block' : 'none';
       if (viewImage) viewImage.style.display = which === 'image' ? 'block' : 'none';
       if (viewChart) viewChart.style.display = which === 'chart' ? 'block' : 'none';
+      if (p1View) p1View.style.display = which === 'p1' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
@@ -3687,6 +3688,15 @@ class ADHDHighlighter {
     const chartButton = document.createElement('button');
     chartButton.id = 'agfBtnChartSkill'; chartButton.className = 'agf-task-btn'; chartButton.dataset.i18n = 'jixia.actions.chart'; chartButton.dataset.i18nTitle = 'jixia.actions.chartTitle'; chartButton.textContent = '做图表'; chartButton.title = '用内置图表 Skill 解释当前上下文';
     if (taskActions) taskActions.appendChild(chartButton);
+    const p1Actions = [
+      ['agfBtnStructuredReading', '结构化阅读'],
+      ['agfBtnWriting', '写作辅助'],
+      ['agfBtnFactCheck', '事实辨识']
+    ];
+    p1Actions.forEach(([id, label]) => { if (!document.getElementById(id) && taskActions) { const button = document.createElement('button'); button.id = id; button.className = 'agf-task-btn'; button.textContent = label; button.disabled = true; taskActions.appendChild(button); } });
+    const p1View = document.createElement('div'); p1View.id = 'agfAiViewP1'; p1View.className = 'agf-ai-view-module'; p1View.style.display = 'none'; p1View.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfP1Title">P1 阅读工具</span><span id="agfP1Meta" class="agf-module-meta"></span></div><div class="agf-module-actions" id="agfP1Actions"></div><div id="agfP1Result" class="agf-module-result"><p>选择一个任务开始。</p></div></div>`; viewChart?.parentElement?.appendChild(p1View);
+    const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
+    const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
     const chartCanvas = chartView.querySelector('#agfChartCanvas');
     const chartTitle = chartView.querySelector('#agfChartTitle');
@@ -6971,6 +6981,21 @@ class ADHDHighlighter {
       vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
     vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: jixiaTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards; vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
+    const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
+    const renderP1Result = (kind, result, ctx) => {
+      const labels = { structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' }; p1Title.textContent = labels[kind]; p1Meta.textContent = `${String(ctx?.pageTitle || '当前文章').slice(0, 40)} · ${new Date().toLocaleTimeString()}`;
+      if (kind === 'structured') { p1Result.innerHTML = `<h3>主旨</h3><p>${p1Esc(result.thesis)}</p><h3>论点与证据</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>证据：${p1Esc(p1Text(item.evidence))}</p><small>置信度：${p1Esc(item.confidence ?? '未提供')}</small></article>`).join('') || '<p>暂无论点。</p>'}<h3>因果关系</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} → ${p1Esc(item.effect)}<br>依据：${p1Esc(item.evidence)}</p>`).join('') || '<p>暂无明确因果关系。</p>'}<h3>争议点</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>立场：${p1Esc(p1Text(item.positions))}<br>不确定性：${p1Esc(item.uncertainty)}</p>`).join('') || '<p>未识别到争议点。</p>'}`; }
+      else if (kind === 'writing') { p1Result.innerHTML = `<h3>${p1Esc(result.title || '写作结果')}</h3>${(result.sections || []).map(section => `<article><h4>${p1Esc(section.heading)}</h4><p>${p1Esc(section.content)}</p><ul>${(section.bullets || []).map(bullet => `<li>${p1Esc(bullet)}</li>`).join('')}</ul></article>`).join('')}<h3>草稿</h3><pre style="white-space:pre-wrap">${p1Esc(result.draft)}</pre>${(result.citations || []).length ? `<h3>引用卡片</h3>${result.citations.map(citation => `<blockquote>${p1Esc(citation.quote || citation.text)}<br><small>${p1Esc(citation.use || citation.locator)}</small></blockquote>`).join('')}` : ''}`; }
+      else { const names = { fact: '事实', inference: '推论', opinion: '观点', unverified: '待验证' }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>：${p1Esc(item.text)}<p>依据：${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · 置信度 ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || '<p>没有识别到可分类陈述。</p>'; }
+    };
+    const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
+    const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
+    const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
+    const runP1 = async (kind, action) => { setView('p1'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${String(error.message || error)}</p>`; } };
+    p1Button('agfBtnStructuredReading').onclick = () => runP1('structured', () => structuredReadingModule.run());
+    p1Button('agfBtnWriting').onclick = () => { p1ActionsEl.innerHTML = ['summary','notes','outline','citations','reflection'].map(kind => `<button class="agf-task-btn" data-writing-kind="${kind}">${({ summary: '摘要', notes: '笔记', outline: '提纲', citations: '引用卡片', reflection: '读后感' })[kind]}</button>`).join(''); p1ActionsEl.querySelectorAll('[data-writing-kind]').forEach(button => { button.onclick = () => runP1('writing', () => writingModule.run(button.dataset.writingKind)); }); setView('p1'); };
+    p1Button('agfBtnFactCheck').onclick = () => runP1('fact', () => factCheckModule.run());
     const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
     const chatModule = JixiaModules.createChatModule({
       context: jixiaContext,
