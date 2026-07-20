@@ -71,6 +71,7 @@
         "content/storage/review-counter.js",
         "review-light-tower.js",
         "lib/rough.min.js",
+        "lib/echarts.min.js",
         "content/chart-model.js",
         "content/chart-layout.js",
         "content/chart-workspace.js",
@@ -119,6 +120,7 @@
       "offscreen/pdfjs/pdf.min.js",
       "offscreen/pdfjs/pdf.worker.min.js",
       "lib/rough.min.js",
+      "lib/echarts.min.js",
       "lib/mermaid.min.js"
       
     ],

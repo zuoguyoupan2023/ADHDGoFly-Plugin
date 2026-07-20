@@ -1,0 +1,10 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
+const scripts = manifest.content_scripts.flatMap(item => item.js || []);
+const resources = manifest.web_accessible_resources.flatMap(item => item.resources || []);
+assert.ok(scripts.includes('lib/echarts.min.js'));
+assert.ok(resources.includes('lib/echarts.min.js'));
+assert.ok(fs.statSync('./lib/echarts.min.js').size > 100000);
+assert.match(fs.readFileSync('./lib/echarts.min.js', 'utf8').slice(0, 400), /Apache Software Foundation/);
+console.log('chart runtime tests passed');

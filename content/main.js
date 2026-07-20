@@ -3881,6 +3881,19 @@ class ADHDHighlighter {
       return AgfChartWorkspace.renderSvgAsync ? AgfChartWorkspace.renderSvgAsync(currentChartContext) : AgfChartWorkspace.renderSvg(currentChartContext);
     };
     let chartRenderToken = 0;
+    const renderEchartsCanvas = context => {
+      const runtime = window.echarts;
+      if (!runtime || context.intent !== 'data' || context.renderer !== 'echarts') return false;
+      if (chartCanvas._agfEcharts) { chartCanvas._agfEcharts.dispose(); chartCanvas._agfEcharts = null; }
+      chartCanvas.innerHTML = '<div style="width:100%;height:520px"></div>';
+      const host = chartCanvas.firstElementChild;
+      const instance = runtime.init(host, context.theme === 'dark' ? 'dark' : undefined, { renderer: 'canvas' });
+      const model = context.chartModel || {}; const series = (model.series || []).map(item => ({ name: item.name, type: item.type === 'table' ? 'bar' : item.type, data: (item.data || []).map(point => Number(point.value)), smooth: item.type === 'line' }));
+      const labels = (model.series?.[0]?.data || []).map(point => point.label);
+      instance.setOption({ animation: false, title: { text: model.title || '数据图表', subtext: [model.units, model.timeRange?.start && model.timeRange?.end ? `${model.timeRange.start}–${model.timeRange.end}` : ''].filter(Boolean).join(' · ') }, tooltip: { trigger: 'axis' }, legend: { type: 'scroll' }, toolbox: { feature: { dataView: { readOnly: true }, magicType: { type: ['line', 'bar'] }, restore: {}, saveAsImage: {} } }, grid: { left: 56, right: 24, bottom: 72, containLabel: true }, xAxis: { type: 'category', data: labels }, yAxis: { type: 'value', name: model.units || '' }, dataZoom: labels.length > 8 ? [{ type: 'inside' }, { type: 'slider', bottom: 18 }] : [], series });
+      chartCanvas._agfEcharts = instance;
+      return true;
+    };
     const renderChartPreview = async () => {
       if (!currentChartContext) return;
       if (AgfChartWorkspace.ensureLaneNodes) AgfChartWorkspace.ensureLaneNodes(currentChartContext);
@@ -3905,7 +3918,7 @@ class ADHDHighlighter {
           new Promise((_, reject) => setTimeout(() => reject(new Error('图表渲染超时')), 6000))
         ]);
         if (token !== chartRenderToken || currentChartContext !== contextAtStart) return;
-        chartCanvas.innerHTML = svg;
+        if (!renderEchartsCanvas(contextAtStart)) chartCanvas.innerHTML = svg;
         const quality = AgfChartWorkspace.validateChartQuality?.(currentChartContext, svg); if (quality?.warnings?.length) chartNotice.textContent = `图表质量提示：${quality.warnings.join('；')}`; else if (quality?.errors?.length) chartNotice.textContent = `图表质量错误：${quality.errors.join('；')}`;
         fitChartToCanvas();
       } catch (error) {
