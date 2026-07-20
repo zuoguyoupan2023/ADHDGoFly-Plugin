@@ -2687,6 +2687,10 @@ class ADHDHighlighter {
       .agf-context-btn{height:24px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#4b5870;font-size:12px;cursor:pointer}
       .agf-context-btn.active{border-color:#315efb;background:#edf2ff;color:#2447c7}
       .agf-context-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:80px;flex:1}
+      .agf-context-tools .agf-context-summary{display:none}
+      .agf-function-bar > .agf-context-summary{display:none}
+      .agf-context-tools [data-source]{position:relative}
+      .agf-context-tools [data-source]:hover::after,.agf-context-tools [data-source]:focus-visible::after{content:attr(data-context-hint);position:absolute;z-index:20;left:50%;top:calc(100% + 6px);transform:translateX(-50%);white-space:nowrap;padding:5px 8px;border-radius:6px;background:#172033;color:#fff;font-size:11px;box-shadow:0 4px 12px rgba(0,0,0,.16);pointer-events:none}
       .agf-task-bar{display:flex;align-items:center;gap:4px;padding:6px 12px;border-bottom:1px solid #e5e9f0;background:#fbfcff}
       .agf-function-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid #e5e9f0;background:#fff;min-width:0}.agf-function-bar .agf-ai-tabs{flex:0 0 auto}.agf-function-bar .agf-context-tools{display:flex;gap:4px;margin-left:auto}.agf-function-bar .agf-context-summary{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .agf-task-label{flex:0 0 auto;color:#687386;font-size:12px}
@@ -2963,13 +2967,12 @@ class ADHDHighlighter {
           <button id="agfAiTabExplain" data-i18n="jixia.tabs.explain">解释</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
         </div>
-        <div class="agf-context-tools">
-          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-i18n="jixia.context.full">全文</button>
-          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-i18n="jixia.context.selection">选中</button>
-          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-i18n="jixia.context.paragraph">段落</button>
+        <div class="agf-context-tools" aria-label="上下文范围">
+          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button>
+          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
+          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph">段落</button>
         </div>
-        <div class="agf-context-summary" id="agfContextSummary" data-i18n="jixia.context.summaryFull">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="jixia.context.discoverImages">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="jixia.context.audio">音频</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools" aria-label="功能支持"><span class="agf-support-label">支持</span><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="jixia.context.audio">音频朗读/识别</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="jixia.context.discoverImages">网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">网页截图</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
