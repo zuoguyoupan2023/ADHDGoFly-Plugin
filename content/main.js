@@ -2636,7 +2636,8 @@ class ADHDHighlighter {
       #agfAiViewImage .agf-page-image-result{max-height:160px;overflow:auto}
       #agfAiViewChart .agf-chart-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
       #agfAiViewChart .agf-chart-title{width:100%;box-sizing:border-box;margin-bottom:10px}
-      #agfAiViewChart .agf-chart-canvas{overflow:auto;border:1px solid #edf0f6;border-radius:9px;min-height:260px;padding:8px;background:#fff}
+      #agfAiViewChart .agf-chart-canvas{overflow:auto;border:0;min-height:260px;padding:8px;background:#fff}
+      #agfAiViewChart .agf-chart-canvas>svg{display:block;border:1px solid #cfd8e6;border-radius:3px;background:#fff;box-sizing:border-box}
       #agfAiViewChart .agf-chart-history-row{display:flex;gap:8px;align-items:center;border-bottom:1px solid #f0f2f6;padding:7px 0;font-size:12px}
       #agfAiViewChart .agf-chart-history-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .agf-media-attachment{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:5px;border:1px solid #dfe5f2;border-radius:9px;background:#f8faff;max-width:100%}.agf-media-attachment img{width:54px;height:54px;object-fit:cover;border-radius:6px}.agf-media-attachment-body{min-width:0;flex:1;font-size:11px;color:#4b5870}.agf-media-attachment-result{max-height:48px;overflow:auto;margin-top:3px;line-height:1.4}.agf-media-attachment-remove{border:0;background:transparent;color:#d33;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
