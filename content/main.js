@@ -2972,7 +2972,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
         </div>
-        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="jixia.context.audio">音频朗读/识别</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="jixia.context.discoverImages">网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">网页截图</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="jixia.context.audio">音频朗读/识别</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="jixia.context.discoverImages">网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
@@ -4646,6 +4646,10 @@ class ADHDHighlighter {
       const cancel = actions.querySelector('[data-agf-shot-cancel]');
       const confirm = actions.querySelector('[data-agf-shot-confirm]');
       if (cancel) cancel.onclick = cleanup;
+      const escapeHandler = event => { if (event.key === 'Escape') { event.preventDefault(); cleanup(); } };
+      document.addEventListener('keydown', escapeHandler, true);
+      const cleanupWithListener = () => { document.removeEventListener('keydown', escapeHandler, true); cleanup(); };
+      if (cancel) cancel.onclick = cleanupWithListener;
       if (confirm) confirm.onclick = async () => {
         const rect = currentRect;
         try {
@@ -4654,9 +4658,9 @@ class ADHDHighlighter {
           const full = await capturePageScreenshot();
           const cropped = await cropImageDataUrl(full, rect);
           await addScreenshotToWorkspace(cropped, '网页选区截图');
-          cleanup();
+          cleanupWithListener();
         } catch (error) {
-          cleanup();
+          cleanupWithListener();
           showToast(error.message || '网页截图失败');
         }
       };
