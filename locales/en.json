@@ -594,18 +594,18 @@
   },
   "sidebar": {
     "home": "Home",
-    "dict": "Dict Lang",
+    "dict": "Dict",
     "stats": "Statistics",
     "colors": "Colors",
     "text": "Text",
-    "ai": "AI Analysis",
+    "ai": "AI",
     "aiChat": "AI Chat",
     "style": "Style",
     "faq": "FAQ",
     "about": "About",
     "settings": "Settings",
     "language": "Switch Language",
-    "languageLabel": "Language"
+    "languageLabel": "Lang"
   },
   "languages": {
     "zh": "中文",
