@@ -579,6 +579,7 @@ class ADHDHighlighter {
     try {
       this.setupMessageListener();
       this.setupPageBridge();
+      this.setupDynamicPageHighlighting();
       
       // 初始化词典
       await this.dictionaryManager.initialize();
@@ -614,6 +615,65 @@ class ADHDHighlighter {
       console.error('初始化失败:', error);
       this.isInitialized = false;
     }
+  }
+
+  setupDynamicPageHighlighting() {
+    if (this.dynamicPageObserver || !document.body) return;
+    this.dynamicPageRouteKey = window.JixiaContextResolver?.routeKey?.(window.location.href) || window.location.href;
+    let timer = null;
+    let routeTimer = null;
+    const processNewContent = () => {
+      timer = null;
+      if (!this.enabled || !this.isInitialized) return;
+      const processor = this.processingMode === 'streaming' ? this.streamingPageProcessor : this.pageProcessor;
+      Promise.resolve(processor?.processPage?.()).catch(error => console.warn('[JixiaHighlight] 增量处理失败:', error));
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(processNewContent, 500);
+    };
+    const routeChanged = () => {
+      const next = window.JixiaContextResolver?.routeKey?.(window.location.href) || window.location.href;
+      if (next === this.dynamicPageRouteKey) return;
+      const previous = this.dynamicPageRouteKey;
+      this.dynamicPageRouteKey = next;
+      clearTimeout(routeTimer);
+      routeTimer = setTimeout(async () => {
+        if (!this.enabled || !this.isInitialized) return;
+        try {
+          const processor = this.processingMode === 'streaming' ? this.streamingPageProcessor : this.pageProcessor;
+          processor?.removeAllHighlights?.();
+          await new Promise(resolve => setTimeout(resolve, 700));
+          await processor?.processPage?.();
+          this.applyColorScheme();
+          console.debug('[JixiaHighlight] route reprocessed', { previous, current: next });
+        } catch (error) { console.warn('[JixiaHighlight] 路由重处理失败:', error); }
+      }, 700);
+    };
+    const originalPush = history.pushState;
+    const originalReplace = history.replaceState;
+    const push = function (...args) { const result = originalPush.apply(this, args); routeChanged(); return result; };
+    const replace = function (...args) { const result = originalReplace.apply(this, args); routeChanged(); return result; };
+    history.pushState = push;
+    history.replaceState = replace;
+    window.addEventListener('popstate', routeChanged);
+    window.addEventListener('hashchange', routeChanged);
+    this.dynamicPageObserver = new MutationObserver(mutations => {
+      const relevant = mutations.some(m => Array.from(m.addedNodes || []).some(node => {
+        if (node.nodeType !== 1) return false;
+        const element = node;
+        return !this.isExtensionUi(element) && !element.closest?.('.adhd-processed, .adhd-observer-wrapper') && !element.matches?.('.adhd-observer-wrapper') && String(element.innerText || element.textContent || '').trim().length >= 20;
+      }));
+      if (relevant) { routeChanged(); schedule(); }
+    });
+    this.dynamicPageObserver.observe(document.body, { childList: true, subtree: true });
+    this.dynamicPageCleanup = () => {
+      clearTimeout(timer); clearTimeout(routeTimer); this.dynamicPageObserver?.disconnect();
+      window.removeEventListener('popstate', routeChanged); window.removeEventListener('hashchange', routeChanged);
+      if (history.pushState === push) history.pushState = originalPush;
+      if (history.replaceState === replace) history.replaceState = originalReplace;
+      this.dynamicPageObserver = null;
+    };
   }
 
   /**

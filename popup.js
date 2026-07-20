@@ -1426,7 +1426,8 @@ class PopupController {
       }
     } catch (error) {
       console.error('检查状态失败:', error);
-      this.updateUI({ enabled: false, error: window.i18n.t('errors.connectionFailed') });
+      const disconnected = /Receiving end does not exist|Could not establish connection/i.test(String(error && error.message || error));
+      this.updateUI({ enabled: false, error: disconnected ? '当前网页插件脚本尚未就绪，请刷新 Reddit 页面后重试。' : window.i18n.t('errors.connectionFailed') });
     }
   }
 
@@ -1460,7 +1461,8 @@ class PopupController {
       }
     } catch (error) {
       console.error('切换失败:', error);
-      this.updateUI({ ...this.currentStatus, error: error.message });
+      const disconnected = /Receiving end does not exist|Could not establish connection/i.test(String(error && error.message || error));
+      this.updateUI({ ...this.currentStatus, error: disconnected ? '当前网页插件脚本尚未就绪，请刷新 Reddit 页面后重试。' : error.message });
     } finally {
       toggleBtn.disabled = false;
     }
