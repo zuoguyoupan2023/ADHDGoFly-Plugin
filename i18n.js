@@ -191,11 +191,22 @@ class I18nManager {
       titleElement.textContent = this.t('appName');
     }
 
-    // 侧边栏按钮的文案和 title 都由 data-i18n / data-i18n-title 驱动。
-    // 不在这里按 id 写死映射，否则新增按钮会漏翻译，且统计按钮容易被误映射成 AI。
-    document.querySelectorAll('.sidebar-btn').forEach(button => {
-      const titleKey = button.getAttribute('data-i18n-title');
-      if (titleKey) button.title = this.t(titleKey);
+    // 更新侧边栏按钮的title属性
+    const sidebarButtons = {
+      'home-btn': 'sidebar.home',
+      'dict-btn': 'sidebar.dict',
+      'colors-btn': 'sidebar.colors',
+      'text-btn': 'sidebar.text',
+      'ai-btn': 'sidebar.ai',
+      'settings-btn': 'sidebar.settings',
+      'languageToggle': 'sidebar.language'
+    };
+
+    Object.entries(sidebarButtons).forEach(([id, key]) => {
+      const button = document.getElementById(id);
+      if (button) {
+        button.title = this.t(key);
+      }
     });
   }
 
