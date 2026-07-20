@@ -33,6 +33,16 @@ const laneContext = { viewType: 'workflow', chartModel: { nodes: [{ id: 'a', lab
 workspace.ensureLaneNodes(laneContext);
 assert.equal(laneContext.chartModel.nodes.filter(node => node.isLane).length, 2);
 assert.match(laneContext.chartModel.nodes.find(node => node.isLane && node.rowIndex === 1).label, /主流程 2/);
+const laneSvg = workspace.renderSvg(laneContext);
+const nodePoint = id => { const match = laneSvg.match(new RegExp(`data-node-id="${id}"[^>]*data-x="([\\d.]+)"[^>]*data-y="([\\d.]+)"`)); assert.ok(match, `missing node ${id}`); return { x: Number(match[1]), y: Number(match[2]) }; };
+assert.equal(nodePoint('lane-' + laneContext.chartModel.nodes.find(node => node.isLane && node.rowIndex === 0).id.split('lane-')[1]).x, 76);
+const lane1 = laneContext.chartModel.nodes.find(node => node.isLane && node.rowIndex === 0);
+const lane2 = laneContext.chartModel.nodes.find(node => node.isLane && node.rowIndex === 1);
+assert.equal(nodePoint(lane1.id).y, nodePoint('a').y);
+assert.equal(nodePoint(lane2.id).y, nodePoint('e').y);
+laneContext.chartModel.nodes.splice(laneContext.chartModel.nodes.indexOf(lane2), 1);
+workspace.ensureLaneNodes(laneContext);
+assert.equal(laneContext.chartModel.nodes.some(node => node.id === lane2.id), false, 'deleted lane must not be recreated');
 const quality = workspace.validateChartQuality({ chartModel: { nodes: [{ id: 'a', label: 'A' }], edges: [{ source: 'a', target: 'missing' }] } }, '<svg viewBox="0 0 100 100"></svg>');
 assert.equal(quality.valid, false); assert.match(quality.errors[0], /连线引用/);
 console.log('chart workspace tests passed');
