@@ -168,6 +168,11 @@ class I18nManager {
       element.placeholder = translation;
     });
 
+    // 处理标题属性（兼容现有侧边栏标记）
+    document.querySelectorAll('[data-i18n-title]').forEach(element => {
+      element.title = this.t(element.getAttribute('data-i18n-title'));
+    });
+
     // 处理带有data-i18n-attr属性的元素
     const attrElements = document.querySelectorAll('[data-i18n-attr]');
     attrElements.forEach(element => {
