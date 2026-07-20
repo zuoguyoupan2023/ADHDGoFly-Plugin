@@ -3735,7 +3735,7 @@ class ADHDHighlighter {
       currentView = which;
       jixiaState.setModule(which);
       updateTaskBar(which);
-      if (fixedBar) fixedBar.style.display = which === 'records' ? 'none' : '';
+      if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
       if (which === 'chat' || which === 'quiz') {
         try { chrome.storage.local.set({ agfJixiaLastModule: which }); } catch (_) {}
       }
