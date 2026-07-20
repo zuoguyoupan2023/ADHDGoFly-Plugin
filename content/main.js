@@ -3888,9 +3888,10 @@ class ADHDHighlighter {
       chartCanvas.innerHTML = '<div style="width:100%;height:520px"></div>';
       const host = chartCanvas.firstElementChild;
       const instance = runtime.init(host, context.theme === 'dark' ? 'dark' : undefined, { renderer: 'canvas' });
-      const model = context.chartModel || {}; const series = (model.series || []).map(item => ({ name: item.name, type: item.type === 'table' ? 'bar' : item.type, data: (item.data || []).map(point => Number(point.value)), smooth: item.type === 'line' }));
+      const model = context.chartModel || {}; const hasPie = model.series?.some(item => item.type === 'pie'); const series = (model.series || []).map(item => ({ name: item.name, type: item.type === 'table' ? 'bar' : item.type, data: item.type === 'pie' ? (item.data || []).map(point => ({ name: point.label, value: Number(point.value) })) : (item.data || []).map(point => Number(point.value)), smooth: item.type === 'line', label: item.type === 'pie' ? { show: true } : undefined }));
       const labels = (model.series?.[0]?.data || []).map(point => point.label);
-      instance.setOption({ animation: false, title: { text: model.title || '数据图表', subtext: [model.units, model.timeRange?.start && model.timeRange?.end ? `${model.timeRange.start}–${model.timeRange.end}` : ''].filter(Boolean).join(' · ') }, tooltip: { trigger: 'axis' }, legend: { type: 'scroll' }, toolbox: { feature: { dataView: { readOnly: true }, magicType: { type: ['line', 'bar'] }, restore: {}, saveAsImage: {} } }, grid: { left: 56, right: 24, bottom: 72, containLabel: true }, xAxis: { type: 'category', data: labels }, yAxis: { type: 'value', name: model.units || '' }, dataZoom: labels.length > 8 ? [{ type: 'inside' }, { type: 'slider', bottom: 18 }] : [], series });
+      const tooltip = { trigger: hasPie ? 'item' : 'axis', formatter: params => { const rows = Array.isArray(params) ? params : [params]; return rows.map(item => `${item.seriesName || item.name}: ${item.value}${model.units ? ` ${model.units}` : ''}`).join('<br>'); } };
+      instance.setOption({ animation: false, title: { text: model.title || '数据图表', subtext: [model.units, model.timeRange?.start && model.timeRange?.end ? `${model.timeRange.start}–${model.timeRange.end}` : ''].filter(Boolean).join(' · ') }, tooltip, legend: { type: 'scroll' }, toolbox: { feature: { dataView: { readOnly: true }, magicType: { type: ['line', 'bar'] }, restore: {}, saveAsImage: {} } }, grid: { left: 56, right: 24, bottom: 72, containLabel: true }, xAxis: hasPie ? undefined : { type: 'category', data: labels }, yAxis: hasPie ? undefined : { type: 'value', name: model.units || '' }, dataZoom: !hasPie && labels.length > 8 ? [{ type: 'inside' }, { type: 'slider', bottom: 18 }] : [], series });
       chartCanvas._agfEcharts = instance;
       return true;
     };
@@ -4026,7 +4027,7 @@ class ADHDHighlighter {
         if (intent === 'data' && chartUnits?.value.trim()) model.units = chartUnits.value.trim();
         if (intent === 'data' && chartSeriesType?.value && Array.isArray(model.series)) model.series.forEach(series => { series.type = chartSeriesType.value; });
         const checked = AgfChartModel.validateChartContext({
-          source: chartSourceName(ctx.source), intent, renderer: chartRenderer?.value || 'svg', chartModel: model,
+          source: chartSourceName(ctx.source), intent, renderer: intent === 'data' ? 'echarts' : (chartRenderer?.value || 'svg'), chartModel: model,
           sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }], theme: chartTheme?.value || 'system', viewType: selectedType
         });
         if (!checked.valid) throw new Error(checked.errors.join('；'));
