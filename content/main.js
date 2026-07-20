@@ -4760,14 +4760,9 @@ class ADHDHighlighter {
       try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }
       catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
     };
-    if (quizSubmit) quizSubmit.addEventListener('click', async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; });
-    if (quizNext) quizNext.addEventListener('click', async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } });
-    if (quizBackHistory) quizBackHistory.addEventListener('click', () => { quizCard.style.display = 'none'; showQuizHistory(); });
-    if (quizTab) quizTab.addEventListener('click', () => showQuiz());
-    if (document.getElementById('agfQuizStart')) document.getElementById('agfQuizStart').onclick = () => startQuiz('easy');
-    if (document.getElementById('agfQuizEasy')) document.getElementById('agfQuizEasy').onclick = () => startQuiz('easy');
-    if (document.getElementById('agfQuizHard')) document.getElementById('agfQuizHard').onclick = () => startQuiz('hard');
-    if (quizHistoryBtn) quizHistoryBtn.onclick = showQuizHistory;
+    const submitQuizAnswer = async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; };
+    const nextQuizQuestion = async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } };
+    TaixueUiModules.bindQuizEvents({ elements: { submit: quizSubmit, next: quizNext, backHistory: quizBackHistory, tab: quizTab, start: document.getElementById('agfQuizStart'), easy: document.getElementById('agfQuizEasy'), hard: document.getElementById('agfQuizHard'), history: quizHistoryBtn }, actions: { submit: submitQuizAnswer, next: nextQuizQuestion, backHistory: () => { quizCard.style.display = 'none'; showQuizHistory(); }, show: showQuiz, start: startQuiz, history: showQuizHistory } });
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
       const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
@@ -4800,7 +4795,6 @@ class ADHDHighlighter {
       }
     };
     const showSettings = () => { setView('settings'); setActiveSettingsTab('api'); };
-    if (tabChat) tabChat.addEventListener('click', () => { hideFulltextPanel(); showChat(); });
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     updateContextControls('full_article');
@@ -6941,9 +6935,20 @@ class ADHDHighlighter {
       sendChat();
     };
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
-    if (quickSummaryBtn) quickSummaryBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.summaryTitle') : '帮我总结这篇文章: '; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.summary') : '总结', includeLangHint: true }); });
-    if (beginnerExplainBtn) beginnerExplainBtn.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerTitle') : '读者为初学者研究生，基础薄弱，需在明天组会做 PPT 文献汇报。请用最通俗、循序渐进、非常详细的方式解读这篇文献，确保我能彻底看懂。'; const extra = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.beginnerOutput') : '输出: 背景与动机；术语科普；方法流程分步骤；关键实验与结果；逐张图解；贡献与局限；改进方向；PPT 大纲与每页要点；可能被问到的问题与回答；最后给出 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.beginnerExplain') : '保姆级解读', extra, includeLangHint: true }); });
-    if (btnTranslate) btnTranslate.addEventListener('click', async () => { await runArticleChatTask({ title: '请翻译以下内容，保留术语和段落结构。', prefix: '翻译', extra: '输出要求：如果原文是中文，请翻译成英文；如果原文不是中文，请翻译成中文。' }); });
+    const translate = key => (window.i18n && window.i18n.t) ? window.i18n.t(key) : '';
+    TaixueUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
+      runArticleChatTask,
+      showChat: () => { hideFulltextPanel(); showChat(); },
+      labels: { summary: translate('aiPanel.summary') || '总结', beginner: translate('aiPanel.beginnerExplain') || '保姆级解读', structured: translate('aiPanel.structured') || '结构化摘要', explain: translate('aiPanel.explain') || '简明解释', outline: translate('aiPanel.outline') || '提取大纲', keywords: translate('aiPanel.keywords') || '提取关键词' },
+      chatTasks: {
+        summary: { title: translate('aiPanel.prompts.summaryTitle') || '帮我总结这篇文章: ' },
+        beginner: { title: translate('aiPanel.prompts.beginnerTitle') || '请用最通俗、循序渐进的方式解读这篇文章。', extra: translate('aiPanel.prompts.beginnerOutput') || '' },
+        structured: { title: translate('aiPanel.prompts.structuredTitle') || '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。' },
+        explain: { title: translate('aiPanel.prompts.explainTitle') || '请用简明方式解释以下正文的核心内容与关键点。' },
+        outline: { title: translate('aiPanel.prompts.outlineTitle') || '请提取以下正文的大纲与层级结构，保留标题与要点。' },
+        keywords: { title: translate('aiPanel.prompts.keywordsTitle') || '请从以下正文提取关键词与术语，并给出简要定义。' }
+      }
+    } });
     if (btnSelectionExplain) btnSelectionExplain.addEventListener('click', async () => {
       if (!getSelectedTextSafe()) {
         updateContextControls('selection');
@@ -6952,12 +6957,8 @@ class ADHDHighlighter {
       }
       try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
-    if (explainTab) explainTab.onclick = () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); };
-    if (explainRetry) explainRetry.onclick = () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
-    if (explainToChat) explainToChat.onclick = () => { if (!explainContext) return; runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); };
-    if (vocabTab) vocabTab.onclick = () => { setView('vocab'); renderVocabHistory(); };
-    if (vocabStart) vocabStart.onclick = () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; });
-    if (vocabReset) vocabReset.onclick = () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; };
+    TaixueUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
+    TaixueUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
       try { showChat(); const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
@@ -6972,10 +6973,6 @@ class ADHDHighlighter {
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); const selectedLang = speakLanguageSelect?.value || 'auto'; utterance.lang = selectedLang === 'auto' ? (/^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US') : selectedLang; const selectedVoiceId = speakVoiceSelect?.value || ''; const selectedVoice = availableSpeakVoices.find(v => (v.voiceURI || v.name) === selectedVoiceId); if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; } utterance.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
     };
     if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { if (currentView === 'quiz') showQuizHistory(); else if (currentView === 'explain') { setView('explain'); renderExplainHistory(); } else if (currentView === 'vocab') { setView('vocab'); renderVocabHistory(); } else showRecords(); };
-    if (btnStructured) btnStructured.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.structuredTitle') : '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.structured') : '结构化摘要' }); });
-    if (btnExplain) btnExplain.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.explainTitle') : '请用简明方式解释以下正文的核心内容与关键点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.explain') : '简明解释' }); });
-    if (btnOutline) btnOutline.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.outlineTitle') : '请提取以下正文的大纲与层级结构，保留标题与要点。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.outline') : '提取大纲' }); });
-    if (btnKeywords) btnKeywords.addEventListener('click', async () => { const title = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.keywordsTitle') : '请从以下正文提取关键词与术语，并给出简要定义。'; await runArticleChatTask({ title, prefix: (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.keywords') : '提取关键词' }); });
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));

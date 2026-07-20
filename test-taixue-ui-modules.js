@@ -1,0 +1,13 @@
+const assert = require('node:assert/strict');
+const { bindChatEvents, bindQuizEvents, bindExplainEvents, bindVocabularyEvents } = require('./content/taixue-ui-modules.js');
+const button = () => { const handlers = {}; return { addEventListener(type, handler) { handlers[type] = handler; }, click() { return handlers.click?.(); } }; };
+const calls = [];
+const chat = Object.fromEntries(['quickSummary','beginnerExplain','translate','structured','explain','outline','keywords','tab'].map(key => [key, button()]));
+bindChatEvents({ elements: chat, actions: { runArticleChatTask: value => calls.push(value), showChat: () => calls.push({ type: 'showChat' }) } });
+chat.quickSummary.click(); chat.tab.click(); assert.equal(calls[0].prefix, '总结'); assert.deepEqual(calls.at(-1), { type: 'showChat' });
+const quiz = Object.fromEntries(['submit','next','backHistory','tab','start','easy','hard','history'].map(key => [key, button()]));
+bindQuizEvents({ elements: quiz, actions: { start: value => calls.push(value), submit: () => calls.push('submit'), show: () => calls.push('quiz') } });
+quiz.start.click(); quiz.submit.click(); quiz.tab.click(); assert.deepEqual(calls.slice(-3), ['easy', 'submit', 'quiz']);
+const explain = { tab: button(), retry: button(), toChat: button() }; bindExplainEvents({ elements: explain, actions: { open: () => calls.push('explain'), retry: () => calls.push('retry'), toChat: () => calls.push('toChat') } }); explain.tab.click(); explain.retry.click(); explain.toChat.click(); assert.deepEqual(calls.slice(-3), ['explain', 'retry', 'toChat']);
+const vocab = { tab: button(), start: button(), reset: button() }; bindVocabularyEvents({ elements: vocab, actions: { open: () => calls.push('vocab'), start: () => calls.push('vocab-start'), reset: () => calls.push('vocab-reset') } }); vocab.tab.click(); vocab.start.click(); vocab.reset.click(); assert.deepEqual(calls.slice(-3), ['vocab', 'vocab-start', 'vocab-reset']);
+console.log('taixue UI module tests passed');
