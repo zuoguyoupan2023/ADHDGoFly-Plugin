@@ -1038,7 +1038,7 @@ class PopupController {
     listContainer.innerHTML = '';
 
     // 为每个词典创建元素并绑定事件
-    const languageNames = { zh: '中文', en: '英文', fr: '法语', ru: '俄语', es: '西班牙语', ja: '日语', other: '其他' };
+    const languageNames = { zh: 'pages.dict.languages.zh', en: 'pages.dict.languages.en', fr: 'pages.dict.languages.fr', ru: 'pages.dict.languages.ru', es: 'pages.dict.languages.es', ja: 'pages.dict.languages.ja', other: 'pages.dict.languages.other' };
     this.customDictionaries.forEach(dict => {
       const dictItem = document.createElement('div');
       dictItem.className = 'custom-dict-item';
@@ -1047,14 +1047,14 @@ class PopupController {
       dictItem.innerHTML = `
         <div class="custom-dict-info">
           <div class="custom-dict-name">${displayName}</div>
-          <div class="custom-dict-meta">${languageNames[dict.language] || '其他'} • ${isArticle ? '文章词典' : (dict.domain || '自定义')}</div>
+          <div class="custom-dict-meta">${window.i18n?.t?.(languageNames[dict.language] || languageNames.other) || '其他'} • ${isArticle ? (window.i18n?.t?.('pages.dict.custom.articleDictionary') || '文章词典') : (dict.domain || (window.i18n?.t?.('pages.dict.custom.customDictionary') || '自定义'))}</div>
         </div>
         <div class="custom-dict-actions">
           <label class="custom-dict-toggle" title="开启/关闭">
             <input type="checkbox" class="custom-dict-checkbox" ${this.dictSettings[dict.id] ? 'checked' : ''} />
             <span></span>
           </label>
-          ${isArticle ? '<button class="edit-dict-btn" type="button">编辑</button>' : ''}
+          ${isArticle ? `<button class="edit-dict-btn" type="button">${window.i18n?.t?.('pages.dict.custom.edit') || '编辑'}</button>` : ''}
           <button class="remove-dict-btn" data-i18n="pages.dict.custom.delete">
             删除
           </button>
@@ -2535,7 +2535,7 @@ class PopupController {
       });
       const latest = samePage[0] || null;
       if (!samePage.length) {
-        container.innerHTML = '<div class="no-data">当前页面还没有测试记录。</div>';
+        container.innerHTML = `<div class="no-data">${window.i18n?.t?.('pages.ai.stats.noTestRecords') || '当前页面还没有测试记录。'}</div>`;
         return;
       }
       const score = latest && latest.completedAt ? `${latest.score}/${latest.total}` : '未完成';

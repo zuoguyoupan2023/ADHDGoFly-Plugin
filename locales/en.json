@@ -190,6 +190,9 @@
       "description": "Check to enable dictionaries; basic dictionaries shown by default",
       "custom": {
         "title": "Custom Dictionaries",
+        "articleDictionary": "Article Dictionary",
+        "customDictionary": "Custom",
+        "edit": "Edit",
         "addButton": "+Add",
         "tip": {
           "text": "No suitable dictionary?",
@@ -228,7 +231,8 @@
         "fr": "French Dictionary",
         "ru": "Russian Dictionary",
         "es": "Spanish Dictionary",
-        "ja": "Japanese Dictionary"
+        "ja": "Japanese Dictionary",
+        "other": "Other"
       },
       "languageGroups": {
         "zh": {
@@ -325,6 +329,9 @@
       "description": "Vocabulary analysis based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
+        "taixueReview": "Taixue Review",
+        "reviewInTaixue": "Review in Taixue",
+        "noTestRecords": "There are no test records for this page yet.",
         "language": "Language Distribution",
         "posDistribution": "Part of Speech Distribution",
         "vocabulary": "Vocabulary Statistics"

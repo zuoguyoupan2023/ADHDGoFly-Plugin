@@ -193,6 +193,9 @@
       "description": "勾选启用词典；默认显示基础词典",
       "custom": {
         "title": "自制词典",
+        "articleDictionary": "文章词典",
+        "customDictionary": "自定义",
+        "edit": "编辑",
         "addButton": "+添加",
         "tip": {
           "text": "没有合适的词典？",
@@ -232,7 +235,8 @@
         "fr": "法语词典",
         "ru": "俄语词典",
         "es": "西班牙语词典",
-        "ja": "日语词典"
+        "ja": "日语词典",
+        "other": "其他"
       },
       "languageGroups": {
         "zh": {
@@ -329,6 +333,9 @@
       "description": "基于当前页面词汇的统计分析",
       "stats": {
         "title": "📊 页面统计",
+        "taixueReview": "太学复习",
+        "reviewInTaixue": "在太学中复习",
+        "noTestRecords": "当前页面还没有测试记录。",
         "language": "语言分布",
         "posDistribution": "词性分布",
         "vocabulary": "词汇统计"
