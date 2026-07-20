@@ -2972,7 +2972,7 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
         </div>
-        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
@@ -2986,7 +2986,6 @@ class ADHDHighlighter {
           <button class="agf-task-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button>
           <button class="agf-task-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button>
           <button class="agf-task-btn" id="agfBtnVisionOcr" disabled data-i18n="jixia.tasks.visionOcr">图片识别/OCR</button>
-          <button class="agf-task-btn" id="agfModuleHistoryBtn" data-i18n="jixia.tasks.history">📃 历史记录</button>
         </div>
       </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
@@ -3187,6 +3186,7 @@ class ADHDHighlighter {
                 <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active" data-i18n="aiPanel.records.current">当前记录</button>
                 <button id="agfRecordsTabAll" class="agf-record-scope-btn" data-i18n="aiPanel.records.all">所有记录</button>
               </div>
+              <select id="agfRecordsType" class="agf-record-scope-btn"><option value="all">全部类型</option><option value="chat">Chat</option><option value="quiz">测试</option><option value="explain">解释</option><option value="vocab">词汇</option><option value="image">图像</option><option value="chart">图表</option></select>
               <input id="agfRecordsSearch" class="agf-records-search" data-i18n-placeholder="aiPanel.records.search" placeholder="搜索主题或链接" />
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
@@ -3726,6 +3726,7 @@ class ADHDHighlighter {
       };
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
+      if (moduleHistoryBtn) moduleHistoryBtn.style.display = which === 'chat' ? '' : 'none';
       if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['explain','vocab','chat','quiz'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
@@ -4981,6 +4982,7 @@ class ADHDHighlighter {
     }
     let recordsScope = 'all';
     let recordsSearch = '';
+    let recordsType = 'all';
     const setRecordsScope = (scope) => {
       recordsScope = scope;
       if (recordsTabCurrent) recordsTabCurrent.classList.toggle('active', scope === 'current');
@@ -4990,6 +4992,8 @@ class ADHDHighlighter {
     if (recordsTabCurrent) recordsTabCurrent.addEventListener('click', () => setRecordsScope('current'));
     if (recordsTabAll) recordsTabAll.addEventListener('click', () => setRecordsScope('all'));
     if (recordsSearchInput) recordsSearchInput.addEventListener('input', (e) => { recordsSearch = String(e.target.value||'').trim().toLowerCase(); if (currentView === 'records') openRecordsListPanel(); });
+    const recordsTypeSelect = document.getElementById('agfRecordsType');
+    if (recordsTypeSelect) recordsTypeSelect.addEventListener('change', e => { recordsType = String(e.target.value || 'all'); if (currentView === 'records') openRecordsListPanel(); });
     const showRecords = () => { setView('records'); setRecordsScope(recordsScope); };
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
     const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
@@ -5816,11 +5820,23 @@ class ADHDHighlighter {
       const convo = { id: currentConversationId, createdAt: (old && old.createdAt) ? old.createdAt : now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || (old && old.subject) || '', prefix: currentPrefix || (old && old.prefix) || '', pageTitle, pageUrl, canonicalUrl };
       try { await dbPutConversation(convo); } catch (_) {}
     };
+    const loadUnifiedHistory = async () => {
+      const getLocal = key => new Promise(resolve => chrome.storage.local.get([key], r => resolve(Array.isArray(r[key]) ? r[key] : [])));
+      const rows = [];
+      const chats = await dbListConversations(500).catch(() => []);
+      chats.forEach(item => rows.push({ ...item, type: 'chat', title: item.subject || item.pageTitle || 'Chat 对话', preview: String(item.messages?.find(m => m.role === 'user')?.content || '').slice(0, 100), storageRef: { kind: 'conversation', id: item.id }, resumable: true }));
+      const quizzes = await getLocal('agfQuizHistory'); quizzes.forEach(item => rows.push({ ...item, type: 'quiz', title: `${item.pageTitle || '文章测试'} · ${item.score || 0}/${item.total || 0}`, preview: `${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? '已完成' : '未完成'}`, updatedAt: item.completedAt || item.createdAt, storageRef: { kind: 'quiz', id: item.id }, resumable: true }));
+      const explains = await getLocal('agfJixiaExplainHistory'); explains.forEach(item => rows.push({ ...item, type: 'explain', title: `解释 · ${item.context?.pageTitle || '当前页面'}`, preview: String(item.text || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'explain', id: item.id }, resumable: true }));
+      const images = await getLocal('agfJixiaImageRecognitionHistory'); images.forEach(item => rows.push({ ...item, type: 'image', title: `图像 · ${item.name || '未命名图片'}`, preview: String(item.output || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'image', id: item.id }, resumable: true }));
+      const vocab = await getLocal('agfJixiaVocabularyReview'); if (vocab.length) rows.push({ id: 'vocab-review', type: 'vocab', title: '词汇复习', preview: `${vocab.length} 个词汇卡片`, createdAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), updatedAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), storageRef: { kind: 'vocab' }, resumable: true });
+      try { const charts = await AgfChartWorkspace.list(); charts.forEach(item => rows.push({ ...item, type: 'chart', title: `图表 · ${item.chartModel?.title || '未命名图表'}`, preview: item.intent || '关系图', storageRef: { kind: 'chart', id: item.id }, resumable: true })); } catch (_) {}
+      return rows.sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
+    };
     const openRecordsListPanel = async () => {
       if (!recordsPanel || !recordsList) return;
       recordsList.innerHTML = '';
       let items = [];
-      try { items = await dbListConversations(500); } catch (_) {}
+      try { items = await loadUnifiedHistory(); } catch (_) {}
       try {
         if (recordsScope === 'current') {
           const u = getCanonicalUrl();
@@ -5848,7 +5864,7 @@ class ADHDHighlighter {
           if (m) urlStr = m[1]; else urlStr = item.pageUrl || item.canonicalUrl || '';
           try { if (urlStr) { const u2 = new URL(urlStr, window.location.href); title = u2.hostname; } } catch (_) { title = urlStr || ''; }
         }
-        return (prefix ? (prefix + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
+        return item.title || (prefix ? (prefix + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
       };
       const buildRecordItem = (item) => {
         const el = document.createElement('div');
@@ -5891,6 +5907,18 @@ class ADHDHighlighter {
         openBtn.className = 'agf-records-open';
         openBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.open') : '打开';
         openBtn.addEventListener('click', async () => {
+          if (item.type !== 'chat') {
+            if (item.type === 'quiz') {
+              const record = item; quizItems = record.questions || []; quizIndex = Math.max(0, quizItems.findIndex(q => typeof q.isCorrect !== 'boolean')); quizScore = Number(record.score || 0); quizDifficulty = record.difficulty || 'easy'; quizContextRef = record.context || null; quizRecordId = record.id; quizFromHistory = true; setView('quiz'); quizCard.style.display = quizItems.length ? 'block' : 'none'; quizStartActions.style.display = 'none'; renderQuizQuestion();
+            } else if (item.type === 'explain') {
+              explainContext = item.context; setView('explain'); explainSource.textContent = `${String(item.text || '').length} 字 · ${item.context?.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(item.output || '') : String(item.output || '').replace(/\n/g, '<br>'); explainToChat.disabled = false; explainRetry.disabled = false;
+            } else if (item.type === 'image') {
+              currentMediaContext = item.context; currentMediaBatch = [item.context]; setView('image'); renderMediaAttachment();
+            } else if (item.type === 'chart') {
+              currentChartContext = item; setView('chart'); renderChartPreview();
+            } else if (item.type === 'vocab') { setView('vocab'); renderVocabHistory(); }
+            return;
+          }
           const data = await dbGetConversation(item.id);
           if (data && data.messages) {
             chatMessages = data.messages.slice();
@@ -5920,6 +5948,7 @@ class ADHDHighlighter {
         return el;
       };
       let filtered = items.slice();
+      if (recordsType !== 'all') filtered = filtered.filter(it => it.type === recordsType);
       if (recordsSearch) {
         const q = recordsSearch.toLowerCase();
         filtered = filtered.filter(it => {
