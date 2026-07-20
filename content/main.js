@@ -3494,6 +3494,18 @@ class ADHDHighlighter {
         createdAt: Date.now(), contentHash: jixiaHash(normalizedText || mediaText || JSON.stringify({ image, audio, chart })), confirmed: Boolean(confirmed), metadata
       };
     };
+    let jixiaRouteGeneration = 0;
+    const jixiaContextMonitor = window.JixiaContextResolver?.createMonitor?.({
+      getUrl: () => window.location.href,
+      onRouteChange: ({ previous, current }) => {
+        jixiaRouteGeneration += 1;
+        addedFullText = ''; addedFullQuestion = ''; addedFullActive = false;
+        currentPageUrl = ''; currentCanonicalUrl = '';
+        if (typeof updateStorageStatusUI === 'function') updateStorageStatusUI().catch(() => {});
+        console.debug('[JixiaContext] route changed', { previous, current, generation: jixiaRouteGeneration });
+      }
+    });
+    jixiaContextMonitor?.start?.();
     const jixiaContext = {
       async resolve(source = jixiaState.contextSource, options = {}) {
         jixiaState.setTaskStatus('preparing_context');
@@ -3514,7 +3526,11 @@ class ADHDHighlighter {
         } else if (preferredSource === 'manual') {
           text = String(options.text || '').trim();
         } else {
-          text = isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
+          const read = async () => isPdfPage() ? await buildPdfStructuredOutlineText() : await buildStructuredFromLegacyOrHints();
+          if (resolver?.waitForStableText) {
+            const stable = await resolver.waitForStableText(read);
+            text = stable.text;
+          } else text = await read();
         }
         text = String(text || '').trim();
         const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'paragraph' ? 'paragraph' : (preferredSource === 'manual' ? 'manual' : 'full_article'));
@@ -3525,7 +3541,10 @@ class ADHDHighlighter {
         }
         jixiaState.setContextSource(sourceName);
         jixiaState.setTaskStatus(text ? 'ready' : 'failed');
-        return { ...createJixiaContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), ...pageIdentity, ...sourceInfo, selectedText: selected, textLength: text.length, approxTokens: estimateJixiaTokens(text) };
+        const contextId = `${pageIdentity.routeKey}:${sourceInfo.textHash}:${jixiaRouteGeneration}`;
+        const result = { ...createJixiaContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), ...pageIdentity, ...sourceInfo, contextId, routeGeneration: jixiaRouteGeneration, selectedText: selected, textLength: text.length, approxTokens: estimateJixiaTokens(text) };
+        console.debug('[JixiaContext] resolved', { contextId, source: sourceName, routeKey: result.routeKey, textHash: result.textHash, textOrigin: result.textOrigin, confidence: result.confidence });
+        return result;
       }
     };
     window.JixiaContext = jixiaContext;
