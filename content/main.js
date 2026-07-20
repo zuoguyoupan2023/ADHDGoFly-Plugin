@@ -3773,13 +3773,16 @@ class ADHDHighlighter {
           if (!node) return;
           const start = svgPointFromEvent(svg, event);
           const origin = { x: Number(node.x) || start.x, y: Number(node.y) || start.y };
+          const size = AgfChartWorkspace.getNodeDragBounds ? AgfChartWorkspace.getNodeDragBounds(currentChartContext, node) : { width: 156, height: 58 };
+          const viewBox = svg.viewBox?.baseVal; const canvasWidth = Number(viewBox?.width) || 900; const canvasHeight = Number(viewBox?.height) || 520; const pad = 20;
+          const semanticBounds = ['workflow', 'data_flow', 'lifecycle'].includes(currentChartContext?.viewType); const minX = size.width / 2 + pad; const maxX = Math.max(minX, canvasWidth - size.width / 2 - pad); const minY = semanticBounds ? 116 : size.height / 2 + pad; const maxY = semanticBounds ? Math.max(minY, canvasHeight - 42) : Math.max(minY, canvasHeight - size.height / 2 - pad);
           let dragging = false;
           const move = moveEvent => {
             const point = svgPointFromEvent(svg, moveEvent);
             if (!dragging && Math.hypot(point.x - start.x, point.y - start.y) < 4) return;
             if (!dragging) { dragging = true; rememberChart(); svg.style.cursor = 'grabbing'; }
-            node.x = Math.max(40, Math.min(860, origin.x + point.x - start.x));
-            node.y = Math.max(80, Math.min(Number(svg.viewBox.baseVal.height || 520) - 40, origin.y + point.y - start.y));
+            node.x = Math.max(minX, Math.min(maxX, origin.x + point.x - start.x));
+            node.y = Math.max(minY, Math.min(maxY, origin.y + point.y - start.y));
             currentChartContext.updatedAt = Date.now();
             group.setAttribute('transform', `translate(${(node.x - origin.x).toFixed(1)},${(node.y - origin.y).toFixed(1)})`);
           };

@@ -122,7 +122,7 @@
     const rows = []; Object.entries(grouped).forEach(([lane, laneNodes]) => { laneNodes.sort((a, b) => (orderIndex[a.id] ?? 999) - (orderIndex[b.id] ?? 999)); for (let i = 0; i < laneNodes.length; i += 4) rows.push({ lane, nodes: laneNodes.slice(i, i + 4) }); });
     const rowHeight = Math.max(112, (height - 100) / Math.max(1, rows.length)); const positions = {};
     rows.forEach((row, ri) => { const step = Math.min(210, (width - 220) / Math.max(1, row.nodes.length)); const reverse = ri % 2 === 1; row.nodes.forEach((node, i) => { const col = reverse ? row.nodes.length - 1 - i : i; positions[node.id] = { ...node, x: 120 + (col + 0.5) * step, y: 92 + ri * rowHeight + rowHeight / 2, _lane: row.lane, _group: ri }; }); });
-    rows.forEach(row => row.nodes.forEach(node => { if (Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y))) positions[node.id].x = Number(node.x), positions[node.id].y = Number(node.y); positions[node.id].x = Math.max(94, Math.min(width - 94, positions[node.id].x)); positions[node.id].y = Math.max(116, Math.min(height - 42, positions[node.id].y)); }));
+    rows.forEach(row => row.nodes.forEach(node => { if (Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y))) positions[node.id].x = Number(node.x), positions[node.id].y = Number(node.y); positions[node.id].x = Math.max(90, Math.min(width - 90, positions[node.id].x)); positions[node.id].y = Math.max(116, Math.min(height - 42, positions[node.id].y)); }));
     return { nodes: nodes.map(n => positions[n.id] || { ...n, x: 120, y: 120 }), edges, lanes: rows.map(row => row.lane), rows, rowHeight };
   }
   function renderSemanticSvg(context) {
@@ -218,6 +218,10 @@
     const payload = exportJson(context).replace(/</g, '\\u003c');
     return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}</style></head><body><main>${svg}<details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
   }
-  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng, svgToPngWithOptions, exportJson, importJson, exportHtml };
+  function getNodeDragBounds(context, node) {
+    const semantic = ['workflow', 'data_flow', 'lifecycle'].includes(context?.viewType);
+    return semantic ? { width: 140, height: 58 } : nodeSize(node);
+  }
+  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng, svgToPngWithOptions, exportJson, importJson, exportHtml, getNodeDragBounds };
   if (typeof module !== 'undefined') module.exports = root.AgfChartWorkspace;
 })(typeof window !== 'undefined' ? window : globalThis);
