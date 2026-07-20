@@ -244,7 +244,10 @@
   function exportHtml(context, svg) {
     const title = esc(context.chartModel?.title || 'Jixia 图表');
     const payload = exportJson(context).replace(/</g, '\\u003c');
-    return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}</style></head><body><main>${svg}<details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
+    const modelApi = root.AgfChartModel;
+    const accessible = esc(modelApi?.buildAccessibilityText ? modelApi.buildAccessibilityText(context) : '图表文本摘要不可用');
+    const copyable = esc(modelApi?.buildCopyableData ? modelApi.buildCopyableData(context) : '');
+    return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}textarea{width:100%;min-height:100px;box-sizing:border-box}</style></head><body><main>${svg}<section aria-label="图表文本摘要"><h2>图表文本摘要</h2><pre>${accessible}</pre></section><details><summary>可复制数据</summary><textarea aria-label="可复制数据" readonly>${copyable}</textarea></details><details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
   }
   function ensureLaneNodes(context) {
     if (!context || context._laneNodesInitialized || !['workflow', 'data_flow', 'lifecycle'].includes(context.viewType)) return context;
@@ -257,9 +260,21 @@
     const errors = []; const warnings = []; const model = context?.chartModel || {}; const nodes = (model.nodes || []).filter(node => !node.hidden); const ids = new Set();
     nodes.forEach(node => { if (ids.has(node.id)) errors.push(`节点 id 重复：${node.id}`); ids.add(node.id); });
     (model.edges || []).forEach(edge => { if (!ids.has(edge.source) || !ids.has(edge.target)) errors.push(`连线引用不存在节点：${edge.source} -> ${edge.target}`); });
+    const connected = new Set();
+    (model.edges || []).forEach(edge => { connected.add(edge.source); connected.add(edge.target); });
+    nodes.filter(node => !node.isLane && !connected.has(node.id)).forEach(node => warnings.push(`孤立节点：${node.label}`));
     const viewBox = String(svgText || '').match(/viewBox="[^"]*"/); if (!svgText || !/<svg[\s>]/.test(svgText)) errors.push('SVG 为空或格式无效'); if (!viewBox) errors.push('SVG 缺少 viewBox');
     if (viewBox) { const values = viewBox[0].match(/-?[\d.]+/g).map(Number); const [, , width, height] = values; nodes.filter(node => Number.isFinite(node.x) && Number.isFinite(node.y) && !node.isLane).forEach(node => { if (node.x < 0 || node.x > width || node.y < 0 || node.y > height) warnings.push(`节点可能超出 SVG：${node.label}`); }); }
     const regular = nodes.filter(node => Number.isFinite(node.x) && Number.isFinite(node.y) && !node.isLane); for (let i = 0; i < regular.length; i++) for (let j = i + 1; j < regular.length; j++) if (Math.abs(regular[i].x - regular[j].x) < 140 && Math.abs(regular[i].y - regular[j].y) < 58) warnings.push(`节点可能重叠：${regular[i].label} / ${regular[j].label}`);
+    const point = node => node && Number.isFinite(node.x) && Number.isFinite(node.y) ? [node.x, node.y] : null;
+    const orientation = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const intersects = (a, b, c, d) => orientation(a, b, c) * orientation(a, b, d) < 0 && orientation(c, d, a) * orientation(c, d, b) < 0;
+    const segments = (model.edges || []).map(edge => ({ edge, a: point(nodes.find(node => node.id === edge.source)), b: point(nodes.find(node => node.id === edge.target)) })).filter(item => item.a && item.b);
+    for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+      const first = segments[i], second = segments[j];
+      if (new Set([first.edge.source, first.edge.target, second.edge.source, second.edge.target]).size < 4) continue;
+      if (intersects(first.a, first.b, second.a, second.b)) warnings.push(`连线可能交叉：${first.edge.source}→${first.edge.target} / ${second.edge.source}→${second.edge.target}`);
+    }
     return { valid: errors.length === 0, errors, warnings };
   }
   function getNodeDragBounds(context, node) {

@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { normalizeChartContext, validateChartContext, parseJsonObject } = require('./content/chart-model.js');
+const { normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, parseJsonObject } = require('./content/chart-model.js');
 
 const graph = normalizeChartContext({ source: 'article', intent: 'relationship', chartModel: {
   title: '学习闭环', nodes: [{ id: 'read', label: '阅读' }, { id: 'review', label: '复习' }],
@@ -37,4 +37,9 @@ assert.deepEqual(parseJsonObject('说明文字 {"title":"提取"} 结束'), { ti
 assert.throws(() => parseJsonObject(''), /空内容/);
 assert.throws(() => parseJsonObject('{"title":'), /不完整/);
 assert.throws(() => parseJsonObject('{"title":"未结束'), /不完整/);
+const accessible = buildAccessibilityText({ intent: 'relationship', chartModel: { title: '阅读路径', description: '从阅读到复习', nodes: [{ id: 'read', label: '阅读' }, { id: 'review', label: '复习' }], edges: [{ source: 'read', target: 'review', label: '促进' }] } });
+assert.match(accessible, /摘要：从阅读到复习/);
+assert.match(accessible, /阅读 促进 复习/);
+const copyable = buildCopyableData({ intent: 'data', chartModel: { title: '数据', series: [{ name: '数量', data: [{ label: 'A', value: 2 }] }] } });
+assert.match(copyable, /系列/); assert.match(copyable, /数量/); assert.match(copyable, /A/);
 console.log('chart model tests passed');

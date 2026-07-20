@@ -140,6 +140,44 @@
     return { valid: errors.length === 0, errors, value: context };
   }
 
+  function buildAccessibilityText(context) {
+    const value = normalizeChartContext(context);
+    const model = value.chartModel;
+    const lines = [`图表：${model.title}`];
+    if (model.description) lines.push(`摘要：${model.description}`);
+    if (value.summary && value.summary !== model.description) lines.push(`生成摘要：${value.summary}`);
+    if (model.units) lines.push(`单位：${model.units}`);
+    if (model.timeRange?.start || model.timeRange?.end) lines.push(`时间范围：${model.timeRange.start || '未注明'} 至 ${model.timeRange.end || '未注明'}`);
+    if (model.nodes.length) {
+      lines.push('节点：');
+      model.nodes.filter(node => !node.hidden).forEach(node => lines.push(`- ${node.label}${node.description ? `：${node.description}` : ''}`));
+    }
+    if (model.edges.length) {
+      lines.push('连线：');
+      model.edges.forEach(edge => {
+        const source = model.nodes.find(node => node.id === edge.source)?.label || edge.source;
+        const target = model.nodes.find(node => node.id === edge.target)?.label || edge.target;
+        lines.push(`- ${source} ${edge.label || '连接到'} ${target}`);
+      });
+    }
+    if (model.events.length) {
+      lines.push('事件：');
+      model.events.forEach(event => lines.push(`- ${event.date ? `${event.date} ` : ''}${event.label}${event.description ? `：${event.description}` : ''}`));
+    }
+    if (model.series.length) {
+      lines.push('数据：');
+      model.series.forEach(series => lines.push(`- ${series.name}（${series.type}）：${series.data.map(point => `${point.label}=${point.value}`).join('，')}`));
+    }
+    return lines.join('\n');
+  }
+
+  function buildCopyableData(context) {
+    const model = normalizeChartContext(context).chartModel;
+    const rows = [['系列', '标签', '数值']];
+    model.series.forEach(series => series.data.forEach(point => rows.push([series.name, point.label, String(point.value)])));
+    return rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join('\t')).join('\n');
+  }
+
   function parseJsonObject(raw) {
     const textValue = text(raw);
     if (!textValue) throw new Error('AI 返回了空内容，无法生成图表。请重试，或换一个支持长输出的模型。');
@@ -157,7 +195,7 @@
     }
   }
 
-  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], VIEW_TYPES: [...VIEW_TYPES], THEMES: [...THEMES], NODE_ROLES: [...NODE_ROLES], normalizeModel, normalizeChartContext, validateChartContext, parseJsonObject, inferViewType };
+  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], VIEW_TYPES: [...VIEW_TYPES], THEMES: [...THEMES], NODE_ROLES: [...NODE_ROLES], normalizeModel, normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, parseJsonObject, inferViewType };
   root.AgfChartModel = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
