@@ -180,6 +180,11 @@
     }
   },
   "pages": {
+    "home": {
+      "title": "Home",
+      "description": "Welcome to ADHDGoFly",
+      "highlightTitle": "Reading highlights"
+    },
     "dict": {
       "title": "Dictionary Management",
       "description": "Check to enable dictionaries; basic dictionaries shown by default",
@@ -590,6 +595,7 @@
   "sidebar": {
     "home": "Home",
     "dict": "Dictionary",
+    "stats": "Statistics",
     "colors": "Colors",
     "text": "Text",
     "ai": "AI Analysis",
@@ -598,7 +604,8 @@
     "faq": "FAQ",
     "about": "About",
     "settings": "Settings",
-    "language": "Switch Language"
+    "language": "Switch Language",
+    "languageLabel": "Language"
   },
   "languages": {
     "zh": "中文",

@@ -2414,21 +2414,12 @@
         text-align: left;
       }
 
-      .main-actions::before {
-        content: "阅读高亮";
+      .main-actions-title {
         display: block;
         margin-bottom: 4px;
         color: var(--ui-ink);
         font-size: 15px;
         font-weight: 700;
-      }
-
-      .main-actions::after {
-        content: "按页面需要开启或暂停词性标注";
-        display: block;
-        margin-top: 8px;
-        color: var(--ui-muted);
-        font-size: 11px;
       }
 
       .toggle-btn {
@@ -2844,10 +2835,11 @@
 
         <!-- 主要操作按钮 -->
         <div class="main-actions">
+          <div class="main-actions-title" data-i18n="pages.home.highlightTitle">阅读高亮</div>
           <button id="toggle" class="toggle-btn" data-i18n="buttons.toggle">
             切换高亮
           </button>
-          <button id="generateArticleDictBtn" class="article-dict-btn" type="button">
+          <button id="generateArticleDictBtn" class="article-dict-btn" type="button" data-i18n="pages.ai.makeDictionary">
             AI 生成本文词典
           </button>
         </div>
@@ -4558,15 +4550,15 @@
 
     <!-- 右侧侧边栏 -->
     <div class="sidebar">
-      <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home" data-action="page"><span>主页</span></button>
-      <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict" data-action="page"><span>词典</span></button>
-      <button class="sidebar-btn" id="ai-btn" title="统计" data-action="page"><span>统计</span></button>
-      <button class="sidebar-btn" id="chat-btn" title="AI" data-action="page"><span>AI</span></button>
-      <button class="sidebar-btn" id="style-btn" title="颜色" data-action="page"><span>颜色</span></button>
-      <button class="sidebar-btn" id="faq-btn" title="关于" data-action="page"><span>关于</span></button>
-      <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings" data-action="page"><span>设置</span></button>
+      <button class="sidebar-btn active" id="home-btn" title="主页" data-i18n-title="sidebar.home" data-action="page"><span data-i18n="sidebar.home">主页</span></button>
+      <button class="sidebar-btn" id="dict-btn" title="词典" data-i18n-title="sidebar.dict" data-action="page"><span data-i18n="sidebar.dict">词典</span></button>
+      <button class="sidebar-btn" id="ai-btn" title="统计" data-i18n-title="sidebar.stats" data-action="page"><span data-i18n="sidebar.stats">统计</span></button>
+      <button class="sidebar-btn" id="chat-btn" title="AI" data-i18n-title="sidebar.ai" data-action="page"><span data-i18n="sidebar.ai">AI</span></button>
+      <button class="sidebar-btn" id="style-btn" title="颜色" data-i18n-title="sidebar.colors" data-action="page"><span data-i18n="sidebar.colors">颜色</span></button>
+      <button class="sidebar-btn" id="faq-btn" title="关于" data-i18n-title="sidebar.about" data-action="page"><span data-i18n="sidebar.about">关于</span></button>
+      <button class="sidebar-btn" id="settings-btn" title="设置" data-section="settings" data-i18n-title="sidebar.settings" data-action="page"><span data-i18n="sidebar.settings">设置</span></button>
       <div class="language-switcher">
-        <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language"><span>语言</span></button>
+      <button id="languageToggle" class="sidebar-btn language-btn" title="切换语言" data-i18n-title="sidebar.language"><span data-i18n="sidebar.languageLabel">语言</span></button>
       </div>
     </div>
 
