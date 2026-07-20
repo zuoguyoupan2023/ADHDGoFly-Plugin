@@ -72,6 +72,7 @@
   const remove = id => transaction('readwrite', store => store.delete(id));
 
   function renderSvg(context) {
+    if (context.intent === 'data' || context.renderer === 'echarts') return renderDataSvg(context);
     if (context.viewType === 'workflow' || context.viewType === 'data_flow' || context.viewType === 'lifecycle') return renderSemanticSvg(context);
     if (context.renderer === 'mermaid' && graphIntents.has(context.intent)) return renderMermaidStyleSvg(context);
     const model = context.chartModel || {}; const theme = themeTokens(context); const title = esc(model.title); const width = 900; let height = context.intent === 'timeline' ? Math.max(280, 150 + (model.events || []).length * 86) : Math.max(420, 190 + Math.ceil((model.nodes || []).length / 3) * 120);
@@ -115,6 +116,26 @@
       });
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#687386"/></marker></defs>${body}</svg>`;
+  }
+  function renderDataSvg(context) {
+    const model = context.chartModel || {}; const series = (model.series || []).filter(item => Array.isArray(item.data)); const width = 900; const height = 520; const theme = themeTokens(context); const title = esc(model.title || '数据图表');
+    const points = series.flatMap(item => item.data || []).filter(point => Number.isFinite(Number(point.value)));
+    if (!points.length) return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="280" viewBox="0 0 ${width} 280"><rect width="100%" height="100%" fill="${theme.background}"/><text x="32" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${title}</text><text x="32" y="92" font-size="14" font-family="Arial,sans-serif" fill="${theme.muted}">没有足够的数值数据，已降级为表格/文本结果。</text></svg>`;
+    const max = Math.max(...points.map(point => Number(point.value)), 0); const min = Math.min(...points.map(point => Number(point.value)), 0); const range = max - min || 1; const chartX = 72; const chartY = 92; const chartW = 760; const chartH = 320; const colors = ['#315efb', '#1f9d55', '#d9822b', '#8b5cf6'];
+    let body = `<rect width="100%" height="100%" fill="${theme.background}"/><text x="32" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${title}</text><text x="32" y="67" font-size="12" font-family="Arial,sans-serif" fill="${theme.muted}">数据图表 · ${esc(model.units || '无单位')} · ${points.length} 个数据点</text><line x1="${chartX}" y1="${chartY + chartH}" x2="${chartX + chartW}" y2="${chartY + chartH}" stroke="${theme.edge}"/><line x1="${chartX}" y1="${chartY}" x2="${chartX}" y2="${chartY + chartH}" stroke="${theme.edge}"/>`;
+    const first = series[0]; const type = first?.type || 'bar';
+    if (type === 'table') return renderDataTableSvg(context, points);
+    if (type === 'line') {
+      series.forEach((item, seriesIndex) => { const valid = item.data.filter(point => Number.isFinite(Number(point.value))); const path = valid.map((point, i) => `${i ? 'L' : 'M'}${chartX + (i + .5) * chartW / Math.max(valid.length, 1)},${chartY + chartH - ((point.value - min) / range) * chartH}`).join(' '); body += `<path d="${path}" fill="none" stroke="${colors[seriesIndex % colors.length]}" stroke-width="3"/>`; valid.forEach((point, i) => { const x = chartX + (i + .5) * chartW / Math.max(valid.length, 1), y = chartY + chartH - ((point.value - min) / range) * chartH; body += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${colors[seriesIndex % colors.length]}"/><text x="${x.toFixed(1)}" y="${chartY + chartH + 22}" text-anchor="middle" font-size="11" fill="${theme.muted}">${esc(point.label)}</text>`; }); });
+    } else {
+      const item = first || { data: points }; item.data.filter(point => Number.isFinite(Number(point.value))).forEach((point, i) => { const barW = Math.min(90, chartW / Math.max(item.data.length, 1) - 14); const x = chartX + i * chartW / Math.max(item.data.length, 1) + (chartW / Math.max(item.data.length, 1) - barW) / 2; const barH = ((point.value - min) / range) * chartH; const y = chartY + chartH - barH; body += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(1, barH).toFixed(1)}" rx="5" fill="${colors[i % colors.length]}"/><text x="${(x + barW / 2).toFixed(1)}" y="${chartY + chartH + 22}" text-anchor="middle" font-size="11" fill="${theme.muted}">${esc(point.label)}</text><text x="${(x + barW / 2).toFixed(1)}" y="${Math.max(chartY + 14, y - 6).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.title}">${esc(point.value)}</text>`; });
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`;
+  }
+  function renderDataTableSvg(context, points) {
+    const theme = themeTokens(context); const title = esc(context.chartModel?.title || '数据表'); let body = `<rect width="100%" height="100%" fill="${theme.background}"/><text x="32" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${title}</text><text x="32" y="70" font-size="13" fill="${theme.muted}">数值不足以绘制趋势，已降级为数据表</text>`;
+    points.forEach((point, index) => { const y = 110 + index * 34; body += `<line x1="40" y1="${y + 12}" x2="860" y2="${y + 12}" stroke="#e5e7eb"/><text x="52" y="${y}" font-size="13" fill="${theme.title}">${esc(point.label)}</text><text x="760" y="${y}" font-size="13" text-anchor="end" fill="${theme.title}">${esc(point.value)}</text>`; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="${Math.max(180, 120 + points.length * 34)}" viewBox="0 0 900 ${Math.max(180, 120 + points.length * 34)}">${body}</svg>`;
   }
   function semanticLayout(context, nodes, edges, width, height) {
     const view = context.viewType; const order = root.AgfChartLayout?.topoSort ? root.AgfChartLayout.topoSort(nodes, edges) : nodes.map(n => n.id); const orderIndex = Object.fromEntries(order.map((id, i) => [id, i]));

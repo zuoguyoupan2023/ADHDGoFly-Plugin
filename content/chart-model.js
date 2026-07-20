@@ -14,6 +14,16 @@
   const text = value => String(value == null ? '' : value).trim();
   const list = value => Array.isArray(value) ? value : [];
   const id = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const normalizeSeries = (value, index) => {
+    const series = value && typeof value === 'object' ? value : {};
+    const raw = list(series.data);
+    const labels = list(series.labels).map(text);
+    const data = raw.map((point, pointIndex) => {
+      if (point && typeof point === 'object') return { label: text(point.label) || labels[pointIndex] || `项目 ${pointIndex + 1}`, value: Number(point.value) };
+      return { label: labels[pointIndex] || `项目 ${pointIndex + 1}`, value: Number(point) };
+    });
+    return { name: text(series.name) || `数据系列 ${index + 1}`, type: ['bar', 'line', 'pie', 'table'].includes(text(series.type)) ? text(series.type) : 'bar', data };
+  };
 
   function sourceRef(value) {
     if (!value || typeof value !== 'object') return null;
@@ -65,7 +75,7 @@
       timeRange: value.timeRange && typeof value.timeRange === 'object' ? {
         start: text(value.timeRange.start), end: text(value.timeRange.end)
       } : null,
-      series: list(value.series),
+      series: list(value.series).map(normalizeSeries),
       uncertainties: list(value.uncertainties).map(text).filter(Boolean),
       sourceRefs: list(value.sourceRefs).map(sourceRef).filter(Boolean),
       warnings: list(value.warnings).map(text).filter(Boolean)
@@ -81,6 +91,10 @@
     if (['concept', 'relationship', 'mindmap', 'flowchart'].includes(intent) && !model.nodes.length) errors.push('图表至少需要一个节点');
     if (intent === 'timeline' && !model.events.length) errors.push('时间线至少需要一个事件');
     if (intent === 'data' && !model.series.length) errors.push('数据图表至少需要一个数据系列');
+    model.series.forEach((series, index) => {
+      if (!series.data.length) errors.push(`数据系列 ${index + 1} 不能为空`);
+      if (series.data.some(point => !Number.isFinite(point.value))) errors.push(`数据系列 ${index + 1} 包含无效数值`);
+    });
     model.edges.forEach((edge, index) => {
       if (!edge.source || !edge.target) errors.push(`chartModel.edges[${index}] 必须包含 source 和 target`);
       if (edge.source && !model.nodes.some(node => node.id === edge.source)) errors.push(`边 ${index + 1} 的 source 不存在`);

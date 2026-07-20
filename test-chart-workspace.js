@@ -27,6 +27,10 @@ const workflow = renderSvg({ viewType: 'workflow', theme: 'dark', renderer: 'svg
 assert.match(workflow, /确定性布局/); assert.doesNotMatch(workflow, /主流程 ·/); assert.match(workflow, /#0f172a/); assert.match(workflow, /#e11d48/);
 const dataFlow = renderSvg({ viewType: 'data_flow', renderer: 'svg', chartModel: { title: '数据流', nodes: [{ id: 'source', label: '输入', kind: 'source' }, { id: 'store', label: '存储', kind: 'store' }], edges: [{ source: 'source', target: 'store', label: '写入' }] } });
 assert.match(dataFlow, /external/); assert.match(dataFlow, /database/);
+const dataChart = renderSvg({ intent: 'data', renderer: 'echarts', chartModel: { title: '销量', units: '件', series: [{ name: '销量', type: 'bar', data: [{ label: '一月', value: 10 }, { label: '二月', value: 20 }] }] } });
+assert.match(dataChart, /<svg/); assert.match(dataChart, /一月/); assert.match(dataChart, /20/);
+const dataTable = renderSvg({ intent: 'data', renderer: 'svg', chartModel: { title: '记录', series: [{ name: '记录', type: 'table', data: [{ label: '样本', value: 3 }] }] } });
+assert.match(dataTable, /降级为数据表/);
 const lifecycle = renderSvg({ viewType: 'lifecycle', renderer: 'rough', chartModel: { title: '生命周期', nodes: [{ id: 'pending', label: '等待', styleRole: 'generic', groupId: '状态' }, { id: 'done', label: '完成', styleRole: 'backend', groupId: '状态' }], edges: [{ source: 'pending', target: 'done', label: '成功' }] } });
 assert.match(lifecycle, /agf-chart-node/); assert.doesNotMatch(lifecycle, /主流程 ·/);
 const laneContext = { viewType: 'workflow', chartModel: { nodes: [{ id: 'a', label: 'A', groupId: '主流程' }, { id: 'b', label: 'B', groupId: '主流程' }, { id: 'c', label: 'C', groupId: '主流程' }, { id: 'd', label: 'D', groupId: '主流程' }, { id: 'e', label: 'E', groupId: '主流程' }] } };
