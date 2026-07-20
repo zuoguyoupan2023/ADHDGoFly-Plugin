@@ -7,6 +7,9 @@
   const INTENTS = new Set(['concept', 'relationship', 'mindmap', 'flowchart', 'infographic', 'data', 'timeline']);
   const SOURCES = new Set(['article', 'selection', 'image', 'manual', 'quiz']);
   const RENDERERS = new Set(['mermaid', 'echarts', 'svg', 'rough', 'html']);
+  const VIEW_TYPES = new Set(['architecture', 'workflow', 'sequence', 'data_flow', 'lifecycle']);
+  const THEMES = new Set(['light', 'dark', 'system']);
+  const NODE_ROLES = new Set(['frontend', 'backend', 'database', 'cloud', 'security', 'message_bus', 'external', 'generic']);
 
   const text = value => String(value == null ? '' : value).trim();
   const list = value => Array.isArray(value) ? value : [];
@@ -35,11 +38,16 @@
         description: text(node?.description),
         ...(Number.isFinite(Number(node?.x)) ? { x: Number(node.x) } : {}),
         ...(Number.isFinite(Number(node?.y)) ? { y: Number(node.y) } : {}),
+        ...(text(node?.kind) ? { kind: text(node.kind) } : {}),
+        ...(NODE_ROLES.has(text(node?.styleRole)) ? { styleRole: text(node.styleRole) } : {}),
+        ...(text(node?.groupId) ? { groupId: text(node.groupId) } : {}),
         sourceRefs: list(node?.sourceRefs).map(sourceRef).filter(Boolean)
       })),
       edges: list(value.edges).map(edge => ({
         source: text(edge?.source), target: text(edge?.target),
         label: text(edge?.label),
+        ...(text(edge?.kind) ? { kind: text(edge.kind) } : {}),
+        ...(edge?.emphasis === true ? { emphasis: true } : {}),
         sourceRefs: list(edge?.sourceRefs).map(sourceRef).filter(Boolean)
       })),
       events: list(value.events).map((event, index) => ({
@@ -57,6 +65,8 @@
       uncertainties: list(value.uncertainties).map(text).filter(Boolean),
       sourceRefs: list(value.sourceRefs).map(sourceRef).filter(Boolean),
       warnings: list(value.warnings).map(text).filter(Boolean)
+      ,viewType: VIEW_TYPES.has(text(value.viewType)) ? text(value.viewType) : null
+      ,theme: THEMES.has(text(value.theme)) ? text(value.theme) : 'system'
     };
   }
 
@@ -72,6 +82,8 @@
       if (edge.source && !model.nodes.some(node => node.id === edge.source)) errors.push(`边 ${index + 1} 的 source 不存在`);
       if (edge.target && !model.nodes.some(node => node.id === edge.target)) errors.push(`边 ${index + 1} 的 target 不存在`);
     });
+    const ids = new Set();
+    model.nodes.forEach((node, index) => { if (ids.has(node.id)) errors.push(`节点 ${index + 1} 的 id 重复`); ids.add(node.id); });
     if (intent === 'data' && !model.units) model.warnings.push('数据图表缺少单位，精确比较可能受限');
     if (!model.sourceRefs.length) model.warnings.push('图表尚未绑定来源证据');
     return errors;
@@ -87,11 +99,17 @@
       intent,
       chartModel: normalizeModel(value.chartModel),
       renderer: RENDERERS.has(value.renderer) ? value.renderer : (intent === 'data' ? 'echarts' : 'mermaid'),
+      viewType: VIEW_TYPES.has(text(value.viewType)) ? text(value.viewType) : inferViewType(intent),
+      theme: THEMES.has(text(value.theme)) ? text(value.theme) : 'system',
       summary: text(value.summary), createdAt: Number(value.createdAt) || Date.now(),
       updatedAt: Number(value.updatedAt) || Date.now(), confirmed: value.confirmed === true,
       version: Number(value.version) || 1
     };
     return context;
+  }
+
+  function inferViewType(intent) {
+    return ({ relationship: 'architecture', concept: 'architecture', flowchart: 'workflow', mindmap: 'workflow', timeline: 'sequence', data: 'data_flow' }[intent] || null);
   }
 
   function validateChartContext(input) {
@@ -120,7 +138,7 @@
     }
   }
 
-  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], normalizeModel, normalizeChartContext, validateChartContext, parseJsonObject };
+  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], VIEW_TYPES: [...VIEW_TYPES], THEMES: [...THEMES], NODE_ROLES: [...NODE_ROLES], normalizeModel, normalizeChartContext, validateChartContext, parseJsonObject, inferViewType };
   root.AgfChartModel = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

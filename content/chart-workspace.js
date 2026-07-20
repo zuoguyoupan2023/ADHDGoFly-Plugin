@@ -6,6 +6,7 @@
   const esc = value => String(value == null ? '' : value).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const truncate = (value, length) => { const text = String(value || ''); return text.length > length ? `${text.slice(0, length - 1)}…` : text; };
   const graphIntents = new Set(['concept', 'relationship', 'mindmap', 'flowchart']);
+  const themeTokens = context => context.theme === 'dark' ? { background: '#0f172a', title: '#f8fafc', muted: '#94a3b8', nodeText: '#e2e8f0' } : { background: '#ffffff', title: '#172033', muted: '#687386', nodeText: '#172033' };
   const wrapText = (value, maxChars = 12, maxLines = 4) => {
     const raw = String(value || '').trim();
     const chunks = raw.match(new RegExp(`.{1,${maxChars}}`, 'g')) || [''];
@@ -70,8 +71,8 @@
 
   function renderSvg(context) {
     if (context.renderer === 'mermaid' && graphIntents.has(context.intent)) return renderMermaidStyleSvg(context);
-    const model = context.chartModel || {}; const title = esc(model.title); const width = 900; let height = context.intent === 'timeline' ? Math.max(280, 150 + (model.events || []).length * 86) : Math.max(420, 190 + Math.ceil((model.nodes || []).length / 3) * 120);
-    let body = `<rect width="100%" height="100%" fill="#ffffff"/><text x="36" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="#172033">${title}</text>`;
+    const model = context.chartModel || {}; const theme = themeTokens(context); const title = esc(model.title); const width = 900; let height = context.intent === 'timeline' ? Math.max(280, 150 + (model.events || []).length * 86) : Math.max(420, 190 + Math.ceil((model.nodes || []).length / 3) * 120);
+    let body = `<rect width="100%" height="100%" fill="${theme.background}"/><text x="36" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${title}</text>`;
     if (context.intent === 'timeline') {
       const events = model.events || []; body += `<line x1="110" y1="86" x2="110" y2="${height - 42}" stroke="#315efb" stroke-width="4"/>`;
       events.forEach((event, i) => { const y = 110 + i * 86; body += `<circle cx="110" cy="${y}" r="9" fill="#315efb"/><text x="140" y="${y - 5}" font-size="14" font-family="Arial,sans-serif" font-weight="700" fill="#172033">${esc(event.date || '')} ${esc(event.label)}</text><text x="140" y="${y + 19}" font-size="12" font-family="Arial,sans-serif" fill="#687386">${esc(event.description || '')}</text>`; });
@@ -85,7 +86,7 @@
       const palette = layout ? layout.palette : [{ fill: '#eef4ff', line: '#315efb', text: '#172033' }];
       const positions = Object.fromEntries(laidNodes.map(node => [node.id, node]));
       const typeLabel = { concept: '概念图', relationship: '关系图', mindmap: '思维导图', flowchart: '流程图' }[context.intent] || '关系图';
-      body += `<text x="36" y="68" font-size="12" font-family="Arial,sans-serif" fill="#687386">${typeLabel} · 布局：${esc(layout?.topology || 'grid')} · ${laidNodes.length} 节点 · ${laidEdges.length} 关系</text>`;
+      body += `<text x="36" y="68" font-size="12" font-family="Arial,sans-serif" fill="${theme.muted}">${typeLabel} · 布局：${esc(layout?.topology || 'grid')} · ${laidNodes.length} 节点 · ${laidEdges.length} 关系</text>`;
       laidEdges.forEach(edge => {
         const a = positions[edge.source]; const b = positions[edge.target]; if (!a || !b) return;
         const color = palette[edge._group % palette.length].line;
