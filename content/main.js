@@ -3681,6 +3681,7 @@ class ADHDHighlighter {
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete') };
+    chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
     const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system">跟随系统</option><option value="light">浅色主题</option><option value="dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
     const archifyOptions = [{ value: 'architecture', label: '架构 / 关系图' }, { value: 'workflow', label: 'Workflow / 泳道流程' }, { value: 'data_flow', label: 'Data Flow / 数据流' }, { value: 'lifecycle', label: 'Lifecycle / 生命周期' }, { value: 'sequence', label: 'Sequence / 时序' }];
     archifyOptions.forEach(option => { if (chartIntent && !chartIntent.querySelector(`option[value="${option.value}"]`)) { const item = document.createElement('option'); item.value = option.value; item.textContent = option.label; chartIntent.appendChild(item); } });
@@ -3703,6 +3704,7 @@ class ADHDHighlighter {
       svg.style.marginBottom = `${Math.max(0, (chartZoom - 1) * svg.clientHeight)}px`;
       if (chartZoomReset) chartZoomReset.textContent = `${Math.round(chartZoom * 100)}%`;
     };
+    const fitChartToCanvas = () => { const svg = chartCanvas?.querySelector('svg'); if (!svg || chartZoom !== 1) return; const width = Number(svg.viewBox?.baseVal?.width || svg.width?.baseVal?.value || 900); const available = Math.max(240, chartCanvas.clientWidth - 18); if (width > available) { chartZoom = Math.max(0.45, Math.min(1, available / width)); applyChartZoom(); } };
     const setChartZoom = value => { chartZoom = Math.max(0.35, Math.min(2.5, value)); applyChartZoom(); };
     const svgPointFromEvent = (svg, event) => {
       const point = svg.createSVGPoint();
@@ -3857,6 +3859,7 @@ class ADHDHighlighter {
     let chartRenderToken = 0;
     const renderChartPreview = async () => {
       if (!currentChartContext) return;
+      if (AgfChartWorkspace.ensureLaneNodes) AgfChartWorkspace.ensureLaneNodes(currentChartContext);
       const token = ++chartRenderToken;
       const contextAtStart = currentChartContext;
       chartTitle.value = currentChartContext.chartModel.title || '';
@@ -3873,9 +3876,12 @@ class ADHDHighlighter {
         ]);
         if (token !== chartRenderToken || currentChartContext !== contextAtStart) return;
         chartCanvas.innerHTML = svg;
+        const quality = AgfChartWorkspace.validateChartQuality?.(currentChartContext, svg); if (quality?.warnings?.length) chartNotice.textContent = `图表质量提示：${quality.warnings.join('；')}`; else if (quality?.errors?.length) chartNotice.textContent = `图表质量错误：${quality.errors.join('；')}`;
+        fitChartToCanvas();
       } catch (error) {
         if (token !== chartRenderToken || currentChartContext !== contextAtStart) return;
-        chartCanvas.innerHTML = AgfChartWorkspace.renderSvg(currentChartContext);
+        const fallbackSvg = AgfChartWorkspace.renderSvg(currentChartContext); chartCanvas.innerHTML = fallbackSvg;
+        fitChartToCanvas();
         chartNotice.textContent = `${error.message || '图表渲染失败'}，已切换到基础 SVG 预览。`;
       }
       Object.values(chartButtons).forEach(button => { if (button && button !== chartButtons.generate && button !== chartButtons.importJson) button.disabled = false; });
@@ -3990,8 +3996,9 @@ class ADHDHighlighter {
     chartButtons.undo.onclick = () => { if (!chartHistoryState.past.length) return; chartHistoryState.future.push(chartSnapshot()); currentChartContext = chartHistoryState.past.pop(); renderChartPreview(); };
     chartButtons.redo.onclick = () => { if (!chartHistoryState.future.length) return; chartHistoryState.past.push(chartSnapshot()); currentChartContext = chartHistoryState.future.pop(); renderChartPreview(); };
     chartButtons.addNode.onclick = () => { if (!currentChartContext?.chartModel?.nodes) return; rememberChart(); const nodes = currentChartContext.chartModel.nodes; const id = `node-${Date.now().toString(36)}`; nodes.push({ id, label: '新节点', description: '', x: 450, y: 180 + (nodes.length % 4) * 90, sourceRefs: [] }); currentChartContext.updatedAt = Date.now(); chartHistoryState.selected = new Set([id]); renderChartPreview(); };
+    chartButtons.addLane.onclick = () => { if (!currentChartContext?.chartModel?.nodes) return; rememberChart(); const nodes = currentChartContext.chartModel.nodes; const existing = nodes.filter(node => node.isLane && !node.hidden).length; const id = `lane-${Date.now().toString(36)}`; nodes.push({ id, label: `主流程 ${existing + 1}`, laneKey: `主流程 ${existing + 1}`, rowIndex: 0, isLane: true, description: '泳道', x: 76, y: 140 + existing * 120, sourceRefs: [] }); currentChartContext._laneNodesInitialized = true; currentChartContext.updatedAt = Date.now(); chartHistoryState.selected = new Set([id]); renderChartPreview(); };
     chartButtons.addEdge.onclick = () => { if (!currentChartContext?.chartModel?.nodes || currentChartContext.chartModel.nodes.length < 2) { chartNotice.textContent = '至少需要两个节点才能添加连线'; return; } chartHistoryState.selected.clear(); chartHistoryState.edgeMode = true; chartNotice.textContent = '连线模式：依次点击两个节点'; };
-    const deleteSelectedChartNodes = () => { if (!currentChartContext || (!chartHistoryState.selected.size && !chartHistoryState.selectedEdges.size)) return; rememberChart(); const ids = chartHistoryState.selected; const edgeIndexes = chartHistoryState.selectedEdges; currentChartContext.chartModel.nodes = currentChartContext.chartModel.nodes.filter(node => !ids.has(node.id)); currentChartContext.chartModel.edges = (currentChartContext.chartModel.edges || []).filter((edge, index) => !ids.has(edge.source) && !ids.has(edge.target) && !edgeIndexes.has(index)); chartHistoryState.selected.clear(); chartHistoryState.selectedEdges.clear(); chartNotice.textContent = '已删除选中节点/连线'; renderChartPreview(); };
+    const deleteSelectedChartNodes = () => { if (!currentChartContext || (!chartHistoryState.selected.size && !chartHistoryState.selectedEdges.size)) return; rememberChart(); const ids = chartHistoryState.selected; const edgeIndexes = chartHistoryState.selectedEdges; currentChartContext.chartModel.nodes = currentChartContext.chartModel.nodes.filter(node => { if (!ids.has(node.id)) return true; if (node.isLane) { node.hidden = true; return true; } return false; }); currentChartContext.chartModel.edges = (currentChartContext.chartModel.edges || []).filter((edge, index) => !ids.has(edge.source) && !ids.has(edge.target) && !edgeIndexes.has(index)); chartHistoryState.selected.clear(); chartHistoryState.selectedEdges.clear(); chartNotice.textContent = '已删除选中节点/连线'; renderChartPreview(); };
     chartButtons.delete.onclick = deleteSelectedChartNodes;
     document.addEventListener('keydown', event => { if (!currentChartContext || !chartView || chartView.style.display === 'none') return; if ((event.key === 'Delete' || event.key === 'Backspace') && chartHistoryState.selected.size && !/INPUT|TEXTAREA/.test(event.target?.tagName || '')) { event.preventDefault(); deleteSelectedChartNodes(); } });
     chartButtons.save.onclick = async () => { if (!currentChartContext) return; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = '已保存到 IndexedDB'; loadChartHistory(); };

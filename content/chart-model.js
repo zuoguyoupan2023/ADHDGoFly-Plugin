@@ -41,6 +41,10 @@
         ...(text(node?.kind) ? { kind: text(node.kind) } : {}),
         ...(NODE_ROLES.has(text(node?.styleRole)) ? { styleRole: text(node.styleRole) } : {}),
         ...(text(node?.groupId) ? { groupId: text(node.groupId) } : {}),
+        ...(node?.isLane === true ? { isLane: true } : {}),
+        ...(text(node?.laneKey) ? { laneKey: text(node.laneKey) } : {}),
+        ...(Number.isInteger(Number(node?.rowIndex)) ? { rowIndex: Number(node.rowIndex) } : {}),
+        ...(node?.hidden === true ? { hidden: true } : {}),
         sourceRefs: list(node?.sourceRefs).map(sourceRef).filter(Boolean)
       })),
       edges: list(value.edges).map(edge => ({
