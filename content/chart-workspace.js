@@ -96,7 +96,7 @@
         const edgeShape = context.renderer === 'rough'
           ? `<g class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" marker-end="url(#arrow)">${roughLineMarkup(x1, y1, x2, y2, { roughness: 1.6, stroke: color, strokeWidth: 1.8, fill: 'none', seed: laidEdges.indexOf(edge) + 1 })}</g>`
           : `<path class="agf-chart-edge" data-edge-index="${laidEdges.indexOf(edge)}" d="M${x1.toFixed(1)},${y1.toFixed(1)} L${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.2" marker-end="url(#arrow)"/>`;
-        body += `${edgeShape}<text class="agf-chart-edge-label" data-edge-index="${laidEdges.indexOf(edge)}" x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}" style="cursor:text">${esc(truncate(edge.label, 18))}</text>`;
+        body += `${edgeShape}<text class="agf-chart-edge-label" data-edge-index="${laidEdges.indexOf(edge)}" x="${midX.toFixed(1)}" y="${(midY - 6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}" style="cursor:grab">${esc(truncate(edge.label, 18))}</text>`;
       });
       laidNodes.forEach(node => {
         const group = palette[(node._group || 0) % palette.length]; const scale = node._scale || 1;
@@ -106,7 +106,7 @@
           : `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="18" fill="${group.fill}" stroke="${group.line}" stroke-width="2"/>`;
         const labelStart = node.y - h / 2 + 26;
         const descStart = labelStart + size.labelLines.length * 18 + 5;
-        body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}" style="cursor:grab">${shape}<text class="agf-chart-node-label" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="${Math.max(13, 15 * scale).toFixed(1)}" font-family="Arial,sans-serif" font-weight="700" fill="${group.text}" style="cursor:text">${textLines(size.labelLines, node.x, labelStart)}</text><text class="agf-chart-node-desc" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="#687386" style="cursor:text">${textLines(size.descLines, node.x, descStart)}</text></g>`;
+        body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}" style="cursor:grab">${shape}<text class="agf-chart-node-label" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="${Math.max(13, 15 * scale).toFixed(1)}" font-family="Arial,sans-serif" font-weight="700" fill="${group.text}" style="cursor:grab">${textLines(size.labelLines, node.x, labelStart)}</text><text class="agf-chart-node-desc" data-node-id="${esc(node.id)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="#687386" style="cursor:grab">${textLines(size.descLines, node.x, descStart)}</text></g>`;
       });
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#687386"/></marker></defs>${body}</svg>`;
