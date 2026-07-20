@@ -3729,7 +3729,7 @@ class ADHDHighlighter {
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (taskBar) taskBar.style.display = visible.size ? '' : 'none';
-      if (moduleHistoryBtn) moduleHistoryBtn.style.display = which === 'chat' ? '' : 'none';
+      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['chat','quiz','explain','vocab','records'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
       currentView = which;
