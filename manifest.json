@@ -75,6 +75,7 @@
         "content/chart-model.js",
         "content/chart-layout.js",
         "content/chart-workspace.js",
+        "content/jixia-context-resolver.js",
         "content/jixia-modules.js",
         "content/jixia-ui-modules.js",
         "content/main.js",

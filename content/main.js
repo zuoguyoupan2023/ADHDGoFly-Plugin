@@ -3498,12 +3498,14 @@ class ADHDHighlighter {
       async resolve(source = jixiaState.contextSource, options = {}) {
         jixiaState.setTaskStatus('preparing_context');
         const u = getCanonicalUrl();
+        const resolver = window.JixiaContextResolver;
+        const pageIdentity = resolver ? resolver.identity(u.pageUrl, u.canonicalUrl) : { pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl, routeKey: u.pageUrl };
         const selected = String(getSelectedTextSafe() || '').trim();
         if ((source === 'image' || source === 'audio') && currentMediaContext && currentMediaContext.source === source) {
           jixiaState.setContextStatus?.('ready');
           return currentMediaContext;
         }
-        const preferredSource = source === 'selection' ? (selected ? 'selection' : 'full_article') : source;
+        const preferredSource = source === 'selection' ? (selected ? 'selection' : 'selection') : source;
         let text = '';
         if (preferredSource === 'selection') {
           text = selected;
@@ -3516,9 +3518,14 @@ class ADHDHighlighter {
         }
         text = String(text || '').trim();
         const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'paragraph' ? 'paragraph' : (preferredSource === 'manual' ? 'manual' : 'full_article'));
+        const sourceInfo = resolver ? resolver.classify({ text, source: sourceName === 'manual' ? 'manual' : 'dom_live', requestedSource: sourceName, identity: pageIdentity }) : { text, textHash: jixiaHash(text), textOrigin: sourceName === 'manual' ? 'manual' : 'dom_live', confidence: 1, isStale: false, staleReason: '' };
+        if (sourceInfo.isStale || ((sourceName === 'selection' || sourceName === 'paragraph') && !sourceInfo.text)) {
+          jixiaState.setTaskStatus('failed');
+          throw new Error(sourceInfo.staleReason === 'route_mismatch' ? '当前页面路由已变化，旧正文已失效，请稍后重试。' : sourceName === 'selection' ? '未找到选中的文本。' : sourceName === 'paragraph' ? '未找到当前段落。' : '当前正文尚未准备好，请稍后重试。');
+        }
         jixiaState.setContextSource(sourceName);
         jixiaState.setTaskStatus(text ? 'ready' : 'failed');
-        return { ...createJixiaContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), selectedText: selected, canonicalUrl: u.canonicalUrl, textLength: text.length, approxTokens: estimateJixiaTokens(text) };
+        return { ...createJixiaContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), ...pageIdentity, ...sourceInfo, selectedText: selected, textLength: text.length, approxTokens: estimateJixiaTokens(text) };
       }
     };
     window.JixiaContext = jixiaContext;
@@ -6554,6 +6561,7 @@ class ADHDHighlighter {
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) { canonicalUrl = link.href; } } catch (_) {}
+      const currentIdentity = window.JixiaContextResolver ? window.JixiaContextResolver.identity(pageUrl, canonicalUrl) : null;
       const candidates = new Set([pageUrl, canonicalUrl]);
       try {
         const iframes = Array.from(document.querySelectorAll('iframe'));
@@ -6577,7 +6585,10 @@ class ADHDHighlighter {
             const val = cursor.value;
             let ok = false;
             if (val) {
-              if (candidates.has(val.pageUrl) || candidates.has(val.canonicalUrl)) ok = true;
+              const recordIdentity = window.JixiaContextResolver ? window.JixiaContextResolver.identity(val.pageUrl || val.sourceUrl || '', val.canonicalUrl || '') : null;
+              const sameRoute = currentIdentity && recordIdentity && recordIdentity.routeKey === currentIdentity.routeKey;
+              const sameCanonicalRoute = currentIdentity && recordIdentity && recordIdentity.canonicalRouteKey === currentIdentity.canonicalRouteKey && currentIdentity.routeKey === currentIdentity.canonicalRouteKey;
+              if (candidates.has(val.pageUrl) || candidates.has(val.sourceUrl) || sameRoute || sameCanonicalRoute) ok = true;
             }
             if (ok) arr.push(val);
             cursor.continue();
