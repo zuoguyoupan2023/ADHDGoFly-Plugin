@@ -19,10 +19,10 @@
     const raw = list(series.data);
     const labels = list(series.labels).map(text);
     const data = raw.map((point, pointIndex) => {
-      if (point && typeof point === 'object') return { label: text(point.label) || labels[pointIndex] || `项目 ${pointIndex + 1}`, value: Number(point.value) };
+      if (point && typeof point === 'object') return { label: text(point.label) || labels[pointIndex] || `项目 ${pointIndex + 1}`, value: Number(point.value), sourceRefs: list(point.sourceRefs).map(sourceRef).filter(Boolean) };
       return { label: labels[pointIndex] || `项目 ${pointIndex + 1}`, value: Number(point) };
     });
-    return { name: text(series.name) || `数据系列 ${index + 1}`, type: ['bar', 'line', 'pie', 'table'].includes(text(series.type)) ? text(series.type) : 'bar', data };
+    return { name: text(series.name) || `数据系列 ${index + 1}`, type: ['bar', 'line', 'pie', 'table'].includes(text(series.type)) ? text(series.type) : 'bar', data, sourceRefs: list(series.sourceRefs).map(sourceRef).filter(Boolean) };
   };
 
   function sourceRef(value) {
@@ -103,6 +103,7 @@
     const ids = new Set();
     model.nodes.forEach((node, index) => { if (ids.has(node.id)) errors.push(`节点 ${index + 1} 的 id 重复`); ids.add(node.id); });
     if (intent === 'data' && !model.units) model.warnings.push('数据图表缺少单位，精确比较可能受限');
+    if (intent === 'data' && !model.sourceRefs.length && !model.series.some(series => series.sourceRefs.length || series.data.some(point => point.sourceRefs?.length))) model.warnings.push('数据图表缺少来源定位，请核对原文或补充来源');
     if (!model.sourceRefs.length) model.warnings.push('图表尚未绑定来源证据');
     return errors;
   }

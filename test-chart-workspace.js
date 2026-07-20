@@ -31,6 +31,8 @@ const dataChart = renderSvg({ intent: 'data', renderer: 'echarts', chartModel: {
 assert.match(dataChart, /<svg/); assert.match(dataChart, /一月/); assert.match(dataChart, /20/);
 const dataTable = renderSvg({ intent: 'data', renderer: 'svg', chartModel: { title: '记录', series: [{ name: '记录', type: 'table', data: [{ label: '样本', value: 3 }] }] } });
 assert.match(dataTable, /降级为数据表/);
+const dataPie = renderSvg({ intent: 'data', chartModel: { title: '占比', units: '%', series: [{ type: 'pie', data: [{ label: 'A', value: 2 }, { label: 'B', value: 1 }] }] } });
+assert.match(dataPie, /占比/); assert.match(dataPie, /A：2/); assert.match(dataPie, /66\.7%/);
 const lifecycle = renderSvg({ viewType: 'lifecycle', renderer: 'rough', chartModel: { title: '生命周期', nodes: [{ id: 'pending', label: '等待', styleRole: 'generic', groupId: '状态' }, { id: 'done', label: '完成', styleRole: 'backend', groupId: '状态' }], edges: [{ source: 'pending', target: 'done', label: '成功' }] } });
 assert.match(lifecycle, /agf-chart-node/); assert.doesNotMatch(lifecycle, /主流程 ·/);
 const laneContext = { viewType: 'workflow', chartModel: { nodes: [{ id: 'a', label: 'A', groupId: '主流程' }, { id: 'b', label: 'B', groupId: '主流程' }, { id: 'c', label: 'C', groupId: '主流程' }, { id: 'd', label: 'D', groupId: '主流程' }, { id: 'e', label: 'E', groupId: '主流程' }] } };
