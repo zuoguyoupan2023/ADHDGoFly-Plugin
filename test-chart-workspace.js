@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict');
 require('./content/chart-layout.js');
+require('./content/chart-model.js');
 const { renderSvg } = require('./content/chart-workspace.js');
+const workspace = require('./content/chart-workspace.js');
 const svg = renderSvg({ intent: 'timeline', chartModel: { title: '发布历程', events: [{ date: '2026', label: '上线' }] } });
 assert.match(svg, /<svg/); assert.match(svg, /发布历程/); assert.match(svg, /上线/);
 const graph = renderSvg({ intent: 'relationship', chartModel: { title: '闭环', nodes: [{ id: 'a', label: '读' }, { id: 'b', label: '练' }], edges: [{ source: 'a', target: 'b', label: '转化' }] } });
@@ -16,4 +18,9 @@ assert.match(rough, /C/);
 const mermaid = renderSvg({ intent: 'flowchart', renderer: 'mermaid', chartModel: { title: 'Mermaid', nodes: [{ id: 'a', label: '开始' }, { id: 'b', label: '结束' }], edges: [{ source: 'a', target: 'b', label: '下一步' }] } });
 assert.match(mermaid, /Mermaid 风格预览/);
 assert.match(mermaid, /flowchart TD/);
+const context = { id: 'chart-1', source: 'manual', intent: 'relationship', renderer: 'svg', chartModel: { title: '备份', nodes: [{ id: 'a', label: 'A', x: 120, y: 140 }, { id: 'b', label: 'B' }], edges: [{ source: 'a', target: 'b', label: '到达' }], sourceRefs: [] }, sourceRefs: [], warnings: [] };
+const imported = workspace.importJson(workspace.exportJson(context));
+assert.equal(imported.chartModel.nodes[0].x, 120);
+assert.match(workspace.exportHtml(imported, renderSvg(imported)), /<!doctype html>/i);
+assert.throws(() => workspace.importJson(JSON.stringify({ intent: 'not-supported', chartModel: {} })), /图表 JSON 无效/);
 console.log('chart workspace tests passed');

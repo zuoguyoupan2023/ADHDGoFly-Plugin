@@ -33,6 +33,8 @@
         id: text(node?.id) || `node-${index + 1}`,
         label: text(node?.label) || `节点 ${index + 1}`,
         description: text(node?.description),
+        ...(Number.isFinite(Number(node?.x)) ? { x: Number(node.x) } : {}),
+        ...(Number.isFinite(Number(node?.y)) ? { y: Number(node.y) } : {}),
         sourceRefs: list(node?.sourceRefs).map(sourceRef).filter(Boolean)
       })),
       edges: list(value.edges).map(edge => ({

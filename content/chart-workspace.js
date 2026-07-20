@@ -173,8 +173,29 @@
     return [header, ...nodes.map(n => `  ${n.id}["${String(n.label || n.id).replace(/"/g, "'")}"]`), ...edges.map(e => `  ${e.source} -->${e.label ? `|${String(e.label).replace(/"/g, "'")}|` : ''} ${e.target}`)].join('\n');
   }
   async function svgToPng(svg, scale = 2) {
-    return new Promise((resolve, reject) => { const blob = new Blob([svg], { type: 'image/svg+xml' }); const url = URL.createObjectURL(blob); const image = new Image(); image.onload = () => { const canvas = document.createElement('canvas'); canvas.width = image.width * scale; canvas.height = image.height * scale; canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')); }; image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('PNG 导出失败')); }; image.src = url; });
+    return svgToPngWithOptions(svg, { scale });
   }
-  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng };
+  function svgToPngWithOptions(svg, options = {}) {
+    const scale = Math.max(1, Math.min(4, Number(options.scale) || 2));
+    const background = options.transparent ? null : (options.background || '#ffffff');
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }); const url = URL.createObjectURL(blob); const image = new Image();
+      image.onload = () => { try { const width = image.naturalWidth || image.width || 900; const height = image.naturalHeight || image.height || 520; const canvas = document.createElement('canvas'); canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale); const ctx = canvas.getContext('2d'); if (background) { ctx.fillStyle = background; ctx.fillRect(0, 0, canvas.width, canvas.height); } ctx.drawImage(image, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')); } catch (error) { URL.revokeObjectURL(url); reject(error); } };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('PNG 导出失败')); }; image.src = url;
+    });
+  }
+  function exportJson(context) { return JSON.stringify(context, null, 2); }
+  function importJson(raw) {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    const checked = root.AgfChartModel?.validateChartContext ? root.AgfChartModel.validateChartContext(parsed) : { valid: true, value: parsed, errors: [] };
+    if (!checked.valid) throw new Error(`图表 JSON 无效：${checked.errors.join('；')}`);
+    return checked.value;
+  }
+  function exportHtml(context, svg) {
+    const title = esc(context.chartModel?.title || 'Taixue 图表');
+    const payload = exportJson(context).replace(/</g, '\\u003c');
+    return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}</style></head><body><main>${svg}<details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
+  }
+  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng, svgToPngWithOptions, exportJson, importJson, exportHtml };
   if (typeof module !== 'undefined') module.exports = root.AgfChartWorkspace;
 })(typeof window !== 'undefined' ? window : globalThis);
