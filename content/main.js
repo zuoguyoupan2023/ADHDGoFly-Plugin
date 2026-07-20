@@ -6994,7 +6994,8 @@ class ADHDHighlighter {
     const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
     const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
     const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
-    const runP1 = async (kind, action) => { setView('p1'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${String(error.message || error)}</p>`; } };
+    const prepareP1 = kind => { p1ActionsEl.innerHTML = ''; p1Title.textContent = ({ structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' })[kind] || 'P1 阅读工具'; };
+    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     p1Button('agfBtnStructuredReading').onclick = () => runP1('structured', () => structuredReadingModule.run());
     p1Button('agfBtnWriting').onclick = () => { p1ActionsEl.innerHTML = ['summary','notes','outline','citations','reflection'].map(kind => `<button class="agf-task-btn" data-writing-kind="${kind}">${({ summary: '摘要', notes: '笔记', outline: '提纲', citations: '引用卡片', reflection: '读后感' })[kind]}</button>`).join(''); p1ActionsEl.querySelectorAll('[data-writing-kind]').forEach(button => { button.onclick = () => runP1('writing', () => writingModule.run(button.dataset.writingKind)); }); setView('p1'); };
     p1Button('agfBtnFactCheck').onclick = () => runP1('fact', () => factCheckModule.run());
