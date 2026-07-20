@@ -50,7 +50,7 @@
     "resetAll": "Reset All Settings"
   },
     "aiPanel": {
-    "title": "Taixue",
+    "title": "Jixia",
     "returnToChat": "Return to chat view",
     "refresh": "Refresh",
     "statusHintNone": "Gray: Page text not loaded",
@@ -335,8 +335,8 @@
       "description": "Vocabulary analysis based on current page content",
       "stats": {
         "title": "📊 Page Statistics",
-        "taixueReview": "Taixue Review",
-        "reviewInTaixue": "Review in Taixue",
+        "jixiaReview": "Jixia Review",
+        "reviewInJixia": "Review in Jixia",
         "noTestRecords": "There are no test records for this page yet.",
         "language": "Language Distribution",
         "posDistribution": "Part of Speech Distribution",
@@ -597,7 +597,7 @@
        }
     }
   },
-  "taixue": {
+  "jixia": {
     "tasks": { "title": "Tasks", "translate": "Translate", "selectionExplain": "Explain selection", "visionOcr": "Image/OCR", "speak": "Read aloud", "history": "📃 History" },
     "context": { "full": "Full text", "selection": "Selection", "paragraph": "Paragraph", "manual": "Manual input", "summary": "Current context: {{label}}", "summaryFull": "Current context: full text", "image": "Image", "chart": "Chart", "discoverImages": "Find web images", "screenshot": "Screenshot page", "audio": "Audio", "mediaMode": "Image sending mode", "auto": "Auto", "recognitionOnly": "Recognition only", "imageAndRecognition": "Image + recognition" },
     "image": { "title": "Image workspace", "waiting": "Waiting for an image", "drop": "Drop an image here to recognize it", "choose": "Choose image", "selectAll": "Select all", "process": "Recognize selected images", "addToChat": "Add to chat", "retry": "Recognize again", "clear": "Clear workspace", "delete": "Delete and clear history", "export": "Export", "history": "Recognition history" },

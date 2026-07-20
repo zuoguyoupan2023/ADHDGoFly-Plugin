@@ -216,7 +216,7 @@
     return checked.value;
   }
   function exportHtml(context, svg) {
-    const title = esc(context.chartModel?.title || 'Taixue 图表');
+    const title = esc(context.chartModel?.title || 'Jixia 图表');
     const payload = exportJson(context).replace(/</g, '\\u003c');
     return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}</style></head><body><main>${svg}<details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
   }

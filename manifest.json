@@ -74,8 +74,8 @@
         "content/chart-model.js",
         "content/chart-layout.js",
         "content/chart-workspace.js",
-        "content/taixue-modules.js",
-        "content/taixue-ui-modules.js",
+        "content/jixia-modules.js",
+        "content/jixia-ui-modules.js",
         "content/main.js",
         "content/dynamic-collector.js"
       ],

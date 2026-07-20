@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
-const { TaixueState, parseQuizPayload, normalizeQuizItems, createChatModule, createQuizModule, createExplainModule, createVocabularyReviewModule, createVocabularyModule } = require('./content/taixue-modules.js');
+const { JixiaState, parseQuizPayload, normalizeQuizItems, createChatModule, createQuizModule, createExplainModule, createVocabularyReviewModule, createVocabularyModule } = require('./content/jixia-modules.js');
 (async () => {
 
-const state = new TaixueState({ currentModule: 'quiz' });
+const state = new JixiaState({ currentModule: 'quiz' });
 assert.equal(state.setContextSource('selection'), 'selection');
 assert.deepEqual(state.getSnapshot(), { currentModule: 'quiz', taskStatus: 'idle', contextSource: 'selection', windowSize: 'full', persistent: false, highlightEnabled: true });
 assert.deepEqual(parseQuizPayload('```json\n[{"question":"Q"}]\n```'), [{ question: 'Q' }]);
@@ -24,5 +24,5 @@ await explain.explainSelection(); assert.equal(explained, true);
 let cards = null;
 const vocabReview = createVocabularyReviewModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify([{ word: 'term', meaning: '含义', example: '例句' }]) }, load: async () => [], save: async () => {}, onCards: value => { cards = value; } });
 await vocabReview.startReview(); assert.equal(cards.length, 1); await vocabReview.answer(true); assert.equal(cards[0].mastery, 20);
-console.log('taixue module tests passed');
+console.log('jixia module tests passed');
 })();

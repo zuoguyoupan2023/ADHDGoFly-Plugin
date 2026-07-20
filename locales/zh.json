@@ -50,7 +50,7 @@
     "resetAll": "重置所有设置"
   },
     "aiPanel": {
-    "title": "太学",
+    "title": "稷下",
     "returnToChat": "返回聊天视图",
     "refresh": "刷新",
     "statusHintNone": "灰色: 未获取该页面文本",
@@ -336,8 +336,8 @@
       "description": "基于当前页面词汇的统计分析",
       "stats": {
         "title": "📊 页面统计",
-        "taixueReview": "太学复习",
-        "reviewInTaixue": "在太学中复习",
+        "jixiaReview": "稷下复习",
+        "reviewInJixia": "在稷下中复习",
         "noTestRecords": "当前页面还没有测试记录。",
         "language": "语言分布",
         "posDistribution": "词性分布",
@@ -598,7 +598,7 @@
      }
     }
   },
-  "taixue": {
+  "jixia": {
     "tasks": { "title": "任务", "translate": "翻译", "selectionExplain": "选区解释", "visionOcr": "图片识别/OCR", "speak": "朗读", "history": "📃 历史记录" },
     "context": { "full": "全文", "selection": "选中", "paragraph": "段落", "manual": "手动内容", "summary": "当前上下文：{{label}}", "summaryFull": "当前上下文：全文", "image": "图片", "chart": "图表", "discoverImages": "发现网页图片", "screenshot": "截图网页", "audio": "音频", "mediaMode": "图片发送方式", "auto": "自动判断", "recognitionOnly": "仅识别结果", "imageAndRecognition": "图片+识别结果" },
     "image": { "title": "图像工作区", "waiting": "等待添加图片", "drop": "拖动图片到这里进行识别", "choose": "选择图片", "selectAll": "全选", "process": "发送勾选图片识别", "addToChat": "添加到对话框", "retry": "重新识别", "clear": "清除工作区", "delete": "删除并清理历史", "export": "导出", "history": "识别历史" },

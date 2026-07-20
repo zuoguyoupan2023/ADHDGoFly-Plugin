@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
 
-  class TaixueState {
+  class JixiaState {
     constructor(initial = {}) {
       this.currentModule = initial.currentModule || 'chat';
       this.taskStatus = initial.taskStatus || 'idle';
@@ -121,7 +121,7 @@
 
   const createModule = (name, actions = {}) => Object.freeze({ name, ...actions });
   const api = {
-    TaixueState,
+    JixiaState,
     parseQuizPayload,
     normalizeQuizItems,
     createChatModule: actions => createModule('chat', actions),
@@ -133,6 +133,6 @@
     createExplainModule,
     createVocabularyReviewModule: createVocabularyModule
   };
-  root.TaixueModules = api;
+  root.JixiaModules = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

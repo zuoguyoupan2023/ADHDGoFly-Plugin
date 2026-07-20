@@ -44,6 +44,6 @@
   }
 
   const api = { bindChatEvents, bindQuizEvents, bindExplainEvents, bindVocabularyEvents };
-  root.TaixueUiModules = api;
+  root.JixiaUiModules = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -6,5 +6,5 @@ const flatten = (value, prefix = '', out = {}) => { Object.entries(value).forEac
 const zhKeys = new Set(Object.keys(flatten(zh))), enKeys = new Set(Object.keys(flatten(en)));
 assert.deepEqual([...zhKeys].filter(key => !enKeys.has(key)), [], '英文缺少中文 i18n key');
 assert.deepEqual([...enKeys].filter(key => !zhKeys.has(key)), [], '中文缺少英文 i18n key');
-['taixue.tabs.chat', 'taixue.tabs.quiz', 'taixue.tabs.explain', 'taixue.tabs.vocab', 'taixue.chart.title'].forEach(key => assert.ok(zhKeys.has(key) && enKeys.has(key), `缺少关键 i18n key: ${key}`));
+['jixia.tabs.chat', 'jixia.tabs.quiz', 'jixia.tabs.explain', 'jixia.tabs.vocab', 'jixia.chart.title'].forEach(key => assert.ok(zhKeys.has(key) && enKeys.has(key), `缺少关键 i18n key: ${key}`));
 console.log('i18n regression tests passed');

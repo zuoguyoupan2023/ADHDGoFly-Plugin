@@ -86,9 +86,32 @@
   } catch (e) {}
 })();
 
+// 0.1.8 Jixia migration: new installs use jixia* keys; existing Taixue data is
+// copied once so old test, media and UI state remains available.
+;(function migrateLegacyJixiaStorage() {
+  try {
+    const pairs = [
+      ['agfJixiaLastModule', 'agfTaixueLastModule'],
+      ['agfJixiaSpeakSettings', 'agfTaixueSpeakSettings'],
+      ['agfJixiaImageRecognitionHistory', 'agfTaixueImageRecognitionHistory'],
+      ['agfJixiaExplainHistory', 'agfTaixueExplainHistory'],
+      ['agfJixiaVocabularyReview', 'agfTaixueVocabularyReview'],
+      ['jixiaMediaPermissionEnabled', 'taixueMediaPermissionEnabled'],
+      ['jixiaMediaUploadEnabled', 'taixueMediaUploadEnabled']
+    ];
+    chrome.storage.local.get(pairs.flat(), values => {
+      const migrated = {};
+      pairs.forEach(([next, legacy]) => {
+        if (values[next] === undefined && values[legacy] !== undefined) migrated[next] = values[legacy];
+      });
+      if (Object.keys(migrated).length) chrome.storage.local.set(migrated);
+    });
+  } catch (_) {}
+})();
+
 const getUiTokens = () => {
   const t = (k) => { try { return (window.i18n && window.i18n.t) ? String(window.i18n.t(k)) : ''; } catch (_) { return ''; } };
-  const base = ['太学','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','保姆级解读','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
+  const base = ['稷下','✏️','📃','🔧','●','◑','○','keyboard_arrow_down','deepseek','moonshot','chatgpt','claude','qwen','chatglm','minimax','gemini','grok','deepseek-chat','deepseek-reasoner','总结','更多','保姆级解读','常驻','手动','发送','收起','展开全文','您好，我是AI助手。','请总结这段文本。','全文'];
   const dyn = ['aiPanel.summary','aiPanel.more','aiPanel.beginnerExplain','aiPanel.send','aiPanel.collapse.expand','aiPanel.collapse.collapse','aiPanel.fullText','aiPanel.mode.persistent','aiPanel.mode.manual'];
   const out = base.slice();
   for (let i = 0; i < dyn.length; i++) { const v = t(dyn[i]); if (v) out.push(v); }
@@ -681,17 +704,18 @@ class ADHDHighlighter {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
-        case 'openTaixue':
+        case 'openJixia':
+        case 'openTaixue': // 兼容 0.1.7/旧版本 Side Panel 消息
           try {
             this.ensureAiSettingPanel();
             this.showAiSettingPanel();
-            this.__pendingTaixueOpen = {
+            this.__pendingJixiaOpen = {
               module: message.module || 'chat',
               contextSource: message.contextSource || 'full_article'
             };
-            if (typeof this.__openTaixueModule === 'function') {
-              this.__openTaixueModule(this.__pendingTaixueOpen);
-              this.__pendingTaixueOpen = null;
+            if (typeof this.__openJixiaModule === 'function') {
+              this.__openJixiaModule(this.__pendingJixiaOpen);
+              this.__pendingJixiaOpen = null;
             }
             sendResponse({ success: true });
           } catch (error) {
@@ -2795,7 +2819,7 @@ class ADHDHighlighter {
       .agf-resize-right{position:absolute;top:0;right:0;width:8px;height:100%;cursor:ew-resize}
       .agf-resize-bottom{position:absolute;left:0;bottom:0;width:100%;height:8px;cursor:ns-resize}
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
-      /* Taixue floating workspace: keep the existing capabilities, clarify the reading flow. */
+      /* Jixia floating workspace: keep the existing capabilities, clarify the reading flow. */
       .agf-ai-overlay{background:#f7f8fb;border:1px solid #dfe5f2;border-radius:16px;box-shadow:0 22px 60px rgba(23,32,51,.24);overflow:hidden}
       .agf-ai-header{min-height:58px;padding:12px 16px;background:#fff;border-bottom:1px solid #e5e9f0}
       .agf-ai-title{gap:8px;color:#172033;font-size:15px}
@@ -2863,7 +2887,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">太学</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">稷下</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
         <div class="agf-ai-controls">
           <button id="agfAiTabWrench" data-i18n-title="aiPanel.settings.general">🔧</button>
           <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
@@ -2874,33 +2898,33 @@ class ADHDHighlighter {
       </div>
       <div class="agf-function-bar">
         <div class="agf-ai-tabs">
-          <button id="agfAiTabChat" data-i18n="taixue.tabs.chat">Chat</button>
-          <button id="agfAiTabQuiz" data-i18n="taixue.tabs.quiz">测试</button>
-          <button id="agfAiTabExplain" data-i18n="taixue.tabs.explain">解释</button>
-          <button id="agfAiTabVocab" data-i18n="taixue.tabs.vocab">词汇</button>
+          <button id="agfAiTabChat" data-i18n="jixia.tabs.chat">Chat</button>
+          <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
+          <button id="agfAiTabExplain" data-i18n="jixia.tabs.explain">解释</button>
+          <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
         </div>
         <div class="agf-context-tools">
-          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-i18n="taixue.context.full">全文</button>
-          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-i18n="taixue.context.selection">选中</button>
-          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-i18n="taixue.context.paragraph">段落</button>
+          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-i18n="jixia.context.full">全文</button>
+          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-i18n="jixia.context.selection">选中</button>
+          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-i18n="jixia.context.paragraph">段落</button>
         </div>
-        <div class="agf-context-summary" id="agfContextSummary" data-i18n="taixue.context.summaryFull">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="taixue.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="taixue.context.chart" data-i18n-title="taixue.chart.title">图表</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="taixue.context.discoverImages">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="taixue.context.screenshot">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="taixue.context.audio">音频</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="taixue.context.mediaMode"><option value="auto" data-i18n="taixue.context.auto">自动判断</option><option value="recognition_only" data-i18n="taixue.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="taixue.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-context-summary" id="agfContextSummary" data-i18n="jixia.context.summaryFull">当前上下文：全文</div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="jixia.context.discoverImages">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="jixia.context.audio">音频</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
-        <span class="agf-task-label" data-i18n="taixue.tasks.title">任务</span>
+        <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
         <div class="agf-task-actions">
           <button id="agfQuickSummaryBtn" class="agf-task-btn" disabled data-i18n="aiPanel.summary">总结</button>
           <button id="agfBeginnerExplainBtn" class="agf-task-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button>
-          <button id="agfBtnTranslate" class="agf-task-btn" disabled data-i18n="taixue.tasks.translate">翻译</button>
-          <button id="agfBtnSelectionExplain" class="agf-task-btn" disabled data-i18n="taixue.tasks.selectionExplain">选区解释</button>
+          <button id="agfBtnTranslate" class="agf-task-btn" disabled data-i18n="jixia.tasks.translate">翻译</button>
+          <button id="agfBtnSelectionExplain" class="agf-task-btn" disabled data-i18n="jixia.tasks.selectionExplain">选区解释</button>
           <button id="agfBtnKeywords" class="agf-task-btn" disabled data-i18n="aiPanel.keywords">关键词</button>
           <button class="agf-task-btn" id="agfBtnStructured" disabled data-i18n="aiPanel.structured">结构化摘要</button>
           <button class="agf-task-btn" id="agfBtnExplain" disabled data-i18n="aiPanel.explain">简明解释</button>
           <button class="agf-task-btn" id="agfBtnOutline" disabled data-i18n="aiPanel.outline">提取大纲</button>
-          <button class="agf-task-btn" id="agfBtnVisionOcr" disabled data-i18n="taixue.tasks.visionOcr">图片识别/OCR</button>
-          <button class="agf-task-btn" id="agfBtnSpeak" disabled data-i18n="taixue.tasks.speak">朗读</button>
-          <button class="agf-task-btn" id="agfModuleHistoryBtn" data-i18n="taixue.tasks.history">📃 历史记录</button>
+          <button class="agf-task-btn" id="agfBtnVisionOcr" disabled data-i18n="jixia.tasks.visionOcr">图片识别/OCR</button>
+          <button class="agf-task-btn" id="agfBtnSpeak" disabled data-i18n="jixia.tasks.speak">朗读</button>
+          <button class="agf-task-btn" id="agfModuleHistoryBtn" data-i18n="jixia.tasks.history">📃 历史记录</button>
         </div>
       </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
@@ -2967,8 +2991,8 @@ class ADHDHighlighter {
               <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
             </div>
           </div>
-          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="taixue.image.title">图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta" data-i18n="taixue.image.waiting">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p data-i18n="taixue.image.drop">拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary" data-i18n="taixue.image.choose">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> <span data-i18n="taixue.image.selectAll">全选</span></label><button id="agfImageProcessSelected" class="primary" disabled data-i18n="taixue.image.process">发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled data-i18n="taixue.image.addToChat">添加到对话框</button><button id="agfImageWorkspaceRetry" disabled data-i18n="taixue.image.retry">重新识别</button><button id="agfImageWorkspaceClear" data-i18n="taixue.image.clear">清除工作区</button><button id="agfImageWorkspaceDelete" data-i18n="taixue.image.delete">删除并清理历史</button><button id="agfImageWorkspaceExport" data-i18n="taixue.image.export">导出</button><button id="agfImageWorkspaceHistory" data-i18n="taixue.image.history">识别历史</button></div></div></div>
-          <div class="agf-ai-view-module" id="agfAiViewChart" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="taixue.chart.title">图表工作区</span><span id="agfChartMeta" class="agf-module-meta" data-i18n="taixue.chart.waiting">等待生成图表</span></div><div id="agfChartSkillBadge" class="agf-media-attachment" style="display:none"><div class="agf-media-attachment-body"><strong data-i18n="taixue.chart.skill">内置图表 Skill</strong><div class="agf-media-attachment-result" data-i18n="taixue.chart.skillPrompt">你帮我做一个关系图来解释</div></div></div><textarea id="agfChartSourceText" class="agf-field" style="width:100%;box-sizing:border-box;min-height:96px;margin-bottom:10px;resize:vertical" data-i18n-placeholder="taixue.chart.sourcePlaceholder"></textarea><div class="agf-chart-toolbar"><select id="agfChartIntent" class="agf-field"><option value="concept">概念图</option><option value="relationship">关系图</option><option value="mindmap">思维导图</option><option value="flowchart">流程图</option><option value="timeline">时间线</option></select><select id="agfChartRenderer" class="agf-field"><option value="svg">清爽 SVG</option><option value="rough">手绘风格</option><option value="mermaid">Mermaid 风格</option></select><button id="agfChartGenerate" class="agf-task-btn" data-i18n="taixue.chart.generate">根据工作区材料生成</button><button id="agfChartSave" class="agf-task-btn" disabled data-i18n="taixue.chart.save">保存</button><button id="agfChartSvg" class="agf-task-btn" disabled data-i18n="taixue.chart.svg">导出 SVG</button><button id="agfChartJson" class="agf-task-btn" disabled data-i18n="taixue.chart.json">导出 JSON</button><button id="agfChartImport" class="agf-task-btn" data-i18n="taixue.chart.importJson">导入 JSON</button><button id="agfChartHtml" class="agf-task-btn" disabled data-i18n="taixue.chart.html">导出 HTML</button><button id="agfChartPng" class="agf-task-btn" disabled data-i18n="taixue.chart.png">导出 PNG</button><button id="agfChartAttach" class="agf-task-btn" disabled data-i18n="taixue.chart.attach">添加到 Chat</button><button id="agfChartUndo" class="agf-task-btn" disabled data-i18n="taixue.chart.undo">撤销</button><button id="agfChartRedo" class="agf-task-btn" disabled data-i18n="taixue.chart.redo">重做</button><button id="agfChartAddNode" class="agf-task-btn" disabled data-i18n="taixue.chart.addNode">添加节点</button><button id="agfChartAddEdge" class="agf-task-btn" disabled data-i18n="taixue.chart.addEdge">添加连线</button><button id="agfChartDelete" class="agf-task-btn" disabled data-i18n="taixue.chart.delete">删除选中</button><button id="agfChartZoomOut" class="agf-task-btn" data-i18n-title="taixue.chart.zoomOut">－</button><button id="agfChartZoomReset" class="agf-task-btn" data-i18n-title="taixue.chart.zoomReset">100%</button><button id="agfChartZoomIn" class="agf-task-btn" data-i18n-title="taixue.chart.zoomIn">＋</button></div><input id="agfChartTitle" class="agf-field agf-chart-title" data-i18n-placeholder="taixue.chart.titlePlaceholder"><div id="agfChartCanvas" class="agf-chart-canvas"></div><div class="agf-chart-ai-edit"><label for="agfChartAiEditInput" data-i18n="taixue.chart.aiEditLabel">AI 修改图表</label><textarea id="agfChartAiEditInput" class="agf-field" data-i18n-placeholder="taixue.chart.aiEditPlaceholder"></textarea><button id="agfChartAiEditBtn" class="agf-task-btn" data-i18n="taixue.chart.aiEditSend">发送修改</button></div><div id="agfChartNotice" class="agf-module-meta" style="margin-top:8px" data-i18n="taixue.chart.notice">操作：单击选择；拖动移动；双击文字编辑。删除请先选择节点，再点“删除选中”或按 Delete。</div><div class="agf-module-history" style="margin-top:16px"><strong style="font-size:13px" data-i18n="taixue.chart.saved">已保存图表</strong><div id="agfChartHistory" style="margin-top:6px"></div></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="jixia.image.title">图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta" data-i18n="jixia.image.waiting">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p data-i18n="jixia.image.drop">拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary" data-i18n="jixia.image.choose">选择图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> <span data-i18n="jixia.image.selectAll">全选</span></label><button id="agfImageProcessSelected" class="primary" disabled data-i18n="jixia.image.process">发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled data-i18n="jixia.image.addToChat">添加到对话框</button><button id="agfImageWorkspaceRetry" disabled data-i18n="jixia.image.retry">重新识别</button><button id="agfImageWorkspaceClear" data-i18n="jixia.image.clear">清除工作区</button><button id="agfImageWorkspaceDelete" data-i18n="jixia.image.delete">删除并清理历史</button><button id="agfImageWorkspaceExport" data-i18n="jixia.image.export">导出</button><button id="agfImageWorkspaceHistory" data-i18n="jixia.image.history">识别历史</button></div></div></div>
+          <div class="agf-ai-view-module" id="agfAiViewChart" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="jixia.chart.title">图表工作区</span><span id="agfChartMeta" class="agf-module-meta" data-i18n="jixia.chart.waiting">等待生成图表</span></div><div id="agfChartSkillBadge" class="agf-media-attachment" style="display:none"><div class="agf-media-attachment-body"><strong data-i18n="jixia.chart.skill">内置图表 Skill</strong><div class="agf-media-attachment-result" data-i18n="jixia.chart.skillPrompt">你帮我做一个关系图来解释</div></div></div><textarea id="agfChartSourceText" class="agf-field" style="width:100%;box-sizing:border-box;min-height:96px;margin-bottom:10px;resize:vertical" data-i18n-placeholder="jixia.chart.sourcePlaceholder"></textarea><div class="agf-chart-toolbar"><select id="agfChartIntent" class="agf-field"><option value="concept">概念图</option><option value="relationship">关系图</option><option value="mindmap">思维导图</option><option value="flowchart">流程图</option><option value="timeline">时间线</option></select><select id="agfChartRenderer" class="agf-field"><option value="svg">清爽 SVG</option><option value="rough">手绘风格</option><option value="mermaid">Mermaid 风格</option></select><button id="agfChartGenerate" class="agf-task-btn" data-i18n="jixia.chart.generate">根据工作区材料生成</button><button id="agfChartSave" class="agf-task-btn" disabled data-i18n="jixia.chart.save">保存</button><button id="agfChartSvg" class="agf-task-btn" disabled data-i18n="jixia.chart.svg">导出 SVG</button><button id="agfChartJson" class="agf-task-btn" disabled data-i18n="jixia.chart.json">导出 JSON</button><button id="agfChartImport" class="agf-task-btn" data-i18n="jixia.chart.importJson">导入 JSON</button><button id="agfChartHtml" class="agf-task-btn" disabled data-i18n="jixia.chart.html">导出 HTML</button><button id="agfChartPng" class="agf-task-btn" disabled data-i18n="jixia.chart.png">导出 PNG</button><button id="agfChartAttach" class="agf-task-btn" disabled data-i18n="jixia.chart.attach">添加到 Chat</button><button id="agfChartUndo" class="agf-task-btn" disabled data-i18n="jixia.chart.undo">撤销</button><button id="agfChartRedo" class="agf-task-btn" disabled data-i18n="jixia.chart.redo">重做</button><button id="agfChartAddNode" class="agf-task-btn" disabled data-i18n="jixia.chart.addNode">添加节点</button><button id="agfChartAddEdge" class="agf-task-btn" disabled data-i18n="jixia.chart.addEdge">添加连线</button><button id="agfChartDelete" class="agf-task-btn" disabled data-i18n="jixia.chart.delete">删除选中</button><button id="agfChartZoomOut" class="agf-task-btn" data-i18n-title="jixia.chart.zoomOut">－</button><button id="agfChartZoomReset" class="agf-task-btn" data-i18n-title="jixia.chart.zoomReset">100%</button><button id="agfChartZoomIn" class="agf-task-btn" data-i18n-title="jixia.chart.zoomIn">＋</button></div><input id="agfChartTitle" class="agf-field agf-chart-title" data-i18n-placeholder="jixia.chart.titlePlaceholder"><div id="agfChartCanvas" class="agf-chart-canvas"></div><div class="agf-chart-ai-edit"><label for="agfChartAiEditInput" data-i18n="jixia.chart.aiEditLabel">AI 修改图表</label><textarea id="agfChartAiEditInput" class="agf-field" data-i18n-placeholder="jixia.chart.aiEditPlaceholder"></textarea><button id="agfChartAiEditBtn" class="agf-task-btn" data-i18n="jixia.chart.aiEditSend">发送修改</button></div><div id="agfChartNotice" class="agf-module-meta" style="margin-top:8px" data-i18n="jixia.chart.notice">操作：单击选择；拖动移动；双击文字编辑。删除请先选择节点，再点“删除选中”或按 Delete。</div><div class="agf-module-history" style="margin-top:16px"><strong style="font-size:13px" data-i18n="jixia.chart.saved">已保存图表</strong><div id="agfChartHistory" style="margin-top:6px"></div></div></div></div>
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
@@ -3074,7 +3098,7 @@ class ADHDHighlighter {
                       </div>
                     </div>
                   </div>
-                  <div id="agfSettingsContentMedia" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">媒体识别</div><div class="agf-hint">这里管理图片识别/OCR和音频上下文，不包含 PDF 解析。当前图片识别固定使用免费的 GLM-4V-Flash。</div><div class="agf-settings-row"><div class="agf-label">GLM-4V-Flash Key</div><div style="display:flex;align-items:center;gap:8px;"><input id="agfGlmVisionKeyInput" class="agf-input" type="password" placeholder="单独用于图片识别/OCR" /><button id="agfSaveGlmVisionKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button></div></div><div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div><div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div><div class="agf-hint">开启后，点击太学上下文区的“图片”或“音频”选择文件；发送给 AI 前仍会再次确认。默认不保存原始媒体，只保存必要的文字结果。</div></div></div>
+                  <div id="agfSettingsContentMedia" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">媒体识别</div><div class="agf-hint">这里管理图片识别/OCR和音频上下文，不包含 PDF 解析。当前图片识别固定使用免费的 GLM-4V-Flash。</div><div class="agf-settings-row"><div class="agf-label">GLM-4V-Flash Key</div><div style="display:flex;align-items:center;gap:8px;"><input id="agfGlmVisionKeyInput" class="agf-input" type="password" placeholder="单独用于图片识别/OCR" /><button id="agfSaveGlmVisionKeyBtn" class="agf-input" style="height:28px;min-width:64px;">保存</button></div></div><div class="agf-settings-row"><div class="agf-label">媒体权限</div><div id="agfMediaPermissionToggle" class="agf-button-list"></div></div><div class="agf-settings-row"><div class="agf-label">媒体上传</div><div id="agfMediaUploadToggle" class="agf-button-list"></div></div><div class="agf-hint">开启后，点击稷下上下文区的“图片”或“音频”选择文件；发送给 AI 前仍会再次确认。默认不保存原始媒体，只保存必要的文字结果。</div></div></div>
                   <div id="agfSettingsContentSpeak" style="display:none;"><div class="agf-settings-group"><div style="font-size:13px;color:#333;font-weight:600;">朗读设置</div><div class="agf-settings-row"><div class="agf-label">朗读语言</div><select id="agfSpeakLanguage" class="agf-select"><option value="auto">自动识别</option><option value="zh-CN">中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option><option value="ko-KR">한국어</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读音色</div><select id="agfSpeakVoice" class="agf-select"><option value="">跟随语言默认音色</option></select></div><div class="agf-settings-row"><div class="agf-label">朗读语速</div><input id="agfSpeakRate" class="agf-input" type="number" min="0.5" max="2" step="0.1" value="1" /><span class="agf-hint">0.5–2.0</span></div><div class="agf-settings-row"><button id="agfSpeakSample" class="agf-btn">试听当前音色</button></div><div class="agf-hint">浏览器提供哪些音色，取决于当前操作系统和浏览器；插件不会上传朗读文本。</div></div></div>
                   <div id="agfSettingsContentDisplay" style="display:none;">
                     <div class="agf-settings-group">
@@ -3373,9 +3397,9 @@ class ADHDHighlighter {
       hideFulltextPanel();
       if (!addedFullActive) {
         await updateStorageStatusUI();
-        const ctx = await taixueContext.resolve('full_article');
+        const ctx = await jixiaContext.resolve('full_article');
         const raw = String(ctx.text || '');
-        if (raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
+        if (raw.length > JIXIA_CONTEXT_MAX_WARN_CHARS) {
           showToast('目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
         }
         addedFullText = raw;
@@ -3406,19 +3430,19 @@ class ADHDHighlighter {
     const bubbleUp = () => { if (!bDragging) return; bDragging = false; document.removeEventListener('mousemove', bubbleMove); document.removeEventListener('mouseup', bubbleUp); if (bMoved) { this.__bubblePos = { left: parseInt(bubble.style.left, 10) || 0, top: parseInt(bubble.style.top, 10) || 0 }; bMoved = false; } else { this.restoreAiSettingPanel(); } };
     const bubbleDown = (e) => { try { const rect = bubble.getBoundingClientRect(); bDragging = true; bMoved = false; bStartX = e.clientX; bStartY = e.clientY; bStartLeft = rect.left; bStartTop = rect.top; bubble.style.left = bStartLeft + 'px'; bubble.style.top = bStartTop + 'px'; bubble.style.right = 'auto'; bubble.style.bottom = 'auto'; document.addEventListener('mousemove', bubbleMove); document.addEventListener('mouseup', bubbleUp); } catch (_) {} };
     bubble.addEventListener('mousedown', bubbleDown);
-    const TAIXUE_CONTEXT_MAX_WARN_CHARS = 12000;
-    const estimateTaixueTokens = (text) => {
+    const JIXIA_CONTEXT_MAX_WARN_CHARS = 12000;
+    const estimateJixiaTokens = (text) => {
       const raw = String(text || '');
       const cjk = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/.test(raw);
       return Math.ceil(raw.length * (cjk ? 1 : 0.75));
     };
-    const limitTaixueText = (text, maxChars = 70000) => {
+    const limitJixiaText = (text, maxChars = 70000) => {
       const raw = String(text || '');
-      if (raw.length <= maxChars) return { text: raw, truncated: false, originalLength: raw.length, approxTokens: estimateTaixueTokens(raw) };
+      if (raw.length <= maxChars) return { text: raw, truncated: false, originalLength: raw.length, approxTokens: estimateJixiaTokens(raw) };
       const head = raw.slice(0, Math.floor(maxChars * 0.62));
       const tail = raw.slice(Math.max(0, raw.length - Math.floor(maxChars * 0.28)));
       const limited = `${head}\n\n[...中间内容已按预算省略，原文约 ${raw.length} 字...]\n\n${tail}`;
-      return { text: limited, truncated: true, originalLength: raw.length, approxTokens: estimateTaixueTokens(limited) };
+      return { text: limited, truncated: true, originalLength: raw.length, approxTokens: estimateJixiaTokens(limited) };
     };
     const getSelectedTextSafe = () => {
       try {
@@ -3447,35 +3471,36 @@ class ADHDHighlighter {
         return '';
       }
     };
-    const taixueState = new TaixueModules.TaixueState();
-    window.TaixueState = taixueState;
-    taixueState.getProviderState = () => {
+    const jixiaState = new JixiaModules.JixiaState();
+    window.JixiaState = jixiaState;
+    window.TaixueState = jixiaState; // 兼容旧内容脚本/调试入口
+    jixiaState.getProviderState = () => {
         return {
           provider: sessionProviderSelect ? sessionProviderSelect.value : '',
           model: sessionModelSelect ? sessionModelSelect.value : ''
         };
     };
-    const taixueHash = (value) => {
+    const jixiaHash = (value) => {
       const text = String(value || ''); let hash = 2166136261;
       for (let i = 0; i < text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); }
       return ('00000000' + (hash >>> 0).toString(16)).slice(-8);
     };
-    const createTaixueContext = ({ source = 'manual', text = '', image = null, audio = null, chart = null, sourceUrl = '', confirmed = false, metadata = {} } = {}) => {
+    const createJixiaContext = ({ source = 'manual', text = '', image = null, audio = null, chart = null, sourceUrl = '', confirmed = false, metadata = {} } = {}) => {
       const normalizedText = String(text || '').trim();
       const mediaText = [image && image.ocrText, audio && audio.transcript, chart && chart.dsl].filter(Boolean).join('\n');
       return {
         source, text: normalizedText, image: image || null, audio: audio || null, chart: chart || null,
         sourceUrl: sourceUrl || String(location.href || ''), pageUrl: String(location.href || ''), pageTitle: getMetaTitle(),
-        createdAt: Date.now(), contentHash: taixueHash(normalizedText || mediaText || JSON.stringify({ image, audio, chart })), confirmed: Boolean(confirmed), metadata
+        createdAt: Date.now(), contentHash: jixiaHash(normalizedText || mediaText || JSON.stringify({ image, audio, chart })), confirmed: Boolean(confirmed), metadata
       };
     };
-    const taixueContext = {
-      async resolve(source = taixueState.contextSource, options = {}) {
-        taixueState.setTaskStatus('preparing_context');
+    const jixiaContext = {
+      async resolve(source = jixiaState.contextSource, options = {}) {
+        jixiaState.setTaskStatus('preparing_context');
         const u = getCanonicalUrl();
         const selected = String(getSelectedTextSafe() || '').trim();
         if ((source === 'image' || source === 'audio') && currentMediaContext && currentMediaContext.source === source) {
-          taixueState.setContextStatus?.('ready');
+          jixiaState.setContextStatus?.('ready');
           return currentMediaContext;
         }
         const preferredSource = source === 'selection' ? (selected ? 'selection' : 'full_article') : source;
@@ -3491,30 +3516,31 @@ class ADHDHighlighter {
         }
         text = String(text || '').trim();
         const sourceName = preferredSource === 'selection' ? 'selection' : (preferredSource === 'paragraph' ? 'paragraph' : (preferredSource === 'manual' ? 'manual' : 'full_article'));
-        taixueState.setContextSource(sourceName);
-        taixueState.setTaskStatus(text ? 'ready' : 'failed');
-        return { ...createTaixueContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), selectedText: selected, canonicalUrl: u.canonicalUrl, textLength: text.length, approxTokens: estimateTaixueTokens(text) };
+        jixiaState.setContextSource(sourceName);
+        jixiaState.setTaskStatus(text ? 'ready' : 'failed');
+        return { ...createJixiaContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), selectedText: selected, canonicalUrl: u.canonicalUrl, textLength: text.length, approxTokens: estimateJixiaTokens(text) };
       }
     };
-    window.TaixueContext = taixueContext;
-    const taixueTaskProtocol = {
+    window.JixiaContext = jixiaContext;
+    window.TaixueContext = jixiaContext;
+    const jixiaTaskProtocol = {
       taskType: 'string', context: 'object', provider: 'string', model: 'string', budget: 'object', outputSchema: 'object', allowNetwork: 'boolean', allowPersistence: 'boolean', retryPolicy: 'object'
     };
-    const validateTaixueTaskRequest = (request) => {
+    const validateJixiaTaskRequest = (request) => {
       if (!request || typeof request !== 'object') throw new Error('任务请求必须是对象');
       if (!String(request.taskType || '').trim()) throw new Error('任务类型不能为空');
       if (!request.context || typeof request.context !== 'object') throw new Error('任务上下文不能为空');
       if (request.allowNetwork === true && !request.context.confirmed && (request.context.image || request.context.audio)) throw new Error('媒体内容上传前需要用户确认');
       return { ...request, allowNetwork: request.allowNetwork !== false, allowPersistence: request.allowPersistence === true, budget: request.budget || {}, outputSchema: request.outputSchema || { type: 'text' }, retryPolicy: request.retryPolicy || { maxRetries: 1 } };
     };
-    const validateTaixueOutput = (output, schema = { type: 'text' }) => {
+    const validateJixiaOutput = (output, schema = { type: 'text' }) => {
       if (schema.type === 'text') return String(output || '').trim();
       const parsed = parseJsonPayload(output);
       if (schema.type === 'array' && !Array.isArray(parsed)) throw new Error('AI 输出不是有效数组');
       if (schema.type === 'object' && (!parsed || Array.isArray(parsed) || typeof parsed !== 'object')) throw new Error('AI 输出不是有效对象');
       return parsed;
     };
-    const taixueTask = {
+    const jixiaTask = {
       getModelCapabilities(provider, model) {
         const p = String(provider || '').toLowerCase(); const m = String(model || '').toLowerCase();
         const configured = typeof PROVIDERS_CONFIG !== 'undefined' ? PROVIDERS_CONFIG[p]?.modelInfo?.[model] : null;
@@ -3533,7 +3559,7 @@ class ADHDHighlighter {
       async requestGlmVision({ imageDataUrl, prompt = '请识别图片内容，并先输出图片中的文字，再补充简要说明。' }) {
         const stored = await new Promise(resolve => chrome.storage.local.get(['glmVisionApiKey'], resolve));
         const key = String(stored.glmVisionApiKey || '').trim();
-        if (!key) throw new Error('请先在太学设置中填写 GLM-4V-Flash Key');
+        if (!key) throw new Error('请先在稷下设置中填写 GLM-4V-Flash Key');
         if (!String(imageDataUrl || '').startsWith('data:image/') && !/^https?:\/\//i.test(String(imageDataUrl || ''))) throw new Error('当前上下文不是有效图片');
         const body = JSON.stringify({ model: 'glm-4v-flash', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: imageDataUrl } }, { type: 'text', text: prompt }] }], temperature: 0.2, max_tokens: 1024 });
         const resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body, timeout: 60000 }, resolve));
@@ -3544,13 +3570,13 @@ class ADHDHighlighter {
         return text;
       },
       async requestStructured(request) {
-        const safeRequest = validateTaixueTaskRequest(request);
+        const safeRequest = validateJixiaTaskRequest(request);
         if (!safeRequest.allowNetwork) throw new Error('该任务未允许联网请求');
         const output = await this.requestJsonText({ prompt: safeRequest.prompt || '', timeout: safeRequest.budget.timeout || 60000, maxTokens: safeRequest.budget.maxTokens || 1800, temperature: safeRequest.budget.temperature || 0.4 });
-        return { taskType: safeRequest.taskType, context: safeRequest.context, output: validateTaixueOutput(output, safeRequest.outputSchema), createdAt: Date.now(), persisted: false };
+        return { taskType: safeRequest.taskType, context: safeRequest.context, output: validateJixiaOutput(output, safeRequest.outputSchema), createdAt: Date.now(), persisted: false };
       },
       async requestJsonText({ prompt, timeout = 60000, maxTokens = 1800, temperature = 0.4 }) {
-        const { provider: prov, model } = taixueState.getProviderState();
+        const { provider: prov, model } = jixiaState.getProviderState();
         const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const key = String((stored.aiKeys || {})[prov] || '').trim();
         if (!key) throw new Error('当前供应商尚未配置 API Key');
@@ -3570,7 +3596,7 @@ class ADHDHighlighter {
           return { url: baseTemplate, body: JSON.stringify({ model, temperature: temp, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) };
         };
         let request = buildRequest(preferredTemperature);
-        taixueState.setTaskStatus('requesting');
+        jixiaState.setTaskStatus('requesting');
         let resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: request.url, method: 'POST', headers, body: request.body, timeout }, resolve));
         const failedStatus = resp && typeof resp.status === 'number' && (resp.status < 200 || resp.status >= 300);
         const temperatureError = resp && (!resp.success || failedStatus) && /invalid temperature|temperature.*only 1|only 1 is allowed/i.test(String(resp?.data?.error?.message || resp?.data?.message || resp?.error || ''));
@@ -3579,7 +3605,7 @@ class ADHDHighlighter {
           resp = await new Promise(resolve => chrome.runtime.sendMessage({ action: 'aiChatRequest', url: request.url, method: 'POST', headers, body: request.body, timeout }, resolve));
         }
         if (!resp || !resp.success || (typeof resp.status === 'number' && (resp.status < 200 || resp.status >= 300))) {
-          taixueState.setTaskStatus('failed');
+          jixiaState.setTaskStatus('failed');
           const detail = resp?.data?.error?.message || resp?.data?.message || resp?.error || '';
           throw new Error(`AI 请求失败，请检查供应商、模型和 API Key${detail ? `：${detail}` : ''}`);
         }
@@ -3591,7 +3617,7 @@ class ADHDHighlighter {
           const choice = data.choices?.[0] || {};
           output = choice.message?.content || choice.text || data.output?.text || data.output_text || '';
         }
-        taixueState.setTaskStatus('completed');
+        jixiaState.setTaskStatus('completed');
         output = Array.isArray(output) ? output.map(part => typeof part === 'string' ? part : (part?.text || '')).join('') : String(output || '');
         if (!output.trim()) {
           const choice = data.choices?.[0] || {};
@@ -3602,7 +3628,8 @@ class ADHDHighlighter {
         return output;
       }
     };
-    window.TaixueTask = taixueTask;
+    window.JixiaTask = jixiaTask;
+    window.TaixueTask = jixiaTask;
     let currentView = 'chat';
     const updateTaskBar = (which) => {
       const groups = {
@@ -3615,10 +3642,10 @@ class ADHDHighlighter {
     };
     const setView = (which) => {
       currentView = which;
-      taixueState.setModule(which);
+      jixiaState.setModule(which);
       updateTaskBar(which);
       if (which === 'chat' || which === 'quiz') {
-        try { chrome.storage.local.set({ agfTaixueLastModule: which }); } catch (_) {}
+        try { chrome.storage.local.set({ agfJixiaLastModule: which }); } catch (_) {}
       }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
@@ -3638,17 +3665,17 @@ class ADHDHighlighter {
       if (tabWrench) tabWrench.classList.toggle('active', which === 'settings');
     };
     const showChat = () => { setView('chat'); try { rebuildConvIndex(); } catch (_) {} try { focusUserCaretEnd(); } catch (_) {} };
-    const updateContextControls = async (source = taixueState.contextSource) => {
-      taixueState.setContextSource(source);
-      contextButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.source === taixueState.contextSource));
+    const updateContextControls = async (source = jixiaState.contextSource) => {
+      jixiaState.setContextSource(source);
+      contextButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.source === jixiaState.contextSource));
       if (!contextSummary) return;
-      const labels = { full_article: window.i18n?.t?.('taixue.context.full') || '全文', selection: window.i18n?.t?.('taixue.context.selection') || '选中内容', paragraph: window.i18n?.t?.('taixue.context.paragraph') || '当前段落', manual: window.i18n?.t?.('taixue.context.manual') || '手动内容' };
+      const labels = { full_article: window.i18n?.t?.('jixia.context.full') || '全文', selection: window.i18n?.t?.('jixia.context.selection') || '选中内容', paragraph: window.i18n?.t?.('jixia.context.paragraph') || '当前段落', manual: window.i18n?.t?.('jixia.context.manual') || '手动内容' };
       let preview = '';
       try {
         if (source === 'selection') preview = getSelectedTextSafe().slice(0, 30);
         else if (source === 'paragraph') preview = getCurrentParagraphText().slice(0, 30);
       } catch (_) {}
-      contextSummary.textContent = `${window.i18n?.t?.('taixue.context.summary', { label: labels[source] || labels.full_article }) || `当前上下文：${labels[source] || '全文'}`}${preview ? ` · ${preview}` : ''}`;
+      contextSummary.textContent = `${window.i18n?.t?.('jixia.context.summary', { label: labels[source] || labels.full_article }) || `当前上下文：${labels[source] || '全文'}`}${preview ? ` · ${preview}` : ''}`;
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
@@ -3658,7 +3685,7 @@ class ADHDHighlighter {
     let currentChartSourceContext = null;
     let currentChartSkill = null;
     const chartButton = document.createElement('button');
-    chartButton.id = 'agfBtnChartSkill'; chartButton.className = 'agf-task-btn'; chartButton.dataset.i18n = 'taixue.actions.chart'; chartButton.dataset.i18nTitle = 'taixue.actions.chartTitle'; chartButton.textContent = '做图表'; chartButton.title = '用内置图表 Skill 解释当前上下文';
+    chartButton.id = 'agfBtnChartSkill'; chartButton.className = 'agf-task-btn'; chartButton.dataset.i18n = 'jixia.actions.chart'; chartButton.dataset.i18nTitle = 'jixia.actions.chartTitle'; chartButton.textContent = '做图表'; chartButton.title = '用内置图表 Skill 解释当前上下文';
     if (taskActions) taskActions.appendChild(chartButton);
     const chartView = viewChart;
     const chartCanvas = chartView.querySelector('#agfChartCanvas');
@@ -3672,19 +3699,19 @@ class ADHDHighlighter {
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
-    chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'taixue.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
-    const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system" data-i18n="taixue.chart.system">跟随系统</option><option value="light" data-i18n="taixue.chart.light">浅色主题</option><option value="dark" data-i18n="taixue.chart.dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
+    chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
+    const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system" data-i18n="jixia.chart.system">跟随系统</option><option value="light" data-i18n="jixia.chart.light">浅色主题</option><option value="dark" data-i18n="jixia.chart.dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
     try { window.i18n?.applyTranslations?.(); } catch (_) {}
-    const archifyOptions = [{ value: 'architecture', key: 'taixue.chart.intent.architecture' }, { value: 'workflow', key: 'taixue.chart.intent.workflow' }, { value: 'data_flow', key: 'taixue.chart.intent.data_flow' }, { value: 'lifecycle', key: 'taixue.chart.intent.lifecycle' }, { value: 'sequence', key: 'taixue.chart.intent.sequence' }];
+    const archifyOptions = [{ value: 'architecture', key: 'jixia.chart.intent.architecture' }, { value: 'workflow', key: 'jixia.chart.intent.workflow' }, { value: 'data_flow', key: 'jixia.chart.intent.data_flow' }, { value: 'lifecycle', key: 'jixia.chart.intent.lifecycle' }, { value: 'sequence', key: 'jixia.chart.intent.sequence' }];
     archifyOptions.forEach(option => { if (chartIntent && !chartIntent.querySelector(`option[value="${option.value}"]`)) { const item = document.createElement('option'); item.value = option.value; item.dataset.i18n = option.key; item.textContent = window.i18n?.t?.(option.key) || option.value; chartIntent.appendChild(item); } });
-    chartIntent?.querySelectorAll('option').forEach(option => { if (option.value) { option.dataset.i18n ||= `taixue.chart.intent.${option.value}`; } });
-    chartRenderer?.querySelectorAll('option').forEach(option => { if (option.value) { option.dataset.i18n ||= `taixue.chart.renderer.${option.value}`; } });
+    chartIntent?.querySelectorAll('option').forEach(option => { if (option.value) { option.dataset.i18n ||= `jixia.chart.intent.${option.value}`; } });
+    chartRenderer?.querySelectorAll('option').forEach(option => { if (option.value) { option.dataset.i18n ||= `jixia.chart.renderer.${option.value}`; } });
     const chartHistoryState = { past: [], future: [], selected: new Set(), selectedEdges: new Set(), edgeMode: false };
     const chartSnapshot = () => currentChartContext ? JSON.parse(JSON.stringify(currentChartContext)) : null;
     const rememberChart = () => { const snapshot = chartSnapshot(); if (!snapshot) return; chartHistoryState.past.push(snapshot); if (chartHistoryState.past.length > 40) chartHistoryState.past.shift(); chartHistoryState.future = []; updateChartHistoryButtons(); };
     const updateChartHistoryButtons = () => { if (chartButtons.undo) chartButtons.undo.disabled = !chartHistoryState.past.length; if (chartButtons.redo) chartButtons.redo.disabled = !chartHistoryState.future.length; };
     const downloadChartFile = (name, content, type) => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([content], { type })); link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000); };
-    const chartFileName = ext => `${(currentChartContext?.chartModel?.title || 'taixue-chart').replace(/[^\w\u4e00-\u9fff-]+/g, '-')}.${ext}`;
+    const chartFileName = ext => `${(currentChartContext?.chartModel?.title || 'jixia-chart').replace(/[^\w\u4e00-\u9fff-]+/g, '-')}.${ext}`;
     const chartZoomOut = chartView.querySelector('#agfChartZoomOut');
     const chartZoomReset = chartView.querySelector('#agfChartZoomReset');
     const chartZoomIn = chartView.querySelector('#agfChartZoomIn');
@@ -3905,7 +3932,7 @@ class ADHDHighlighter {
       return String(fallbackText || '').trim();
     };
     const fillChartWorkspace = async ({ useSkill = false } = {}) => {
-      const ctx = await taixueContext.resolve(taixueState.contextSource);
+      const ctx = await jixiaContext.resolve(jixiaState.contextSource);
       const material = useSkill ? currentChartSkillMaterial(ctx.text) : String(ctx.text || '');
       currentChartSourceContext = ctx;
       currentChartSkill = useSkill ? '你帮我做一个关系图来解释' : null;
@@ -3939,14 +3966,14 @@ class ADHDHighlighter {
       return `${skillPrefix}不要输出思考过程、分析过程或Markdown。${compactRule}请根据以下工作区输入生成${config.name}，只返回严格JSON。工作区输入可能是事实材料，也可能只是用户的任务要求；如果输入明确要求“根据你的知识/常识生成”，允许使用你的通用知识完成图表，不要因为输入没有提供事实段落而返回空结构。若输入包含网页或选区材料，则优先依据材料并标记不确定内容。JSON必须包含 title, description, ${config.schema}, sourceRefs。${config.rule}对于知识驱动图表，sourceRefs 可以为空并在 warnings 说明“基于通用知识生成”；对于材料驱动图表，每个主要事件、节点或关系都要尽量给出原文依据的短文本和段落定位；无法确定的关系放入warnings，不要编造。工作区输入：\n${material}`;
     };
     const requestChartOutput = async (intent, material) => {
-      const firstMaterial = limitTaixueText(material, 30000).text;
+      const firstMaterial = limitJixiaText(material, 30000).text;
       try {
-        return await taixueTask.requestJsonText({ prompt: buildChartPrompt(intent, firstMaterial), timeout: 90000, maxTokens: 8000, temperature: .2 });
+        return await jixiaTask.requestJsonText({ prompt: buildChartPrompt(intent, firstMaterial), timeout: 90000, maxTokens: 8000, temperature: .2 });
       } catch (error) {
         if (!/空内容|timeout|超时|截断|length|token/i.test(String(error.message || error))) throw error;
         chartNotice.textContent = 'AI 首次没有返回可解析正文，正在用压缩 JSON 模式重试…';
-        const shorterMaterial = limitTaixueText(material, 12000).text;
-        return await taixueTask.requestJsonText({ prompt: buildChartPrompt(intent, shorterMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
+        const shorterMaterial = limitJixiaText(material, 12000).text;
+        return await jixiaTask.requestJsonText({ prompt: buildChartPrompt(intent, shorterMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
       }
     };
     const requestChartModel = async (promptType, material) => {
@@ -3956,15 +3983,15 @@ class ADHDHighlighter {
       } catch (error) {
         if (!/JSON|不完整|Unterminated|截断/i.test(String(error.message || error))) throw error;
         chartNotice.textContent = 'AI 返回了半截 JSON，正在要求压缩格式重试…';
-        const retryMaterial = limitTaixueText(material, 12000).text;
-        const retryOutput = await taixueTask.requestJsonText({ prompt: buildChartPrompt(promptType, retryMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
+        const retryMaterial = limitJixiaText(material, 12000).text;
+        const retryOutput = await jixiaTask.requestJsonText({ prompt: buildChartPrompt(promptType, retryMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
         return typeof retryOutput === 'string' ? AgfChartModel.parseJsonObject(retryOutput) : retryOutput;
       }
     };
     chartButtons.generate.onclick = async () => {
       try {
         chartNotice.textContent = '正在根据工作区材料生成结构化图表…';
-        const ctx = currentChartSourceContext || await taixueContext.resolve(taixueState.contextSource);
+        const ctx = currentChartSourceContext || await jixiaContext.resolve(jixiaState.contextSource);
         const material = String(chartSourceText?.value || ctx.text || '').trim();
         if (!material) throw new Error('图表工作区没有可用材料');
         const selectedType = chartIntent.value;
@@ -4001,7 +4028,7 @@ class ADHDHighlighter {
           userRequest: request
         };
         const prompt = `你是图表结构编辑器。根据当前结构化 ChartModel 和用户要求，返回修改后的完整 ChartModel JSON。不要输出 Markdown、SVG、Mermaid、HTML 或解释文字；不要丢失未要求修改的节点、连线、泳道、来源和元数据。允许新增/删除/移动节点，修改节点标签、连线、强调路径和泳道。坐标可保留或调整，但必须保证节点 id 唯一、连线 source/target 存在。当前图表类型：${payload.chartType}；intent：${payload.intent}；renderer：${payload.renderer}；theme：${payload.theme}。元数据：${JSON.stringify(payload.metadata)}。当前 ChartModel：${JSON.stringify(payload.chartModel)}。用户要求：${payload.userRequest}。只返回完整 ChartModel JSON。`;
-        const output = await taixueTask.requestJsonText({ prompt, timeout: 90000, maxTokens: 9000, temperature: .15 });
+        const output = await jixiaTask.requestJsonText({ prompt, timeout: 90000, maxTokens: 9000, temperature: .15 });
         const parsed = typeof output === 'string' ? AgfChartModel.parseJsonObject(output) : output;
         const nextModel = parsed?.chartModel && typeof parsed.chartModel === 'object' ? parsed.chartModel : parsed;
         const checked = AgfChartModel.validateChartContext({ ...currentChartContext, chartModel: nextModel, updatedAt: Date.now() });
@@ -4033,7 +4060,7 @@ class ADHDHighlighter {
     document.addEventListener('keydown', event => { if (!currentChartContext || !chartView || chartView.style.display === 'none') return; if ((event.key === 'Delete' || event.key === 'Backspace') && chartHistoryState.selected.size && !/INPUT|TEXTAREA/.test(event.target?.tagName || '')) { event.preventDefault(); deleteSelectedChartNodes(); } });
     chartButtons.save.onclick = async () => { if (!currentChartContext) return; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = '已保存到 IndexedDB'; loadChartHistory(); };
     chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const scale = Number(prompt('PNG 导出倍率（1-4）', '2')) || 2; const transparent = confirm('是否使用透明背景？'); const png = await AgfChartWorkspace.svgToPngWithOptions(await getCurrentChartSvg(), { scale, transparent }); const link = document.createElement('a'); link.href = png; link.download = chartFileName('png'); link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
-    chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createTaixueContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'taixue-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
+    chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createJixiaContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'jixia-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
     const renderMediaAttachment = () => {
       if (!mediaAttachment) return;
       const media = currentMediaContext?.image;
@@ -4047,7 +4074,7 @@ class ADHDHighlighter {
       const root = source === 'selection' ? selection?.anchorNode : document.body;
       const selectedRoot = root && (root.nodeType === 1 ? root : root.parentElement);
       const imgs = Array.from(document.images || []).filter(img => {
-        if (!img || !img.src || img.closest('#agfTaixuePanel, #agfAiSettingOverlay')) return false;
+        if (!img || !img.src || img.closest('#agfJixiaPanel, #agfAiSettingOverlay')) return false;
         if (source === 'selection') {
           try { return Boolean(selection?.rangeCount && selection.getRangeAt(0).intersectsNode(img)); } catch (_) { return selectedRoot && (selectedRoot.contains(img) || img.contains(selectedRoot)); }
         }
@@ -4189,23 +4216,23 @@ class ADHDHighlighter {
       const imageSet = pageImagesForSource(source);
       const imgs = imageSet.selected;
       if (!imgs.length) {
-        const useScreenshot = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}没有检测到可直接读取的图片。是否截图当前网页视窗并加入图像工作区？\n注意：截图不包含浏览器侧边栏，太学浮层会暂时隐藏。`);
+        const useScreenshot = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}没有检测到可直接读取的图片。是否截图当前网页视窗并加入图像工作区？\n注意：截图不包含浏览器侧边栏，稷下浮层会暂时隐藏。`);
         if (!useScreenshot) return [];
         try {
           const dataUrl = await capturePageScreenshot();
-          const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name: '当前网页视窗截图', delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
+          const ctx = createJixiaContext({ source: 'screenshot', image: { dataUrl, name: '当前网页视窗截图', delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
           return [ctx];
         } catch (error) { showToast(`网页截图识别失败：${error.message || error}`); return []; }
       }
-      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
-      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { showToast('发现网页图片，但媒体权限或上传开关未开启，将只使用文本。'); return []; }
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['jixiaMediaPermissionEnabled','jixiaMediaUploadEnabled'], resolve));
+      if (mediaSettings.jixiaMediaPermissionEnabled === false || mediaSettings.jixiaMediaUploadEnabled !== true) { showToast('发现网页图片，但媒体权限或上传开关未开启，将只使用文本。'); return []; }
       const limitHint = imageSet.total > 10 ? '图片超过 10 张，全部串行处理可能需要较长时间；你可以取消后改用截图或分批处理。' : '';
       const ok = window.confirm(`当前${source === 'selection' ? '选区' : '全文'}发现 ${imageSet.total} 张可见图片。将先加入图像工作区并默认勾选；点击“发送勾选图片识别”后会使用 GLM-4V-Flash 串行识别。${limitHint}\n是否继续？`);
       if (!ok) return [];
       const contexts = [];
       for (let i = 0; i < imgs.length; i++) {
         const imageUrl = imgs[i].currentSrc || imgs[i].src;
-        contexts.push(createTaixueContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl: '', mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imageUrl, delivery: 'link' }, confirmed: true, sourceUrl: location.href }));
+        contexts.push(createJixiaContext({ source: source === 'selection' ? 'selection' : 'full_article', image: { dataUrl: '', mimeType: imgs[i].naturalWidth ? 'image/*' : '', name: imgs[i].alt || `网页图片 ${i + 1}`, alt: imgs[i].alt || '', sourceUrl: imageUrl, delivery: 'link' }, confirmed: true, sourceUrl: location.href }));
       }
       return contexts;
     };
@@ -4213,12 +4240,12 @@ class ADHDHighlighter {
       const prompt = `这是第 ${index + 1} 张图片。请完成 OCR 与视觉理解，先输出图片文字，再输出图片说明；不确定内容请明确标注。`;
       const imageUrl = ctx.image?.sourceUrl || '';
       if (ctx.image?.dataUrl) {
-        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
+        return await withMediaTimeout(jixiaTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
       }
       let linkError = null;
       try {
         ctx.image.delivery = 'link';
-        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: imageUrl, prompt }), 75000);
+        return await withMediaTimeout(jixiaTask.requestGlmVision({ imageDataUrl: imageUrl, prompt }), 75000);
       } catch (error) { linkError = error; }
       let downloadError = null;
       try {
@@ -4226,13 +4253,13 @@ class ADHDHighlighter {
         if (!img) throw new Error('无法在当前页面定位图片元素');
         ctx.image.dataUrl = await imageElementToDataUrl(img);
         ctx.image.delivery = 'download';
-        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
+        return await withMediaTimeout(jixiaTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt }), 75000);
       } catch (error) { downloadError = error; }
       try {
         const img = Array.from(document.images || []).find(x => (x.currentSrc || x.src) === imageUrl);
         ctx.image.dataUrl = await captureImageElementScreenshot(img);
         ctx.image.delivery = 'screenshot';
-        return await withMediaTimeout(taixueTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt: `${prompt}\n这是定位到正文图片后的截图兜底，请只识别目标图片内容，不要描述网页或太学浮层。` }), 75000);
+        return await withMediaTimeout(jixiaTask.requestGlmVision({ imageDataUrl: ctx.image.dataUrl, prompt: `${prompt}\n这是定位到正文图片后的截图兜底，请只识别目标图片内容，不要描述网页或稷下浮层。` }), 75000);
       } catch (screenshotError) {
         throw new Error(`链接、下载、截图均失败：链接=${linkError?.message || linkError}；下载=${downloadError?.message || downloadError}；截图=${screenshotError.message || screenshotError}`);
       }
@@ -4262,11 +4289,11 @@ class ADHDHighlighter {
       }
     };
     const saveImageRecognitionHistory = async (ctx, index) => {
-      const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : [])));
+      const history = await new Promise(resolve => chrome.storage.local.get(['agfJixiaImageRecognitionHistory'], r => resolve(Array.isArray(r.agfJixiaImageRecognitionHistory) ? r.agfJixiaImageRecognitionHistory : [])));
       const historyId = ctx.metadata?.historyId || `image-${Date.now()}-${index}`;
       ctx.metadata = { ...(ctx.metadata || {}), historyId };
       history.unshift({ id: historyId, name: ctx.image?.name || `图片 ${index + 1}`, output: ctx.recognition?.text || '', context: ctx, createdAt: Date.now() });
-      await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
+      await new Promise(resolve => chrome.storage.local.set({ agfJixiaImageRecognitionHistory: history.slice(0, 30) }, resolve));
     };
     const saveVisionChatHistory = async (ctx, text, provider, model) => {
       if (!ctx?.image || !text) return;
@@ -4309,7 +4336,7 @@ class ADHDHighlighter {
     const prepareMediaForChat = async (provider, model, requestedMode = 'auto') => {
       const hasImageLikeContext = currentMediaContext && (currentMediaContext.source === 'image' || currentMediaContext.source === 'chart');
       if (!hasImageLikeContext && !currentMediaBatch.length) return { mode: 'none', context: null, contexts: [] };
-      const capabilities = taixueTask.getModelCapabilities(provider, model);
+      const capabilities = jixiaTask.getModelCapabilities(provider, model);
       const allContexts = currentMediaBatch.length ? currentMediaBatch : [currentMediaContext];
       const contexts = capabilities.vision
         ? allContexts.filter(ctx => ctx?.image?.dataUrl || ctx?.image?.sourceUrl)
@@ -4326,27 +4353,27 @@ class ADHDHighlighter {
     });
     const chooseMedia = async (kind, file) => {
       if (kind === 'image' && imageWorkspaceStatus) imageWorkspaceStatus.textContent = file ? '正在读取图片…' : '未选择图片';
-      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
-      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['jixiaMediaPermissionEnabled','jixiaMediaUploadEnabled'], resolve));
+      if (mediaSettings.jixiaMediaPermissionEnabled === false || mediaSettings.jixiaMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在稷下设置中开启媒体权限和媒体上传。'); return; }
       const allow = await new Promise(resolve => { const ok = window.confirm(`${kind === 'image' ? '图片' : '音频'}将仅在你确认后发送给已选择的 AI 服务商。是否继续？`); resolve(ok); });
       if (!allow) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已取消'; return; }
       const dataUrl = await readMediaFile(file, kind);
       if (kind === 'image' && imageWorkspaceStatus) imageWorkspaceStatus.textContent = '图片已读取，正在请求 GLM-4V-Flash…';
-      currentMediaContext = createTaixueContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      currentMediaContext = createJixiaContext({ source: kind, [kind]: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
       if (kind === 'image') currentMediaBatch = [currentMediaContext];
       if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
       if (mediaModeSelect) mediaModeSelect.disabled = false;
       if (mediaStrategy) mediaStrategy.textContent = '图片已加入，等待发送时判断模型能力';
-      if (contextSummary) contextSummary.textContent = `${window.i18n?.t?.('taixue.context.summary', { label: window.i18n?.t?.(`taixue.context.${kind}`) || (kind === 'image' ? '图片' : '音频') }) || `当前上下文：${kind === 'image' ? '图片' : '音频'}`} · ${file.name}`;
+      if (contextSummary) contextSummary.textContent = `${window.i18n?.t?.('jixia.context.summary', { label: window.i18n?.t?.(`jixia.context.${kind}`) || (kind === 'image' ? '图片' : '音频') }) || `当前上下文：${kind === 'image' ? '图片' : '音频'}`} · ${file.name}`;
       if (kind === 'image' && imageWorkspaceStatus) { imageWorkspaceStatus.textContent = '识别中…'; imageWorkspaceResult.innerHTML = `<p>已添加：${String(file.name)}</p><img src="${dataUrl}" alt="待识别图片" style="max-width:180px;max-height:120px;border-radius:8px"/>`; }
-      if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
+      if (kind === 'image') { try { const output = await jixiaTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfJixiaImageRecognitionHistory'], r => resolve(Array.isArray(r.agfJixiaImageRecognitionHistory) ? r.agfJixiaImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfJixiaImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
       else showToast('音频已加入上下文，音频转写功能尚未开启。');
     };
     const processImageBatch = async (files) => {
       const list = Array.from(files || []).filter(f => f && String(f.type || '').startsWith('image/'));
       if (!list.length) return;
-      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['taixueMediaPermissionEnabled','taixueMediaUploadEnabled'], resolve));
-      if (mediaSettings.taixueMediaPermissionEnabled === false || mediaSettings.taixueMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在太学设置中开启媒体权限和媒体上传。'); return; }
+      const mediaSettings = await new Promise(resolve => chrome.storage.local.get(['jixiaMediaPermissionEnabled','jixiaMediaUploadEnabled'], resolve));
+      if (mediaSettings.jixiaMediaPermissionEnabled === false || mediaSettings.jixiaMediaUploadEnabled !== true) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '等待开启媒体权限和上传'; showToast('请先在稷下设置中开启媒体权限和媒体上传。'); return; }
       if (!window.confirm(`将依次识别 ${list.length} 张图片，并发送给 GLM-4V-Flash。预计需要更长时间，是否继续？`)) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '已取消'; return; }
       currentMediaBatch = []; currentMediaContext = null; if (imageAddToChat) imageAddToChat.disabled = true; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
       for (let i = 0; i < list.length; i++) {
@@ -4355,12 +4382,12 @@ class ADHDHighlighter {
           if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在读取第 ${i + 1}/${list.length} 张…`;
           const dataUrl = await readMediaFile(file, 'image');
           if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = `正在识别第 ${i + 1}/${list.length} 张…`;
-          const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `这是第 ${i + 1} 张图片。请完成图片 OCR 与视觉理解，先输出图片文字，再输出图片说明；不确定内容请明确标注。` });
-          const context = createTaixueContext({ source: 'upload', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+          const output = await jixiaTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: `这是第 ${i + 1} 张图片。请完成图片 OCR 与视觉理解，先输出图片文字，再输出图片说明；不确定内容请明确标注。` });
+          const context = createJixiaContext({ source: 'upload', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
           context.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() };
           currentMediaBatch.push(context); if (!currentMediaContext) currentMediaContext = context;
-          const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : [])));
-          history.unshift({ id: `image-${Date.now()}-${i}`, name: file.name, output, context, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve));
+          const history = await new Promise(resolve => chrome.storage.local.get(['agfJixiaImageRecognitionHistory'], r => resolve(Array.isArray(r.agfJixiaImageRecognitionHistory) ? r.agfJixiaImageRecognitionHistory : [])));
+          history.unshift({ id: `image-${Date.now()}-${i}`, name: file.name, output, context, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfJixiaImageRecognitionHistory: history.slice(0, 30) }, resolve));
           if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div class="agf-vocab-card"><strong>${i + 1}/${list.length} · ${String(file.name)}</strong><div style="margin-top:8px"><img src="${dataUrl}" alt="${String(file.name)}" style="max-width:180px;max-height:120px;border-radius:8px"></div><div style="margin-top:8px">${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`;
         } catch (e) { if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<p class="agf-error">${i + 1}/${list.length} 识别失败：${String(e.message || e)}</p>`; }
       }
@@ -4371,7 +4398,7 @@ class ADHDHighlighter {
     const attachDirectChatImage = async (file) => {
       if (!file) return;
       const dataUrl = await readMediaFile(file, 'image');
-      const context = createTaixueContext({ source: 'chat_image', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
+      const context = createJixiaContext({ source: 'chat_image', image: { dataUrl, mimeType: file.type, name: file.name, size: file.size, alt: file.name }, confirmed: true, sourceUrl: location.href });
       context.recognition = { status: 'not_requested', text: '' };
       currentMediaBatch = [context]; currentMediaContext = context;
       renderMediaAttachment();
@@ -4410,13 +4437,13 @@ class ADHDHighlighter {
     };
     chatImageInput.onchange = () => attachDirectChatImage(chatImageInput.files?.[0]).catch(error => showToast(error.message || '添加图片失败'));
     const addScreenshotToWorkspace = async (dataUrl, name = '网页截图') => {
-      const ctx = createTaixueContext({ source: 'screenshot', image: { dataUrl, name, delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
+      const ctx = createJixiaContext({ source: 'screenshot', image: { dataUrl, name, delivery: 'screenshot' }, confirmed: true, sourceUrl: location.href });
       addMediaContextsToWorkspace([ctx], { reset: false, statusText: '截图已加入图像工作区，等待发送识别' });
     };
     const startPageScreenshotMode = async () => {
-      const taixueOverlay = document.getElementById('agfAiSettingOverlay');
-      const previousDisplay = taixueOverlay && taixueOverlay.style.display;
-      if (taixueOverlay) taixueOverlay.style.display = 'none';
+      const jixiaOverlay = document.getElementById('agfAiSettingOverlay');
+      const previousDisplay = jixiaOverlay && jixiaOverlay.style.display;
+      if (jixiaOverlay) jixiaOverlay.style.display = 'none';
       const mask = document.createElement('div');
       mask.id = 'agfScreenshotSelectionMask';
       mask.style.cssText = 'position:fixed;inset:0;z-index:2147483646;cursor:crosshair;background:rgba(20,30,40,.10);';
@@ -4431,7 +4458,7 @@ class ADHDHighlighter {
       let startX = 0, startY = 0, currentRect = null, dragging = false;
       const cleanup = () => {
         try { mask.remove(); } catch (_) {}
-        if (taixueOverlay) taixueOverlay.style.display = previousDisplay || '';
+        if (jixiaOverlay) jixiaOverlay.style.display = previousDisplay || '';
       };
       const setRect = (x1, y1, x2, y2) => {
         const left = Math.min(x1, x2);
@@ -4482,7 +4509,7 @@ class ADHDHighlighter {
     if (imageContextBtn) imageContextBtn.onclick = () => setView('image');
     const pageImageDiscoverBtn = document.getElementById('agfPageImageDiscoverBtn');
     if (pageImageDiscoverBtn) pageImageDiscoverBtn.onclick = async () => {
-      const source = taixueState.contextSource === 'selection' && getSelectedTextSafe() ? 'selection' : 'full_article';
+      const source = jixiaState.contextSource === 'selection' && getSelectedTextSafe() ? 'selection' : 'full_article';
       pageImageDiscoverBtn.disabled = true;
       try {
         const contexts = await discoverAndConfirmPageImages(source);
@@ -4509,9 +4536,9 @@ class ADHDHighlighter {
     if (imageChooseBtn) imageChooseBtn.onclick = () => workspaceImageInput && workspaceImageInput.click();
     if (workspaceImageInput) workspaceImageInput.onchange = () => processImageBatch(workspaceImageInput.files).catch(e => { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '处理失败'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = `<p class="agf-error">${String(e.message || e)}</p>`; showToast(e.message || '图片处理失败'); });
     if (imageDropzone) { imageDropzone.ondragover = e => { e.preventDefault(); imageDropzone.classList.add('dragover'); }; imageDropzone.ondragleave = () => imageDropzone.classList.remove('dragover'); imageDropzone.ondrop = e => { e.preventDefault(); imageDropzone.classList.remove('dragover'); processImageBatch(e.dataTransfer?.files).catch(err => showToast(err.message || '图片处理失败')); }; }
-    const imageHistoryKey = 'agfTaixueImageRecognitionHistory';
+    const imageHistoryKey = 'agfJixiaImageRecognitionHistory';
     const historyModelLabel = item => { const provider = item.context?.metadata?.provider || item.context?.metadata?.visionProvider || ''; const model = item.context?.metadata?.model || item.context?.metadata?.visionModel || item.context?.recognition?.model || ''; return provider && model ? `${provider}/${model}` : model || '模型信息不可用'; };
-    const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x.agfTaixueImageRecognitionHistory : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${historyModelLabel(x)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果 · ${historyModelLabel(x)}</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
+    const renderImageHistory = async () => { if (!imageWorkspaceHistoryList) return; const r = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x.agfJixiaImageRecognitionHistory : []))); imageWorkspaceHistoryList.innerHTML = r.length ? r.slice(0,20).map(x => `<div class="agf-history-row">${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="width:42px;height:42px;object-fit:cover;border-radius:5px">` : ''}<span>${String(x.name)} · ${historyModelLabel(x)} · ${new Date(x.createdAt).toLocaleString()}</span><button data-image-history-id="${x.id}">查看</button></div>`).join('') : '<p>暂无图像识别历史。</p>'; imageWorkspaceHistoryList.querySelectorAll('[data-image-history-id]').forEach(b => b.onclick = () => { const x = r.find(y => y.id === b.dataset.imageHistoryId); if (x) { currentMediaContext = x.context; imageWorkspaceResult.innerHTML = `${x.context?.image?.dataUrl ? `<img src="${x.context.image.dataUrl}" alt="历史图片" style="max-width:180px;max-height:120px;border-radius:8px">` : ''}<strong>识别结果 · ${historyModelLabel(x)}</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(x.output) : String(x.output).replace(/\n/g,'<br>')}</div>`; imageAddToChat.disabled = false; renderMediaAttachment(); } }); };
     const enhanceImageHistoryControls = async () => {
       if (!imageWorkspaceHistoryList) return;
       if (!imageWorkspaceHistoryList.querySelector('[data-image-history-clear]')) {
@@ -4634,9 +4661,9 @@ class ADHDHighlighter {
     let quizContextRef = null;
     let quizFromHistory = false;
     let quizHistoryFilterCurrent = false;
-    const parseJsonPayload = TaixueModules.parseQuizPayload;
-    const normalizeQuizItems = TaixueModules.normalizeQuizItems;
-    const quizModule = TaixueModules.createQuizModule({ context: taixueContext, task: taixueTask, limitText: limitTaixueText, getCount: () => quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3, onState: state => { const ctx = state.context; quizContextRef = { source: ctx.source, pageTitle: ctx.pageTitle, pageUrl: ctx.pageUrl, canonicalUrl: ctx.canonicalUrl, createdAt: ctx.createdAt, textLength: String(ctx.text || '').length, approxTokens: ctx.approxTokens || estimateTaixueTokens(ctx.text) }; } });
+    const parseJsonPayload = JixiaModules.parseQuizPayload;
+    const normalizeQuizItems = JixiaModules.normalizeQuizItems;
+    const quizModule = JixiaModules.createQuizModule({ context: jixiaContext, task: jixiaTask, limitText: limitJixiaText, getCount: () => quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3, onState: state => { const ctx = state.context; quizContextRef = { source: ctx.source, pageTitle: ctx.pageTitle, pageUrl: ctx.pageUrl, canonicalUrl: ctx.canonicalUrl, createdAt: ctx.createdAt, textLength: String(ctx.text || '').length, approxTokens: ctx.approxTokens || estimateJixiaTokens(ctx.text) }; } });
     const requestQuiz = (difficulty, retryCount = 1) => quizModule.requestQuestions(difficulty, retryCount);
     const quizHistoryKey = 'agfQuizHistory';
     const getQuizHistory = async () => new Promise(resolve => chrome.storage.local.get([quizHistoryKey], res => resolve(Array.isArray(res[quizHistoryKey]) ? res[quizHistoryKey] : [])));
@@ -4644,7 +4671,7 @@ class ADHDHighlighter {
     const saveQuizHistory = async (completed = false) => {
       if (!quizItems.length) return;
       const url = String(location.href || '');
-      const record = { id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pageUrl: url, pageTitle: getMetaTitle(), createdAt: quizStartedAt || Date.now(), completedAt: completed ? Date.now() : 0, provider: sessionProviderSelect.value, model: sessionModelSelect.value, difficulty: quizDifficulty, score: quizScore, total: quizItems.length, context: quizContextRef || { source: taixueState.contextSource, pageUrl: url, pageTitle: getMetaTitle() }, questions: quizItems.map((q, i) => ({ ...q, selected: q.selected, isCorrect: q.isCorrect, markedForReview: q.markedForReview || false })) };
+      const record = { id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pageUrl: url, pageTitle: getMetaTitle(), createdAt: quizStartedAt || Date.now(), completedAt: completed ? Date.now() : 0, provider: sessionProviderSelect.value, model: sessionModelSelect.value, difficulty: quizDifficulty, score: quizScore, total: quizItems.length, context: quizContextRef || { source: jixiaState.contextSource, pageUrl: url, pageTitle: getMetaTitle() }, questions: quizItems.map((q, i) => ({ ...q, selected: q.selected, isCorrect: q.isCorrect, markedForReview: q.markedForReview || false })) };
       const history = await getQuizHistory();
       const currentId = quizRecordId;
       const index = currentId ? history.findIndex(item => item.id === currentId) : -1;
@@ -4737,7 +4764,7 @@ class ADHDHighlighter {
     };
     const submitQuizAnswer = async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; };
     const nextQuizQuestion = async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } };
-    TaixueUiModules.bindQuizEvents({ elements: { submit: quizSubmit, next: quizNext, backHistory: quizBackHistory, tab: quizTab, start: document.getElementById('agfQuizStart'), easy: document.getElementById('agfQuizEasy'), hard: document.getElementById('agfQuizHard'), history: quizHistoryBtn }, actions: { submit: submitQuizAnswer, next: nextQuizQuestion, backHistory: () => { quizCard.style.display = 'none'; showQuizHistory(); }, show: showQuiz, start: startQuiz, history: showQuizHistory } });
+    JixiaUiModules.bindQuizEvents({ elements: { submit: quizSubmit, next: quizNext, backHistory: quizBackHistory, tab: quizTab, start: document.getElementById('agfQuizStart'), easy: document.getElementById('agfQuizEasy'), hard: document.getElementById('agfQuizHard'), history: quizHistoryBtn }, actions: { submit: submitQuizAnswer, next: nextQuizQuestion, backHistory: () => { quizCard.style.display = 'none'; showQuizHistory(); }, show: showQuiz, start: startQuiz, history: showQuizHistory } });
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
       const cl = document.querySelector('#agfAiSettingOverlay .agf-chat-list');
@@ -4773,19 +4800,19 @@ class ADHDHighlighter {
     if (tabWrench) tabWrench.addEventListener('click', () => { hideFulltextPanel(); hideToast(); showSettings(); });
     if (titleLabel) titleLabel.addEventListener('click', showChat);
     updateContextControls('full_article');
-    this.__openTaixueModule = (request = {}) => {
+    this.__openJixiaModule = (request = {}) => {
       updateContextControls(request.contextSource || 'full_article');
       if (request.module === 'quiz') showQuiz();
       else showChat();
     };
-    const pendingOpen = this.__pendingTaixueOpen || null;
-    this.__pendingTaixueOpen = null;
+    const pendingOpen = this.__pendingJixiaOpen || null;
+    this.__pendingJixiaOpen = null;
     if (pendingOpen) {
-      this.__openTaixueModule(pendingOpen);
+      this.__openJixiaModule(pendingOpen);
     } else {
       try {
-        chrome.storage.local.get(['agfTaixueLastModule'], res => {
-          const last = res && res.agfTaixueLastModule;
+        chrome.storage.local.get(['agfJixiaLastModule'], res => {
+          const last = res && res.agfJixiaLastModule;
           if (last === 'quiz') showQuiz();
           else showChat();
         });
@@ -5130,7 +5157,7 @@ class ADHDHighlighter {
       saveGlmVisionKeyBtn.addEventListener('click', () => { const value = String(glmVisionKeyInput.value || '').trim(); if (!value) return; chrome.storage.local.set({ glmVisionApiKey: value }, () => { glmVisionKeyInput.value = ''; glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; showToast('GLM-4V-Flash Key 已保存'); }); });
       chrome.storage.local.get(['glmVisionApiKey'], r => { if (r.glmVisionApiKey) glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; });
     }
-    const speakSettingsKey = 'agfTaixueSpeakSettings';
+    const speakSettingsKey = 'agfJixiaSpeakSettings';
     let availableSpeakVoices = [];
     const persistSpeakSettings = () => { try { chrome.storage.local.set({ [speakSettingsKey]: { language: speakLanguageSelect?.value || 'auto', voice: speakVoiceSelect?.value || '', rate: Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))) } }); } catch (_) {} };
     const refreshSpeakVoices = () => {
@@ -5146,7 +5173,7 @@ class ADHDHighlighter {
     if (speakVoiceSelect) speakVoiceSelect.addEventListener('change', persistSpeakSettings);
     if (speakRateInput) speakRateInput.addEventListener('change', persistSpeakSettings);
     if ('speechSynthesis' in window) { window.speechSynthesis.addEventListener('voiceschanged', refreshSpeakVoices); initSpeakSettings(); }
-    if (speakSampleBtn) speakSampleBtn.onclick = () => { if (!('speechSynthesis' in window)) return; const lang = speakLanguageSelect?.value || 'auto'; const sample = lang === 'zh-CN' || (lang === 'auto' && (!speakVoiceSelect?.value || speakVoiceSelect.value.toLowerCase().includes('zh'))) ? '这是太学朗读试听。你可以在这里确认当前语言、音色和语速。' : 'This is a Taixue reading sample. You can check the selected language, voice, and reading speed here.'; const u = new SpeechSynthesisUtterance(sample); const v = availableSpeakVoices.find(x => (x.voiceURI || x.name) === (speakVoiceSelect?.value || '')); u.voice = v || null; u.lang = v?.lang || (lang === 'auto' ? 'en-US' : lang); u.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); speechSynthesis.cancel(); speechSynthesis.speak(u); };
+    if (speakSampleBtn) speakSampleBtn.onclick = () => { if (!('speechSynthesis' in window)) return; const lang = speakLanguageSelect?.value || 'auto'; const sample = lang === 'zh-CN' || (lang === 'auto' && (!speakVoiceSelect?.value || speakVoiceSelect.value.toLowerCase().includes('zh'))) ? '这是稷下朗读试听。你可以在这里确认当前语言、音色和语速。' : 'This is a Jixia reading sample. You can check the selected language, voice, and reading speed here.'; const u = new SpeechSynthesisUtterance(sample); const v = availableSpeakVoices.find(x => (x.voiceURI || x.name) === (speakVoiceSelect?.value || '')); u.voice = v || null; u.lang = v?.lang || (lang === 'auto' ? 'en-US' : lang); u.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); speechSynthesis.cancel(); speechSynthesis.speak(u); };
 
     initFromStorage();
 
@@ -5214,7 +5241,7 @@ class ADHDHighlighter {
       let sensitive = true;
       let mediaSettings = {};
       try {
-        const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled','taixueMediaPermissionEnabled','taixueMediaUploadEnabled']);
+        const s = await chrome.storage.local.get(['pdfAutoCollectEnabled','privacySensitiveFilterEnabled','jixiaMediaPermissionEnabled','jixiaMediaUploadEnabled']);
         mediaSettings = s || {};
         auto = s.pdfAutoCollectEnabled !== undefined ? !!s.pdfAutoCollectEnabled : true;
         if (s.privacySensitiveFilterEnabled === undefined) {
@@ -5247,16 +5274,16 @@ class ADHDHighlighter {
         const on = val === 'on';
         await chrome.storage.local.set({ privacySensitiveFilterEnabled: on });
       }, sensMap);
-      const mediaPermission = mediaSettings.taixueMediaPermissionEnabled !== false;
-      const mediaUpload = mediaSettings.taixueMediaUploadEnabled === true;
+      const mediaPermission = mediaSettings.jixiaMediaPermissionEnabled !== false;
+      const mediaUpload = mediaSettings.jixiaMediaUploadEnabled === true;
       const mediaMap = { on: '开启', off: '关闭' };
       renderButtons(mediaPermissionToggle, ['on','off'], mediaPermission ? 'on' : 'off', async (val, btn) => {
         Array.from(mediaPermissionToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        await chrome.storage.local.set({ taixueMediaPermissionEnabled: val === 'on' });
+        await chrome.storage.local.set({ jixiaMediaPermissionEnabled: val === 'on' });
       }, mediaMap);
       renderButtons(mediaUploadToggle, ['on','off'], mediaUpload ? 'on' : 'off', async (val, btn) => {
         Array.from(mediaUploadToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        await chrome.storage.local.set({ taixueMediaUploadEnabled: val === 'on' });
+        await chrome.storage.local.set({ jixiaMediaUploadEnabled: val === 'on' });
       }, mediaMap);
       if (manualParseBtn) {
         manualParseBtn.style.display = auto ? 'none' : 'inline-block';
@@ -6841,35 +6868,35 @@ class ADHDHighlighter {
       } catch (_) {}
     };
 
-    const getTaixueLangHint = () => (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
+    const getJixiaLangHint = () => (window.i18n && window.i18n.t) ? window.i18n.t(((function(){ try{ const s=String(window.i18n.t('aiPanel.summary')||''); return /^[A-Za-z]/.test(s)?'aiPanel.prompts.outputEnglish':'aiPanel.prompts.outputChinese'; }catch(_){ return 'aiPanel.prompts.outputChinese'; }})())) : '请用中文输出。';
     let explainContext = null;
     let vocabCards = [];
     let vocabIndex = 0;
     let vocabModule = null;
-    const explainHistoryKey = 'agfTaixueExplainHistory';
+    const explainHistoryKey = 'agfJixiaExplainHistory';
     const getExplainHistory = () => new Promise(resolve => chrome.storage.local.get([explainHistoryKey], r => resolve(Array.isArray(r[explainHistoryKey]) ? r[explainHistoryKey] : [])));
     const renderExplainHistory = async () => { const rows = await getExplainHistory(); if (!explainHistory) return; explainHistory.innerHTML = `<strong>解释历史</strong>` + (rows.length ? rows.slice(0,20).map((r,i) => `<div class="agf-history-row"><span>${String(r.text).slice(0,45)} · ${new Date(r.createdAt).toLocaleString()}</span><button data-explain-index="${i}">查看</button></div>`).join('') : '<p>暂无解释记录。</p>'); explainHistory.querySelectorAll('[data-explain-index]').forEach(btn => btn.onclick = () => { const r = rows[Number(btn.dataset.explainIndex)]; explainContext = r.context; explainSource.textContent = `${r.text.length} 字 · ${r.context.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(r.output) : String(r.output).replace(/\n/g,'<br>'); explainToChat.disabled = false; explainRetry.disabled = false; }); };
     const renderVocabHistory = async () => { const rows = await loadVocab(); if (!vocabHistory) return; const grouped = rows.slice(0,30); vocabHistory.innerHTML = `<strong>词汇掌握记录</strong>` + (grouped.length ? grouped.map(r => `<div class="agf-history-row"><span>${String(r.word)} · 掌握度 ${Number(r.mastery || 0)}% · ${Number(r.reviewCount || 0)} 次</span></div>`).join('') : '<p>暂无复习记录。</p>'); };
     const explainSelectionLegacy = async () => {
-      const ctx = await taixueContext.resolve('selection');
+      const ctx = await jixiaContext.resolve('selection');
       if (!ctx.text) throw new Error('请先在网页中选中一段文本。');
       explainContext = ctx; setView('explain');
       explainSource.textContent = `${ctx.text.length} 字 · ${ctx.pageTitle || '当前页面'}`;
       explainResult.innerHTML = '<p>正在生成解释…</p>'; explainToChat.disabled = true; explainRetry.disabled = true;
-      const output = await taixueTask.requestJsonText({ prompt: `请解释下面选中文本。输出简洁但完整，包含：1.通俗释义 2.上下文作用 3.关键术语 4.必要时给出改写或例句。请用中文。\n\n选中文本：\n${ctx.text}`, maxTokens: 1800, temperature: .35 });
+      const output = await jixiaTask.requestJsonText({ prompt: `请解释下面选中文本。输出简洁但完整，包含：1.通俗释义 2.上下文作用 3.关键术语 4.必要时给出改写或例句。请用中文。\n\n选中文本：\n${ctx.text}`, maxTokens: 1800, temperature: .35 });
       const explainRows = await getExplainHistory(); explainRows.unshift({ id: `explain-${Date.now()}`, text: ctx.text, output, context: ctx, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ [explainHistoryKey]: explainRows.slice(0, 30) }, resolve));
       explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g, '<br>');
       explainToChat.disabled = false; explainRetry.disabled = false;
       renderExplainHistory();
     };
-    const explainModule = TaixueModules.createExplainModule({
-      context: taixueContext,
-      task: taixueTask,
+    const explainModule = JixiaModules.createExplainModule({
+      context: jixiaContext,
+      task: jixiaTask,
       save: async record => { const rows = await getExplainHistory(); rows.unshift(record); await new Promise(resolve => chrome.storage.local.set({ [explainHistoryKey]: rows.slice(0, 30) }, resolve)); },
       render: (output, ctx) => { explainContext = ctx; setView('explain'); explainSource.textContent = `${ctx.text.length} 字 · ${ctx.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g, '<br>'); explainToChat.disabled = false; explainRetry.disabled = false; renderExplainHistory(); }
     });
     const explainSelection = () => explainModule.explainSelection();
-    const vocabKey = 'agfTaixueVocabularyReview';
+    const vocabKey = 'agfJixiaVocabularyReview';
     const loadVocab = () => new Promise(resolve => chrome.storage.local.get([vocabKey], r => resolve(Array.isArray(r[vocabKey]) ? r[vocabKey] : [])));
     const saveVocab = records => new Promise(resolve => chrome.storage.local.set({ [vocabKey]: records.slice(0, 200) }, resolve));
     const renderVocabCard = () => {
@@ -6881,19 +6908,19 @@ class ADHDHighlighter {
     };
     const startVocabReviewLegacy = async () => {
       setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>';
-      const ctx = await taixueContext.resolve('full_article');
-      const output = await taixueTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitTaixueText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
+      const ctx = await jixiaContext.resolve('full_article');
+      const output = await jixiaTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitJixiaText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
       const parsed = parseJsonPayload(output); const old = await loadVocab();
       vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
       vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
-    vocabModule = TaixueModules.createVocabularyReviewModule({ context: taixueContext, task: taixueTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards; vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
+    vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: jixiaTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards; vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
     const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
-    const chatModule = TaixueModules.createChatModule({
-      context: taixueContext,
-      beforeRun: async (ctx, limited) => { hideFulltextPanel(); await updateStorageStatusUI(); const discoveredImages = await discoverAndConfirmPageImages(ctx.source === 'selection' ? 'selection' : 'full_article'); if (discoveredImages.length) addMediaContextsToWorkspace(discoveredImages, { reset: true, statusText: `已发现 ${discoveredImages.length} 张图片，可在图像工作区勾选识别` }); if (limited.truncated || String(limited.text || '').length > TAIXUE_CONTEXT_MAX_WARN_CHARS) showToast(limited.truncated ? '文章较长，已按预算保留开头和结尾发送。' : '目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); },
-      limitText: limitTaixueText,
-      languageHint: getTaixueLangHint,
+    const chatModule = JixiaModules.createChatModule({
+      context: jixiaContext,
+      beforeRun: async (ctx, limited) => { hideFulltextPanel(); await updateStorageStatusUI(); const discoveredImages = await discoverAndConfirmPageImages(ctx.source === 'selection' ? 'selection' : 'full_article'); if (discoveredImages.length) addMediaContextsToWorkspace(discoveredImages, { reset: true, statusText: `已发现 ${discoveredImages.length} 张图片，可在图像工作区勾选识别` }); if (limited.truncated || String(limited.text || '').length > JIXIA_CONTEXT_MAX_WARN_CHARS) showToast(limited.truncated ? '文章较长，已按预算保留开头和结尾发送。' : '目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); },
+      limitText: limitJixiaText,
+      languageHint: getJixiaLangHint,
       afterContext: (ctx, prefix, prompt) => {
         if (inputUser) inputUser.innerText = prompt;
         if (composerHidden) composerHidden.value = prompt;
@@ -6906,7 +6933,7 @@ class ADHDHighlighter {
     const runArticleChatTask = options => chatModule.runTask(options);
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
     const translate = key => (window.i18n && window.i18n.t) ? window.i18n.t(key) : '';
-    TaixueUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
+    JixiaUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
       runArticleChatTask,
       showChat: () => { hideFulltextPanel(); showChat(); },
       labels: { summary: translate('aiPanel.summary') || '总结', beginner: translate('aiPanel.beginnerExplain') || '保姆级解读', structured: translate('aiPanel.structured') || '结构化摘要', explain: translate('aiPanel.explain') || '简明解释', outline: translate('aiPanel.outline') || '提取大纲', keywords: translate('aiPanel.keywords') || '提取关键词' },
@@ -6927,18 +6954,18 @@ class ADHDHighlighter {
       }
       try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
-    TaixueUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
-    TaixueUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
+    JixiaUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
+    JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
-      try { showChat(); const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
+      try { showChat(); const output = await jixiaTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
     };
     if (speakBtn) speakBtn.onclick = async () => {
       if (!('speechSynthesis' in window)) { showToast('当前浏览器不支持本地朗读'); return; }
       if (speechSynthesis.speaking && !speechSynthesis.paused) { speechSynthesis.pause(); speakBtn.textContent = '继续朗读'; return; }
       if (speechSynthesis.paused) { speechSynthesis.resume(); speakBtn.textContent = '暂停朗读'; return; }
       const selected = getSelectedTextSafe(); let text = selected;
-      if (!text) { try { const fullContext = await taixueContext.resolve('full_article'); text = String(fullContext.text || '').trim(); } catch (_) {} }
+      if (!text) { try { const fullContext = await jixiaContext.resolve('full_article'); text = String(fullContext.text || '').trim(); } catch (_) {} }
       if (!text) { showToast('没有可朗读的文本'); return; }
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); const selectedLang = speakLanguageSelect?.value || 'auto'; utterance.lang = selectedLang === 'auto' ? (/^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US') : selectedLang; const selectedVoiceId = speakVoiceSelect?.value || ''; const selectedVoice = availableSpeakVoices.find(v => (v.voiceURI || v.name) === selectedVoiceId); if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; } utterance.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
     };

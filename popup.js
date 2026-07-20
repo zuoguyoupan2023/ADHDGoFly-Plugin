@@ -1485,7 +1485,7 @@ class PopupController {
       const ai = await chrome.storage.local.get(['aiProvider', 'aiModel', 'aiKeys', 'aiBaseUrls']);
       const provider = ai.aiProvider || 'deepseek';
       const key = ai.aiKeys && ai.aiKeys[provider];
-      if (!key) throw new Error('尚未配置当前 AI 供应商的 API Key，请先进入太学设置。');
+      if (!key) throw new Error('尚未配置当前 AI 供应商的 API Key，请先进入稷下设置。');
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tab = tabs && tabs[0];
       if (!tab || !tab.id) throw new Error('未找到当前网页。');
@@ -2194,9 +2194,9 @@ class PopupController {
         chrome.tabs.create({ url: 'https://dictionary.readgofly.online' });
       });
     }
-    const reviewInTaixueBtn = document.getElementById('reviewInTaixueBtn');
-    if (reviewInTaixueBtn) {
-      reviewInTaixueBtn.addEventListener('click', () => this.openTaixueReview());
+    const reviewInJixiaBtn = document.getElementById('reviewInJixiaBtn');
+    if (reviewInJixiaBtn) {
+      reviewInJixiaBtn.addEventListener('click', () => this.openJixiaReview());
     }
   }
 
@@ -2496,32 +2496,32 @@ class PopupController {
     
     // 显示词汇统计
     this.displayVocabularyStats(data.vocabulary || null);
-    this.displayTaixueReviewStats();
+    this.displayJixiaReviewStats();
     
     // 显示推荐
     // this.displayRecommendations(data.recommendations || {}); // 暂时禁用推荐功能
   }
 
-  async openTaixueReview() {
-    const btn = document.getElementById('reviewInTaixueBtn');
+  async openJixiaReview() {
+    const btn = document.getElementById('reviewInJixiaBtn');
     const prev = btn ? btn.textContent : '';
     try {
       if (btn) { btn.disabled = true; btn.textContent = '打开中...'; }
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tab = tabs && tabs[0];
       if (!tab || !tab.id) throw new Error('未检测到当前网页');
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'openTaixue', module: 'quiz', contextSource: 'full_article' });
-      if (!response || !response.success) throw new Error(response && response.error || '无法打开太学');
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'openJixia', module: 'quiz', contextSource: 'full_article' });
+      if (!response || !response.success) throw new Error(response && response.error || '无法打开稷下');
       window.close();
     } catch (error) {
-      this.showError(error.message || '打开太学失败');
+      this.showError(error.message || '打开稷下失败');
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = prev || '在太学中复习'; }
+      if (btn) { btn.disabled = false; btn.textContent = prev || '在稷下中复习'; }
     }
   }
 
-  async displayTaixueReviewStats() {
-    const container = document.getElementById('taixueReviewStats');
+  async displayJixiaReviewStats() {
+    const container = document.getElementById('jixiaReviewStats');
     if (!container) return;
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
