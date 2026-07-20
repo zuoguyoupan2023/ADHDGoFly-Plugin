@@ -6622,6 +6622,7 @@ class ADHDHighlighter {
       if (btnExplain) btnExplain.disabled = !has;
       if (btnOutline) btnOutline.disabled = !has;
       if (btnKeywords) btnKeywords.disabled = !has;
+      ['agfBtnStructuredReading', 'agfBtnWriting', 'agfBtnFactCheck'].forEach(id => { const button = document.getElementById(id); if (button) button.disabled = !has; });
       if (visionOcrBtn) visionOcrBtn.disabled = !(currentMediaContext && currentMediaContext.source === 'image');
       if (speakBtn) speakBtn.disabled = !has && !getSelectedTextSafe();
       if (addFullBtn) addFullBtn.disabled = !has;
@@ -6642,6 +6643,7 @@ class ADHDHighlighter {
       if (btnExplain) btnExplain.disabled = true;
       if (btnOutline) btnOutline.disabled = true;
       if (btnKeywords) btnKeywords.disabled = true;
+      ['agfBtnStructuredReading', 'agfBtnWriting', 'agfBtnFactCheck'].forEach(id => { const button = document.getElementById(id); if (button) button.disabled = true; });
     };
 
     const sessionGet = async (key) => { try { const o = await chrome.storage.session.get([key]); return o && o[key]; } catch (_) { return undefined; } };
