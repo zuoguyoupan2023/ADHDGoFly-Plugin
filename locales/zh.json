@@ -32,7 +32,10 @@
     "slowTip": "💡 商店安装用户请耐心等待，会在1-7天内自动更新",
     "contactInfo": "📞 WeChat: zuoguyoupan2023",
     "gotIt": "知道了",
-    "newUpdates": "有更新"
+    "newUpdates": "有更新",
+    "officialWebsite": "官方网站",
+    "visitOfficialSite": "访问官方网站获取更多信息和支持",
+    "autoUpdateNote": "💡 从浏览器商店安装的扩展会自动更新到最新版本"
   },
   "buttons": {
     "toggle": "切换高亮",

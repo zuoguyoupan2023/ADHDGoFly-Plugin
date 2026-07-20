@@ -74,6 +74,7 @@
         "content/chart-model.js",
         "content/chart-layout.js",
         "content/chart-workspace.js",
+        "content/taixue-modules.js",
         "content/main.js",
         "content/dynamic-collector.js"
       ],

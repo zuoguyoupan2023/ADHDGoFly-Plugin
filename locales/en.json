@@ -183,7 +183,13 @@
     "home": {
       "title": "Home",
       "description": "Welcome to ADHDGoFly",
-      "highlightTitle": "Reading highlights"
+      "highlightTitle": "Reading highlights",
+      "preview": {
+        "noun": "Noun",
+        "verb": "Verb",
+        "adjective": "Adjective"
+      },
+      "applyScheme": "Apply Scheme"
     },
     "dict": {
       "title": "Dictionary Management",

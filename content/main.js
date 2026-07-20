@@ -3447,25 +3447,13 @@ class ADHDHighlighter {
         return '';
       }
     };
-    const taixueState = {
-      currentModule: 'chat',
-      taskStatus: 'idle',
-      contextSource: 'full_article',
-      setModule(moduleName) {
-        this.currentModule = moduleName || 'chat';
-      },
-      setTaskStatus(status) {
-        this.taskStatus = status || 'idle';
-      },
-      setContextSource(source) {
-        this.contextSource = source || 'full_article';
-      },
-      getProviderState() {
+    const taixueState = new TaixueModules.TaixueState();
+    window.TaixueState = taixueState;
+    taixueState.getProviderState = () => {
         return {
           provider: sessionProviderSelect ? sessionProviderSelect.value : '',
           model: sessionModelSelect ? sessionModelSelect.value : ''
         };
-      }
     };
     const taixueHash = (value) => {
       const text = String(value || ''); let hash = 2166136261;
@@ -3508,6 +3496,7 @@ class ADHDHighlighter {
         return { ...createTaixueContext({ source: sourceName, text, sourceUrl: u.canonicalUrl }), selectedText: selected, canonicalUrl: u.canonicalUrl, textLength: text.length, approxTokens: estimateTaixueTokens(text) };
       }
     };
+    window.TaixueContext = taixueContext;
     const taixueTaskProtocol = {
       taskType: 'string', context: 'object', provider: 'string', model: 'string', budget: 'object', outputSchema: 'object', allowNetwork: 'boolean', allowPersistence: 'boolean', retryPolicy: 'object'
     };
@@ -3613,6 +3602,7 @@ class ADHDHighlighter {
         return output;
       }
     };
+    window.TaixueTask = taixueTask;
     let currentView = 'chat';
     const updateTaskBar = (which) => {
       const groups = {
@@ -4644,31 +4634,8 @@ class ADHDHighlighter {
     let quizContextRef = null;
     let quizFromHistory = false;
     let quizHistoryFilterCurrent = false;
-    const parseJsonPayload = (text) => {
-      const raw = String(text || '').replace(/```json|```/gi, '').trim();
-      try { return JSON.parse(raw); } catch (_) {}
-      const start = raw.indexOf('['); const end = raw.lastIndexOf(']');
-      if (start >= 0 && end > start) { try { return JSON.parse(raw.slice(start, end + 1)); } catch (_) {} }
-      return null;
-    };
-    const normalizeQuizItems = (items, requestedCount) => {
-      const out = (Array.isArray(items) ? items : []).filter(q => {
-        if (!q || !String(q.question || '').trim()) return false;
-        if (!Array.isArray(q.options) || q.options.length !== 4) return false;
-        if (!Number.isInteger(Number(q.answer))) return false;
-        const answer = Number(q.answer);
-        if (answer < 0 || answer > 3) return false;
-        if (!Array.isArray(q.optionReasons) || q.optionReasons.length !== q.options.length) return false;
-        if (q.optionReasons.some(reason => !String(reason || '').trim())) return false;
-        return true;
-      }).slice(0, requestedCount);
-      if (out.length < Math.min(3, requestedCount)) throw new Error('AI 返回的题目格式无法识别');
-      const counts = [0, 0, 0, 0];
-      out.forEach(q => { counts[Number(q.answer)] += 1; });
-      const max = Math.max.apply(null, counts);
-      if (out.length >= 4 && max > Math.ceil(out.length / 2)) throw new Error('正确答案分布过于集中');
-      return out;
-    };
+    const parseJsonPayload = TaixueModules.parseQuizPayload;
+    const normalizeQuizItems = TaixueModules.normalizeQuizItems;
     const requestQuiz = async (difficulty, retryCount = 1) => {
       const ctx = await taixueContext.resolve(taixueState.contextSource);
       quizContextRef = {

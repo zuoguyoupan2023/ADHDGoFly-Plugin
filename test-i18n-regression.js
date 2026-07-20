@@ -1,0 +1,10 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const zh = JSON.parse(fs.readFileSync('locales/zh.json', 'utf8'));
+const en = JSON.parse(fs.readFileSync('locales/en.json', 'utf8'));
+const flatten = (value, prefix = '', out = {}) => { Object.entries(value).forEach(([key, child]) => { const path = prefix ? `${prefix}.${key}` : key; if (child && typeof child === 'object' && !Array.isArray(child)) flatten(child, path, out); else out[path] = child; }); return out; };
+const zhKeys = new Set(Object.keys(flatten(zh))), enKeys = new Set(Object.keys(flatten(en)));
+assert.deepEqual([...zhKeys].filter(key => !enKeys.has(key)), [], '英文缺少中文 i18n key');
+assert.deepEqual([...enKeys].filter(key => !zhKeys.has(key)), [], '中文缺少英文 i18n key');
+['taixue.tabs.chat', 'taixue.tabs.quiz', 'taixue.tabs.explain', 'taixue.tabs.vocab', 'taixue.chart.title'].forEach(key => assert.ok(zhKeys.has(key) && enKeys.has(key), `缺少关键 i18n key: ${key}`));
+console.log('i18n regression tests passed');
