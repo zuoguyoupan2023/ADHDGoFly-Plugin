@@ -4636,33 +4636,8 @@ class ADHDHighlighter {
     let quizHistoryFilterCurrent = false;
     const parseJsonPayload = TaixueModules.parseQuizPayload;
     const normalizeQuizItems = TaixueModules.normalizeQuizItems;
-    const requestQuiz = async (difficulty, retryCount = 1) => {
-      const ctx = await taixueContext.resolve(taixueState.contextSource);
-      quizContextRef = {
-        source: ctx.source,
-        pageTitle: ctx.pageTitle,
-        pageUrl: ctx.pageUrl,
-        canonicalUrl: ctx.canonicalUrl,
-        createdAt: ctx.createdAt,
-        textLength: String(ctx.text || '').length,
-        approxTokens: ctx.approxTokens || estimateTaixueTokens(ctx.text)
-      };
-      const limitedContext = limitTaixueText(ctx.text, 70000);
-      const text = String(limitedContext.text || '').trim();
-      if (!text) throw new Error('当前页面没有可分析的正文');
-      const requestedCount = quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3;
-      const budgetNote = limitedContext.truncated ? `注意：材料已按请求预算截取，原文约 ${limitedContext.originalLength} 字；题目只能依据下方可见材料。` : '';
-      const prompt = `你是严格的阅读理解题目设计者。请基于下面材料生成${requestedCount}道中文单选题，难度为${difficulty === 'hard' ? '困难' : '简单'}。题目必须只依据材料，不使用材料外知识。简单难度考主旨、明确事实和因果；困难难度考跨段关系、隐含观点和合理推断。每题4个选项且只有一个正确答案。正确答案位置要尽量均匀分布，选项长度相近，干扰项必须有文章依据但不能成立。返回严格JSON数组，不要Markdown，不要额外文字。每项包含 question,type,difficulty,options(4个字符串),answer(0到3的数字),explanation,evidence(包含quote和paragraph),optionReasons(必须与options等长的字符串数组，逐项解释为什么正确或错误)。${budgetNote ? '\n' + budgetNote : ''}\n\n材料：\n${text}`;
-      try {
-        const output = await taixueTask.requestJsonText({ prompt, timeout: 60000, maxTokens: requestedCount >= 10 ? 3600 : 2200, temperature: 0.35 });
-        const parsed = parseJsonPayload(output);
-        const items = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.questions) ? parsed.questions : []);
-        return normalizeQuizItems(items, requestedCount);
-      } catch (error) {
-        if (retryCount > 0) return requestQuiz(difficulty, retryCount - 1);
-        throw error;
-      }
-    };
+    const quizModule = TaixueModules.createQuizModule({ context: taixueContext, task: taixueTask, limitText: limitTaixueText, getCount: () => quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3, onState: state => { const ctx = state.context; quizContextRef = { source: ctx.source, pageTitle: ctx.pageTitle, pageUrl: ctx.pageUrl, canonicalUrl: ctx.canonicalUrl, createdAt: ctx.createdAt, textLength: String(ctx.text || '').length, approxTokens: ctx.approxTokens || estimateTaixueTokens(ctx.text) }; } });
+    const requestQuiz = (difficulty, retryCount = 1) => quizModule.requestQuestions(difficulty, retryCount);
     const quizHistoryKey = 'agfQuizHistory';
     const getQuizHistory = async () => new Promise(resolve => chrome.storage.local.get([quizHistoryKey], res => resolve(Array.isArray(res[quizHistoryKey]) ? res[quizHistoryKey] : [])));
     const setQuizHistory = async (history) => new Promise(resolve => chrome.storage.local.set({ [quizHistoryKey]: Array.isArray(history) ? history.slice(0, 30) : [] }, resolve));
@@ -6870,11 +6845,12 @@ class ADHDHighlighter {
     let explainContext = null;
     let vocabCards = [];
     let vocabIndex = 0;
+    let vocabModule = null;
     const explainHistoryKey = 'agfTaixueExplainHistory';
     const getExplainHistory = () => new Promise(resolve => chrome.storage.local.get([explainHistoryKey], r => resolve(Array.isArray(r[explainHistoryKey]) ? r[explainHistoryKey] : [])));
     const renderExplainHistory = async () => { const rows = await getExplainHistory(); if (!explainHistory) return; explainHistory.innerHTML = `<strong>解释历史</strong>` + (rows.length ? rows.slice(0,20).map((r,i) => `<div class="agf-history-row"><span>${String(r.text).slice(0,45)} · ${new Date(r.createdAt).toLocaleString()}</span><button data-explain-index="${i}">查看</button></div>`).join('') : '<p>暂无解释记录。</p>'); explainHistory.querySelectorAll('[data-explain-index]').forEach(btn => btn.onclick = () => { const r = rows[Number(btn.dataset.explainIndex)]; explainContext = r.context; explainSource.textContent = `${r.text.length} 字 · ${r.context.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(r.output) : String(r.output).replace(/\n/g,'<br>'); explainToChat.disabled = false; explainRetry.disabled = false; }); };
     const renderVocabHistory = async () => { const rows = await loadVocab(); if (!vocabHistory) return; const grouped = rows.slice(0,30); vocabHistory.innerHTML = `<strong>词汇掌握记录</strong>` + (grouped.length ? grouped.map(r => `<div class="agf-history-row"><span>${String(r.word)} · 掌握度 ${Number(r.mastery || 0)}% · ${Number(r.reviewCount || 0)} 次</span></div>`).join('') : '<p>暂无复习记录。</p>'); };
-    const explainSelection = async () => {
+    const explainSelectionLegacy = async () => {
       const ctx = await taixueContext.resolve('selection');
       if (!ctx.text) throw new Error('请先在网页中选中一段文本。');
       explainContext = ctx; setView('explain');
@@ -6886,6 +6862,13 @@ class ADHDHighlighter {
       explainToChat.disabled = false; explainRetry.disabled = false;
       renderExplainHistory();
     };
+    const explainModule = TaixueModules.createExplainModule({
+      context: taixueContext,
+      task: taixueTask,
+      save: async record => { const rows = await getExplainHistory(); rows.unshift(record); await new Promise(resolve => chrome.storage.local.set({ [explainHistoryKey]: rows.slice(0, 30) }, resolve)); },
+      render: (output, ctx) => { explainContext = ctx; setView('explain'); explainSource.textContent = `${ctx.text.length} 字 · ${ctx.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g, '<br>'); explainToChat.disabled = false; explainRetry.disabled = false; renderExplainHistory(); }
+    });
+    const explainSelection = () => explainModule.explainSelection();
     const vocabKey = 'agfTaixueVocabularyReview';
     const loadVocab = () => new Promise(resolve => chrome.storage.local.get([vocabKey], r => resolve(Array.isArray(r[vocabKey]) ? r[vocabKey] : [])));
     const saveVocab = records => new Promise(resolve => chrome.storage.local.set({ [vocabKey]: records.slice(0, 200) }, resolve));
@@ -6893,10 +6876,10 @@ class ADHDHighlighter {
       const card = vocabCards[vocabIndex]; if (!card) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
       const mastery = Number(card.mastery || 0); vocabStats.textContent = `基础掌握度 ${mastery}% · ${vocabIndex + 1}/${vocabCards.length}`;
       vocabResult.innerHTML = `<div class="agf-vocab-card"><strong>${String(card.word)}</strong><p>${String(card.meaning || '请回忆这个词的含义')}</p><p><em>${String(card.example || '')}</em></p><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
-      const answer = async remembered => { card.reviewCount = Number(card.reviewCount || 0) + 1; card.lastReviewedAt = Date.now(); card.mastery = Math.max(0, Math.min(100, mastery + (remembered ? 20 : -10))); const all = await loadVocab(); const i = all.findIndex(x => x.word === card.word && x.pageUrl === card.pageUrl); if (i >= 0) all[i] = card; else all.unshift(card); await saveVocab(all); vocabIndex++; renderVocabCard(); };
+      const answer = remembered => vocabModule ? vocabModule.answer(remembered) : Promise.resolve();
       document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
     };
-    const startVocabReview = async () => {
+    const startVocabReviewLegacy = async () => {
       setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>';
       const ctx = await taixueContext.resolve('full_article');
       const output = await taixueTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitTaixueText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
@@ -6904,36 +6887,23 @@ class ADHDHighlighter {
       vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
       vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
-    const runArticleChatTask = async ({ title, prefix, extra = '', includeLangHint = false, contextSource = taixueState.contextSource }) => {
-      hideFulltextPanel();
-      await updateStorageStatusUI();
-      const ctx = await taixueContext.resolve(contextSource);
-      const discoveredImages = await discoverAndConfirmPageImages(contextSource === 'selection' ? 'selection' : 'full_article');
-      if (discoveredImages.length) addMediaContextsToWorkspace(discoveredImages, { reset: true, statusText: `已发现 ${discoveredImages.length} 张图片，可在图像工作区勾选识别` });
-      const limitedContext = limitTaixueText(ctx.text, 50000);
-      const raw = String(limitedContext.text || '');
-      if (limitedContext.truncated || raw.length > TAIXUE_CONTEXT_MAX_WARN_CHARS) {
-        showToast(limitedContext.truncated ? '文章较长，已按预算保留开头和结尾发送。' : '目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。');
-      }
-      const pageLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.pageLabel') : '页面: ';
-      const bodyLabel = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.prompts.bodyLabel') : '正文:';
-      const parts = [title, pageLabel + ctx.canonicalUrl];
-      if (limitedContext.truncated) parts.push(`预算提示：原文约 ${limitedContext.originalLength} 字，本次发送已截取。`);
-      parts.push(bodyLabel, raw);
-      if (extra) parts.push(extra);
-      if (includeLangHint) parts.push(getTaixueLangHint());
-      const prompt = parts.join('\n');
-      if (inputUser) { inputUser.innerText = prompt; }
-      if (composerHidden) composerHidden.value = prompt;
-      nextPromptIsGenerated = true;
-      currentPrefix = prefix;
-      currentPageUrl = ctx.pageUrl;
-      currentCanonicalUrl = ctx.canonicalUrl;
-      currentPageTitle = ctx.pageTitle;
-      currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || '');
-      showChat();
-      sendChat();
-    };
+    vocabModule = TaixueModules.createVocabularyReviewModule({ context: taixueContext, task: taixueTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards; vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
+    const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
+    const chatModule = TaixueModules.createChatModule({
+      context: taixueContext,
+      beforeRun: async (ctx, limited) => { hideFulltextPanel(); await updateStorageStatusUI(); const discoveredImages = await discoverAndConfirmPageImages(ctx.source === 'selection' ? 'selection' : 'full_article'); if (discoveredImages.length) addMediaContextsToWorkspace(discoveredImages, { reset: true, statusText: `已发现 ${discoveredImages.length} 张图片，可在图像工作区勾选识别` }); if (limited.truncated || String(limited.text || '').length > TAIXUE_CONTEXT_MAX_WARN_CHARS) showToast(limited.truncated ? '文章较长，已按预算保留开头和结尾发送。' : '目前还在升级AI功能，超出12000字数的文本不建议发送，可能会超出ai最大长度。'); },
+      limitText: limitTaixueText,
+      languageHint: getTaixueLangHint,
+      afterContext: (ctx, prefix, prompt) => {
+        if (inputUser) inputUser.innerText = prompt;
+        if (composerHidden) composerHidden.value = prompt;
+        nextPromptIsGenerated = true; currentPrefix = prefix;
+        currentPageUrl = ctx.pageUrl; currentCanonicalUrl = ctx.canonicalUrl; currentPageTitle = ctx.pageTitle;
+        currentSubject = (currentPrefix ? (currentPrefix + ' · ') : '') + (currentPageTitle || ''); showChat();
+      },
+      send: prompt => sendChat(prompt)
+    });
+    const runArticleChatTask = options => chatModule.runTask(options);
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
     const translate = key => (window.i18n && window.i18n.t) ? window.i18n.t(key) : '';
     TaixueUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
@@ -6958,7 +6928,7 @@ class ADHDHighlighter {
       try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
     TaixueUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
-    TaixueUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
+    TaixueUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
       try { showChat(); const output = await taixueTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
