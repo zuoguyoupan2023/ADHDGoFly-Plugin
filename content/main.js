@@ -3681,7 +3681,8 @@ class ADHDHighlighter {
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete') };
     const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system">跟随系统</option><option value="light">浅色主题</option><option value="dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
-    const chartViewType = chartView.querySelector('#agfChartViewType') || (() => { const select = document.createElement('select'); select.id = 'agfChartViewType'; select.className = 'agf-field'; select.title = 'Archify 语义视图'; select.innerHTML = '<option value="architecture">架构 / 关系</option><option value="workflow">Workflow / 泳道流程</option><option value="data_flow">Data Flow / 数据流</option><option value="lifecycle">Lifecycle / 生命周期</option><option value="sequence">Sequence / 时序</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
+    const archifyOptions = [{ value: 'architecture', label: '架构 / 关系图' }, { value: 'workflow', label: 'Workflow / 泳道流程' }, { value: 'data_flow', label: 'Data Flow / 数据流' }, { value: 'lifecycle', label: 'Lifecycle / 生命周期' }, { value: 'sequence', label: 'Sequence / 时序' }];
+    archifyOptions.forEach(option => { if (chartIntent && !chartIntent.querySelector(`option[value="${option.value}"]`)) { const item = document.createElement('option'); item.value = option.value; item.textContent = option.label; chartIntent.appendChild(item); } });
     const chartHistoryState = { past: [], future: [], selected: new Set(), selectedEdges: new Set(), edgeMode: false };
     const chartSnapshot = () => currentChartContext ? JSON.parse(JSON.stringify(currentChartContext)) : null;
     const rememberChart = () => { const snapshot = chartSnapshot(); if (!snapshot) return; chartHistoryState.past.push(snapshot); if (chartHistoryState.past.length > 40) chartHistoryState.past.shift(); chartHistoryState.future = []; updateChartHistoryButtons(); };
@@ -3858,7 +3859,7 @@ class ADHDHighlighter {
       chartIntent.value = currentChartContext.intent;
       if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg');
       if (chartTheme) chartTheme.value = currentChartContext.theme || 'system';
-      if (chartViewType) chartViewType.value = currentChartContext.viewType || 'architecture';
+      if (chartIntent) chartIntent.value = currentChartContext.viewType || currentChartContext.intent || 'architecture';
       chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`;
       chartCanvas.innerHTML = '<div style="padding:18px;color:#687386;font-size:12px">正在渲染图表…</div>';
       try {
@@ -3884,7 +3885,6 @@ class ADHDHighlighter {
     if (chartZoomReset) chartZoomReset.onclick = () => setChartZoom(1);
     if (chartRenderer) chartRenderer.onchange = () => { if (!currentChartContext) return; currentChartContext.renderer = chartRenderer.value; currentChartContext.updatedAt = Date.now(); renderChartPreview(); };
     if (chartTheme) chartTheme.onchange = () => { if (!currentChartContext) return; currentChartContext.theme = chartTheme.value; currentChartContext.updatedAt = Date.now(); renderChartPreview(); };
-    if (chartViewType) chartViewType.onchange = () => { if (!currentChartContext) return; currentChartContext.viewType = chartViewType.value; currentChartContext.updatedAt = Date.now(); chartNotice.textContent = `已切换 Archify 视图：${chartViewType.options[chartViewType.selectedIndex].text}`; renderChartPreview(); };
     const loadChartHistory = async () => { try { const rows = await AgfChartWorkspace.list(); chartHistory.innerHTML = rows.length ? rows.slice(0, 12).map(row => `<div class="agf-chart-history-row"><span>${String(row.chartModel?.title || '未命名')} · ${row.intent === 'timeline' ? '时间线' : '关系图'}</span><button class="agf-task-btn" data-chart-load="${row.id}">打开</button></div>`).join('') : '<span style="font-size:12px;color:#687386">暂无保存记录</span>'; chartHistory.querySelectorAll('[data-chart-load]').forEach(button => button.onclick = async () => { currentChartContext = await AgfChartWorkspace.get(button.dataset.chartLoad); renderChartPreview(); }); } catch (error) { chartNotice.textContent = error.message || '无法读取图表历史'; } };
     const chartSourceName = source => source === 'full_article' ? 'article' : (source === 'paragraph' ? 'selection' : (source || 'manual'));
     const currentChartSkillMaterial = (fallbackText) => {
@@ -3924,7 +3924,12 @@ class ADHDHighlighter {
         relationship: { name: '关系图', schema: 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '提取实体、概念、因果、依赖或引用关系；边label必须说明关系含义。' },
         mindmap: { name: '思维导图', schema: 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '根节点id必须为root，label为材料主题；展开5-12个子节点，形成清晰父子层级；边label可以为空或写“包含”。' },
         flowchart: { name: '流程图', schema: 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '提取6-12个核心步骤、判断或状态；按流程顺序连线；边label可为空或填写条件。' },
-        timeline: { name: '时间线', schema: 'events:[{id,date,label,description,sourceRefs}]', rule: '按时间顺序提取事件；date没有明确日期时可写阶段名，但不要编造日期。' }
+        timeline: { name: '时间线', schema: 'events:[{id,date,label,description,sourceRefs}]', rule: '按时间顺序提取事件；date没有明确日期时可写阶段名，但不要编造日期。' },
+        architecture: { name: '架构/关系图', schema: 'nodes:[{id,label,description,styleRole,sourceRefs}],edges:[{source,target,label,kind,sourceRefs}]', rule: '提取组件、服务、存储、外部系统和主要依赖；styleRole 可用 frontend/backend/database/security/cloud/external。' },
+        workflow: { name: 'Workflow 泳道流程图', schema: 'nodes:[{id,label,description,groupId,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '提取步骤、分支和参与泳道；用 groupId 表示参与者或阶段，按执行顺序连线。' },
+        data_flow: { name: 'Data Flow 数据流图', schema: 'nodes:[{id,label,description,kind,styleRole,sourceRefs}],edges:[{source,target,label,kind,sourceRefs}]', rule: '区分 source、transform、store、sink；不要凭空添加数据源、数值或系统。' },
+        lifecycle: { name: 'Lifecycle 生命周期图', schema: 'nodes:[{id,label,description,kind,sourceRefs}],edges:[{source,target,label,kind,emphasis,sourceRefs}]', rule: '提取状态、迁移、重试、取消、成功和失败终态；重试或异常路径可用 emphasis:true。' },
+        sequence: { name: 'Sequence 时序图', schema: 'events:[{id,date,label,description,sourceRefs}]', rule: '按调用或事件顺序提取参与者动作；date 使用序号或阶段名，不编造时间。' }
       }[intent] || { name: '关系图', schema: 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '提取关键节点和关系。' };
       const compactRule = options.compact ? '请输出单行压缩JSON，description和sourceRefs.text保持短句，节点/事件控制在8个以内。' : '请控制节点或事件数量，避免冗长说明。';
       return `${skillPrefix}不要输出思考过程、分析过程或Markdown。${compactRule}请根据以下材料生成${config.name}，只返回严格JSON。JSON必须包含 title, description, ${config.schema}, sourceRefs。${config.rule}每个主要事件、节点或关系都要尽量给出原文依据的短文本和段落定位；无法确定的关系放入warnings，不要编造。材料：\n${material}`;
@@ -3958,11 +3963,12 @@ class ADHDHighlighter {
         const ctx = currentChartSourceContext || await taixueContext.resolve(taixueState.contextSource);
         const material = String(chartSourceText?.value || ctx.text || '').trim();
         if (!material) throw new Error('图表工作区没有可用材料');
-        const intent = chartIntent.value;
+        const selectedType = chartIntent.value;
+        const intent = { architecture: 'relationship', workflow: 'flowchart', data_flow: 'data', lifecycle: 'relationship', sequence: 'timeline' }[selectedType] || selectedType;
         const model = await requestChartModel(intent, material);
         const checked = AgfChartModel.validateChartContext({
           source: chartSourceName(ctx.source), intent, renderer: chartRenderer?.value || 'svg', chartModel: model,
-          sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }], theme: chartTheme?.value || 'system', viewType: chartViewType?.value || undefined
+          sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }], theme: chartTheme?.value || 'system', viewType: selectedType
         });
         if (!checked.valid) throw new Error(checked.errors.join('；'));
         currentChartContext = checked.value;
