@@ -6,7 +6,9 @@
   const esc = value => String(value == null ? '' : value).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const truncate = (value, length) => { const text = String(value || ''); return text.length > length ? `${text.slice(0, length - 1)}…` : text; };
   const graphIntents = new Set(['concept', 'relationship', 'mindmap', 'flowchart']);
-  const themeTokens = context => context.theme === 'dark' ? { background: '#0f172a', title: '#f8fafc', muted: '#94a3b8', nodeText: '#e2e8f0' } : { background: '#ffffff', title: '#172033', muted: '#687386', nodeText: '#172033' };
+  const themeTokens = context => context.theme === 'dark' ? { background: '#0f172a', title: '#f8fafc', muted: '#94a3b8', nodeText: '#e2e8f0', lane: '#1e293b', edge: '#94a3b8', roles: { frontend: ['#172554', '#60a5fa', '#dbeafe'], backend: ['#052e16', '#4ade80', '#dcfce7'], database: ['#422006', '#fbbf24', '#fef3c7'], security: ['#4c0519', '#fb7185', '#ffe4e6'], external: ['#334155', '#cbd5e1', '#f1f5f9'], message_bus: ['#312e81', '#a78bfa', '#ede9fe'], cloud: ['#164e63', '#22d3ee', '#cffafe'], generic: ['#1e293b', '#94a3b8', '#e2e8f0'] } } : { background: '#ffffff', title: '#172033', muted: '#687386', nodeText: '#172033', lane: '#f7f9fc', edge: '#687386', roles: { frontend: ['#eef4ff', '#315efb', '#172033'], backend: ['#eefaf2', '#1f9d55', '#173b25'], database: ['#fff7e8', '#d9822b', '#4a2a0a'], security: ['#fff1f2', '#e11d48', '#4a0d1b'], external: ['#f1f5f9', '#64748b', '#1e293b'], message_bus: ['#f7efff', '#8b5cf6', '#2f1d52'], cloud: ['#eefbff', '#0891b2', '#083344'], generic: ['#eef4ff', '#315efb', '#172033'] } };
+  const roleOf = node => node.styleRole || (node.kind === 'source' ? 'external' : node.kind === 'transform' ? 'backend' : node.kind === 'store' ? 'database' : node.kind === 'sink' ? 'external' : 'generic');
+  const semanticTokens = (context, node) => themeTokens(context).roles[roleOf(node)] || themeTokens(context).roles.generic;
   const wrapText = (value, maxChars = 12, maxLines = 4) => {
     const raw = String(value || '').trim();
     const chunks = raw.match(new RegExp(`.{1,${maxChars}}`, 'g')) || [''];
@@ -70,6 +72,7 @@
   const remove = id => transaction('readwrite', store => store.delete(id));
 
   function renderSvg(context) {
+    if (context.viewType === 'workflow' || context.viewType === 'data_flow' || context.viewType === 'lifecycle') return renderSemanticSvg(context);
     if (context.renderer === 'mermaid' && graphIntents.has(context.intent)) return renderMermaidStyleSvg(context);
     const model = context.chartModel || {}; const theme = themeTokens(context); const title = esc(model.title); const width = 900; let height = context.intent === 'timeline' ? Math.max(280, 150 + (model.events || []).length * 86) : Math.max(420, 190 + Math.ceil((model.nodes || []).length / 3) * 120);
     let body = `<rect width="100%" height="100%" fill="${theme.background}"/><text x="36" y="42" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${title}</text>`;
@@ -111,6 +114,22 @@
       });
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="#687386"/></marker></defs>${body}</svg>`;
+  }
+  function semanticLayout(context, nodes, edges, width, height) {
+    const view = context.viewType; const laneIds = [...new Set(nodes.map(n => n.groupId || (view === 'data_flow' ? roleOf(n) : '主流程')))];
+    const laneHeight = Math.max(100, (height - 120) / Math.max(1, laneIds.length)); const order = root.AgfChartLayout?.topoSort ? root.AgfChartLayout.topoSort(nodes, edges) : nodes.map(n => n.id);
+    const positions = {}; const perLane = Object.fromEntries(laneIds.map(id => [id, []]));
+    nodes.forEach(n => (perLane[n.groupId || (view === 'data_flow' ? roleOf(n) : '主流程')] || perLane[laneIds[0]]).push(n));
+    laneIds.forEach((lane, li) => { const laneNodes = perLane[lane]; laneNodes.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)); laneNodes.forEach((node, i) => { positions[node.id] = { ...node, x: 120 + (i + 0.5) * Math.max(150, (width - 180) / Math.max(1, laneNodes.length)), y: 112 + li * laneHeight + laneHeight / 2, _lane: lane, _group: li }; }); });
+    return { nodes: nodes.map(n => positions[n.id] || { ...n, x: 120, y: 120 }), edges, lanes: laneIds, laneHeight };
+  }
+  function renderSemanticSvg(context) {
+    const model = context.chartModel || {}; const nodes = model.nodes || []; const edges = model.edges || []; const width = 1000; const height = Math.max(460, 170 + Math.max(1, new Set(nodes.map(n => n.groupId || (context.viewType === 'data_flow' ? roleOf(n) : '主流程'))).size) * 120); const theme = themeTokens(context); const layout = semanticLayout(context, nodes, edges, width, height); const pos = Object.fromEntries(layout.nodes.map(n => [n.id, n]));
+    let body = `<rect width="100%" height="100%" fill="${theme.background}"/><text x="32" y="38" font-size="24" font-family="Arial,sans-serif" font-weight="700" fill="${theme.title}">${esc(model.title || '图表')}</text><text x="32" y="64" font-size="12" font-family="Arial,sans-serif" fill="${theme.muted}">${esc(context.viewType)} · 确定性布局 · ${nodes.length} 节点 · ${edges.length} 关系</text>`;
+    layout.lanes.forEach((lane, i) => { const y = 82 + i * layout.laneHeight; body += `<rect x="24" y="${y.toFixed(1)}" width="952" height="${Math.max(70, layout.laneHeight - 10).toFixed(1)}" rx="12" fill="${theme.lane}" opacity=".72"/><text x="42" y="${(y + 24).toFixed(1)}" font-size="12" font-family="Arial,sans-serif" font-weight="700" fill="${theme.muted}">${esc(lane)}</text>`; });
+    edges.forEach((edge, i) => { const a = pos[edge.source], b = pos[edge.target]; if (!a || !b) return; const color = edge.emphasis ? '#e11d48' : theme.edge; body += `<path class="agf-chart-edge" data-edge-index="${i}" d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${b.x.toFixed(1)},${b.y.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${edge.emphasis ? 3 : 2}" marker-end="url(#arrow)"/><text class="agf-chart-edge-label" data-edge-index="${i}" x="${((a.x+b.x)/2).toFixed(1)}" y="${((a.y+b.y)/2-6).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Arial,sans-serif" fill="${color}">${esc(truncate(edge.label, 18))}</text>`; });
+    layout.nodes.forEach(node => { const [fill, line, text] = semanticTokens(context, node); const w = 150, h = 58; const shape = context.renderer === 'rough' ? roughRectMarkup(node.x - w / 2, node.y - h / 2, w, h, { roughness: 2, stroke: line, strokeWidth: 2, fill, fillStyle: 'hachure', seed: layout.nodes.indexOf(node) + 22 }) : `<rect x="${(node.x-w/2).toFixed(1)}" y="${(node.y-h/2).toFixed(1)}" width="${w}" height="${h}" rx="12" fill="${fill}" stroke="${line}" stroke-width="2"/>`; body += `<g class="agf-chart-node" data-node-id="${esc(node.id)}" data-x="${node.x.toFixed(1)}" data-y="${node.y.toFixed(1)}" style="cursor:grab">${shape}<text class="agf-chart-node-label" data-node-id="${esc(node.id)}" x="${node.x}" y="${node.y-3}" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" font-weight="700" fill="${text}">${esc(truncate(node.label, 18))}</text><text x="${node.x}" y="${node.y+17}" text-anchor="middle" font-size="10" font-family="Arial,sans-serif" fill="${text}">${esc(roleOf(node))}</text></g>`; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="${theme.edge}"/></marker></defs>${body}</svg>`;
   }
   function renderMermaidStyleSvg(context) {
     const model = context.chartModel || {}; const nodes = model.nodes || []; const edges = model.edges || []; const width = 900; const height = Math.max(420, 180 + Math.ceil(Math.max(nodes.length, 1) / 3) * 120);

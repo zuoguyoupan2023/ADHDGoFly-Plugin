@@ -3680,6 +3680,7 @@ class ADHDHighlighter {
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete') };
+    const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system">跟随系统</option><option value="light">浅色主题</option><option value="dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
     const chartHistoryState = { past: [], future: [], selected: new Set(), selectedEdges: new Set(), edgeMode: false };
     const chartSnapshot = () => currentChartContext ? JSON.parse(JSON.stringify(currentChartContext)) : null;
     const rememberChart = () => { const snapshot = chartSnapshot(); if (!snapshot) return; chartHistoryState.past.push(snapshot); if (chartHistoryState.past.length > 40) chartHistoryState.past.shift(); chartHistoryState.future = []; updateChartHistoryButtons(); };
@@ -3855,6 +3856,7 @@ class ADHDHighlighter {
       chartTitle.value = currentChartContext.chartModel.title || '';
       chartIntent.value = currentChartContext.intent;
       if (chartRenderer) chartRenderer.value = currentChartContext.renderer === 'mermaid' ? 'mermaid' : (currentChartContext.renderer === 'rough' ? 'rough' : 'svg');
+      if (chartTheme) chartTheme.value = currentChartContext.theme || 'system';
       chartMeta.textContent = `${currentChartContext.source} · ${new Date(currentChartContext.updatedAt).toLocaleString()}`;
       chartCanvas.innerHTML = '<div style="padding:18px;color:#687386;font-size:12px">正在渲染图表…</div>';
       try {
@@ -3879,6 +3881,7 @@ class ADHDHighlighter {
     if (chartZoomIn) chartZoomIn.onclick = () => setChartZoom(chartZoom + 0.15);
     if (chartZoomReset) chartZoomReset.onclick = () => setChartZoom(1);
     if (chartRenderer) chartRenderer.onchange = () => { if (!currentChartContext) return; currentChartContext.renderer = chartRenderer.value; currentChartContext.updatedAt = Date.now(); renderChartPreview(); };
+    if (chartTheme) chartTheme.onchange = () => { if (!currentChartContext) return; currentChartContext.theme = chartTheme.value; currentChartContext.updatedAt = Date.now(); renderChartPreview(); };
     const loadChartHistory = async () => { try { const rows = await AgfChartWorkspace.list(); chartHistory.innerHTML = rows.length ? rows.slice(0, 12).map(row => `<div class="agf-chart-history-row"><span>${String(row.chartModel?.title || '未命名')} · ${row.intent === 'timeline' ? '时间线' : '关系图'}</span><button class="agf-task-btn" data-chart-load="${row.id}">打开</button></div>`).join('') : '<span style="font-size:12px;color:#687386">暂无保存记录</span>'; chartHistory.querySelectorAll('[data-chart-load]').forEach(button => button.onclick = async () => { currentChartContext = await AgfChartWorkspace.get(button.dataset.chartLoad); renderChartPreview(); }); } catch (error) { chartNotice.textContent = error.message || '无法读取图表历史'; } };
     const chartSourceName = source => source === 'full_article' ? 'article' : (source === 'paragraph' ? 'selection' : (source || 'manual'));
     const currentChartSkillMaterial = (fallbackText) => {
@@ -3956,7 +3959,7 @@ class ADHDHighlighter {
         const model = await requestChartModel(intent, material);
         const checked = AgfChartModel.validateChartContext({
           source: chartSourceName(ctx.source), intent, renderer: chartRenderer?.value || 'svg', chartModel: model,
-          sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }]
+          sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }], theme: chartTheme?.value || 'system'
         });
         if (!checked.valid) throw new Error(checked.errors.join('；'));
         currentChartContext = checked.value;
