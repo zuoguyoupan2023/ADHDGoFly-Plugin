@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, parseJsonObject } = require('./content/chart-model.js');
+const { normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, buildSourceLinks, parseJsonObject } = require('./content/chart-model.js');
 
 const graph = normalizeChartContext({ source: 'article', intent: 'relationship', chartModel: {
   title: '学习闭环', nodes: [{ id: 'read', label: '阅读' }, { id: 'review', label: '复习' }],
@@ -42,4 +42,6 @@ assert.match(accessible, /摘要：从阅读到复习/);
 assert.match(accessible, /阅读 促进 复习/);
 const copyable = buildCopyableData({ intent: 'data', chartModel: { title: '数据', series: [{ name: '数量', data: [{ label: 'A', value: 2 }] }] } });
 assert.match(copyable, /系列/); assert.match(copyable, /数量/); assert.match(copyable, /A/);
+const sourceLinks = buildSourceLinks({ id: 'chart-1', source: 'article', sourceRefs: [{ type: 'article', text: '全文', url: 'https://example.com/article' }], intent: 'data', chartModel: { title: '来源', series: [{ name: '销量', data: [{ label: '一月', value: 2, sourceRefs: [{ type: 'paragraph', locator: 'p-3', url: 'https://example.com/article' }] }] }] } });
+assert.equal(sourceLinks.length, 2); assert.equal(sourceLinks[1].scope, 'data-point'); assert.equal(sourceLinks[1].locator, 'p-3');
 console.log('chart model tests passed');

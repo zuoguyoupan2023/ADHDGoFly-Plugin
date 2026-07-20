@@ -56,4 +56,16 @@ assert.ok(qualityWarnings.warnings.some(warning => /孤立节点：孤立/.test(
 assert.ok(qualityWarnings.warnings.some(warning => /连线可能交叉/.test(warning)));
 const accessibleHtml = workspace.exportHtml({ intent: 'relationship', chartModel: { title: '无障碍', description: '摘要', nodes: [{ id: 'a', label: '节点 A' }] } }, '<svg viewBox="0 0 100 100"></svg>');
 assert.match(accessibleHtml, /图表文本摘要/); assert.match(accessibleHtml, /节点 A/); assert.match(accessibleHtml, /可复制数据/);
+assert.match(workspace.exportHtml({ id: 'source-chart', source: 'article', sourceRefs: [{ type: 'article', text: '文章', url: 'https://example.com/a' }], intent: 'relationship', chartModel: { title: '来源', nodes: [{ id: 'a', label: '节点 A', sourceRefs: [{ type: 'paragraph', text: '段落', locator: 'p-2', url: 'https://example.com/a' }] }] } }, '<svg viewBox="0 0 100 100"><text>节点 A</text></svg>'), /来源回链/);
+const versionOne = { id: 'history-1', version: 1, updatedAt: 1, intent: 'relationship', chartModel: { title: '第一版', nodes: [{ id: 'a', label: 'A' }] } };
+const versionTwo = { ...versionOne, version: 2, updatedAt: 2, chartModel: { title: '第二版', nodes: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }] } };
+const snap = workspace.snapshotChart(versionTwo, '添加节点');
+assert.equal(snap.reason, '添加节点');
+assert.equal(workspace.compareVersions(versionOne, versionTwo).changed, true);
+assert.match(workspace.compareVersions(versionOne, versionTwo).changes.map(change => change.field).join(','), /nodes/);
+const restored = workspace.restoreVersion({ ...versionTwo, versionHistory: [{ ...workspace.snapshotChart(versionOne, '初始') }, snap] }, 1);
+assert.equal(restored.chartModel.title, '第一版');
+assert.equal(workspace.validateExportArtifact(renderSvg({ intent: 'relationship', chartModel: { title: '导出', nodes: [{ id: 'a', label: 'A' }] } }), 'svg').valid, true);
+assert.equal(workspace.validateExportArtifact(accessibleHtml, 'html').valid, true);
+assert.equal(workspace.validateExportArtifact('data:image/png;base64,AAAA', 'png').valid, true);
 console.log('chart workspace tests passed');

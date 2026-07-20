@@ -178,6 +178,21 @@
     return rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join('\t')).join('\n');
   }
 
+  function buildSourceLinks(context) {
+    const value = normalizeChartContext(context);
+    const links = [];
+    const add = (scope, id, refs) => list(refs).forEach(ref => {
+      const normalized = sourceRef(ref);
+      if (normalized) links.push({ scope, id: id || '', type: normalized.type, label: normalized.text || normalized.locator || normalized.url || '来源', url: normalized.url, locator: normalized.locator, text: normalized.text });
+    });
+    add('chart', value.id, value.sourceRefs.concat(value.chartModel.sourceRefs));
+    value.chartModel.nodes.forEach(node => add('node', node.id, node.sourceRefs));
+    value.chartModel.edges.forEach((edge, index) => add('edge', `${edge.source}->${edge.target}#${index}`, edge.sourceRefs));
+    value.chartModel.events.forEach(event => add('event', event.id, event.sourceRefs));
+    value.chartModel.series.forEach(series => { add('series', series.name, series.sourceRefs); series.data.forEach(point => add('data-point', `${series.name}:${point.label}`, point.sourceRefs)); });
+    return links;
+  }
+
   function parseJsonObject(raw) {
     const textValue = text(raw);
     if (!textValue) throw new Error('AI 返回了空内容，无法生成图表。请重试，或换一个支持长输出的模型。');
@@ -195,7 +210,7 @@
     }
   }
 
-  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], VIEW_TYPES: [...VIEW_TYPES], THEMES: [...THEMES], NODE_ROLES: [...NODE_ROLES], normalizeModel, normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, parseJsonObject, inferViewType };
+  const api = { INTENTS: [...INTENTS], SOURCES: [...SOURCES], RENDERERS: [...RENDERERS], VIEW_TYPES: [...VIEW_TYPES], THEMES: [...THEMES], NODE_ROLES: [...NODE_ROLES], normalizeModel, normalizeChartContext, validateChartContext, buildAccessibilityText, buildCopyableData, buildSourceLinks, parseJsonObject, inferViewType };
   root.AgfChartModel = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

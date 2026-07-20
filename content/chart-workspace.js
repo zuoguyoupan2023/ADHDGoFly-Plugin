@@ -66,10 +66,20 @@
       request.onerror = () => { db.close(); reject(request.error); };
     });
   }
-  const save = chart => transaction('readwrite', store => store.put(chart));
+  const clone = value => JSON.parse(JSON.stringify(value));
+  function snapshotChart(chart, reason = '编辑') { const value = clone(chart); delete value.versionHistory; return { version: Number(chart.version) || 1, createdAt: Number(chart.updatedAt) || Date.now(), reason, context: value }; }
+  const save = chart => { const value = clone(chart); const history = Array.isArray(chart.versionHistory) ? chart.versionHistory.slice() : []; const current = snapshotChart(value, value.changeReason || '保存'); if (!history.length || JSON.stringify(history[history.length - 1].context) !== JSON.stringify(current.context)) history.push(current); value.versionHistory = history.slice(-50); value.version = history.length; delete value.changeReason; return transaction('readwrite', store => store.put(value)); };
   const get = id => transaction('readonly', store => store.get(id));
   const list = () => transaction('readonly', store => store.getAll()).then(rows => rows.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
   const remove = id => transaction('readwrite', store => store.delete(id));
+  function compareVersions(first, second) {
+    const a = first?.context || first || {}, b = second?.context || second || {};
+    const changes = [];
+    if (a.chartModel?.title !== b.chartModel?.title) changes.push({ field: 'title', before: a.chartModel?.title || '', after: b.chartModel?.title || '' });
+    ['nodes', 'edges', 'events', 'series', 'sourceRefs'].forEach(field => { const left = JSON.stringify(a.chartModel?.[field] || a[field] || []); const right = JSON.stringify(b.chartModel?.[field] || b[field] || []); if (left !== right) changes.push({ field, before: a.chartModel?.[field] || a[field] || [], after: b.chartModel?.[field] || b[field] || [] }); });
+    return { changed: changes.length > 0, changes };
+  }
+  function restoreVersion(chart, version) { const item = (chart?.versionHistory || []).find(entry => Number(entry.version) === Number(version)); if (!item) throw new Error(`找不到图表版本：${version}`); return { ...clone(item.context), version: item.version, versionHistory: clone(chart.versionHistory), updatedAt: Date.now(), changeReason: `恢复版本 ${item.version}` }; }
 
   function renderSvg(context) {
     if (context.intent === 'data' || context.renderer === 'echarts') return renderDataSvg(context);
@@ -247,7 +257,17 @@
     const modelApi = root.AgfChartModel;
     const accessible = esc(modelApi?.buildAccessibilityText ? modelApi.buildAccessibilityText(context) : '图表文本摘要不可用');
     const copyable = esc(modelApi?.buildCopyableData ? modelApi.buildCopyableData(context) : '');
-    return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}textarea{width:100%;min-height:100px;box-sizing:border-box}</style></head><body><main>${svg}<section aria-label="图表文本摘要"><h2>图表文本摘要</h2><pre>${accessible}</pre></section><details><summary>可复制数据</summary><textarea aria-label="可复制数据" readonly>${copyable}</textarea></details><details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
+    const sourceLinks = modelApi?.buildSourceLinks ? modelApi.buildSourceLinks(context) : [];
+    const sourceMarkup = sourceLinks.length ? sourceLinks.map(source => { const raw = source.url && /^https?:\/\//i.test(source.url) ? `${source.url}${source.locator ? `#${encodeURIComponent(source.locator)}` : ''}` : ''; return raw ? `<li><a href="${esc(raw)}" target="_blank" rel="noopener">${esc(source.scope)} · ${esc(source.label)}</a></li>` : `<li>${esc(source.scope)} · ${esc(source.label)}${source.locator ? ` · ${esc(source.locator)}` : ''}</li>`; }).join('') : '<li>暂无来源定位</li>';
+    return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;padding:32px;background:#f4f6fb;color:#172033;font:14px Arial,sans-serif}main{max-width:1100px;margin:auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px #17203318}svg{display:block;max-width:100%;height:auto}details{margin-top:20px}pre{white-space:pre-wrap}textarea{width:100%;min-height:100px;box-sizing:border-box}</style></head><body><main>${svg}<section aria-label="图表文本摘要"><h2>图表文本摘要</h2><pre>${accessible}</pre></section><section aria-label="来源回链"><h2>来源回链</h2><ul>${sourceMarkup}</ul></section><details><summary>可复制数据</summary><textarea aria-label="可复制数据" readonly>${copyable}</textarea></details><details><summary>图表数据与来源</summary><pre id="data"></pre></details></main><script>const chartContext=${payload};document.getElementById('data').textContent=JSON.stringify(chartContext,null,2);</script></body></html>`;
+  }
+
+  function validateExportArtifact(artifact, type = 'svg') {
+    const text = String(artifact || ''); const errors = [];
+    if (type === 'svg') { if (!/<svg[\s>]/i.test(text)) errors.push('SVG 缺少根元素'); if (!/viewBox="[^"]+"/i.test(text)) errors.push('SVG 缺少 viewBox'); if (!/<text[\s>]/i.test(text)) errors.push('SVG 缺少可见文本'); }
+    if (type === 'html') { if (!/^<!doctype html>/i.test(text.trim())) errors.push('HTML 缺少 doctype'); if (!/<svg[\s>]/i.test(text)) errors.push('HTML 缺少内嵌 SVG'); if (!/<\/html>/i.test(text)) errors.push('HTML 未闭合'); if (!/图表文本摘要/.test(text)) errors.push('HTML 缺少无障碍文本'); }
+    if (type === 'png') { if (!/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(text)) errors.push('PNG 不是有效 data URL'); }
+    return { valid: errors.length === 0, errors };
   }
   function ensureLaneNodes(context) {
     if (!context || context._laneNodesInitialized || !['workflow', 'data_flow', 'lifecycle'].includes(context.viewType)) return context;
@@ -281,6 +301,6 @@
     const semantic = ['workflow', 'data_flow', 'lifecycle'].includes(context?.viewType);
     return semantic ? { width: 140, height: 58 } : nodeSize(node);
   }
-  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng, svgToPngWithOptions, exportJson, importJson, exportHtml, getNodeDragBounds, ensureLaneNodes, validateChartQuality };
+  root.AgfChartWorkspace = { save, get, list, remove, renderSvg, renderSvgAsync, renderMermaidSvg, svgToPng, svgToPngWithOptions, exportJson, importJson, exportHtml, snapshotChart, compareVersions, restoreVersion, validateExportArtifact, getNodeDragBounds, ensureLaneNodes, validateChartQuality };
   if (typeof module !== 'undefined') module.exports = root.AgfChartWorkspace;
 })(typeof window !== 'undefined' ? window : globalThis);
