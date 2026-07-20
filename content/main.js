@@ -2976,7 +2976,6 @@ class ADHDHighlighter {
         <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
-        <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
         <div class="agf-task-actions">
           <button id="agfQuickSummaryBtn" class="agf-task-btn" disabled data-i18n="aiPanel.summary">总结</button>
           <button id="agfBeginnerExplainBtn" class="agf-task-btn" disabled data-i18n="aiPanel.beginnerExplain">通俗解读</button>
@@ -3344,6 +3343,8 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
+    const taskBar = overlay.querySelector('.agf-task-bar');
+    const fixedBar = overlay.querySelector('.agf-fixed-bar');
     const taskActions = overlay.querySelector('.agf-task-actions');
     const visionOcrBtn = document.getElementById('agfBtnVisionOcr');
     const speakBtn = document.getElementById('agfBtnSpeak');
@@ -3727,12 +3728,14 @@ class ADHDHighlighter {
       };
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
+      if (taskBar) taskBar.style.display = visible.size ? '' : 'none';
       if (moduleHistoryBtn) moduleHistoryBtn.style.display = which === 'chat' ? '' : 'none';
     };
     const setView = (which) => {
       currentView = which;
       jixiaState.setModule(which);
       updateTaskBar(which);
+      if (fixedBar) fixedBar.style.display = which === 'records' ? 'none' : '';
       if (which === 'chat' || which === 'quiz') {
         try { chrome.storage.local.set({ agfJixiaLastModule: which }); } catch (_) {}
       }
@@ -4935,6 +4938,7 @@ class ADHDHighlighter {
       const rounds = labels.filter(el => String(el.textContent||'').trim().startsWith('Q')).length;
       roundsEl.textContent = rounds > 0 ? rounds + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.roundsSuffix') : '轮考题') : '';
       roundsEl.style.display = rounds > 0 ? '' : 'none';
+      if (fixedBar && currentView !== 'records') fixedBar.style.display = rounds > 0 || Boolean(String(document.getElementById('agfStatusText')?.textContent || '').trim()) ? '' : 'none';
       try {
         if (carryWrap) carryWrap.style.display = rounds > 0 ? 'flex' : 'none';
         if (carryInput) {
