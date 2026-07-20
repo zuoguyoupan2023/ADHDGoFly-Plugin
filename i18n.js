@@ -144,7 +144,9 @@ class I18nManager {
     
     elements.forEach(element => {
       const key = element.getAttribute('data-i18n');
-      const translation = this.t(key);
+      const params = {};
+      (element.getAttribute('data-i18n-params') || '').split(',').forEach(pair => { const [name, value] = pair.split(':'); if (name && value) params[name.trim()] = value.trim(); });
+      const translation = this.t(key, params);
       
       // 根据元素类型设置文本
       if (element.tagName === 'INPUT' && (element.type === 'button' || element.type === 'submit')) {

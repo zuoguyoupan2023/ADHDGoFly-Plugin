@@ -2884,8 +2884,8 @@ class ADHDHighlighter {
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-i18n="taixue.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-i18n="taixue.context.paragraph">段落</button>
         </div>
-        <div class="agf-context-summary" id="agfContextSummary" data-i18n="taixue.context.summary">当前上下文：全文</div>
-        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="taixue.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="taixue.context.chart" data-i18n-title="taixue.chart.title">图表</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="taixue.context.discoverImages">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="taixue.context.screenshot">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="taixue.context.audio">音频</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="taixue.context.mediaMode"><option value="auto">自动判断</option><option value="recognition_only">仅识别结果</option><option value="image_and_recognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-context-summary" id="agfContextSummary" data-i18n="taixue.context.summaryFull">当前上下文：全文</div>
+        <div class="agf-media-context-tools"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="taixue.context.image">图片</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="taixue.context.chart" data-i18n-title="taixue.chart.title">图表</button><button id="agfPageImageDiscoverBtn" class="agf-context-btn" data-i18n="taixue.context.discoverImages">发现网页图片</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="taixue.context.screenshot">截图网页</button><button id="agfAudioContextBtn" class="agf-context-btn" data-i18n="taixue.context.audio">音频</button><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="taixue.context.mediaMode"><option value="auto" data-i18n="taixue.context.auto">自动判断</option><option value="recognition_only" data-i18n="taixue.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="taixue.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label" data-i18n="taixue.tasks.title">任务</span>
@@ -3652,13 +3652,13 @@ class ADHDHighlighter {
       taixueState.setContextSource(source);
       contextButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.source === taixueState.contextSource));
       if (!contextSummary) return;
-      const labels = { full_article: '全文', selection: '选中内容', paragraph: '当前段落', manual: '手动内容' };
+      const labels = { full_article: window.i18n?.t?.('taixue.context.full') || '全文', selection: window.i18n?.t?.('taixue.context.selection') || '选中内容', paragraph: window.i18n?.t?.('taixue.context.paragraph') || '当前段落', manual: window.i18n?.t?.('taixue.context.manual') || '手动内容' };
       let preview = '';
       try {
         if (source === 'selection') preview = getSelectedTextSafe().slice(0, 30);
         else if (source === 'paragraph') preview = getCurrentParagraphText().slice(0, 30);
       } catch (_) {}
-      contextSummary.textContent = `当前上下文：${labels[source] || '全文'}${preview ? ` · ${preview}` : ''}`;
+      contextSummary.textContent = `${window.i18n?.t?.('taixue.context.summary', { label: labels[source] || labels.full_article }) || `当前上下文：${labels[source] || '全文'}`}${preview ? ` · ${preview}` : ''}`;
     };
     contextButtons.forEach(btn => btn.addEventListener('click', () => updateContextControls(btn.dataset.source || 'full_article')));
     let currentMediaContext = null;
@@ -4310,7 +4310,7 @@ class ADHDHighlighter {
       if (visionOcrBtn) visionOcrBtn.disabled = kind !== 'image';
       if (mediaModeSelect) mediaModeSelect.disabled = false;
       if (mediaStrategy) mediaStrategy.textContent = '图片已加入，等待发送时判断模型能力';
-      if (contextSummary) contextSummary.textContent = `当前上下文：${kind === 'image' ? '图片' : '音频'} · ${file.name}`;
+      if (contextSummary) contextSummary.textContent = `${window.i18n?.t?.('taixue.context.summary', { label: window.i18n?.t?.(`taixue.context.${kind}`) || (kind === 'image' ? '图片' : '音频') }) || `当前上下文：${kind === 'image' ? '图片' : '音频'}`} · ${file.name}`;
       if (kind === 'image' && imageWorkspaceStatus) { imageWorkspaceStatus.textContent = '识别中…'; imageWorkspaceResult.innerHTML = `<p>已添加：${String(file.name)}</p><img src="${dataUrl}" alt="待识别图片" style="max-width:180px;max-height:120px;border-radius:8px"/>`; }
       if (kind === 'image') { try { const output = await taixueTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfTaixueImageRecognitionHistory'], r => resolve(Array.isArray(r.agfTaixueImageRecognitionHistory) ? r.agfTaixueImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfTaixueImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
       else showToast('音频已加入上下文，音频转写功能尚未开启。');
