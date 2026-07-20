@@ -3932,7 +3932,7 @@ class ADHDHighlighter {
         sequence: { name: 'Sequence 时序图', schema: 'events:[{id,date,label,description,sourceRefs}]', rule: '按调用或事件顺序提取参与者动作；date 使用序号或阶段名，不编造时间。' }
       }[intent] || { name: '关系图', schema: 'nodes:[{id,label,description,sourceRefs}],edges:[{source,target,label,sourceRefs}]', rule: '提取关键节点和关系。' };
       const compactRule = options.compact ? '请输出单行压缩JSON，description和sourceRefs.text保持短句，节点/事件控制在8个以内。' : '请控制节点或事件数量，避免冗长说明。';
-      return `${skillPrefix}不要输出思考过程、分析过程或Markdown。${compactRule}请根据以下材料生成${config.name}，只返回严格JSON。JSON必须包含 title, description, ${config.schema}, sourceRefs。${config.rule}每个主要事件、节点或关系都要尽量给出原文依据的短文本和段落定位；无法确定的关系放入warnings，不要编造。材料：\n${material}`;
+      return `${skillPrefix}不要输出思考过程、分析过程或Markdown。${compactRule}请根据以下工作区输入生成${config.name}，只返回严格JSON。工作区输入可能是事实材料，也可能只是用户的任务要求；如果输入明确要求“根据你的知识/常识生成”，允许使用你的通用知识完成图表，不要因为输入没有提供事实段落而返回空结构。若输入包含网页或选区材料，则优先依据材料并标记不确定内容。JSON必须包含 title, description, ${config.schema}, sourceRefs。${config.rule}对于知识驱动图表，sourceRefs 可以为空并在 warnings 说明“基于通用知识生成”；对于材料驱动图表，每个主要事件、节点或关系都要尽量给出原文依据的短文本和段落定位；无法确定的关系放入warnings，不要编造。工作区输入：\n${material}`;
     };
     const requestChartOutput = async (intent, material) => {
       const firstMaterial = limitTaixueText(material, 30000).text;
@@ -3945,15 +3945,15 @@ class ADHDHighlighter {
         return await taixueTask.requestJsonText({ prompt: buildChartPrompt(intent, shorterMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
       }
     };
-    const requestChartModel = async (intent, material) => {
-      const output = await requestChartOutput(intent, material);
+    const requestChartModel = async (promptType, material) => {
+      const output = await requestChartOutput(promptType, material);
       try {
         return typeof output === 'string' ? AgfChartModel.parseJsonObject(output) : output;
       } catch (error) {
         if (!/JSON|不完整|Unterminated|截断/i.test(String(error.message || error))) throw error;
         chartNotice.textContent = 'AI 返回了半截 JSON，正在要求压缩格式重试…';
         const retryMaterial = limitTaixueText(material, 12000).text;
-        const retryOutput = await taixueTask.requestJsonText({ prompt: buildChartPrompt(intent, retryMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
+        const retryOutput = await taixueTask.requestJsonText({ prompt: buildChartPrompt(promptType, retryMaterial, { compact: true }), timeout: 90000, maxTokens: 8000, temperature: .15 });
         return typeof retryOutput === 'string' ? AgfChartModel.parseJsonObject(retryOutput) : retryOutput;
       }
     };
@@ -3965,7 +3965,7 @@ class ADHDHighlighter {
         if (!material) throw new Error('图表工作区没有可用材料');
         const selectedType = chartIntent.value;
         const intent = { architecture: 'relationship', workflow: 'flowchart', data_flow: 'data', lifecycle: 'relationship', sequence: 'timeline' }[selectedType] || selectedType;
-        const model = await requestChartModel(intent, material);
+        const model = await requestChartModel(selectedType, material);
         const checked = AgfChartModel.validateChartContext({
           source: chartSourceName(ctx.source), intent, renderer: chartRenderer?.value || 'svg', chartModel: model,
           sourceRefs: model.sourceRefs || [{ type: ctx.source || 'manual', text: material.slice(0, 180), url: ctx.canonicalUrl || ctx.sourceUrl || location.href }], theme: chartTheme?.value || 'system', viewType: selectedType
