@@ -7511,14 +7511,16 @@ console.log('加载ADHD文本高亮器主控制器...');
 // 等待DOM加载完成后初始化
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', async () => {
-    window.adhdHighlighter = new ADHDHighlighter();
-    // 先创建控制器，确保消息监听器立即注册；i18n 加载不能阻塞 popup 打开太学。
     try { await window.i18n.init(); } catch (e) {}
+    window.adhdHighlighter = new ADHDHighlighter();
   });
 } else {
   // DOM已经加载完成
-  window.adhdHighlighter = new ADHDHighlighter();
-  try { window.i18n.init(); } catch (e) {}
+  try {
+    window.i18n.init().then(() => { window.adhdHighlighter = new ADHDHighlighter(); });
+  } catch (e) {
+    window.adhdHighlighter = new ADHDHighlighter();
+  }
 }
 
 console.log('ADHD文本高亮器主控制器加载完成');
