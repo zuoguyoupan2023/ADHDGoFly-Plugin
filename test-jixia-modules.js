@@ -33,5 +33,8 @@ const writing = createWritingModule({ context: fakeContext, task: { requestJsonT
 assert.equal((await writing.run('summary')).result.draft, '草稿');
 const facts = createFactCheckModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ claims: [{ text: '说法', classification: 'fact', confidence: 1.2 }] }) } });
 assert.equal((await facts.run()).result.claims[0].confidence, 1);
+let factAttempts = 0;
+const retryFacts = createFactCheckModule({ context: fakeContext, task: { requestJsonText: async () => { factAttempts += 1; if (factAttempts === 1) throw new Error('AI 返回了空内容（finish_reason: length）'); return JSON.stringify([{ text: '简短说法', classification: 'opinion', confidence: .5 }]); } } });
+assert.equal((await retryFacts.run()).result.claims.length, 1); assert.equal(factAttempts, 2);
 console.log('jixia module tests passed');
 })();
