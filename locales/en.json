@@ -579,16 +579,12 @@
        }
     }
   },
-  "chartWorkspace": {"title":"Chart Workspace","generate":"Generate from workspace","modify":"AI Modify Chart","modifyPlaceholder":"For example: add Redis before the database and highlight the cache-miss path","addLane":"Add Lane","notice":"Click to select; drag to move; double-click text to edit.","save":"Save","attach":"Add to Chat"},
-  "imageWorkspace": {"title":"Image Workspace","choose":"Choose Images","process":"Recognize Selected Images","addToChat":"Add to Chat","retry":"Retry Recognition","clear":"Clear Workspace","delete":"Delete and Clear History","export":"Export","history":"Recognition History"},
-  "taskBar": {"label":"Tasks","translate":"Translate","selectionExplain":"Explain Selection","visionOcr":"Image OCR","speak":"Read Aloud","history":"History"},
   "sidebar": {
     "home": "Home",
     "dict": "Dictionary",
     "colors": "Colors",
     "text": "Text",
-    "ai": "AI",
-    "stats": "Stats",
+    "ai": "AI Analysis",
     "aiChat": "AI Chat",
     "style": "Style",
     "faq": "FAQ",

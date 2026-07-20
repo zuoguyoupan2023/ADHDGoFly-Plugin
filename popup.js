@@ -503,9 +503,7 @@ class PopupController {
         (async () => {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tabs[0]) return;
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'openTaixue', module: 'chat', contextSource: 'full_article' }, () => {
-            if (chrome.runtime.lastError) console.warn('无法打开太学：', chrome.runtime.lastError.message);
-          });
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'showAiSettingPanel' });
         })();
         break;
       case 'faq-btn':
