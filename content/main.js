@@ -2966,13 +2966,14 @@ class ADHDHighlighter {
           <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
           <button id="agfAiTabExplain" data-i18n="jixia.tabs.explain">解释</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
+          <button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button>
         </div>
         <div class="agf-context-tools" aria-label="上下文范围">
           <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button>
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
         </div>
-        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
       <div class="agf-task-bar">
         <span class="agf-task-label" data-i18n="jixia.tasks.title">任务</span>
@@ -3042,14 +3043,14 @@ class ADHDHighlighter {
                 <div class="agf-quiz-actions"><button id="agfQuizBackHistory" style="display:none">返回历史</button><button id="agfQuizSubmit" class="primary" disabled>提交答案</button><button id="agfQuizNext" style="display:none">下一题</button></div>
               </div>
               <div class="agf-quiz-result" id="agfQuizResult"></div>
-              <div class="agf-quiz-actions" id="agfQuizStartActions"><button id="agfQuizHistory">测试历史</button><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
+              <div class="agf-quiz-actions" id="agfQuizStartActions"><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
             </div>
           </div>
           <div class="agf-ai-view-module" id="agfAiViewExplain" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>选区解释</span><span id="agfExplainSource" class="agf-module-meta"></span></div>
               <div id="agfExplainResult" class="agf-module-result"><p>请先在网页中选中文本，再点击“选区解释”。</p></div>
-              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history"></div>
+              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history" style="display:none"></div>
             </div>
           </div>
           <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="jixia.image.title">图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta" data-i18n="jixia.image.waiting">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p data-i18n="jixia.image.drop">拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary" data-i18n="jixia.image.choose">选择图片</button><button id="agfPageImageDiscoverBtn" type="button" data-i18n="jixia.context.discoverImages">发现网页图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div class="agf-image-workspace-controls"><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> <span data-i18n="jixia.image.selectAll">全选</span></label><button id="agfImageProcessSelected" class="primary" disabled data-i18n="jixia.image.process">发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled data-i18n="jixia.image.addToChat">添加到对话框</button><button id="agfImageWorkspaceRetry" disabled data-i18n="jixia.image.retry">重新识别</button><button id="agfImageWorkspaceClear" data-i18n="jixia.image.clear">清除工作区</button><button id="agfImageWorkspaceDelete" data-i18n="jixia.image.delete">删除并清理历史</button><button id="agfImageWorkspaceExport" data-i18n="jixia.image.export">导出</button><button id="agfImageWorkspaceHistory" data-i18n="jixia.image.history">识别历史</button></div></div></div>
@@ -3058,7 +3059,7 @@ class ADHDHighlighter {
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
               <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
-              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history"></div>
+              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history" style="display:none"></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3727,7 +3728,6 @@ class ADHDHighlighter {
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (moduleHistoryBtn) moduleHistoryBtn.style.display = which === 'chat' ? '' : 'none';
-      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['explain','vocab','chat','quiz'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
       currentView = which;
@@ -3799,6 +3799,7 @@ class ADHDHighlighter {
     const chartNotice = chartView.querySelector('#agfChartNotice');
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
+    const chartHistoryQuickBtn = (() => { const button = document.createElement('button'); button.id = 'agfChartHistoryQuick'; button.className = 'agf-context-btn'; button.textContent = '历史记录'; button.title = '查看图表历史'; chartView.querySelector('.agf-module-heading')?.appendChild(button); button.onclick = () => { recordsType = 'chart'; if (recordsTypeSelect) recordsTypeSelect.value = 'chart'; showRecords(); }; return button; })();
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
@@ -4806,7 +4807,7 @@ class ADHDHighlighter {
       setView('chat');
       showChat();
     };
-    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = async () => { imageWorkspaceHistoryList.style.display = imageWorkspaceHistoryList.style.display === 'none' ? 'block' : 'none'; if (imageWorkspaceHistoryList.style.display !== 'none') await renderImageHistoryManager(); };
+    if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { recordsType = 'image'; if (recordsTypeSelect) recordsTypeSelect.value = 'image'; showRecords(); };
     if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = clearImageWorkspace;
     if (imageWorkspaceDeleteBtn) imageWorkspaceDeleteBtn.onclick = () => deleteImageWorkspaceAndHistory().catch(e => showToast(e.message || '删除失败'));
     if (imageWorkspaceExportBtn) imageWorkspaceExportBtn.onclick = () => exportImageWorkspace().catch(e => showToast(e.message || '导出失败'));
@@ -5939,7 +5940,20 @@ class ADHDHighlighter {
         delBtn.addEventListener('click', async () => {
           const ok = window.confirm((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.deleteConfirm') : '确定删除该记录？');
           if (!ok) return;
-          try { await dbDeleteConversation(item.id); el.remove(); if (toastEl) { toastEl.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.deleted') : '记录已删除'; toastEl.style.display = 'block'; setTimeout(() => { toastEl.style.display = 'none'; }, 2000); } } catch (_) {}
+          try {
+            if (item.type === 'chat') await dbDeleteConversation(item.id);
+            else if (item.type === 'chart') await AgfChartWorkspace.remove(item.id);
+            else {
+              const keys = { quiz: 'agfQuizHistory', explain: 'agfJixiaExplainHistory', image: 'agfJixiaImageRecognitionHistory' };
+              const key = keys[item.type];
+              if (key) {
+                const stored = await new Promise(resolve => chrome.storage.local.get([key], resolve));
+                const next = Array.isArray(stored[key]) ? stored[key].filter(row => row.id !== item.id) : [];
+                await new Promise(resolve => chrome.storage.local.set({ [key]: next }, resolve));
+              } else if (item.type === 'vocab') await new Promise(resolve => chrome.storage.local.remove(['agfJixiaVocabularyReview'], resolve));
+            }
+            el.remove(); if (toastEl) { toastEl.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.records.deleted') : '记录已删除'; toastEl.style.display = 'block'; setTimeout(() => { toastEl.style.display = 'none'; }, 2000); }
+          } catch (_) {}
         });
         actions.appendChild(openBtn);
         actions.appendChild(delBtn);
@@ -7179,7 +7193,7 @@ class ADHDHighlighter {
       if (!text) { showToast('没有可朗读的文本'); return; }
       const utterance = new SpeechSynthesisUtterance(text.slice(0, 12000)); const selectedLang = speakLanguageSelect?.value || 'auto'; utterance.lang = selectedLang === 'auto' ? (/^\s*[\u4e00-\u9fff]/.test(text) ? 'zh-CN' : 'en-US') : selectedLang; const selectedVoiceId = speakVoiceSelect?.value || ''; const selectedVoice = availableSpeakVoices.find(v => (v.voiceURI || v.name) === selectedVoiceId); if (selectedVoice) { utterance.voice = selectedVoice; utterance.lang = selectedVoice.lang; } utterance.rate = Math.max(.5, Math.min(2, Number(speakRateInput?.value || 1))); utterance.onend = () => { speakBtn.textContent = '朗读'; }; speechSynthesis.cancel(); speechSynthesis.speak(utterance); speakBtn.textContent = '暂停朗读';
     };
-    if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { if (currentView === 'quiz') showQuizHistory(); else if (currentView === 'explain') { setView('explain'); renderExplainHistory(); } else if (currentView === 'vocab') { setView('vocab'); renderVocabHistory(); } else showRecords(); };
+    if (moduleHistoryBtn) moduleHistoryBtn.onclick = () => { recordsType = 'all'; if (recordsTypeSelect) recordsTypeSelect.value = 'all'; showRecords(); };
     if (testTextBtn) testTextBtn.addEventListener('click', async () => {
       const u = getCanonicalUrl();
       const res = await new Promise(r => chrome.runtime.sendMessage({ action: 'agfTestGetTextForPage', pageUrl: u.pageUrl, canonicalUrl: u.canonicalUrl }, r));
