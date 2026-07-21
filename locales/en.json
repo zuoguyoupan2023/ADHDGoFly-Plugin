@@ -70,7 +70,7 @@
     "highlight": { "on": "Color", "off": "Off" },
     "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
       "send": "Send",
-      "addFullText": "+ Text", "addImage": "+ Image", "fullTextPrefix": "My question is: ",
+      "addFullText": "+ Text", "addImage": "+ Image", "mediaWaitingVision": "Waiting for the current vision model to understand it", "fullTextPrefix": "My question is: ",
       "basedOnFullText": "Based on the current page's full text, ",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",

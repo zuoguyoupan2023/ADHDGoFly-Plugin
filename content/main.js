@@ -4368,9 +4368,11 @@ class ADHDHighlighter {
       const media = currentMediaContext?.image;
       const result = currentMediaContext?.recognition?.text || '';
       if (!media) { mediaAttachment.style.display = 'none'; mediaAttachment.innerHTML = ''; return; }
-      mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl || media.sourceUrl || ''}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong>${result ? `<div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div>` : '<div class="agf-media-attachment-result">等待当前视觉模型直接理解</div>'}</div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
+      const waitingVision = window.i18n?.t?.('aiPanel.mediaWaitingVision') || '等待当前视觉模型直接理解';
+      mediaAttachment.style.display = 'flex'; mediaAttachment.innerHTML = `<img src="${media.dataUrl || media.sourceUrl || ''}" alt="已添加图片"><div class="agf-media-attachment-body"><strong>${String(media.name || '图片')}</strong>${result ? `<div class="agf-media-attachment-result">${typeof markdownToHtml === 'function' ? markdownToHtml(result) : String(result).replace(/\n/g,'<br>')}</div>` : `<div class="agf-media-attachment-result">${waitingVision}</div>`}</div><button class="agf-media-attachment-remove" title="删除图片和识别结果">×</button>`;
       mediaAttachment.querySelector('.agf-media-attachment-remove').onclick = () => { currentMediaContext = null; renderMediaAttachment(); if (mediaStrategy) mediaStrategy.textContent = ''; if (visionOcrBtn) visionOcrBtn.disabled = true; };
     };
+    document.addEventListener('languageChanged', () => renderMediaAttachment(), { passive: true });
     const pageImagesForSource = (source) => {
       const selection = source === 'selection' ? window.getSelection() : null;
       const root = source === 'selection' ? selection?.anchorNode : document.body;

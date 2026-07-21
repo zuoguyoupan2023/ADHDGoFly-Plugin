@@ -70,7 +70,7 @@
     "highlight": { "on": "高亮", "off": "不亮" },
     "compose": { "placeholder": "输入你的问题，按 Enter 发送，Shift+Enter 换行" },
       "send": "发送",
-      "addFullText": "+全文", "addImage": "+图像", "fullTextPrefix": "我的问题是： ",
+      "addFullText": "+全文", "addImage": "+图像", "mediaWaitingVision": "等待当前视觉模型直接理解", "fullTextPrefix": "我的问题是： ",
       "basedOnFullText": "基于当前页面全文， ",
     "refreshHint": "刷新以采取全文",
     "close": "关闭",
