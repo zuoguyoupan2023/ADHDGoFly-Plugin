@@ -3865,10 +3865,13 @@ class ADHDHighlighter {
       };
       Object.assign(uiText, { '阅读': 'jixia.tabs.reading', 'Reading': 'jixia.tabs.reading', '写作': 'jixia.tabs.writing', 'Writing': 'jixia.tabs.writing', '测试': 'jixia.tabs.quiz', 'Quiz': 'jixia.tabs.quiz', '词汇': 'jixia.tabs.vocab', 'Vocabulary': 'jixia.tabs.vocab', '图像': 'jixia.context.image', 'Image': 'jixia.context.image', '图表': 'jixia.context.chart', 'Chart': 'jixia.context.chart', '解释': 'jixia.tabs.explain', 'Explain': 'jixia.tabs.explain', '打开': 'jixia.ui.open', 'Open': 'jixia.ui.open', '删除': 'jixia.ui.delete', 'Delete': 'jixia.ui.delete', '恢复': 'jixia.ui.restore', 'Restore': 'jixia.ui.restore', '比较': 'jixia.ui.compare', 'Compare': 'jixia.ui.compare', '选择版本': 'jixia.ui.selectVersion', 'Select version': 'jixia.ui.selectVersion' });
       Object.assign(uiText, { '全文关键词': 'jixia.ui.fullTextKeywords', 'Full-text keywords': 'jixia.ui.fullTextKeywords', '逐段关键词': 'jixia.ui.sectionKeywords', 'Section keywords': 'jixia.ui.sectionKeywords', '保存为词典': 'jixia.ui.saveDictionary', 'Save as dictionary': 'jixia.ui.saveDictionary', '重置本轮': 'jixia.ui.reset', 'Reset this round': 'jixia.ui.reset', '基础掌握度 0%': 'jixia.ui.mastery', 'Concept map': 'jixia.chart.intent.concept', '概念图': 'jixia.chart.intent.concept', '数据图表': 'jixia.chart.intent.data', 'Data chart': 'jixia.chart.intent.data', 'Clean SVG': 'jixia.chart.renderer.svg', '清爽 SVG': 'jixia.chart.renderer.svg', 'Generate from workspace': 'jixia.chart.generate', '根据工作区材料生成': 'jixia.chart.generate', 'Saved charts': 'jixia.chart.saved', '已保存图表': 'jixia.chart.saved', '关系图': 'jixia.chart.intent.relationship', 'Relationship': 'jixia.chart.intent.relationship', 'Undo': 'jixia.chart.undo', '撤销': 'jixia.chart.undo', 'Redo': 'jixia.chart.redo', '重做': 'jixia.chart.redo', 'Add node': 'jixia.chart.addNode', '添加节点': 'jixia.chart.addNode', 'Add edge': 'jixia.chart.addEdge', '添加连线': 'jixia.chart.addEdge', 'Add lane': 'jixia.chart.addLane', '添加泳道': 'jixia.chart.addLane', 'Delete selected': 'jixia.chart.delete', '删除选中': 'jixia.chart.delete' });
-      const roots = [document.querySelector('#agfAiViewP1'), document.querySelector('#agfAiViewWriting'), document.querySelector('#agfAiViewQuiz'), document.querySelector('#agfAiViewVocab'), document.querySelector('#agfRecordsPanel'), document.querySelector('#agfAiViewImage'), document.querySelector('#agfAiViewChart')].filter(Boolean);
+      Object.assign(uiText, { '准备中': 'jixia.settingsUi.ready', '连接状态': 'jixia.settingsUi.connectionStatus', '已配置，待测试': 'jixia.settingsUi.configuredPendingTest', '测试当前供应商': 'jixia.settingsUi.testProvider', '备用供应商': 'jixia.settingsUi.fallbackProvider', '不启用': 'jixia.settingsUi.disabled', '媒体识别': 'jixia.settingsUi.mediaRecognition', '这里管理图片识别/OCR和音频上下文，不包含 PDF 解析。当前图片识别固定使用免费的 GLM-4V-Flash。': 'jixia.settingsUi.mediaDescription', '朗读设置': 'jixia.settingsUi.speechSettings', '朗读语言': 'jixia.settingsUi.speechLanguage', '朗读音色': 'jixia.settingsUi.speechVoice', '朗读语速': 'jixia.settingsUi.speechRate', '试听当前音色': 'jixia.settingsUi.testVoice', '浏览器提供哪些音色，取决于当前操作系统和浏览器；插件不会上传朗读文本。': 'jixia.settingsUi.voiceDescription', '开启后，点击稷下上下文区的“图片”或“音频”选择文件；发送给 AI 前仍会再次确认。默认不保存原始媒体，只保存必要的文字结果。': 'jixia.settingsUi.mediaHint', '媒体权限': 'jixia.settingsUi.mediaPermission', '媒体上传': 'jixia.settingsUi.mediaUpload', '开启': 'jixia.settingsUi.enabled', '关闭': 'jixia.settingsUi.disabled', '自动识别': 'jixia.settingsUi.autoDetect', '跟随语言默认音色': 'jixia.settingsUi.defaultVoice', '保存': 'jixia.ui.save' });
+      const roots = [document.querySelector('#agfAiViewP1'), document.querySelector('#agfAiViewWriting'), document.querySelector('#agfAiViewQuiz'), document.querySelector('#agfAiViewVocab'), document.querySelector('#agfRecordsPanel'), document.querySelector('#agfAiViewImage'), document.querySelector('#agfAiViewChart'), document.querySelector('#agfAiViewSettings')].filter(Boolean);
       roots.forEach(root => root.querySelectorAll('button, label, option, p, strong, h3, h4, span').forEach(element => {
         const value = String(element.textContent || '').trim(); const key = uiText[value]; if (key && !element.children.length) element.dataset.i18n = key;
       }));
+      const settingPlaceholders = [['#agfGlmVisionKeyInput', 'jixia.settingsUi.visionKeyPlaceholder']];
+      settingPlaceholders.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.dataset.i18nPlaceholder = key; });
       try { window.i18n?.applyTranslations?.(); } catch (_) {}
     };
     localizeJixiaViews();
@@ -3928,7 +3931,7 @@ class ADHDHighlighter {
       currentChartContext.changeReason = '自动保存';
       await AgfChartWorkspace.save(currentChartContext);
       lastAutoSavedChart = JSON.stringify(chartSnapshot());
-      loadChartHistory();
+      loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {});
       return true;
     };
     const updateChartHistoryButtons = () => { if (chartButtons.undo) chartButtons.undo.disabled = !chartHistoryState.past.length; if (chartButtons.redo) chartButtons.redo.disabled = !chartHistoryState.future.length; };
@@ -4212,10 +4215,11 @@ class ADHDHighlighter {
       if (chartIntent && useSkill) chartIntent.value = 'relationship';
       if (chartSkillBadge) chartSkillBadge.style.display = useSkill ? 'flex' : 'none';
       if (chartSourceText) chartSourceText.value = material;
-      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · 已填充 ${material.length} 字`;
-      chartNotice.textContent = useSkill ? '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。' : '已填充当前上下文，可修改材料后生成。';
+      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · ${window.i18n?.getCurrentLanguage?.() === 'en' ? `Filled ${material.length} chars` : `已填充 ${material.length} 字`}`;
+      const chartEnglish = window.i18n?.getCurrentLanguage?.() === 'en';
+      chartNotice.textContent = useSkill ? (chartEnglish ? 'The current context is wrapped with the built-in chart Skill. You can edit the material before generating.' : '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。') : (chartEnglish ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。');
       setView('chart');
-      loadChartHistory();
+      loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {});
     };
     const showChartView = () => fillChartWorkspace({ useSkill: false }).catch(error => { showToast(error.message || '无法进入图表工作区'); });
     if (chartWorkspaceBtn) chartWorkspaceBtn.onclick = () => showChartView();
@@ -4336,7 +4340,7 @@ class ADHDHighlighter {
     const deleteSelectedChartNodes = () => { if (!currentChartContext || (!chartHistoryState.selected.size && !chartHistoryState.selectedEdges.size)) return; rememberChart(); const ids = chartHistoryState.selected; const edgeIndexes = chartHistoryState.selectedEdges; currentChartContext.chartModel.nodes = currentChartContext.chartModel.nodes.filter(node => { if (!ids.has(node.id)) return true; if (node.isLane) { node.hidden = true; return true; } return false; }); currentChartContext.chartModel.edges = (currentChartContext.chartModel.edges || []).filter((edge, index) => !ids.has(edge.source) && !ids.has(edge.target) && !edgeIndexes.has(index)); chartHistoryState.selected.clear(); chartHistoryState.selectedEdges.clear(); chartNotice.textContent = '已删除选中节点/连线'; renderChartPreview(); };
     chartButtons.delete.onclick = deleteSelectedChartNodes;
     document.addEventListener('keydown', event => { if (!currentChartContext || !chartView || chartView.style.display === 'none') return; if ((event.key === 'Delete' || event.key === 'Backspace') && chartHistoryState.selected.size && !/INPUT|TEXTAREA/.test(event.target?.tagName || '')) { event.preventDefault(); deleteSelectedChartNodes(); } });
-    chartButtons.save.onclick = async () => { if (!currentChartContext) return; currentChartContext.changeReason = currentChartContext.changeReason || '手动保存'; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = '已保存到 IndexedDB，并记录当前版本'; loadChartHistory(); };
+    chartButtons.save.onclick = async () => { if (!currentChartContext) return; currentChartContext.changeReason = currentChartContext.changeReason || '手动保存'; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'Saved to IndexedDB and the current version was recorded.' : '已保存到 IndexedDB，并记录当前版本'; loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {}); };
     chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const scale = Number(prompt('PNG 导出倍率（1-4）', '2')) || 2; const transparent = confirm('是否使用透明背景？'); const png = await AgfChartWorkspace.svgToPngWithOptions(await getCurrentChartSvg(), { scale, transparent }); const link = document.createElement('a'); link.href = png; link.download = chartFileName('png'); link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
     chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createJixiaContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'jixia-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
     const renderMediaAttachment = () => {
@@ -5309,7 +5313,7 @@ class ADHDHighlighter {
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = 'none';
         if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
-        if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[val] ? '已配置，待测试' : '未配置 API Key';
+        if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[val] ? (window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试') : (window.i18n?.t?.('aiPanel.settings.unconfigured') || '未配置 API Key');
         if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[val])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[val])); }
       }, labelMap);
       if (fallbackProviderSelect) {
@@ -5349,7 +5353,7 @@ class ADHDHighlighter {
           if (tempInput) tempInput.value = t;
           if (keySavedBtn) keySavedBtn.style.display = 'none';
           if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
-          if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[currentProvider] ? '已配置，待测试' : '未配置 API Key';
+          if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[currentProvider] ? (window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试') : (window.i18n?.t?.('aiPanel.settings.unconfigured') || '未配置 API Key');
           if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[currentProvider])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[currentProvider])); }
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
@@ -5448,8 +5452,8 @@ class ADHDHighlighter {
       });
     }
     if (saveGlmVisionKeyBtn && glmVisionKeyInput) {
-      saveGlmVisionKeyBtn.addEventListener('click', () => { const value = String(glmVisionKeyInput.value || '').trim(); if (!value) return; chrome.storage.local.set({ glmVisionApiKey: value }, () => { glmVisionKeyInput.value = ''; glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; showToast('GLM-4V-Flash Key 已保存'); }); });
-      chrome.storage.local.get(['glmVisionApiKey'], r => { if (r.glmVisionApiKey) glmVisionKeyInput.placeholder = '已配置，单独用于图片识别/OCR'; });
+      saveGlmVisionKeyBtn.addEventListener('click', () => { const value = String(glmVisionKeyInput.value || '').trim(); if (!value) return; chrome.storage.local.set({ glmVisionApiKey: value }, () => { glmVisionKeyInput.value = ''; glmVisionKeyInput.placeholder = window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试'; showToast(window.i18n?.t?.('jixia.settingsUi.saved') || '已保存'); }); });
+      chrome.storage.local.get(['glmVisionApiKey'], r => { if (r.glmVisionApiKey) glmVisionKeyInput.placeholder = window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试'; });
     }
     const speakSettingsKey = 'agfJixiaSpeakSettings';
     let availableSpeakVoices = [];
@@ -5572,7 +5576,7 @@ class ADHDHighlighter {
       }, sensMap);
       const mediaPermission = mediaSettings.jixiaMediaPermissionEnabled !== false;
       const mediaUpload = mediaSettings.jixiaMediaUploadEnabled === true;
-      const mediaMap = { on: '开启', off: '关闭' };
+      const mediaMap = { on: window.i18n?.t?.('jixia.settingsUi.enabled') || '开启', off: window.i18n?.t?.('jixia.settingsUi.disabled') || '关闭' };
       renderButtons(mediaPermissionToggle, ['on','off'], mediaPermission ? 'on' : 'off', async (val, btn) => {
         Array.from(mediaPermissionToggle.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active')); btn.classList.add('active');
         await chrome.storage.local.set({ jixiaMediaPermissionEnabled: val === 'on' });
