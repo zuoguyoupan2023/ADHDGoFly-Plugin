@@ -3040,6 +3040,7 @@ class ADHDHighlighter {
       #agfAiSettingOverlay .agf-ai-tabs button.active{background:#edf2ff!important;color:#2447c7!important}
       #agfAiSettingOverlay .agf-media-context-tools{display:inline-flex!important;align-items:center!important;gap:4px!important;margin-left:auto!important}
       #agfAiSettingOverlay .agf-context-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:24px!important;min-height:24px!important;margin:0!important;padding:0 8px!important;border:1px solid #dfe5f2!important;border-radius:7px!important;background:#fff!important;color:#4b5870!important;font-size:12px!important;font-weight:400!important;line-height:22px!important;white-space:nowrap!important}
+      #agfAiSettingOverlay #agfCtxParagraph{display:none!important}
       #agfAiSettingOverlay .agf-context-btn.active{border-color:#315efb!important;background:#edf2ff!important;color:#2447c7!important}
       #agfAiSettingOverlay .agf-ai-controls{display:inline-flex!important;align-items:center!important;gap:4px!important}
       #agfAiSettingOverlay .agf-ai-controls button{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;min-height:26px!important;min-width:26px!important;margin:0!important;padding:0 6px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#687386!important;font-size:12px!important;line-height:24px!important}

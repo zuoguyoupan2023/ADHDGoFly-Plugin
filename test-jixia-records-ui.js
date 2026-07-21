@@ -25,6 +25,7 @@ assert.match(source, /#agfQuizStartActions \.agf-quiz-select,#agfQuizStartAction
 assert.match(source, /Paragraph context is wired, but hidden until the interaction model is ready\./);
 assert.doesNotMatch(source, /class="agf-top-context-tools agf-highlight-toggle"[^>]*style="display:none"/);
 assert.match(source, /id="agfCtxParagraph"[^>]*style="display:none"[^>]*aria-hidden="true"[^>]*tabindex="-1"/);
+assert.match(source, /#agfAiSettingOverlay #agfCtxParagraph\{display:none!important\}/);
 assert.doesNotMatch(source, /title: `阅读 ·/);
 assert.doesNotMatch(source, /title: `写作 ·/);
 assert.doesNotMatch(source, /title: `解释 ·/);
