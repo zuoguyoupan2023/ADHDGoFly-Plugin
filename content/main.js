@@ -3432,6 +3432,8 @@ class ADHDHighlighter {
     let addedFullLinkPreview = '';
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
+    const recordsListObserver = new MutationObserver(() => { try { localizeJixiaViews?.(); } catch (_) {} });
+    if (recordsList) recordsListObserver.observe(recordsList, { childList: true, subtree: true });
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
     const recordsTabAll = document.getElementById('agfRecordsTabAll');
     const recordsSearchInput = document.getElementById('agfRecordsSearch');
@@ -3848,9 +3850,33 @@ class ADHDHighlighter {
       const attrs = [['#agfP1Title', 'jixia.ui.readingTitle'], ['#agfWritingTitle', 'jixia.ui.writingTitle'], ['#agfReadingSave', 'jixia.ui.save'], ['#agfWritingSave', 'jixia.ui.save'], ['#agfReadingDiscussToggle', 'jixia.ui.discuss'], ['#agfWritingDiscussToggle', 'jixia.ui.discuss'], ['#agfQuizDiscussToggle', 'jixia.ui.discuss'], ['#agfReadingDiscussSend', 'jixia.ui.send'], ['#agfWritingDiscussSend', 'jixia.ui.send'], ['#agfQuizDiscussSend', 'jixia.ui.send']];
       attrs.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.dataset.i18n = key; });
       document.querySelectorAll('#agfReadingQuestion,#agfWritingQuestion,#agfQuizQuestion').forEach(element => { element.dataset.i18nPlaceholder = 'jixia.ui.questionPlaceholder'; });
+      const uiText = {
+        '总结': 'aiPanel.summary', 'Summary': 'aiPanel.summary', '保姆级解读': 'aiPanel.beginnerExplain', 'Beginner-Friendly': 'aiPanel.beginnerExplain',
+        '结构化摘要': 'aiPanel.structured', 'Structured Summary': 'aiPanel.structured', '提取大纲': 'aiPanel.outline', 'Extract Outline': 'aiPanel.outline',
+        '简明解释': 'aiPanel.explain', 'Plain Explanation': 'aiPanel.explain', '提取关键词': 'aiPanel.keywords', 'Extract Keywords': 'aiPanel.keywords',
+        '事实辨识': 'jixia.ui.factCheck', 'Fact Check': 'jixia.ui.factCheck', '结构化阅读': 'jixia.ui.structuredReading', 'Structured Reading': 'jixia.ui.structuredReading',
+        '翻译': 'jixia.tasks.translate', 'Translate': 'jixia.tasks.translate', '做图表': 'jixia.actions.chart', 'Make chart': 'jixia.actions.chart',
+        '改写成新闻': 'jixia.ui.rewriteNews', 'Rewrite as news': 'jixia.ui.rewriteNews', '文风总结': 'jixia.ui.styleSummary', 'Style summary': 'jixia.ui.styleSummary',
+        '文风仿写': 'jixia.ui.styleCopy', 'Style imitation': 'jixia.ui.styleCopy', '全部类型': 'jixia.ui.allTypes', 'All types': 'jixia.ui.allTypes',
+        '选择一个阅读场景开始。': 'jixia.ui.selectScene', 'Choose a reading scene to begin.': 'jixia.ui.selectScene',
+        '选择一个写作场景开始。': 'jixia.ui.selectWritingScene', 'Choose a writing scene to begin.': 'jixia.ui.selectWritingScene',
+        '保存': 'jixia.ui.save', 'Save': 'jixia.ui.save', '选择': 'jixia.ui.choose', 'Choose': 'jixia.ui.choose',
+        '处理': 'jixia.ui.process', 'Process': 'jixia.ui.process', '管理': 'jixia.ui.manage', 'Manage': 'jixia.ui.manage',
+        '全选': 'jixia.ui.selectAll', 'Select all': 'jixia.ui.selectAll', '未处理': 'jixia.ui.pending', 'Pending': 'jixia.ui.pending',
+        '失败': 'jixia.ui.failed', 'Failed': 'jixia.ui.failed', '已处理': 'jixia.ui.completed', 'Completed': 'jixia.ui.completed'
+      };
+      Object.assign(uiText, { '阅读': 'jixia.tabs.reading', 'Reading': 'jixia.tabs.reading', '写作': 'jixia.tabs.writing', 'Writing': 'jixia.tabs.writing', '测试': 'jixia.tabs.quiz', 'Quiz': 'jixia.tabs.quiz', '词汇': 'jixia.tabs.vocab', 'Vocabulary': 'jixia.tabs.vocab', '图像': 'jixia.context.image', 'Image': 'jixia.context.image', '图表': 'jixia.context.chart', 'Chart': 'jixia.context.chart', '解释': 'jixia.tabs.explain', 'Explain': 'jixia.tabs.explain', '打开': 'jixia.ui.open', 'Open': 'jixia.ui.open', '删除': 'jixia.ui.delete', 'Delete': 'jixia.ui.delete', '恢复': 'jixia.ui.restore', 'Restore': 'jixia.ui.restore', '比较': 'jixia.ui.compare', 'Compare': 'jixia.ui.compare', '选择版本': 'jixia.ui.selectVersion', 'Select version': 'jixia.ui.selectVersion' });
+      Object.assign(uiText, { '全文关键词': 'jixia.ui.fullTextKeywords', 'Full-text keywords': 'jixia.ui.fullTextKeywords', '逐段关键词': 'jixia.ui.sectionKeywords', 'Section keywords': 'jixia.ui.sectionKeywords', '保存为词典': 'jixia.ui.saveDictionary', 'Save as dictionary': 'jixia.ui.saveDictionary', '重置本轮': 'jixia.ui.reset', 'Reset this round': 'jixia.ui.reset', '基础掌握度 0%': 'jixia.ui.mastery', 'Concept map': 'jixia.chart.intent.concept', '概念图': 'jixia.chart.intent.concept', '数据图表': 'jixia.chart.intent.data', 'Data chart': 'jixia.chart.intent.data', 'Clean SVG': 'jixia.chart.renderer.svg', '清爽 SVG': 'jixia.chart.renderer.svg', 'Generate from workspace': 'jixia.chart.generate', '根据工作区材料生成': 'jixia.chart.generate', 'Saved charts': 'jixia.chart.saved', '已保存图表': 'jixia.chart.saved', '关系图': 'jixia.chart.intent.relationship', 'Relationship': 'jixia.chart.intent.relationship', 'Undo': 'jixia.chart.undo', '撤销': 'jixia.chart.undo', 'Redo': 'jixia.chart.redo', '重做': 'jixia.chart.redo', 'Add node': 'jixia.chart.addNode', '添加节点': 'jixia.chart.addNode', 'Add edge': 'jixia.chart.addEdge', '添加连线': 'jixia.chart.addEdge', 'Add lane': 'jixia.chart.addLane', '添加泳道': 'jixia.chart.addLane', 'Delete selected': 'jixia.chart.delete', '删除选中': 'jixia.chart.delete' });
+      const roots = [document.querySelector('#agfAiViewP1'), document.querySelector('#agfAiViewWriting'), document.querySelector('#agfAiViewQuiz'), document.querySelector('#agfAiViewVocab'), document.querySelector('#agfRecordsPanel'), document.querySelector('#agfAiViewImage'), document.querySelector('#agfAiViewChart')].filter(Boolean);
+      roots.forEach(root => root.querySelectorAll('button, label, option, p, strong, h3, h4, span').forEach(element => {
+        const value = String(element.textContent || '').trim(); const key = uiText[value]; if (key && !element.children.length) element.dataset.i18n = key;
+      }));
+      const chartNotice = document.querySelector('#agfChartNotice');
+      if (chartNotice && (chartNotice.textContent.includes('已填充当前上下文') || chartNotice.textContent.includes('The current context has been filled'))) chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。';
       try { window.i18n?.applyTranslations?.(); } catch (_) {}
     };
     localizeJixiaViews();
+    window.addEventListener('languageChanged', localizeJixiaViews);
     const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
     const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
@@ -3867,6 +3893,8 @@ class ADHDHighlighter {
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartHistoryQuickBtn = (() => { const button = document.createElement('button'); button.id = 'agfChartHistoryQuick'; button.className = 'agf-context-btn'; button.textContent = '历史记录'; button.title = '查看图表历史'; chartView.querySelector('.agf-module-heading')?.appendChild(button); button.onclick = () => { recordsType = 'chart'; if (recordsTypeSelect) recordsTypeSelect.value = 'chart'; showRecords(); }; return button; })();
+    const chartHistoryObserver = new MutationObserver(() => { try { localizeJixiaViews?.(); } catch (_) {} });
+    chartHistoryObserver.observe(chartHistory, { childList: true, subtree: true });
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
@@ -4191,8 +4219,9 @@ class ADHDHighlighter {
       if (chartIntent && useSkill) chartIntent.value = 'relationship';
       if (chartSkillBadge) chartSkillBadge.style.display = useSkill ? 'flex' : 'none';
       if (chartSourceText) chartSourceText.value = material;
-      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · 已填充 ${material.length} 字`;
-      chartNotice.textContent = useSkill ? '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。' : '已填充当前上下文，可修改材料后生成。';
+      const chartEnglish = window.i18n?.getCurrentLanguage?.() === 'en';
+      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · ${chartEnglish ? `Filled ${material.length} chars` : `已填充 ${material.length} 字`}`;
+      chartNotice.textContent = useSkill ? (chartEnglish ? 'The current context is wrapped with the built-in chart Skill. You can edit the material before generating.' : '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。') : (chartEnglish ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。');
       setView('chart');
       loadChartHistory();
     };
@@ -4708,7 +4737,8 @@ class ADHDHighlighter {
       box.style.cssText = 'position:fixed;border:2px solid #4c8df6;background:rgba(76,141,246,.15);display:none;pointer-events:none;';
       const actions = document.createElement('div');
       actions.style.cssText = 'position:fixed;display:none;z-index:2147483647;background:#fff;border:1px solid #d6dce5;border-radius:8px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);';
-      actions.innerHTML = '<button data-agf-shot-confirm>确认截图</button><button data-agf-shot-cancel>取消</button>';
+      const isEnglish = window.i18n?.getCurrentLanguage?.() === 'en';
+      actions.innerHTML = isEnglish ? '<button data-agf-shot-confirm>Confirm screenshot</button><button data-agf-shot-cancel>Cancel</button>' : '<button data-agf-shot-confirm>确认截图</button><button data-agf-shot-cancel>取消</button>';
       mask.appendChild(box);
       mask.appendChild(actions);
       document.body.appendChild(mask);
@@ -5103,7 +5133,7 @@ class ADHDHighlighter {
     if (recordsSearchInput) recordsSearchInput.addEventListener('input', (e) => { recordsSearch = String(e.target.value||'').trim().toLowerCase(); if (currentView === 'records') openRecordsListPanel(); });
     const recordsTypeSelect = document.getElementById('agfRecordsType');
     if (recordsTypeSelect) recordsTypeSelect.addEventListener('change', e => { recordsType = String(e.target.value || 'all'); if (currentView === 'records') openRecordsListPanel(); });
-    const showRecords = () => { setView('records'); setRecordsScope(recordsScope); };
+    const showRecords = () => { setView('records'); setRecordsScope(recordsScope); try { localizeJixiaViews?.(); } catch (_) {} };
     const showColors = () => { if (colorsPanel) colorsPanel.style.display = 'block'; };
     const hideColors = () => { if (colorsPanel) colorsPanel.style.display = 'none'; };
     if (colorsClose) colorsClose.addEventListener('click', hideColors);
