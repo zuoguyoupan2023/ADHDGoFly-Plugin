@@ -2860,6 +2860,7 @@ class ADHDHighlighter {
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-status-fixed{display:none}
       .agf-ai-waiting{display:inline-flex;align-items:center;gap:5px;color:#687386;font-size:11px;margin-left:8px}
+      .agf-ai-waiting[hidden]{display:none!important}
       .agf-ai-waiting-spinner{width:12px;height:12px;border:2px solid #dfe5f2;border-top-color:#315efb;border-radius:50%;animation:agf-ai-spin .8s linear infinite;box-sizing:border-box}
       @keyframes agf-ai-spin{to{transform:rotate(360deg)}}
       .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
