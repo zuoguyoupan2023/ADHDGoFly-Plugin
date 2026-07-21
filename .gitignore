@@ -4,6 +4,7 @@
 # 开发和测试文件
 test*.html
 *.md
+!README-cn.md
 !/docs2/
 !/docs2/*.md
 .vscode/

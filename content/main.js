@@ -3452,6 +3452,9 @@ class ADHDHighlighter {
     chatImagePlusBtn.type = 'button'; chatImagePlusBtn.className = 'agf-send'; chatImagePlusBtn.dataset.i18n = 'aiPanel.addImage'; chatImagePlusBtn.dataset.i18nTitle = 'aiPanel.addImage'; chatImagePlusBtn.textContent = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.title = chatImagePlusBtn.textContent;
     document.addEventListener('languageChanged', () => { const label = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.textContent = label; chatImagePlusBtn.title = label; }, { passive: true });
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatImagePlusBtn, addFullBtn);
+    const chatNewBtn = document.createElement('button');
+    chatNewBtn.type = 'button'; chatNewBtn.className = 'agf-send agf-workspace-clear'; chatNewBtn.textContent = '新对话'; chatNewBtn.title = '新开对话，保留历史记录';
+    if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatNewBtn, addFullBtn);
     const chatImageInput = document.createElement('input');
     chatImageInput.type = 'file'; chatImageInput.accept = 'image/*'; chatImageInput.style.display = 'none';
     overlay.appendChild(chatImageInput);
@@ -3522,7 +3525,20 @@ class ADHDHighlighter {
     const showSaveToast = msg => { if (!toastEl) return; toastSticky = false; toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 3000); };
     const registerWorkspaceSave = (id, getSnapshot, save) => { workspaceSaveRegistry.set(id, { getSnapshot, save, lastSaved: null, saving: false }); };
     const saveWorkspace = async (id, manual = true) => { const entry = workspaceSaveRegistry.get(id); if (!entry || entry.saving) return false; const snapshot = JSON.stringify(entry.getSnapshot()); if (!snapshot || snapshot === 'null') return false; entry.saving = true; try { await entry.save(JSON.parse(snapshot)); entry.lastSaved = snapshot; if (manual) showSaveToast('保存成功'); return true; } finally { entry.saving = false; } };
-    const saveChangedWorkspaces = async () => { for (const [id, entry] of workspaceSaveRegistry) { const current = JSON.stringify(entry.getSnapshot()); if (current && current !== entry.lastSaved) await saveWorkspace(id, false); } };
+    const saveChangedWorkspaces = async () => { for (const [id, entry] of workspaceSaveRegistry) { const current = JSON.stringify(entry.getSnapshot()); if (current && current !== 'null' && current !== entry.lastSaved) await saveWorkspace(id, false); } };
+    const removeLocalStorageKeys = keys => new Promise(resolve => chrome.storage.local.remove(keys, resolve));
+    const forgetWorkspaceSnapshot = async (id, keys) => {
+      const entry = workspaceSaveRegistry.get(id);
+      if (entry) entry.lastSaved = JSON.stringify(entry.getSnapshot());
+      await removeLocalStorageKeys(Array.isArray(keys) ? keys : [keys]);
+    };
+    const createWorkspaceClearButton = (label = '清除工作区') => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'agf-task-btn agf-workspace-clear';
+      button.textContent = label;
+      return button;
+    };
     setInterval(() => { saveChangedWorkspaces().catch(() => {}); }, 60000);
     const showStickyToast = (msg) => { if (!toastEl) return; toastSticky = true; if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } toastEl.innerHTML = `<span class="agf-toast-msg"></span><button class="agf-toast-close">❌</button>`; const msgEl = toastEl.querySelector('.agf-toast-msg'); if (msgEl) msgEl.textContent = msg; toastEl.style.display = 'block'; const btn = toastEl.querySelector('.agf-toast-close'); if (btn) { btn.addEventListener('click', hideToast); } };
     if (miniBtn) miniBtn.addEventListener('click', () => this.minimizeAiSettingPanel());
@@ -3973,6 +3989,7 @@ class ADHDHighlighter {
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
+    chartButtons.clear = chartView.querySelector('#agfChartClear') || (() => { const button = createWorkspaceClearButton(); button.id = 'agfChartClear'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
     const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system" data-i18n="jixia.chart.system">跟随系统</option><option value="light" data-i18n="jixia.chart.light">浅色主题</option><option value="dark" data-i18n="jixia.chart.dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
     (() => {
       const toolbar = chartView.querySelector('.agf-chart-toolbar');
@@ -4419,6 +4436,23 @@ class ADHDHighlighter {
     const deleteSelectedChartNodes = () => { if (!currentChartContext || (!chartHistoryState.selected.size && !chartHistoryState.selectedEdges.size)) return; rememberChart(); const ids = chartHistoryState.selected; const edgeIndexes = chartHistoryState.selectedEdges; currentChartContext.chartModel.nodes = currentChartContext.chartModel.nodes.filter(node => { if (!ids.has(node.id)) return true; if (node.isLane) { node.hidden = true; return true; } return false; }); currentChartContext.chartModel.edges = (currentChartContext.chartModel.edges || []).filter((edge, index) => !ids.has(edge.source) && !ids.has(edge.target) && !edgeIndexes.has(index)); chartHistoryState.selected.clear(); chartHistoryState.selectedEdges.clear(); chartNotice.textContent = '已删除选中节点/连线'; renderChartPreview(); };
     chartButtons.delete.onclick = deleteSelectedChartNodes;
     document.addEventListener('keydown', event => { if (!currentChartContext || !chartView || chartView.style.display === 'none') return; if ((event.key === 'Delete' || event.key === 'Backspace') && chartHistoryState.selected.size && !/INPUT|TEXTAREA/.test(event.target?.tagName || '')) { event.preventDefault(); deleteSelectedChartNodes(); } });
+    chartButtons.clear.onclick = async () => {
+      currentChartContext = null;
+      chartHistoryState.past = [];
+      chartHistoryState.future = [];
+      chartHistoryState.selected.clear();
+      chartHistoryState.selectedEdges.clear();
+      chartHistoryState.edgeMode = false;
+      if (chartCanvas) chartCanvas.innerHTML = '';
+      if (chartTitle) chartTitle.textContent = '图表工作区';
+      if (chartMeta) chartMeta.textContent = '未生成图表';
+      if (chartNotice) chartNotice.textContent = '图表工作区已清除，已保存图表仍保留';
+      if (chartSourceText) chartSourceText.value = '';
+      if (chartAiEditInput) chartAiEditInput.value = '';
+      Object.values(chartButtons).forEach(button => { if (button && button !== chartButtons.generate && button !== chartButtons.importJson && button !== chartButtons.clear) button.disabled = true; });
+      updateChartHistoryButtons();
+      await forgetWorkspaceSnapshot('chart', 'agfJixiaChartWorkspace').catch(() => {});
+    };
     chartButtons.save.onclick = async () => { if (!currentChartContext) return; currentChartContext.changeReason = currentChartContext.changeReason || '手动保存'; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'Saved to IndexedDB and the current version was recorded.' : '已保存到 IndexedDB，并记录当前版本'; loadChartHistory().then(() => applyChartHistoryTranslations()).catch(() => {}); };
     chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const scale = Number(prompt('PNG 导出倍率（1-4）', '2')) || 2; const transparent = confirm('是否使用透明背景？'); const png = await AgfChartWorkspace.svgToPngWithOptions(await getCurrentChartSvg(), { scale, transparent }); const link = document.createElement('a'); link.href = png; link.download = chartFileName('png'); link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
     chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createJixiaContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'jixia-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
@@ -4934,19 +4968,20 @@ class ADHDHighlighter {
         row.appendChild(remove);
       });
     };
-    const clearImageWorkspace = () => {
+    const clearImageWorkspace = async () => {
       currentMediaBatch = [];
       currentMediaContext = null;
       if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
       if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '工作区已清除，识别历史仍保留';
       refreshImageWorkspaceActions();
+      await forgetWorkspaceSnapshot('image', 'agfJixiaImageWorkspace').catch(() => {});
     };
     const deleteImageWorkspaceAndHistory = async () => {
       const ids = new Set(currentMediaBatch.map(ctx => ctx?.metadata?.historyId).filter(Boolean));
       if (!ids.size || !window.confirm('将清除当前工作区，并删除这些图片对应的识别历史。此操作不可恢复，是否继续？')) return;
       const history = await new Promise(resolve => chrome.storage.local.get([imageHistoryKey], x => resolve(Array.isArray(x[imageHistoryKey]) ? x[imageHistoryKey] : [])));
       await new Promise(resolve => chrome.storage.local.set({ [imageHistoryKey]: history.filter(item => !ids.has(item.id)) }, resolve));
-      clearImageWorkspace();
+      await clearImageWorkspace();
       if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '工作区和对应识别历史已删除';
       renderImageHistory();
     };
@@ -5016,7 +5051,7 @@ class ADHDHighlighter {
       showChat();
     };
     if (imageWorkspaceHistoryBtn) imageWorkspaceHistoryBtn.onclick = () => { recordsType = 'image'; if (recordsTypeSelect) recordsTypeSelect.value = 'image'; showRecords(); };
-    if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = clearImageWorkspace;
+    if (imageWorkspaceClearBtn) imageWorkspaceClearBtn.onclick = () => clearImageWorkspace().catch(e => showToast(e.message || '清除失败'));
     if (imageWorkspaceDeleteBtn) imageWorkspaceDeleteBtn.onclick = () => deleteImageWorkspaceAndHistory().catch(e => showToast(e.message || '删除失败'));
     if (imageWorkspaceExportBtn) imageWorkspaceExportBtn.onclick = () => exportImageWorkspace().catch(e => showToast(e.message || '导出失败'));
     if (imageWorkspaceRetry) imageWorkspaceRetry.onclick = () => { const file = workspaceImageInput?.files?.[0]; if (file) chooseMedia('image', file); };
@@ -5029,6 +5064,8 @@ class ADHDHighlighter {
     let quizContextRef = null;
     let quizFromHistory = false;
     let quizHistoryFilterCurrent = false;
+    const quizClear = createWorkspaceClearButton();
+    quizStartActions?.appendChild(quizClear);
     const parseJsonPayload = JixiaModules.parseQuizPayload;
     const normalizeQuizItems = JixiaModules.normalizeQuizItems;
     const quizModule = JixiaModules.createQuizModule({ context: jixiaContext, task: jixiaTask, limitText: limitJixiaText, getCount: () => quizCountSelect ? Math.max(3, Math.min(10, parseInt(String(quizCountSelect.value || '3'), 10) || 3)) : 3, onState: state => { const ctx = state.context; quizContextRef = { source: ctx.source, pageTitle: ctx.pageTitle, pageUrl: ctx.pageUrl, canonicalUrl: ctx.canonicalUrl, createdAt: ctx.createdAt, textLength: String(ctx.text || '').length, approxTokens: ctx.approxTokens || estimateJixiaTokens(ctx.text) }; } });
@@ -5048,6 +5085,32 @@ class ADHDHighlighter {
     };
     let quizStartedAt = 0;
     let quizRecordId = '';
+    const clearQuizWorkspace = async () => {
+      quizItems = [];
+      quizIndex = 0;
+      quizScore = 0;
+      quizSelected = -1;
+      quizAnswered = false;
+      quizContextRef = null;
+      quizFromHistory = false;
+      quizStartedAt = 0;
+      quizRecordId = '';
+      if (quizBackHistory) quizBackHistory.style.display = 'none';
+      if (quizCard) quizCard.style.display = 'none';
+      if (quizStartActions) quizStartActions.style.display = 'flex';
+      if (quizResult) { quizResult.style.display = 'block'; quizResult.innerHTML = '<p>选择难度开始新的测试。</p>'; }
+      if (quizOptions) quizOptions.innerHTML = '';
+      if (quizFeedback) { quizFeedback.style.display = 'none'; quizFeedback.innerHTML = ''; }
+      if (quizProgressText) quizProgressText.textContent = '准备中';
+      if (quizProgressBar) quizProgressBar.style.width = '0%';
+      if (quizDiscussion) quizDiscussion.style.display = 'none';
+      if (quizDiscussionBody) quizDiscussionBody.style.display = 'none';
+      if (quizDiscussionList) quizDiscussionList.innerHTML = '';
+      if (quizQuestionInput) quizQuestionInput.value = '';
+      await forgetWorkspaceSnapshot('quiz', 'agfJixiaQuizWorkspace').catch(() => {});
+      showToast('测试工作区已清除，测试历史仍保留');
+    };
+    if (quizClear) quizClear.onclick = () => clearQuizWorkspace().catch(error => showToast(error.message || '清除失败'));
     const showQuizHistory = async () => {
       const history = await getQuizHistory();
       const currentCanonical = getCanonicalUrl().canonicalUrl;
@@ -6081,6 +6144,23 @@ class ADHDHighlighter {
       }
       const convo = { id: currentConversationId, createdAt: (old && old.createdAt) ? old.createdAt : now, updatedAt: now, provider: prov, model, messages: chatMessages, subject: currentSubject || (old && old.subject) || '', prefix: currentPrefix || (old && old.prefix) || '', pageTitle, pageUrl, canonicalUrl };
       try { await dbPutConversation(convo); } catch (_) {}
+    };
+    if (chatNewBtn) chatNewBtn.onclick = async () => {
+      try { if (currentConversationId && chatMessages.length) await saveConversationSnapshot(); } catch (_) {}
+      currentConversationId = null;
+      chatMessages = [];
+      qaCounter = 0;
+      currentSubject = '';
+      currentPrefix = '';
+      nextPromptIsGenerated = false;
+      if (chatList) chatList.innerHTML = '';
+      if (inputUser) inputUser.innerText = '';
+      if (composerHidden) composerHidden.value = '';
+      if (statusText) statusText.textContent = '已新开对话，历史记录仍保留';
+      try { rebuildConvIndex(); } catch (_) {}
+      await forgetWorkspaceSnapshot('chat', 'agfJixiaChatWorkspace').catch(() => {});
+      showChat();
+      showToast('已新开对话，历史记录仍保留');
     };
     const loadUnifiedHistory = async () => {
       const getLocal = key => new Promise(resolve => chrome.storage.local.get([key], r => resolve(Array.isArray(r[key]) ? r[key] : [])));
@@ -7435,13 +7515,13 @@ class ADHDHighlighter {
     let vocabSceneMode = '全文关键词';
     const vocabTask = { ...jixiaTask, requestJsonText: options => jixiaTask.requestJsonText({ ...options, prompt: `${vocabSceneMode === '逐段关键词' ? '请按文章段落分别提取关键词，词条中标记所属段落。' : '请从全文提取核心关键词。'} 每项必须包含 word、pos、meaning、definition、example；其中 meaning/definition/example 使用词汇对应语言。最终界面只展示“词汇、词性、含义、例句”。\n${String(options.prompt || '').replace('word,meaning,example', 'word,pos,meaning,definition,example')}` }) };
     vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: vocabTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards.map(card => ({ ...card, pos: card.pos || card.partOfSpeech || '待补充' })); vocabIndex = index; renderVocabCard(); renderVocabHistory(); if (vocabCards.length) setTimeout(() => saveWorkspace('vocab', false).catch(() => {}), 0); } });
-    registerWorkspaceSave('vocab', () => ({ source: vocabSceneMode, pageTitle: currentPageTitle, pageUrl: currentCanonicalUrl, cards: vocabCards, index: vocabIndex }), snapshot => new Promise(resolve => chrome.storage.local.set({ [vocabWorkspaceKey]: { ...snapshot, savedAt: Date.now() } }, resolve)));
+    registerWorkspaceSave('vocab', () => vocabCards.length ? ({ source: vocabSceneMode, pageTitle: currentPageTitle, pageUrl: currentCanonicalUrl, cards: vocabCards, index: vocabIndex }) : null, snapshot => new Promise(resolve => chrome.storage.local.set({ [vocabWorkspaceKey]: { ...snapshot, savedAt: Date.now() } }, resolve)));
     const saveWorkspaceSnapshot = (key, snapshot) => new Promise(resolve => chrome.storage.local.set({ [key]: { ...snapshot, savedAt: Date.now() } }, resolve));
-    registerWorkspaceSave('chat', () => ({ conversationId: currentConversationId, pageTitle: currentPageTitle, pageUrl: currentPageUrl, canonicalUrl: currentCanonicalUrl, messages: chatMessages }), snapshot => saveWorkspaceSnapshot('agfJixiaChatWorkspace', snapshot));
-    registerWorkspaceSave('reading', () => ({ context: readingSceneContext, result: readingSceneResult }), snapshot => saveWorkspaceSnapshot('agfJixiaReadingWorkspace', snapshot));
-    registerWorkspaceSave('writing', () => ({ context: writingContext, result: writingOutput }), snapshot => saveWorkspaceSnapshot('agfJixiaWritingWorkspace', snapshot));
-    registerWorkspaceSave('quiz', () => ({ context: quizContextRef, questions: quizItems, index: quizIndex, score: quizScore, difficulty: quizDifficulty, recordId: quizRecordId }), snapshot => saveWorkspaceSnapshot('agfJixiaQuizWorkspace', snapshot));
-    registerWorkspaceSave('image', () => ({ batch: currentMediaBatch, current: currentMediaContext }), snapshot => saveWorkspaceSnapshot('agfJixiaImageWorkspace', snapshot));
+    registerWorkspaceSave('chat', () => currentConversationId && chatMessages.length ? ({ conversationId: currentConversationId, pageTitle: currentPageTitle, pageUrl: currentPageUrl, canonicalUrl: currentCanonicalUrl, messages: chatMessages }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaChatWorkspace', snapshot));
+    registerWorkspaceSave('reading', () => (readingSceneContext || readingSceneResult) ? ({ context: readingSceneContext, result: readingSceneResult }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaReadingWorkspace', snapshot));
+    registerWorkspaceSave('writing', () => (writingContext || writingOutput) ? ({ context: writingContext, result: writingOutput }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaWritingWorkspace', snapshot));
+    registerWorkspaceSave('quiz', () => quizItems.length ? ({ context: quizContextRef, questions: quizItems, index: quizIndex, score: quizScore, difficulty: quizDifficulty, recordId: quizRecordId }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaQuizWorkspace', snapshot));
+    registerWorkspaceSave('image', () => (currentMediaBatch.length || currentMediaContext) ? ({ batch: currentMediaBatch, current: currentMediaContext }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaImageWorkspace', snapshot));
     registerWorkspaceSave('chart', () => currentChartContext ? ({ context: currentChartContext }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaChartWorkspace', snapshot));
     const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
@@ -7516,6 +7596,22 @@ class ADHDHighlighter {
     const readingDiscussionList = p1View.querySelector('#agfReadingDiscussionList');
     const readingSave = p1View.querySelector('#agfReadingSave');
     if (readingSave) readingSave.onclick = () => saveReadingResult().catch(error => showToast(error.message || '阅读结果保存失败'));
+    const readingClear = createWorkspaceClearButton();
+    if (readingSave?.parentElement) readingSave.insertAdjacentElement('afterend', readingClear);
+    readingClear.onclick = async () => {
+      readingSceneContext = null;
+      readingSceneResult = '';
+      p1Title.textContent = '阅读工作区';
+      p1Meta.textContent = '';
+      p1Result.innerHTML = '<p>选择一个阅读场景开始。</p>';
+      if (readingSave) readingSave.disabled = true;
+      if (readingDiscussion) readingDiscussion.style.display = 'none';
+      if (readingDiscussionBody) readingDiscussionBody.style.display = 'none';
+      if (readingDiscussionList) readingDiscussionList.innerHTML = '';
+      if (readingQuestion) readingQuestion.value = '';
+      await forgetWorkspaceSnapshot('reading', 'agfJixiaReadingWorkspace').catch(() => {});
+      showToast('阅读工作区已清除，历史记录仍保留');
+    };
     if (readingDiscussionToggle) readingDiscussionToggle.onclick = () => { readingDiscussionBody.style.display = readingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     if (readingDiscussionSend) readingDiscussionSend.onclick = async () => { const question = String(readingQuestion.value || '').trim(); if (!question || !readingSceneContext) return; readingDiscussionSend.disabled = true; try { const prompt = `你正在阅读工作区的深入讨论。请只基于原文、当前阅读结果和用户问题回答；原文没有证据时明确说明，不要编造。\n\n原文：\n${String(readingSceneContext.text || '').slice(0, 50000)}\n\n当前阅读结果：\n${readingSceneResult}\n\n用户问题：\n${question}`; const answer = await jixiaTask.requestJsonText({ prompt, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; readingDiscussionList.appendChild(turn); readingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } finally { readingDiscussionSend.disabled = false; } };
     if (tabReading) tabReading.addEventListener('click', () => setView('reading'));
@@ -7533,6 +7629,22 @@ class ADHDHighlighter {
     writingView.querySelector('#agfWritingDiscussToggle').onclick = () => { writingDiscussionBody.style.display = writingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     const writingSave = writingView.querySelector('#agfWritingSave');
     if (writingSave) writingSave.onclick = () => saveWritingResult().catch(error => showToast(error.message || '写作结果保存失败'));
+    const writingClear = createWorkspaceClearButton();
+    if (writingSave?.parentElement) writingSave.insertAdjacentElement('afterend', writingClear);
+    writingClear.onclick = async () => {
+      writingContext = null;
+      writingOutput = '';
+      const writingMeta = writingView.querySelector('#agfWritingMeta');
+      if (writingMeta) writingMeta.textContent = '';
+      if (writingResult) writingResult.innerHTML = '<p>选择一个写作场景开始。</p>';
+      if (writingSave) writingSave.disabled = true;
+      if (writingDiscussion) writingDiscussion.style.display = 'none';
+      if (writingDiscussionBody) writingDiscussionBody.style.display = 'none';
+      if (writingDiscussionList) writingDiscussionList.innerHTML = '';
+      if (writingQuestion) writingQuestion.value = '';
+      await forgetWorkspaceSnapshot('writing', 'agfJixiaWritingWorkspace').catch(() => {});
+      showToast('写作工作区已清除，历史记录仍保留');
+    };
     writingView.querySelector('#agfWritingDiscussSend').onclick = async () => { const question = String(writingQuestion.value || '').trim(); if (!question || !writingContext) return; try { const answer = await jixiaTask.requestJsonText({ prompt: `你正在进行写作工作区的深入讨论。请基于原文、当前写作结果和用户问题回答；区分原文事实与改写建议。\n\n原文：\n${String(writingContext.text || '').slice(0, 50000)}\n\n当前写作结果：\n${writingOutput}\n\n用户问题：\n${question}`, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; writingDiscussionList.appendChild(turn); writingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } };
     if (tabWriting) tabWriting.addEventListener('click', () => setView('writing'));
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
@@ -7559,7 +7671,7 @@ class ADHDHighlighter {
       try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
     JixiaUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
-    JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); restoreVocabWorkspace().then(restored => { if (!restored) renderVocabHistory(); }).catch(() => renderVocabHistory()); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
+    JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); restoreVocabWorkspace().then(restored => { if (!restored) renderVocabHistory(); }).catch(() => renderVocabHistory()); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: async () => { vocabModule.reset(); vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; await forgetWorkspaceSnapshot('vocab', vocabWorkspaceKey).catch(() => {}); showToast('词汇工作区已清除，复习历史仍保留'); } } });
     if (vocabSave) vocabSave.onclick = () => saveWorkspace('vocab', true).catch(error => showToast(error.message || '保存失败'));
     const deterministicVocabScenes = new Set(['雅思词汇','托福词汇','四六级词汇','高考词汇','K9词汇']);
     overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); const scene = button.dataset.vocabScene; if (deterministicVocabScenes.has(scene)) { vocabResult.innerHTML = `<p>${p1Esc(scene)}需要对应的本地词典文件进行确定性匹配。当前项目尚未安装该词库，因此不会让 AI 临时编造词表。</p>`; return; } vocabSceneMode = scene; if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(scene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
