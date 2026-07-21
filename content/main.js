@@ -2693,7 +2693,6 @@ class ADHDHighlighter {
       .agf-context-tools [data-source]:hover::after,.agf-context-tools [data-source]:focus-visible::after{content:attr(data-context-hint);position:absolute;z-index:20;left:50%;top:calc(100% + 6px);transform:translateX(-50%);white-space:nowrap;padding:5px 8px;border-radius:6px;background:#172033;color:#fff;font-size:11px;box-shadow:0 4px 12px rgba(0,0,0,.16);pointer-events:none}
       .agf-task-bar{display:flex;align-items:center;gap:4px;padding:6px 12px;border-bottom:1px solid #e5e9f0;background:#fbfcff}
       .agf-function-bar{position:relative;display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid #e5e9f0;background:#fff;min-width:0}.agf-function-bar .agf-ai-tabs{flex:0 0 auto}.agf-function-bar .agf-context-tools{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:4px}.agf-function-bar .agf-media-context-tools{margin-left:auto}.agf-function-bar .agf-context-summary{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .agf-compact-only{display:none!important}.agf-function-more-menu{position:fixed;z-index:2147483646;display:none;gap:4px;padding:6px;background:#fff;border:1px solid #dfe5f2;border-radius:9px;box-shadow:0 10px 28px rgba(23,32,51,.18);white-space:nowrap}.agf-function-more-menu.open{display:flex}.agf-function-more-menu button{height:26px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;font-size:12px;cursor:pointer}.agf-function-more-menu button:hover{background:#edf2ff;border-color:#9db4ff}.agf-function-bar.agf-compact .agf-compact-hidden{display:none!important}.agf-function-bar.agf-compact .agf-compact-only{display:inline-flex!important}
       .agf-task-label{flex:0 0 auto;color:#687386;font-size:12px}
       .agf-task-actions{display:flex;align-items:center;gap:4px;min-width:0;overflow:auto}
       .agf-task-btn{height:26px;padding:0 8px;border:1px solid #dfe5f2;border-radius:7px;background:#fff;color:#315efb;font-size:12px;white-space:nowrap;cursor:pointer}
@@ -2958,20 +2957,6 @@ class ADHDHighlighter {
       .agf-composer-body .agf-send-col{grid-column:2!important;grid-row:2!important;width:52px!important;min-width:52px!important;box-sizing:border-box!important;height:auto!important;gap:4px!important}
       .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
       .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important}
-      /* Responsive function bar: explicit rows prevent the legacy absolute context rule from overlapping. */
-      .agf-function-bar{position:relative!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;min-width:0!important}
-      .agf-function-main-row{position:static!important;display:flex!important;align-items:center!important;gap:8px!important;flex:1 1 auto!important;min-width:0!important}
-      .agf-function-main-row .agf-ai-tabs{position:static!important;display:flex!important;align-items:center!important;gap:2px!important;flex:1 1 auto!important;min-width:0!important;overflow:hidden!important}
-      .agf-function-main-row .agf-ai-tabs button{flex:0 0 auto!important;white-space:nowrap!important}
-      .agf-function-main-row .agf-context-tools{position:static!important;display:flex!important;align-items:center!important;gap:4px!important;transform:none!important;flex:0 0 auto!important;margin-left:auto!important;min-width:max-content!important}
-      .agf-function-bar > .agf-media-context-tools{position:static!important;display:flex!important;align-items:center!important;gap:4px!important;flex:0 0 auto!important;margin-left:0!important;min-width:max-content!important;white-space:nowrap!important}
-      .agf-function-bar.agf-compact{flex-direction:row!important}
-      .agf-function-bar.agf-compact .agf-function-main-row{flex:1 1 auto!important}
-      .agf-function-bar.agf-compact .agf-function-main-row .agf-ai-tabs{flex:1 1 auto!important}
-      .agf-function-bar.agf-compact .agf-function-bar .agf-context-tools{position:static!important}
-      .agf-function-bar.agf-compact .agf-compact-hidden{display:none!important}
-      .agf-function-bar.agf-compact .agf-compact-only{display:inline-flex!important}
-      .agf-function-more-menu{z-index:2147483648!important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
@@ -2989,23 +2974,20 @@ class ADHDHighlighter {
         </div>
       </div>
       <div class="agf-function-bar">
-        <div class="agf-function-main-row">
         <div class="agf-ai-tabs">
           <button id="agfAiTabChat" data-i18n="jixia.tabs.chat">Chat</button>
-          <button id="agfAiTabReading" class="agf-compact-hidden">阅读</button>
-          <button id="agfAiTabWriting" class="agf-compact-hidden">写作</button>
-          <button id="agfAiTabQuiz" class="agf-compact-hidden" data-i18n="jixia.tabs.quiz">测试</button>
-          <button id="agfAiTabVocab" class="agf-compact-hidden" data-i18n="jixia.tabs.vocab">词汇</button>
-          <button id="agfModuleHistoryBtn" class="agf-context-btn agf-compact-hidden" data-i18n="jixia.tasks.history">历史记录</button>
-          <button id="agfWorkspaceMoreBtn" class="agf-context-btn agf-compact-only">更多</button>
+          <button id="agfAiTabReading">阅读</button>
+          <button id="agfAiTabWriting">写作</button>
+          <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
+          <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
+          <button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button>
         </div>
         <div class="agf-context-tools" aria-label="上下文范围">
           <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button>
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
         </div>
-        </div>
-        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn agf-compact-hidden" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn agf-compact-hidden" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn agf-compact-hidden" data-i18n="jixia.context.screenshot">截图</button><button id="agfMediaMoreBtn" class="agf-context-btn agf-compact-only">更多</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
+        <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
           <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
@@ -3369,23 +3351,6 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
-    const functionBar = document.querySelector('.agf-function-bar');
-    const workspaceMoreBtn = document.getElementById('agfWorkspaceMoreBtn');
-    const mediaMoreBtn = document.getElementById('agfMediaMoreBtn');
-    const createMoreMenu = (items) => {
-      const menu = document.createElement('div'); menu.className = 'agf-function-more-menu';
-      items.forEach(([label, id]) => { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.onclick = event => { event.stopPropagation(); menu.classList.remove('open'); document.getElementById(id)?.click(); }; menu.appendChild(button); });
-      document.body.appendChild(menu); return menu;
-    };
-    const workspaceMoreMenu = createMoreMenu([['阅读', 'agfAiTabReading'], ['写作', 'agfAiTabWriting'], ['测试', 'agfAiTabQuiz'], ['词汇', 'agfAiTabVocab'], ['历史记录', 'agfModuleHistoryBtn']]);
-    const mediaMoreMenu = createMoreMenu([['图像', 'agfImageContextBtn'], ['朗读', 'agfBtnSpeak'], ['截图', 'agfPageScreenshotBtn']]);
-    const toggleMoreMenu = (button, menu) => { const rect = button.getBoundingClientRect(); const next = !menu.classList.contains('open'); workspaceMoreMenu.classList.remove('open'); mediaMoreMenu.classList.remove('open'); if (next) { menu.classList.add('open'); menu.style.left = `${Math.max(8, rect.right - menu.offsetWidth)}px`; menu.style.top = `${rect.bottom + 5}px`; } };
-    workspaceMoreBtn?.addEventListener('click', event => { event.stopPropagation(); toggleMoreMenu(workspaceMoreBtn, workspaceMoreMenu); });
-    mediaMoreBtn?.addEventListener('click', event => { event.stopPropagation(); toggleMoreMenu(mediaMoreBtn, mediaMoreMenu); });
-    document.addEventListener('click', event => { if (!event.target.closest('.agf-function-more-menu') && !event.target.closest('#agfWorkspaceMoreBtn') && !event.target.closest('#agfMediaMoreBtn')) { workspaceMoreMenu.classList.remove('open'); mediaMoreMenu.classList.remove('open'); } });
-    const updateFunctionBarDensity = () => { if (!functionBar) return; functionBar.classList.toggle('agf-compact', functionBar.clientWidth < 760); };
-    if (functionBar && typeof ResizeObserver !== 'undefined') new ResizeObserver(updateFunctionBarDensity).observe(functionBar);
-    setTimeout(updateFunctionBarDensity, 0);
     const taskBar = overlay.querySelector('.agf-task-bar');
     const fixedBar = overlay.querySelector('.agf-fixed-bar');
     const taskActions = overlay.querySelector('.agf-task-actions');
