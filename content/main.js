@@ -3432,8 +3432,6 @@ class ADHDHighlighter {
     let addedFullLinkPreview = '';
     const recordsPanel = overlay.querySelector('#agfRecordsPanel');
     const recordsList = overlay.querySelector('#agfRecordsList');
-    const recordsListObserver = new MutationObserver(() => { try { localizeJixiaViews?.(); } catch (_) {} });
-    if (recordsList) recordsListObserver.observe(recordsList, { childList: true, subtree: true });
     const recordsTabCurrent = document.getElementById('agfRecordsTabCurrent');
     const recordsTabAll = document.getElementById('agfRecordsTabAll');
     const recordsSearchInput = document.getElementById('agfRecordsSearch');
@@ -3871,8 +3869,6 @@ class ADHDHighlighter {
       roots.forEach(root => root.querySelectorAll('button, label, option, p, strong, h3, h4, span').forEach(element => {
         const value = String(element.textContent || '').trim(); const key = uiText[value]; if (key && !element.children.length) element.dataset.i18n = key;
       }));
-      const chartNotice = document.querySelector('#agfChartNotice');
-      if (chartNotice && (chartNotice.textContent.includes('已填充当前上下文') || chartNotice.textContent.includes('The current context has been filled'))) chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。';
       try { window.i18n?.applyTranslations?.(); } catch (_) {}
     };
     localizeJixiaViews();
@@ -3893,8 +3889,6 @@ class ADHDHighlighter {
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
     const chartHistoryQuickBtn = (() => { const button = document.createElement('button'); button.id = 'agfChartHistoryQuick'; button.className = 'agf-context-btn'; button.textContent = '历史记录'; button.title = '查看图表历史'; chartView.querySelector('.agf-module-heading')?.appendChild(button); button.onclick = () => { recordsType = 'chart'; if (recordsTypeSelect) recordsTypeSelect.value = 'chart'; showRecords(); }; return button; })();
-    const chartHistoryObserver = new MutationObserver(() => { try { localizeJixiaViews?.(); } catch (_) {} });
-    chartHistoryObserver.observe(chartHistory, { childList: true, subtree: true });
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
@@ -4219,9 +4213,8 @@ class ADHDHighlighter {
       if (chartIntent && useSkill) chartIntent.value = 'relationship';
       if (chartSkillBadge) chartSkillBadge.style.display = useSkill ? 'flex' : 'none';
       if (chartSourceText) chartSourceText.value = material;
-      const chartEnglish = window.i18n?.getCurrentLanguage?.() === 'en';
-      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · ${chartEnglish ? `Filled ${material.length} chars` : `已填充 ${material.length} 字`}`;
-      chartNotice.textContent = useSkill ? (chartEnglish ? 'The current context is wrapped with the built-in chart Skill. You can edit the material before generating.' : '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。') : (chartEnglish ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。');
+      chartMeta.textContent = `${useSkill ? currentView : (ctx.source || 'manual')} · 已填充 ${material.length} 字`;
+      chartNotice.textContent = useSkill ? '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。' : '已填充当前上下文，可修改材料后生成。';
       setView('chart');
       loadChartHistory();
     };
