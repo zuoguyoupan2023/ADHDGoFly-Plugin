@@ -3015,7 +3015,7 @@ class ADHDHighlighter {
                     <option>deepseek-reasoner</option>
                   </select>
                   <button id="agfChatReasoningToggle" class="agf-mode-btn" type="button" aria-pressed="false">推理：关</button>
-                <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfTestTextBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.fullText">文</button></div>
+                <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfTestTextBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.fullText" style="display:none">文</button></div>
                 </div>
                 </div>
                 <div class="agf-composer-body">
