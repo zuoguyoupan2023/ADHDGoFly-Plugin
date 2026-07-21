@@ -2994,8 +2994,8 @@ class ADHDHighlighter {
       <div class="agf-function-bar">
         <div class="agf-ai-tabs">
           <button id="agfAiTabChat" data-i18n="jixia.tabs.chat">Chat</button>
-          <button id="agfAiTabReading">阅读</button>
-          <button id="agfAiTabWriting">写作</button>
+          <button id="agfAiTabReading" data-i18n="jixia.tabs.reading">阅读</button>
+          <button id="agfAiTabWriting" data-i18n="jixia.tabs.writing">写作</button>
           <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
           <button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button>
@@ -3029,7 +3029,7 @@ class ADHDHighlighter {
                     <option>deepseek-chat</option>
                     <option>deepseek-reasoner</option>
                   </select>
-                  <button id="agfChatReasoningToggle" class="agf-mode-btn" type="button" aria-pressed="false">推理：关</button>
+                  <button id="agfChatReasoningToggle" class="agf-mode-btn" type="button" aria-pressed="false" data-i18n="jixia.reasoning.off">推理：关</button>
                 <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfTestTextBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.fullText" style="display:none">文</button></div>
                 </div>
                 </div>
@@ -3049,16 +3049,16 @@ class ADHDHighlighter {
           </div>
           <div class="agf-ai-view-quiz" id="agfAiViewQuiz">
             <div class="agf-quiz-shell">
-              <div class="agf-quiz-top"><span id="agfQuizModeLabel">文章理解测试</span><div class="agf-quiz-progress"><span id="agfQuizProgressBar" style="width:0%"></span></div><span id="agfQuizProgressText">准备中</span></div>
+              <div class="agf-quiz-top"><span id="agfQuizModeLabel" data-i18n="jixia.ui.quizTitle">文章理解测试</span><div class="agf-quiz-progress"><span id="agfQuizProgressBar" style="width:0%"></span></div><span id="agfQuizProgressText">准备中</span></div>
               <div class="agf-quiz-card" id="agfQuizCard" style="display:none">
                 <div class="agf-quiz-type" id="agfQuizType"></div>
                 <div class="agf-quiz-question" id="agfQuizQuestion"></div>
                 <div class="agf-quiz-options" id="agfQuizOptions"></div>
                 <div class="agf-quiz-feedback" id="agfQuizFeedback" style="display:none"></div>
-                <div class="agf-quiz-actions"><button id="agfQuizBackHistory" style="display:none">返回历史</button><button id="agfQuizSubmit" class="primary" disabled>提交答案</button><button id="agfQuizNext" style="display:none">下一题</button></div>
+                <div class="agf-quiz-actions"><button id="agfQuizBackHistory" style="display:none" data-i18n="jixia.ui.backHistory">返回历史</button><button id="agfQuizSubmit" class="primary" disabled data-i18n="jixia.ui.submit">提交答案</button><button id="agfQuizNext" style="display:none" data-i18n="jixia.ui.next">下一题</button></div>
               </div>
               <div class="agf-quiz-result" id="agfQuizResult"></div>
-              <div class="agf-quiz-actions" id="agfQuizStartActions"><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
+              <div class="agf-quiz-actions" id="agfQuizStartActions"><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3</option><option value="5">5</option><option value="10">10</option></select><button id="agfQuizEasy" data-i18n="jixia.ui.easy">简单一些</button><button id="agfQuizStart" class="primary" data-i18n="jixia.ui.generateQuiz">生成测试</button><button id="agfQuizHard" data-i18n="jixia.ui.hard">难一些</button></div>
               <div id="agfQuizDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfQuizDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfQuizDiscussionBody" style="display:none"><textarea id="agfQuizQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前题目或整套测试提问"></textarea><button id="agfQuizDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfQuizDiscussionList" class="agf-module-result"></div></div></div>
             </div>
           </div>
@@ -3194,11 +3194,11 @@ class ADHDHighlighter {
           <div class="agf-records-panel" id="agfRecordsPanel">
             <div class="agf-records-header">
               <div class="agf-records-title">
-                <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active" data-i18n="aiPanel.records.current">当前记录</button>
-                <button id="agfRecordsTabAll" class="agf-record-scope-btn" data-i18n="aiPanel.records.all">所有记录</button>
+                <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active" data-i18n="jixia.ui.currentRecords">当前记录</button>
+                <button id="agfRecordsTabAll" class="agf-record-scope-btn" data-i18n="jixia.ui.allRecords">所有记录</button>
               </div>
               <select id="agfRecordsType" class="agf-record-scope-btn"><option value="all">全部类型</option><option value="chat">Chat</option><option value="reading">阅读</option><option value="writing">写作</option><option value="quiz">测试</option><option value="explain">解释</option><option value="vocab">词汇</option><option value="image">图像</option><option value="chart">图表</option></select>
-              <input id="agfRecordsSearch" class="agf-records-search" data-i18n-placeholder="aiPanel.records.search" placeholder="搜索主题或链接" />
+              <input id="agfRecordsSearch" class="agf-records-search" data-i18n-placeholder="jixia.ui.searchRecords" placeholder="搜索主题或链接" />
             </div>
             <div class="agf-records-list" id="agfRecordsList"></div>
           </div>
@@ -3366,7 +3366,7 @@ class ADHDHighlighter {
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
     const reasoningToggle = document.getElementById('agfChatReasoningToggle');
-    if (reasoningToggle) reasoningToggle.addEventListener('click', () => { jixiaState.reasoningEnabled = !jixiaState.reasoningEnabled; reasoningToggle.setAttribute('aria-pressed', String(jixiaState.reasoningEnabled)); reasoningToggle.textContent = `推理：${jixiaState.reasoningEnabled ? '开' : '关'}`; });
+    if (reasoningToggle) reasoningToggle.addEventListener('click', () => { jixiaState.reasoningEnabled = !jixiaState.reasoningEnabled; reasoningToggle.setAttribute('aria-pressed', String(jixiaState.reasoningEnabled)); reasoningToggle.dataset.i18n = jixiaState.reasoningEnabled ? 'jixia.reasoning.on' : 'jixia.reasoning.off'; reasoningToggle.textContent = window.i18n?.t?.(reasoningToggle.dataset.i18n) || (jixiaState.reasoningEnabled ? '推理：开' : '推理：关'); });
     const statusDot = document.getElementById('agfStorageStatusDot');
     const refreshBtn = document.getElementById('agfRefreshBtn');
     const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
@@ -3844,6 +3844,13 @@ class ADHDHighlighter {
     p1Actions.forEach(([id, label]) => { if (!document.getElementById(id) && taskActions) { const button = document.createElement('button'); button.id = id; button.className = 'agf-task-btn'; button.textContent = label; button.disabled = true; taskActions.appendChild(button); } });
     const p1View = document.createElement('div'); p1View.id = 'agfAiViewP1'; p1View.className = 'agf-ai-view-module'; p1View.style.display = 'none'; p1View.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfP1Title">阅读</span><span id="agfP1Meta" class="agf-module-meta"></span></div><div class="agf-reading-scenes" id="agfReadingScenes">${[['summary','总结'],['beginner','保姆级解读'],['structured','结构化摘要'],['outline','提取大纲'],['explain','简明解释'],['keywords','提取关键词'],['fact','事实辨识'],['structuredReading','结构化阅读']].map(([id,label]) => `<button class="agf-task-btn" data-reading-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions" id="agfP1Actions"><button id="agfReadingSave" class="agf-task-btn" disabled>保存</button></div><div id="agfP1Result" class="agf-module-result"><p>选择一个阅读场景开始。</p></div><div id="agfReadingDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfReadingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfReadingDiscussionBody" style="display:none"><textarea id="agfReadingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前阅读结果提问"></textarea><button id="agfReadingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfReadingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(p1View);
     const writingView = document.createElement('div'); writingView.id = 'agfAiViewWriting'; writingView.className = 'agf-ai-view-module'; writingView.style.display = 'none'; writingView.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfWritingTitle">写作</span><span id="agfWritingMeta" class="agf-module-meta"></span></div><div class="agf-writing-scenes">${[['translate','翻译'],['chart','做图表'],['news','改写成新闻'],['style-summary','文风总结'],['style-copy','文风仿写']].map(([id,label]) => `<button class="agf-task-btn" data-writing-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions"><button id="agfWritingSave" class="agf-task-btn" disabled>保存</button></div><div id="agfWritingResult" class="agf-module-result"><p>选择一个写作场景开始。</p></div><div id="agfWritingDiscussion" style="display:none"><button id="agfWritingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfWritingDiscussionBody" style="display:none"><textarea id="agfWritingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前写作结果提问"></textarea><button id="agfWritingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfWritingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(writingView);
+    const localizeJixiaViews = () => {
+      const attrs = [['#agfP1Title', 'jixia.ui.readingTitle'], ['#agfWritingTitle', 'jixia.ui.writingTitle'], ['#agfReadingSave', 'jixia.ui.save'], ['#agfWritingSave', 'jixia.ui.save'], ['#agfReadingDiscussToggle', 'jixia.ui.discuss'], ['#agfWritingDiscussToggle', 'jixia.ui.discuss'], ['#agfQuizDiscussToggle', 'jixia.ui.discuss'], ['#agfReadingDiscussSend', 'jixia.ui.send'], ['#agfWritingDiscussSend', 'jixia.ui.send'], ['#agfQuizDiscussSend', 'jixia.ui.send']];
+      attrs.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.dataset.i18n = key; });
+      document.querySelectorAll('#agfReadingQuestion,#agfWritingQuestion,#agfQuizQuestion').forEach(element => { element.dataset.i18nPlaceholder = 'jixia.ui.questionPlaceholder'; });
+      try { window.i18n?.applyTranslations?.(); } catch (_) {}
+    };
+    localizeJixiaViews();
     const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
     const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
