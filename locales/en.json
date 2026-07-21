@@ -12,7 +12,7 @@
     "disabled": "Highlighting disabled",
     "processing": "Processing...",
     "switching": "Switching status..."
-  }, 
+  },
   "errors": {
     "noTab": "Unable to get current tab",
     "notLoaded": "Extension not loaded or initialization failed",
@@ -49,7 +49,7 @@
     "refresh": "🔄 Refresh Analysis",
     "resetAll": "Reset All Settings"
   },
-    "aiPanel": {
+  "aiPanel": {
     "title": "Jixia",
     "returnToChat": "Return to chat view",
     "refresh": "Refresh",
@@ -57,25 +57,42 @@
     "statusHintOk": "Green: Page text loaded",
     "statusHintProcessing": "Processing: Fetching page text",
     "statusFailed": "Processing failed, refresh to retry",
-    "processingText": "Processing text", "waiting": "Waiting…",
+    "processingText": "Processing text",
+    "waiting": "Waiting…",
     "summary": "Summary",
     "more": "More",
     "structured": "Structured Summary",
-      "explain": "Plain Explanation",
-      "beginnerExplain": "Beginner-Friendly",
-      "outline": "Extract Outline",
-      "keywords": "Extract Keywords",
+    "explain": "Plain Explanation",
+    "beginnerExplain": "Beginner-Friendly",
+    "outline": "Extract Outline",
+    "keywords": "Extract Keywords",
     "fullText": "Text",
-    "size": { "full": "Full", "half": "Half", "mini": "Small" },
-    "highlight": { "on": "Color", "off": "Off" },
-    "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
-      "send": "Send",
-      "addFullText": "+ Text", "addImage": "+ Image", "mediaWaitingVision": "Waiting for the current vision model to understand it", "fullTextPrefix": "My question is: ",
-      "basedOnFullText": "Based on the current page's full text, ",
+    "size": {
+      "full": "Full",
+      "half": "Half",
+      "mini": "Small"
+    },
+    "highlight": {
+      "on": "Color",
+      "off": "Off"
+    },
+    "compose": {
+      "placeholder": "Type your question, Enter to send, Shift+Enter for newline"
+    },
+    "send": "Send",
+    "addFullText": "+ Text",
+    "addImage": "+ Image",
+    "mediaWaitingVision": "Waiting for the current vision model to understand it",
+    "fullTextPrefix": "My question is: ",
+    "basedOnFullText": "Based on the current page's full text, ",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",
-      "settings": {
-      "tabs": { "api": "API Key", "colors": "Color Management", "parse": "Parse & Filter" },
+    "settings": {
+      "tabs": {
+        "api": "API Key",
+        "colors": "Color Management",
+        "parse": "Parse & Filter"
+      },
       "general": "General Settings",
       "provider": "Provider",
       "model": "Model",
@@ -85,7 +102,10 @@
       "privacyFilter": "Privacy Filter",
       "privacyHint": "Privacy refers to names, emails, phone numbers in PDFs",
       "parseTitle": "Parse & Filter",
-      "parse": { "auto": "Auto", "manual": "Manual" },
+      "parse": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
       "manualParsePdf": "Parse Current PDF Now",
       "retentionDays": "Retention Days",
       "foldThreshold": "Fold Threshold",
@@ -130,12 +150,31 @@
     "qnaSuffix": "Q&A rounds",
     "copy": "Copy",
     "copied": "Copied",
-    "collapse": { "goFull": "Go to full text", "expand": "Expand full text", "collapse": "Collapse" },
-    "fulltext": { "pdfTitle": "PDF Full Text", "webTitle": "Web Page Full Text", "none": "No supplementary text", "noStructured": "No structured content" },
-    "mode": { "persistent": "Pin", "manual": "Manual" },
-    "save": "Save", "deleteKey": "Delete key", "deleteKeyConfirm": "Delete the API key for the current provider?", "keyDeleted": "API key deleted",
+    "collapse": {
+      "goFull": "Go to full text",
+      "expand": "Expand full text",
+      "collapse": "Collapse"
+    },
+    "fulltext": {
+      "pdfTitle": "PDF Full Text",
+      "webTitle": "Web Page Full Text",
+      "none": "No supplementary text",
+      "noStructured": "No structured content"
+    },
+    "mode": {
+      "persistent": "Pin",
+      "manual": "Manual"
+    },
+    "save": "Save",
+    "deleteKey": "Delete key",
+    "deleteKeyConfirm": "Delete the API key for the current provider?",
+    "keyDeleted": "API key deleted",
     "unnamed": "Untitled",
-    "date": { "yearSuffix": "", "monthSuffix": "", "daySuffix": "" },
+    "date": {
+      "yearSuffix": "",
+      "monthSuffix": "",
+      "daySuffix": ""
+    },
     "prompts": {
       "summaryTitle": "Summarize this article: ",
       "structuredTitle": "Generate a structured summary with section key points and TL;DR.",
@@ -342,11 +381,9 @@
         "posDistribution": "Part of Speech Distribution",
         "vocabulary": "Vocabulary Statistics"
       },
-
       "analyzing": "Analyzing...",
       "copy": "📋 Copy",
       "makeDictionary": "🔗 AI Create Dictionary",
-
       "noData": "No data available",
       "error": "Analysis failed, please try again"
     },
@@ -470,8 +507,8 @@
         "title": "Version Information"
       },
       "dictionaries": {
-         "title": "Dictionary Sources",
-         "titles": {
+        "title": "Dictionary Sources",
+        "titles": {
           "zh": "Chinese Dictionary (ZH) - Jieba",
           "en": "English Dictionary (EN) - WordNet",
           "fr": "French Dictionary (FR) - Morphalou",
@@ -479,7 +516,7 @@
           "es": "Spanish Dictionary (ES) - Apertium",
           "ja": "Japanese Dictionary (JA) - JMdict"
         },
-         "descriptions": {
+        "descriptions": {
           "zh": "Based on Jieba Chinese word segmentation dictionary, containing part-of-speech annotations for common vocabulary. Data sourced from public Chinese linguistic resources.",
           "en": "Based on WordNet English dictionary, providing accurate part-of-speech classification and semantic relationships. WordNet is a large English lexical database developed by Princeton University.",
           "fr": "Sourced from Morphalou French morphological dictionary, containing basic vocabulary part-of-speech information and morphological analysis.",
@@ -487,7 +524,7 @@
           "es": "Sourced from Apertium open-source machine translation platform's Spanish linguistic resources, supporting common vocabulary recognition.",
           "ja": "Based on JMdict open-source Japanese multilingual dictionary, containing part-of-speech information for kana and kanji. Completely open and supports commercial use."
         }
-     },
+      },
       "storage": {
         "title": "Storage Management",
         "retentionTime": "Cache Retention Time",
@@ -541,13 +578,13 @@
         "wechat": "WeChat zuoguyoupan2023",
         "websiteUrl": "https://feedback.readgofly.online"
       },
-       "about": {
-         "title": "About Us",
-         "description": "ADHDGoFly is an ADHD-friendly text highlighting plugin that helps users better understand and read web content through intelligent part-of-speech recognition and color marking.",
-         "version": "Version:",
-         "developer": "Developer:",
-         "website": "Website:"
-       },
+      "about": {
+        "title": "About Us",
+        "description": "ADHDGoFly is an ADHD-friendly text highlighting plugin that helps users better understand and read web content through intelligent part-of-speech recognition and color marking.",
+        "version": "Version:",
+        "developer": "Developer:",
+        "website": "Website:"
+      },
       "changelog": {
         "title": "Update Log",
         "v016": {
@@ -566,47 +603,259 @@
           "feature1": "Optimized caching logic for improved page loading performance",
           "feature2": "Added vocabulary-part-of-speech copy function for easier custom dictionary creation",
           "feature3": "Use official logo",
-           "feature4": "Added Q&A page",
-           "feature5": "Added review reminders",
-           "feature6": "Added anonymous information collection for product optimization",
-           "feature7": "Added feedback functionality"
-         },
-         "v014": {
-           "title": "Dictionary Features & Performance Enhancement",
-           "feature1": "Added custom dictionary functionality",
-           "feature2": "Implemented caching logic",
-           "feature3": "Optimized homepage UI and sidebar UI",
-           "feature4": "Fixed minor bugs"
-         },
-         "v013": {
-           "title": "Interface Optimization & Feature Enhancement",
-           "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
-           "feature2": "Support for English comparative and superlative purple logic",
-           "feature3": "Implement basic settings management and storage functionality"
-         },
-         "v012": {
-           "title": "Multi-language Support & Performance Optimization",
-           "feature1": "Multiple color schemes: warm, cool, soft, high contrast",
-           "feature2": "Added font size, line spacing, word spacing logic"
-         },
-         "v011": {
-           "title": "Basic Feature Release",
-           "feature1": "Support for Chinese and English part-of-speech recognition",
-           "feature2": "Provide color highlighting for nouns, verbs, adjectives"
-         }
-       }
+          "feature4": "Added Q&A page",
+          "feature5": "Added review reminders",
+          "feature6": "Added anonymous information collection for product optimization",
+          "feature7": "Added feedback functionality"
+        },
+        "v014": {
+          "title": "Dictionary Features & Performance Enhancement",
+          "feature1": "Added custom dictionary functionality",
+          "feature2": "Implemented caching logic",
+          "feature3": "Optimized homepage UI and sidebar UI",
+          "feature4": "Fixed minor bugs"
+        },
+        "v013": {
+          "title": "Interface Optimization & Feature Enhancement",
+          "feature1": "Support for French, Spanish, Russian, Japanese languages; main interface optimization",
+          "feature2": "Support for English comparative and superlative purple logic",
+          "feature3": "Implement basic settings management and storage functionality"
+        },
+        "v012": {
+          "title": "Multi-language Support & Performance Optimization",
+          "feature1": "Multiple color schemes: warm, cool, soft, high contrast",
+          "feature2": "Added font size, line spacing, word spacing logic"
+        },
+        "v011": {
+          "title": "Basic Feature Release",
+          "feature1": "Support for Chinese and English part-of-speech recognition",
+          "feature2": "Provide color highlighting for nouns, verbs, adjectives"
+        }
+      }
     }
   },
   "jixia": {
-    "settingsUi": { "ready": "Ready", "connectionStatus": "Connection status", "configuredPendingTest": "Configured, not tested", "testProvider": "Test current provider", "fallbackProvider": "Fallback provider", "disabled": "Disabled", "mediaRecognition": "Media recognition", "mediaDescription": "Manage image recognition/OCR and audio context here. PDF parsing is managed separately. Image recognition currently uses the free GLM-4V-Flash service.", "visionKey": "GLM-4V-Flash Key", "visionKeyPlaceholder": "Used separately for image recognition/OCR", "saved": "Saved", "mediaPermission": "Media permission", "mediaUpload": "Media upload", "enabled": "Enabled", "speechSettings": "Read-aloud settings", "speechLanguage": "Reading language", "speechVoice": "Voice", "speechRate": "Reading speed", "autoDetect": "Auto detect", "chinese": "Chinese", "defaultVoice": "Follow language default voice", "defaultVoiceMarker": "default", "testVoice": "Preview current voice", "voiceDescription": "Available voices depend on the operating system and browser. The extension does not upload reading text.", "mediaHint": "After enabling, choose files from the Image or Audio context buttons. Sending still requires confirmation. Original media is not saved by default; only necessary text results are stored." },
-    "tasks": { "title": "Tasks", "translate": "Translate", "selectionExplain": "Explain selection", "visionOcr": "Image/OCR", "speak": "Read aloud", "history": "📃 History" },
-    "context": { "full": "Full text", "selection": "Selection", "paragraph": "Paragraph", "manual": "Manual input", "summary": "Current context: {{label}}", "summaryFull": "Current context: full text", "image": "Image", "chart": "Chart", "discoverImages": "Find web images", "screenshot": "Screenshot", "audio": "Audio", "mediaMode": "Image sending mode", "auto": "Auto", "recognitionOnly": "Recognition only", "imageAndRecognition": "Image + recognition" },
-    "image": { "title": "Image workspace", "waiting": "Waiting for an image", "drop": "Drop an image here to recognize it", "choose": "Choose image", "selectAll": "Select all", "process": "Recognize selected images", "addToChat": "Add to chat", "retry": "Recognize again", "clear": "Clear workspace", "delete": "Delete and clear history", "export": "Export", "history": "Recognition history" },
-    "chart": { "title": "Chart workspace", "waiting": "Waiting to generate chart", "skill": "Built-in chart Skill", "skillPrompt": "Help me make a relationship diagram to explain this", "sourcePlaceholder": "Chart material is filled automatically; you can edit it here", "generate": "Generate from workspace", "save": "Save", "svg": "Export SVG", "json": "Export JSON", "importJson": "Import JSON", "html": "Export HTML", "png": "Export PNG", "attach": "Add to Chat", "undo": "Undo", "redo": "Redo", "addNode": "Add node", "addEdge": "Add edge", "delete": "Delete selected", "zoomOut": "Zoom out", "zoomReset": "Reset zoom", "zoomIn": "Zoom in", "titlePlaceholder": "Chart title", "notice": "Click to select; drag to move; double-click text to edit. Select a node before deleting it.", "saved": "Saved charts", "addLane": "Add lane", "aiEditLabel": "AI Edit Chart", "aiEditPlaceholder": "For example: add Redis; move nodes; change an edge; highlight the cache-miss path in red", "aiEditSend": "Apply change", "system": "System", "light": "Light theme", "dark": "Dark theme", "intent": { "concept": "Concept map", "relationship": "Relationship", "mindmap": "Mind map", "flowchart": "Flowchart", "timeline": "Timeline", "architecture": "Architecture / relationship", "workflow": "Workflow / swimlane", "data_flow": "Data flow", "lifecycle": "Lifecycle", "sequence": "Sequence" }, "renderer": { "svg": "Clean SVG", "rough": "Hand-drawn", "mermaid": "Mermaid style" } },
-    "tabs": { "chat": "Chat", "reading": "Reading", "writing": "Writing", "quiz": "Quiz", "explain": "Explain", "vocab": "Vocabulary" },
-    "actions": { "chart": "Chart", "chartTitle": "Use the built-in chart Skill for the current context" },
-    "reasoning": { "on": "Reasoning: On", "off": "Reasoning: Off" },
-    "ui": { "readingTitle": "Reading", "writingTitle": "Writing", "quizTitle": "Article comprehension quiz", "vocabularyTitle": "Vocabulary review", "historyTitle": "History", "selectScene": "Choose a reading scene to begin.", "selectWritingScene": "Choose a writing scene to begin.", "save": "Save", "send": "Send", "reset": "Reset", "discuss": "Discuss", "backHistory": "Back to history", "submit": "Submit answer", "next": "Next question", "generateQuiz": "Generate quiz", "easy": "Easier", "hard": "Harder", "questionPlaceholder": "Ask about the current content", "allTypes": "All types", "currentRecords": "Current records", "allRecords": "All records", "searchRecords": "Search title or link", "emptyHistory": "No history yet", "selectAll": "Select all", "pending": "Pending", "failed": "Failed", "completed": "Completed", "process": "Process", "manage": "Manage", "choose": "Choose", "ask": "Q", "answer": "A", "factCheck": "Fact check", "structuredReading": "Structured reading", "rewriteNews": "Rewrite as news", "styleSummary": "Style summary", "styleCopy": "Style imitation", "open": "Open", "delete": "Delete", "restore": "Restore", "compare": "Compare", "selectVersion": "Select version", "fullTextKeywords": "Full-text keywords", "sectionKeywords": "Section keywords", "saveDictionary": "Save as dictionary", "mastery": "Mastery 0%", "vocabIntro": "Generate a vocabulary review set from the current article.", "groupGenerate": "Generate", "groupFile": "File", "groupEdit": "Edit", "groupView": "View" }
+    "settingsUi": {
+      "ready": "Ready",
+      "connectionStatus": "Connection status",
+      "configuredPendingTest": "Configured, not tested",
+      "testProvider": "Test current provider",
+      "fallbackProvider": "Fallback provider",
+      "disabled": "Disabled",
+      "mediaRecognition": "Media recognition",
+      "mediaDescription": "Manage image recognition/OCR and audio context here. PDF parsing is managed separately. Image recognition currently uses the free GLM-4V-Flash service.",
+      "visionKey": "GLM-4V-Flash Key",
+      "visionKeyPlaceholder": "Used separately for image recognition/OCR",
+      "saved": "Saved",
+      "mediaPermission": "Media permission",
+      "mediaUpload": "Media upload",
+      "enabled": "Enabled",
+      "speechSettings": "Read-aloud settings",
+      "speechLanguage": "Reading language",
+      "speechVoice": "Voice",
+      "speechRate": "Reading speed",
+      "autoDetect": "Auto detect",
+      "chinese": "Chinese",
+      "defaultVoice": "Follow language default voice",
+      "defaultVoiceMarker": "default",
+      "testVoice": "Preview current voice",
+      "voiceDescription": "Available voices depend on the operating system and browser. The extension does not upload reading text.",
+      "mediaHint": "After enabling, choose files from the Image or Audio context buttons. Sending still requires confirmation. Original media is not saved by default; only necessary text results are stored."
+    },
+    "tasks": {
+      "title": "Tasks",
+      "translate": "Translate",
+      "selectionExplain": "Explain selection",
+      "visionOcr": "Image/OCR",
+      "speak": "Read aloud",
+      "history": "📃 History"
+    },
+    "context": {
+      "full": "Full text",
+      "selection": "Selection",
+      "paragraph": "Paragraph",
+      "manual": "Manual input",
+      "summary": "Current context: {{label}}",
+      "summaryFull": "Current context: full text",
+      "image": "Image",
+      "chart": "Chart",
+      "discoverImages": "Find web images",
+      "screenshot": "Screenshot",
+      "audio": "Audio",
+      "mediaMode": "Image sending mode",
+      "auto": "Auto",
+      "recognitionOnly": "Recognition only",
+      "imageAndRecognition": "Image + recognition"
+    },
+    "image": {
+      "title": "Image workspace",
+      "waiting": "Waiting for an image",
+      "drop": "Drop an image here to recognize it",
+      "choose": "Choose image",
+      "selectAll": "Select all",
+      "process": "Recognize selected images",
+      "addToChat": "Add to chat",
+      "retry": "Recognize again",
+      "clear": "Clear workspace",
+      "delete": "Delete and clear history",
+      "export": "Export",
+      "history": "Recognition history"
+    },
+    "chart": {
+      "title": "Chart workspace",
+      "waiting": "Waiting to generate chart",
+      "skill": "Built-in chart Skill",
+      "skillPrompt": "Help me make a relationship diagram to explain this",
+      "sourcePlaceholder": "Chart material is filled automatically; you can edit it here",
+      "generate": "Generate from workspace",
+      "save": "Save",
+      "svg": "Export SVG",
+      "json": "Export JSON",
+      "importJson": "Import JSON",
+      "html": "Export HTML",
+      "png": "Export PNG",
+      "attach": "Add to Chat",
+      "undo": "Undo",
+      "redo": "Redo",
+      "addNode": "Add node",
+      "addEdge": "Add edge",
+      "delete": "Delete selected",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset zoom",
+      "zoomIn": "Zoom in",
+      "titlePlaceholder": "Chart title",
+      "notice": "Click to select; drag to move; double-click text to edit. Select a node before deleting it.",
+      "saved": "Saved charts",
+      "addLane": "Add lane",
+      "aiEditLabel": "AI Edit Chart",
+      "aiEditPlaceholder": "For example: add Redis; move nodes; change an edge; highlight the cache-miss path in red",
+      "aiEditSend": "Apply change",
+      "system": "System",
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "intent": {
+        "concept": "Concept map",
+        "relationship": "Relationship",
+        "mindmap": "Mind map",
+        "flowchart": "Flowchart",
+        "timeline": "Timeline",
+        "architecture": "Architecture / relationship",
+        "workflow": "Workflow / swimlane",
+        "data_flow": "Data flow",
+        "lifecycle": "Lifecycle",
+        "sequence": "Sequence"
+      },
+      "renderer": {
+        "svg": "Clean SVG",
+        "rough": "Hand-drawn",
+        "mermaid": "Mermaid style"
+      }
+    },
+    "tabs": {
+      "chat": "Chat",
+      "reading": "Reading",
+      "writing": "Writing",
+      "quiz": "Quiz",
+      "explain": "Explain",
+      "vocab": "Vocabulary"
+    },
+    "actions": {
+      "chart": "Chart",
+      "chartTitle": "Use the built-in chart Skill for the current context"
+    },
+    "reasoning": {
+      "on": "Reasoning: On",
+      "off": "Reasoning: Off"
+    },
+    "ui": {
+      "readingTitle": "Reading",
+      "writingTitle": "Writing",
+      "quizTitle": "Article comprehension quiz",
+      "vocabularyTitle": "Vocabulary review",
+      "historyTitle": "History",
+      "selectScene": "Choose a reading scene to begin.",
+      "selectWritingScene": "Choose a writing scene to begin.",
+      "save": "Save",
+      "send": "Send",
+      "reset": "Reset",
+      "discuss": "Discuss",
+      "backHistory": "Back to history",
+      "submit": "Submit answer",
+      "next": "Next question",
+      "generateQuiz": "Generate quiz",
+      "easy": "Easier",
+      "hard": "Harder",
+      "questionPlaceholder": "Ask about the current content",
+      "allTypes": "All types",
+      "currentRecords": "Current records",
+      "allRecords": "All records",
+      "searchRecords": "Search title or link",
+      "emptyHistory": "No history yet",
+      "selectAll": "Select all",
+      "pending": "Pending",
+      "failed": "Failed",
+      "completed": "Completed",
+      "process": "Process",
+      "manage": "Manage",
+      "choose": "Choose",
+      "ask": "Q",
+      "answer": "A",
+      "factCheck": "Fact check",
+      "structuredReading": "Structured reading",
+      "rewriteNews": "Rewrite as news",
+      "styleSummary": "Style summary",
+      "styleCopy": "Style imitation",
+      "open": "Open",
+      "delete": "Delete",
+      "restore": "Restore",
+      "compare": "Compare",
+      "selectVersion": "Select version",
+      "fullTextKeywords": "Full-text keywords",
+      "sectionKeywords": "Section keywords",
+      "saveDictionary": "Save as dictionary",
+      "mastery": "Mastery 0%",
+      "vocabIntro": "Generate a vocabulary review set from the current article.",
+      "groupGenerate": "Generate",
+      "groupFile": "File",
+      "groupEdit": "Edit",
+      "groupView": "View",
+      "clearWorkspace": "Clear workspace",
+      "newConversation": "New chat",
+      "newConversationTitle": "Start a new conversation and keep history",
+      "newConversationDone": "Started a new conversation. History is kept.",
+      "readingWorkspace": "Reading workspace",
+      "writingAssist": "Writing assist",
+      "currentArticle": "Current article",
+      "thesis": "Thesis",
+      "argumentsEvidence": "Arguments and evidence",
+      "evidence": "Evidence",
+      "confidence": "Confidence",
+      "notProvided": "Not provided",
+      "noArguments": "No arguments yet.",
+      "causalRelations": "Causal relations",
+      "noCausalRelations": "No clear causal relations yet.",
+      "controversies": "Controversies",
+      "positions": "Positions",
+      "uncertainty": "Uncertainty",
+      "noControversies": "No controversies found.",
+      "fact": "Fact",
+      "inference": "Inference",
+      "opinion": "Opinion",
+      "unverified": "Needs verification",
+      "noClassifiableClaims": "No classifiable claims found.",
+      "analyzing": "Analyzing, please wait...",
+      "generating": "Generating, please wait...",
+      "selectTextFirst": "Select some text on the page first.",
+      "noArticleContent": "No usable article content on the current page.",
+      "chartUnavailable": "Unable to use chart capability",
+      "imageCleared": "Workspace cleared. Recognition history is kept.",
+      "chartCleared": "Chart workspace cleared. Saved charts are kept.",
+      "quizCleared": "Quiz workspace cleared. Quiz history is kept.",
+      "readingCleared": "Reading workspace cleared. History is kept.",
+      "writingCleared": "Writing workspace cleared. History is kept.",
+      "selectQuizDifficulty": "Choose a difficulty to start a new quiz.",
+      "vocabCleared": "Vocabulary workspace cleared. Review history is kept."
+    }
   },
   "sidebar": {
     "home": "Home",
