@@ -3041,7 +3041,7 @@ class ADHDHighlighter {
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
-              <div class="agf-vocab-scenes"><button class="agf-task-btn" data-vocab-scene="全文关键词">全文关键词</button><button class="agf-task-btn" data-vocab-scene="逐段关键词">逐段关键词</button><span class="agf-vocab-planned" title="后续有相应词典后再完成">雅思词汇、托福词汇、四六级词汇、高考词汇、K9词汇（待本地词典）</span></div>
+              <div class="agf-vocab-scenes"><button class="agf-task-btn" data-vocab-scene="全文关键词">全文关键词</button><button class="agf-task-btn" data-vocab-scene="逐段关键词">逐段关键词</button><!-- 雅思、托福、四六级、高考、K9：后续有对应本地词典后再恢复入口。 --></div>
               <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
               <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabSaveDictionary" class="agf-task-btn">保存为词典</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history" style="display:none"></div>
             </div>
@@ -3663,7 +3663,11 @@ class ADHDHighlighter {
       async requestJsonText({ prompt, timeout = 60000, maxTokens = 1800, temperature = 0.4 }) {
         const { provider: prov, model: selectedModel } = jixiaState.getProviderState();
         const reasoningAllowed = jixiaState.currentModule === 'chat' && jixiaState.reasoningEnabled === true;
-        const model = !reasoningAllowed && /reasoner|reasoning|deepseek-r1/i.test(String(selectedModel || '')) ? String(selectedModel).replace(/reasoner|reasoning|deepseek-r1/ig, 'chat') : selectedModel;
+        const normalizedSelectedModel = String(selectedModel || '').toLowerCase();
+        const configuredCapabilities = this.getModelCapabilities(prov, selectedModel);
+        const selectedModelIsReasoning = configuredCapabilities.reasoning === true || /reasoner|reasoning|thinking|deepseek-r1|kimi-k[2346]|glm-5/i.test(normalizedSelectedModel);
+        const fallbackModels = { deepseek: 'deepseek-chat', moonshot: 'moonshot-v1-128k', chatglm: 'glm-4.6' };
+        const model = !reasoningAllowed && selectedModelIsReasoning ? (fallbackModels[prov] || String(selectedModel).replace(/reasoner|reasoning|thinking|deepseek-r1/ig, 'chat')) : selectedModel;
         const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const key = String((stored.aiKeys || {})[prov] || '').trim();
         if (!key) throw new Error('当前供应商尚未配置 API Key');
