@@ -3872,6 +3872,16 @@ class ADHDHighlighter {
       }));
       const settingPlaceholders = [['#agfGlmVisionKeyInput', 'jixia.settingsUi.visionKeyPlaceholder']];
       settingPlaceholders.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.dataset.i18nPlaceholder = key; });
+      const mediaSettingsRoot = document.querySelector('#agfSettingsContentMedia');
+      if (mediaSettingsRoot) {
+        const headings = mediaSettingsRoot.querySelectorAll('.agf-settings-group > div:first-child'); if (headings[0]) headings[0].dataset.i18n = 'jixia.settingsUi.mediaRecognition';
+        const hints = mediaSettingsRoot.querySelectorAll('.agf-hint'); if (hints[0]) hints[0].dataset.i18n = 'jixia.settingsUi.mediaDescription'; if (hints[1]) hints[1].dataset.i18n = 'jixia.settingsUi.mediaHint';
+      }
+      const speakSettingsRoot = document.querySelector('#agfSettingsContentSpeak');
+      if (speakSettingsRoot) {
+        const headings = speakSettingsRoot.querySelectorAll('.agf-settings-group > div:first-child'); if (headings[0]) headings[0].dataset.i18n = 'jixia.settingsUi.speechSettings';
+        const hints = speakSettingsRoot.querySelectorAll('.agf-hint'); if (hints[0]) hints[0].dataset.i18n = 'jixia.settingsUi.voiceDescription';
+      }
       try { window.i18n?.applyTranslations?.(); } catch (_) {}
     };
     localizeJixiaViews();
@@ -3890,7 +3900,15 @@ class ADHDHighlighter {
     const chartNotice = chartView.querySelector('#agfChartNotice');
     const chartMeta = chartView.querySelector('#agfChartMeta');
     const chartHistory = chartView.querySelector('#agfChartHistory');
-    const chartHistoryQuickBtn = (() => { const button = document.createElement('button'); button.id = 'agfChartHistoryQuick'; button.className = 'agf-context-btn'; button.textContent = '历史记录'; button.title = '查看图表历史'; chartView.querySelector('.agf-module-heading')?.appendChild(button); button.onclick = () => { recordsType = 'chart'; if (recordsTypeSelect) recordsTypeSelect.value = 'chart'; showRecords(); }; return button; })();
+    const applyChartHistoryTranslations = () => {
+      chartHistory?.querySelectorAll('[data-chart-load]').forEach(element => { element.dataset.i18n = 'jixia.ui.open'; });
+      chartHistory?.querySelectorAll('[data-version-restore]').forEach(element => { element.dataset.i18n = 'jixia.ui.restore'; });
+      chartHistory?.querySelectorAll('[data-version-compare]').forEach(element => { element.dataset.i18n = 'jixia.ui.compare'; });
+      chartHistory?.querySelectorAll('[data-version-select]').forEach(element => { const option = element.querySelector('option[value=""]'); if (option) option.dataset.i18n = 'jixia.ui.selectVersion'; });
+      try { window.i18n?.applyTranslations?.(); } catch (_) {}
+    };
+    const chartHistoryQuickBtn = (() => { const button = document.createElement('button'); button.id = 'agfChartHistoryQuick'; button.className = 'agf-context-btn'; button.dataset.i18n = 'jixia.ui.historyTitle'; button.dataset.i18nTitle = 'jixia.chart.title'; button.textContent = '历史记录'; button.title = '查看图表历史'; chartView.querySelector('.agf-module-heading')?.appendChild(button); button.onclick = () => { recordsType = 'chart'; if (recordsTypeSelect) recordsTypeSelect.value = 'chart'; showRecords(); }; return button; })();
+    document.addEventListener('languageChanged', () => { localizeJixiaViews(); applyChartHistoryTranslations(); if (chartHistoryQuickBtn) window.i18n?.applyTranslations?.(); }, { passive: true });
     const chartButtons = { generate: chartView.querySelector('#agfChartGenerate'), save: chartView.querySelector('#agfChartSave'), svg: chartView.querySelector('#agfChartSvg'), json: chartView.querySelector('#agfChartJson'), importJson: chartView.querySelector('#agfChartImport'), html: chartView.querySelector('#agfChartHtml'), png: chartView.querySelector('#agfChartPng'), attach: chartView.querySelector('#agfChartAttach'), undo: chartView.querySelector('#agfChartUndo'), redo: chartView.querySelector('#agfChartRedo'), addNode: chartView.querySelector('#agfChartAddNode'), addEdge: chartView.querySelector('#agfChartAddEdge'), delete: chartView.querySelector('#agfChartDelete'), aiEdit: chartView.querySelector('#agfChartAiEditBtn') };
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
@@ -3931,7 +3949,7 @@ class ADHDHighlighter {
       currentChartContext.changeReason = '自动保存';
       await AgfChartWorkspace.save(currentChartContext);
       lastAutoSavedChart = JSON.stringify(chartSnapshot());
-      loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {});
+      loadChartHistory().then(() => applyChartHistoryTranslations()).catch(() => {});
       return true;
     };
     const updateChartHistoryButtons = () => { if (chartButtons.undo) chartButtons.undo.disabled = !chartHistoryState.past.length; if (chartButtons.redo) chartButtons.redo.disabled = !chartHistoryState.future.length; };
@@ -4219,7 +4237,7 @@ class ADHDHighlighter {
       const chartEnglish = window.i18n?.getCurrentLanguage?.() === 'en';
       chartNotice.textContent = useSkill ? (chartEnglish ? 'The current context is wrapped with the built-in chart Skill. You can edit the material before generating.' : '已用内置图表 Skill 包裹当前上下文，可修改材料后生成。') : (chartEnglish ? 'The current context has been filled. You can edit the material before generating.' : '已填充当前上下文，可修改材料后生成。');
       setView('chart');
-      loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {});
+      loadChartHistory().then(() => applyChartHistoryTranslations()).catch(() => {});
     };
     const showChartView = () => fillChartWorkspace({ useSkill: false }).catch(error => { showToast(error.message || '无法进入图表工作区'); });
     if (chartWorkspaceBtn) chartWorkspaceBtn.onclick = () => showChartView();
@@ -4268,7 +4286,7 @@ class ADHDHighlighter {
     };
     chartButtons.generate.onclick = async () => {
       try {
-        chartNotice.textContent = '正在根据工作区材料生成结构化图表…';
+        chartNotice.textContent = window.i18n?.t?.('jixia.chart.waiting') || '正在根据工作区材料生成结构化图表…';
         const ctx = currentChartSourceContext || await jixiaContext.resolve(jixiaState.contextSource);
         const material = String(chartSourceText?.value || ctx.text || '').trim();
         if (!material) throw new Error('图表工作区没有可用材料');
@@ -4340,7 +4358,7 @@ class ADHDHighlighter {
     const deleteSelectedChartNodes = () => { if (!currentChartContext || (!chartHistoryState.selected.size && !chartHistoryState.selectedEdges.size)) return; rememberChart(); const ids = chartHistoryState.selected; const edgeIndexes = chartHistoryState.selectedEdges; currentChartContext.chartModel.nodes = currentChartContext.chartModel.nodes.filter(node => { if (!ids.has(node.id)) return true; if (node.isLane) { node.hidden = true; return true; } return false; }); currentChartContext.chartModel.edges = (currentChartContext.chartModel.edges || []).filter((edge, index) => !ids.has(edge.source) && !ids.has(edge.target) && !edgeIndexes.has(index)); chartHistoryState.selected.clear(); chartHistoryState.selectedEdges.clear(); chartNotice.textContent = '已删除选中节点/连线'; renderChartPreview(); };
     chartButtons.delete.onclick = deleteSelectedChartNodes;
     document.addEventListener('keydown', event => { if (!currentChartContext || !chartView || chartView.style.display === 'none') return; if ((event.key === 'Delete' || event.key === 'Backspace') && chartHistoryState.selected.size && !/INPUT|TEXTAREA/.test(event.target?.tagName || '')) { event.preventDefault(); deleteSelectedChartNodes(); } });
-    chartButtons.save.onclick = async () => { if (!currentChartContext) return; currentChartContext.changeReason = currentChartContext.changeReason || '手动保存'; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'Saved to IndexedDB and the current version was recorded.' : '已保存到 IndexedDB，并记录当前版本'; loadChartHistory().then(() => window.i18n?.applyTranslations?.()).catch(() => {}); };
+    chartButtons.save.onclick = async () => { if (!currentChartContext) return; currentChartContext.changeReason = currentChartContext.changeReason || '手动保存'; await AgfChartWorkspace.save(currentChartContext); chartNotice.textContent = window.i18n?.getCurrentLanguage?.() === 'en' ? 'Saved to IndexedDB and the current version was recorded.' : '已保存到 IndexedDB，并记录当前版本'; loadChartHistory().then(() => applyChartHistoryTranslations()).catch(() => {}); };
     chartButtons.png.onclick = async () => { if (!currentChartContext) return; try { const scale = Number(prompt('PNG 导出倍率（1-4）', '2')) || 2; const transparent = confirm('是否使用透明背景？'); const png = await AgfChartWorkspace.svgToPngWithOptions(await getCurrentChartSvg(), { scale, transparent }); const link = document.createElement('a'); link.href = png; link.download = chartFileName('png'); link.click(); chartNotice.textContent = 'PNG 已导出'; } catch (error) { chartNotice.textContent = error.message || 'PNG 导出失败'; } };
     chartButtons.attach.onclick = async () => { if (!currentChartContext) return; try { const png = await AgfChartWorkspace.svgToPng(await getCurrentChartSvg()); currentMediaContext = createJixiaContext({ source: 'chart', image: { dataUrl: png, mimeType: 'image/png', name: currentChartContext.chartModel.title || '图表' }, confirmed: true, sourceUrl: currentChartContext.sourceRefs?.[0]?.url || location.href, metadata: { chartContext: currentChartContext }, }); currentMediaContext.recognition = { status: 'completed', model: 'jixia-chart', text: JSON.stringify(currentChartContext.chartModel, null, 2), ocrText: '' }; currentMediaBatch = [currentMediaContext]; renderMediaAttachment(); showChat(); chartNotice.textContent = '图表已作为图片附件加入 Chat，可直接发送给 AI 优化。'; } catch (error) { chartNotice.textContent = error.message || '添加附件失败'; } };
     const renderMediaAttachment = () => {
@@ -7324,7 +7342,7 @@ class ADHDHighlighter {
     const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
     const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
     const prepareP1 = kind => { p1ActionsEl.innerHTML = ''; p1Title.textContent = ({ structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' })[kind] || 'P1 阅读工具'; };
-    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = `<p>${window.i18n?.t?.('aiPanel.processingText') || '正在分析，请稍候…'}</p>`; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
     const chatModule = JixiaModules.createChatModule({
       context: jixiaContext,
