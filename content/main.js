@@ -3003,6 +3003,7 @@ class ADHDHighlighter {
                     <option>deepseek-chat</option>
                     <option>deepseek-reasoner</option>
                   </select>
+                  <button id="agfChatReasoningToggle" class="agf-mode-btn" type="button" aria-pressed="false">推理：关</button>
                 <div class="agf-status"><span id="agfStorageStatusDot" class="agf-status-dot" data-i18n-attr="title:aiPanel.statusHintNone"></span><button id="agfRefreshBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.refresh">⟳</button><button id="agfTestTextBtn" class="agf-refresh-btn" data-i18n-attr="title:aiPanel.fullText">文</button></div>
                 </div>
                 </div>
@@ -3040,7 +3041,7 @@ class ADHDHighlighter {
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
-              <div class="agf-vocab-scenes"><button class="agf-task-btn" data-vocab-scene="全文关键词">全文关键词</button><button class="agf-task-btn" data-vocab-scene="逐段关键词">逐段关键词</button><button class="agf-task-btn" data-vocab-scene="雅思词汇">雅思词汇</button><button class="agf-task-btn" data-vocab-scene="托福词汇">托福词汇</button><button class="agf-task-btn" data-vocab-scene="四六级词汇">四六级词汇</button><button class="agf-task-btn" data-vocab-scene="高考词汇">高考词汇</button><button class="agf-task-btn" data-vocab-scene="K9词汇">K9词汇</button></div>
+              <div class="agf-vocab-scenes"><button class="agf-task-btn" data-vocab-scene="全文关键词">全文关键词</button><button class="agf-task-btn" data-vocab-scene="逐段关键词">逐段关键词</button><span class="agf-vocab-planned" title="后续有相应词典后再完成">雅思词汇、托福词汇、四六级词汇、高考词汇、K9词汇（待本地词典）</span></div>
               <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
               <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabSaveDictionary" class="agf-task-btn">保存为词典</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history" style="display:none"></div>
             </div>
@@ -3323,6 +3324,8 @@ class ADHDHighlighter {
     const foldHeightInput = document.getElementById('agfFoldHeightInput');
     const sessionProviderSelect = document.getElementById('agfSessionProvider');
     const sessionModelSelect = document.getElementById('agfSessionModel');
+    const reasoningToggle = document.getElementById('agfChatReasoningToggle');
+    if (reasoningToggle) reasoningToggle.addEventListener('click', () => { jixiaState.reasoningEnabled = !jixiaState.reasoningEnabled; reasoningToggle.setAttribute('aria-pressed', String(jixiaState.reasoningEnabled)); reasoningToggle.textContent = `推理：${jixiaState.reasoningEnabled ? '开' : '关'}`; });
     const statusDot = document.getElementById('agfStorageStatusDot');
     const refreshBtn = document.getElementById('agfRefreshBtn');
     const quickSummaryBtn = document.getElementById('agfQuickSummaryBtn');
@@ -3527,6 +3530,7 @@ class ADHDHighlighter {
       }
     };
     const jixiaState = new JixiaModules.JixiaState();
+    jixiaState.reasoningEnabled = false;
     window.JixiaState = jixiaState;
     window.TaixueState = jixiaState; // 兼容旧内容脚本/调试入口
     jixiaState.getProviderState = () => {
@@ -3657,7 +3661,9 @@ class ADHDHighlighter {
         return { taskType: safeRequest.taskType, context: safeRequest.context, output: validateJixiaOutput(output, safeRequest.outputSchema), createdAt: Date.now(), persisted: false };
       },
       async requestJsonText({ prompt, timeout = 60000, maxTokens = 1800, temperature = 0.4 }) {
-        const { provider: prov, model } = jixiaState.getProviderState();
+        const { provider: prov, model: selectedModel } = jixiaState.getProviderState();
+        const reasoningAllowed = jixiaState.currentModule === 'chat' && jixiaState.reasoningEnabled === true;
+        const model = !reasoningAllowed && /reasoner|reasoning|deepseek-r1/i.test(String(selectedModel || '')) ? String(selectedModel).replace(/reasoner|reasoning|deepseek-r1/ig, 'chat') : selectedModel;
         const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const key = String((stored.aiKeys || {})[prov] || '').trim();
         if (!key) throw new Error('当前供应商尚未配置 API Key');
@@ -3722,6 +3728,7 @@ class ADHDHighlighter {
     const setView = (which) => {
       currentView = which;
       jixiaState.setModule(which);
+      if (reasoningToggle) reasoningToggle.style.display = which === 'chat' ? '' : 'none';
       updateTaskBar(which);
       if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
       if (which === 'chat' || which === 'quiz') {
@@ -7110,7 +7117,7 @@ class ADHDHighlighter {
     const renderVocabCard = () => {
       if (!vocabCards.length || vocabIndex >= vocabCards.length) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
       const card = vocabCards[vocabIndex]; const mastery = Number(card.mastery || 0); vocabStats.textContent = `已提取 ${vocabCards.length} 词 · 当前掌握度 ${mastery}%`;
-      vocabResult.innerHTML = `<div class="agf-vocab-list"><table><thead><tr><th>词汇</th><th>词性</th><th>中文解释</th><th>英文解释</th><th>例句</th><th>操作</th></tr></thead><tbody>${vocabCards.map((item, index) => `<tr><td>${p1Esc(item.word)}</td><td>${p1Esc(item.pos || item.partOfSpeech || '待补充')}</td><td>${p1Esc(item.meaning || '')}</td><td>${p1Esc(item.definition || item.englishMeaning || '')}</td><td>${p1Esc(item.example || '')}</td><td><button class="agf-task-btn" data-vocab-sentence="${index}">造句</button></td></tr>`).join('')}</tbody></table></div><div class="agf-vocab-review-current"><span>当前复习：${p1Esc(card.word)}</span><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
+      vocabResult.innerHTML = `<div class="agf-vocab-list"><table><thead><tr><th>词汇</th><th>词性</th><th>对应语言含义</th><th>对应语言例句</th><th>操作</th></tr></thead><tbody>${vocabCards.map((item, index) => { const latin = /[A-Za-z]/.test(String(item.word || '')); const meaning = latin ? (item.definition || item.englishMeaning || item.meaning || '') : (item.meaning || item.definition || item.englishMeaning || ''); return `<tr><td>${p1Esc(item.word)}</td><td>${p1Esc(item.pos || item.partOfSpeech || '待补充')}</td><td>${p1Esc(meaning)}</td><td>${p1Esc(item.example || '')}</td><td><button class="agf-task-btn" data-vocab-sentence="${index}">造句</button></td></tr>`; }).join('')}</tbody></table></div><div class="agf-vocab-review-current"><span>当前复习：${p1Esc(card.word)}</span><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
       const answer = remembered => vocabModule ? vocabModule.answer(remembered) : Promise.resolve();
       document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
       vocabResult.querySelectorAll('[data-vocab-sentence]').forEach(button => { button.onclick = async () => { const item = vocabCards[Number(button.dataset.vocabSentence)]; button.disabled = true; try { const language = /[A-Za-z]/.test(item.word) ? '英文' : '中文'; const output = await jixiaTask.requestJsonText({ prompt: `请用词汇“${item.word}”造一个自然、符合语境的${language}句子，只返回句子，并附带简短中文解释。`, maxTokens: 500, temperature: .4 }); button.parentElement.innerHTML = p1Esc(output); } catch (error) { showToast(error.message || '造句失败'); } finally { button.disabled = false; } }; });
@@ -7220,7 +7227,7 @@ class ADHDHighlighter {
     JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
     const deterministicVocabScenes = new Set(['雅思词汇','托福词汇','四六级词汇','高考词汇','K9词汇']);
     overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); const scene = button.dataset.vocabScene; if (deterministicVocabScenes.has(scene)) { vocabResult.innerHTML = `<p>${p1Esc(scene)}需要对应的本地词典文件进行确定性匹配。当前项目尚未安装该词库，因此不会让 AI 临时编造词表。</p>`; return; } vocabSceneMode = scene; if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(scene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
-    if (vocabSaveDictionary) vocabSaveDictionary.onclick = () => showToast('词典保存入口已保留，下一步接入统一 DictionaryTool。');
+    if (vocabSaveDictionary) vocabSaveDictionary.onclick = async () => { if (!vocabCards.length) { showToast('请先生成词汇列表。'); return; } try { const id = `jixia-vocab-${Date.now().toString(36)}`; const firstLatin = vocabCards.some(item => /[A-Za-z]/.test(String(item.word || ''))); const language = firstLatin ? 'en' : 'zh'; const title = currentPageTitle || '稷下词汇'; const words = {}; vocabCards.forEach(item => { words[String(item.word).toLowerCase()] = { pos: [item.pos || item.partOfSpeech || 'unknown'], meaningZh: item.meaning || '', definitionEn: item.definition || item.englishMeaning || '', example: item.example || '' }; }); const data = { meta: { id, name: id.toUpperCase(), displayName: title, language, type: 'local', source: 'jixia-vocab', sourceTitle: currentPageTitle || title, sourceUrl: currentCanonicalUrl || location.href, scope: 'page', createdAt: Date.now(), updatedAt: Date.now() }, version: '1.0', lastUpdated: new Date().toISOString(), words }; const stored = await new Promise(resolve => chrome.storage.local.get(['customDictRegistry'], resolve)); const registry = stored.customDictRegistry || { version: '1.0.0', dictionaries: { preset: [], downloaded: [], local: [] }, local: [] }; if (!registry.dictionaries) registry.dictionaries = { preset: [], downloaded: [], local: [] }; if (!Array.isArray(registry.dictionaries.local)) registry.dictionaries.local = []; if (!Array.isArray(registry.local)) registry.local = []; const entry = { id, name: id.toUpperCase(), displayName: { zh: title, en: title }, language, type: 'local', source: 'jixia-vocab', filePath: `storage:dictionary_${id}`, enabled: true, createdAt: Date.now() }; registry.dictionaries.local.push(entry); registry.local.push(entry); await new Promise(resolve => chrome.storage.local.set({ customDictRegistry: registry, [`dictionary_${id}`]: data, activeArticleDictionaryId: id }, resolve)); showToast(`已保存并注册词典：${title}`); } catch (error) { showToast(error.message || '词典保存失败'); } };
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
       try { showChat(); const output = await jixiaTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
