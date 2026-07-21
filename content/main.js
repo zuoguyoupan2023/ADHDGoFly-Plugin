@@ -2893,6 +2893,8 @@ class ADHDHighlighter {
       .agf-ai-title{gap:8px;color:#172033;font-size:15px}
       .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
       .agf-top-context-tools{display:inline-flex;align-items:center;margin-left:0}
+      .agf-chat-header-actions{display:inline-flex;align-items:center;gap:4px;margin-left:0}
+      .agf-chat-header-actions button{height:24px;min-width:28px;padding:0 8px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;cursor:pointer}
       .agf-ai-controls{gap:4px}
       .agf-ai-controls button,.agf-ai-tabs button{height:26px;min-width:26px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
@@ -3347,6 +3349,7 @@ class ADHDHighlighter {
     const btnOutline = document.getElementById('agfBtnOutline');
     const btnKeywords = document.getElementById('agfBtnKeywords');
     const moduleHistoryBtn = document.getElementById('agfModuleHistoryBtn');
+    const topContextTools = overlay.querySelector('.agf-top-context-tools');
     const taskBar = overlay.querySelector('.agf-task-bar');
     const fixedBar = overlay.querySelector('.agf-fixed-bar');
     const taskActions = overlay.querySelector('.agf-task-actions');
@@ -3748,6 +3751,7 @@ class ADHDHighlighter {
     const setView = (which) => {
       currentView = which;
       jixiaState.setModule(which);
+      if (topContextTools) topContextTools.style.display = which === 'chat' ? 'none' : 'inline-flex';
       if (reasoningToggle) reasoningToggle.style.display = which === 'chat' ? '' : 'none';
       updateTaskBar(which);
       if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
@@ -3796,6 +3800,12 @@ class ADHDHighlighter {
     let currentChartSourceContext = null;
     let currentChartSkill = null;
     const chartButton = document.getElementById('agfChatChartBtn');
+    if (reasoningToggle && chartButton && chatImagePlusBtn && addFullBtn) {
+      const chatHeaderActions = document.createElement('div');
+      chatHeaderActions.className = 'agf-chat-header-actions';
+      reasoningToggle.parentElement?.insertBefore(chatHeaderActions, reasoningToggle.nextSibling);
+      chatHeaderActions.append(chatImagePlusBtn, addFullBtn, chartButton);
+    }
     if (chartButton) { chartButton.dataset.i18n = 'jixia.actions.chart'; chartButton.dataset.i18nTitle = 'jixia.actions.chartTitle'; chartButton.title = '用内置图表 Skill 解释当前上下文'; }
     const p1Actions = [
       ['agfBtnStructuredReading', '结构化阅读'],
