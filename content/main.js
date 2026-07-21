@@ -2700,6 +2700,10 @@ class ADHDHighlighter {
     const style = document.createElement('style');
     style.id = 'agf-ai-setting-style';
     style.textContent = `
+      #agfAiSettingOverlay,#agfAiBubble{box-sizing:border-box!important;font-family:Arial,sans-serif!important;font-size:13px!important;line-height:normal!important;letter-spacing:0!important;text-transform:none!important}
+      #agfAiSettingOverlay *,#agfAiSettingOverlay *::before,#agfAiSettingOverlay *::after,#agfAiBubble *,#agfAiBubble *::before,#agfAiBubble *::after{box-sizing:border-box!important;letter-spacing:0!important;text-transform:none!important}
+      #agfAiSettingOverlay button,#agfAiSettingOverlay select,#agfAiSettingOverlay input,#agfAiSettingOverlay textarea{font-family:Arial,sans-serif!important;margin:0!important;letter-spacing:0!important;text-transform:none!important}
+      #agfAiSettingOverlay button{-webkit-appearance:none!important;appearance:none!important;background-clip:padding-box!important}
       .agf-ai-overlay{position:fixed;display:none;flex-direction:column;background:#f8f9fc;border:1px solid #dfe5f2;z-index:2147483647;width:min(760px,70vw);height:min(720px,78vh);box-shadow:0 18px 48px rgba(23,32,51,.22);min-width:420px;min-height:520px;border-radius:14px;overflow:hidden;color:#172033}
       .agf-ai-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #e5e9f0;background:#fff}
       .agf-ai-title{font-size:15px;font-weight:700;color:#172033;display:flex;align-items:center;gap:8px}
@@ -3015,6 +3019,15 @@ class ADHDHighlighter {
       .agf-composer-body .agf-send-col{grid-column:2!important;grid-row:2!important;width:52px!important;min-width:52px!important;box-sizing:border-box!important;height:auto!important;gap:4px!important}
       .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
       .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important;padding:3px 1px!important;font-size:10px!important;line-height:12px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
+      #agfAiSettingOverlay .agf-function-bar{display:flex!important;align-items:center!important;gap:8px!important;padding:5px 12px!important}
+      #agfAiSettingOverlay .agf-ai-tabs{display:inline-flex!important;align-items:center!important;gap:2px!important;margin-left:2px!important}
+      #agfAiSettingOverlay .agf-ai-tabs button{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;min-height:26px!important;min-width:26px!important;width:auto!important;margin:0!important;padding:0 8px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#687386!important;font-size:12px!important;font-weight:400!important;line-height:24px!important;white-space:nowrap!important}
+      #agfAiSettingOverlay .agf-ai-tabs button.active{background:#edf2ff!important;color:#2447c7!important}
+      #agfAiSettingOverlay .agf-media-context-tools{display:inline-flex!important;align-items:center!important;gap:4px!important;margin-left:auto!important}
+      #agfAiSettingOverlay .agf-context-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:24px!important;min-height:24px!important;margin:0!important;padding:0 8px!important;border:1px solid #dfe5f2!important;border-radius:7px!important;background:#fff!important;color:#4b5870!important;font-size:12px!important;font-weight:400!important;line-height:22px!important;white-space:nowrap!important}
+      #agfAiSettingOverlay .agf-context-btn.active{border-color:#315efb!important;background:#edf2ff!important;color:#2447c7!important}
+      #agfAiSettingOverlay .agf-ai-controls{display:inline-flex!important;align-items:center!important;gap:4px!important}
+      #agfAiSettingOverlay .agf-ai-controls button{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;min-height:26px!important;min-width:26px!important;margin:0!important;padding:0 6px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#687386!important;font-size:12px!important;line-height:24px!important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
