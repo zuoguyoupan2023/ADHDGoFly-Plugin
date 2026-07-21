@@ -2964,6 +2964,7 @@ class ADHDHighlighter {
         <div class="agf-ai-tabs">
           <button id="agfAiTabChat" data-i18n="jixia.tabs.chat">Chat</button>
           <button id="agfAiTabReading">阅读</button>
+          <button id="agfAiTabWriting">写作</button>
           <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
           <button id="agfAiTabExplain" data-i18n="jixia.tabs.explain">解释</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
@@ -3230,6 +3231,7 @@ class ADHDHighlighter {
     const titleLabel = document.getElementById('agfTitleLabel');
     const tabChat = document.getElementById('agfAiTabChat');
     const tabReading = document.getElementById('agfAiTabReading');
+    const tabWriting = document.getElementById('agfAiTabWriting');
     const tabPencil = document.getElementById('agfAiTabPencil');
     const tabNote = document.getElementById('agfAiTabNote');
     const tabDoc = document.getElementById('agfAiTabDoc');
@@ -3728,12 +3730,14 @@ class ADHDHighlighter {
       }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (tabReading) tabReading.classList.toggle('active', which === 'reading');
+      if (tabWriting) tabWriting.classList.toggle('active', which === 'writing');
       if (viewQuiz) viewQuiz.style.display = which === 'quiz' ? 'block' : 'none';
       if (viewExplain) viewExplain.style.display = which === 'explain' ? 'block' : 'none';
       if (viewVocab) viewVocab.style.display = which === 'vocab' ? 'block' : 'none';
       if (viewImage) viewImage.style.display = which === 'image' ? 'block' : 'none';
       if (viewChart) viewChart.style.display = which === 'chart' ? 'block' : 'none';
       if (p1View) p1View.style.display = ['reading','p1'].includes(which) ? 'block' : 'none';
+      if (writingView) writingView.style.display = which === 'writing' ? 'block' : 'none';
       if (viewSettings) viewSettings.style.display = which === 'settings' ? 'block' : 'none';
       if (recordsPanel) recordsPanel.style.display = which === 'records' ? 'block' : 'none';
       if (colorsPanel) colorsPanel.style.display = 'none';
@@ -3774,6 +3778,7 @@ class ADHDHighlighter {
     ];
     p1Actions.forEach(([id, label]) => { if (!document.getElementById(id) && taskActions) { const button = document.createElement('button'); button.id = id; button.className = 'agf-task-btn'; button.textContent = label; button.disabled = true; taskActions.appendChild(button); } });
     const p1View = document.createElement('div'); p1View.id = 'agfAiViewP1'; p1View.className = 'agf-ai-view-module'; p1View.style.display = 'none'; p1View.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfP1Title">阅读</span><span id="agfP1Meta" class="agf-module-meta"></span></div><div class="agf-reading-scenes" id="agfReadingScenes">${[['summary','总结'],['beginner','保姆级解读'],['structured','结构化摘要'],['outline','提取大纲'],['explain','简明解释'],['keywords','提取关键词'],['fact','事实辨识'],['structuredReading','结构化阅读']].map(([id,label]) => `<button class="agf-task-btn" data-reading-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions" id="agfP1Actions"></div><div id="agfP1Result" class="agf-module-result"><p>选择一个阅读场景开始。</p></div><div id="agfReadingDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfReadingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfReadingDiscussionBody" style="display:none"><textarea id="agfReadingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前阅读结果提问"></textarea><button id="agfReadingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfReadingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(p1View);
+    const writingView = document.createElement('div'); writingView.id = 'agfAiViewWriting'; writingView.className = 'agf-ai-view-module'; writingView.style.display = 'none'; writingView.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfWritingTitle">写作</span><span id="agfWritingMeta" class="agf-module-meta"></span></div><div class="agf-writing-scenes">${[['translate','翻译'],['chart','做图表'],['news','改写成新闻'],['style-summary','文风总结'],['style-copy','文风仿写']].map(([id,label]) => `<button class="agf-task-btn" data-writing-scene="${id}">${label}</button>`).join('')}</div><div id="agfWritingResult" class="agf-module-result"><p>选择一个写作场景开始。</p></div><div id="agfWritingDiscussion" style="display:none"><button id="agfWritingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfWritingDiscussionBody" style="display:none"><textarea id="agfWritingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前写作结果提问"></textarea><button id="agfWritingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfWritingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(writingView);
     const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
     const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
@@ -7167,6 +7172,20 @@ class ADHDHighlighter {
     if (readingDiscussionToggle) readingDiscussionToggle.onclick = () => { readingDiscussionBody.style.display = readingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     if (readingDiscussionSend) readingDiscussionSend.onclick = async () => { const question = String(readingQuestion.value || '').trim(); if (!question || !readingSceneContext) return; readingDiscussionSend.disabled = true; try { const prompt = `你正在阅读工作区的深入讨论。请只基于原文、当前阅读结果和用户问题回答；原文没有证据时明确说明，不要编造。\n\n原文：\n${String(readingSceneContext.text || '').slice(0, 50000)}\n\n当前阅读结果：\n${readingSceneResult}\n\n用户问题：\n${question}`; const answer = await jixiaTask.requestJsonText({ prompt, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; readingDiscussionList.appendChild(turn); readingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } finally { readingDiscussionSend.disabled = false; } };
     if (tabReading) tabReading.addEventListener('click', () => setView('reading'));
+    const writingResult = writingView.querySelector('#agfWritingResult');
+    const writingDiscussion = writingView.querySelector('#agfWritingDiscussion');
+    const writingDiscussionBody = writingView.querySelector('#agfWritingDiscussionBody');
+    const writingQuestion = writingView.querySelector('#agfWritingQuestion');
+    const writingDiscussionList = writingView.querySelector('#agfWritingDiscussionList');
+    let writingContext = null;
+    let writingOutput = '';
+    const writingScenePrompts = { translate: '请翻译以下文章，保留段落结构和关键术语。', news: '请将以下文章改写成客观、清晰的新闻稿，不能虚构事实。', 'style-summary': '请总结以下文章的语言风格、句式、语气、结构和常用表达。', 'style-copy': '请在保留事实的前提下，模仿以下文章的语言风格重写一版。' };
+    const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; };
+    const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = '<p>正在生成，请稍候…</p>'; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || '无法调用图表能力')); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    writingView.querySelectorAll('[data-writing-scene]').forEach(button => { button.onclick = () => runWritingScene(button.dataset.writingScene); });
+    writingView.querySelector('#agfWritingDiscussToggle').onclick = () => { writingDiscussionBody.style.display = writingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
+    writingView.querySelector('#agfWritingDiscussSend').onclick = async () => { const question = String(writingQuestion.value || '').trim(); if (!question || !writingContext) return; try { const answer = await jixiaTask.requestJsonText({ prompt: `你正在进行写作工作区的深入讨论。请基于原文、当前写作结果和用户问题回答；区分原文事实与改写建议。\n\n原文：\n${String(writingContext.text || '').slice(0, 50000)}\n\n当前写作结果：\n${writingOutput}\n\n用户问题：\n${question}`, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; writingDiscussionList.appendChild(turn); writingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } };
+    if (tabWriting) tabWriting.addEventListener('click', () => setView('writing'));
     if (refreshBtn) refreshBtn.addEventListener('click', () => { try { window.location.reload(); } catch (_) {} });
     const translate = key => (window.i18n && window.i18n.t) ? window.i18n.t(key) : '';
     JixiaUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
