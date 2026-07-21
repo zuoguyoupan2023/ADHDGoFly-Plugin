@@ -2862,7 +2862,7 @@ class ADHDHighlighter {
       .agf-records-header{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:auto minmax(120px,180px) minmax(160px,1fr);align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:#fff;border-bottom:1px solid #e0e0e0}
       .agf-records-title{display:inline-flex;align-items:center;gap:0;padding:2px;border:1px solid #dfe5f2;border-radius:9px;background:#f7f8fb;font-size:14px;color:#333;font-weight:600}
       .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-records-open{height:24px;min-width:48px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
+      .agf-records-open{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:48px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px;line-height:1;padding:0 8px}
       .agf-records-list{display:flex;flex-direction:column;gap:8px}
       .agf-record-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333;min-width:0}
       .agf-record-main{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;overflow:hidden}
@@ -2870,14 +2870,14 @@ class ADHDHighlighter {
       .agf-record-subject{max-width:100%;min-width:0;font-size:12px;color:#26345b;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .agf-record-preview{max-width:100%;min-width:0;font-size:11px;color:#687386;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .agf-record-actions{display:inline-flex;gap:6px;flex:0 0 auto}
-      .agf-record-delete{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
+      .agf-record-delete{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px;line-height:1;padding:0 7px}
       .agf-record-link{display:block;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a73e8;text-decoration:none;font-size:11px;line-height:1.35}
       .agf-record-link:hover{text-decoration:underline}
-      .agf-record-scope-btn{height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:0}
+      .agf-record-scope-btn{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:0;font-size:12px;line-height:1;padding:0 9px}
       .agf-records-title .agf-record-scope-btn{border:0;border-radius:7px;background:transparent;color:#687386}
       .agf-record-scope-btn.active{background:#333;color:#fff;border-color:#333}
       .agf-records-title .agf-record-scope-btn.active{background:#315efb;color:#fff;box-shadow:0 2px 6px rgba(49,94,251,.18)}
-      .agf-records-search{height:24px;border:1px solid #e0e0e0;border-radius:6px;padding:0 8px;width:100%;min-width:0}
+      .agf-records-search{height:24px;border:1px solid #e0e0e0;border-radius:6px;padding:0 8px;width:100%;min-width:0;font-size:12px;line-height:24px}
       .agf-group{border:1px dashed #e0e0e0;border-radius:6px}
       .agf-group-title{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;color:#333}
       .agf-group-body{padding:8px}
@@ -3026,6 +3026,9 @@ class ADHDHighlighter {
       .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
       .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important;padding:3px 1px!important;font-size:10px!important;line-height:12px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
       #agfAiSettingOverlay .agf-records-header{display:grid!important;grid-template-columns:auto minmax(120px,180px) minmax(160px,1fr)!important;align-items:center!important;gap:8px!important}
+      #agfAiSettingOverlay .agf-record-scope-btn,#agfAiSettingOverlay .agf-records-open,#agfAiSettingOverlay .agf-record-delete{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;margin:0!important}
+      #agfAiSettingOverlay .agf-record-scope-btn{height:24px!important;min-height:24px!important;padding:0 9px!important;font-size:12px!important}
+      #agfAiSettingOverlay .agf-records-search{height:24px!important;line-height:24px!important;font-size:12px!important;padding:0 8px!important}
       #agfAiSettingOverlay .agf-record-item{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;min-width:0!important}
       #agfAiSettingOverlay .agf-record-main{min-width:0!important;max-width:100%!important;overflow:hidden!important}
       #agfAiSettingOverlay .agf-record-subject,#agfAiSettingOverlay .agf-record-preview,#agfAiSettingOverlay .agf-record-link{max-width:100%!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
