@@ -2846,7 +2846,7 @@ class ADHDHighlighter {
       .agf-actions{display:inline-flex;align-items:center;gap:8px}
       .agf-send{height:32px;min-width:0;border:1px solid #e0e0e0;border-radius:8px;background:#fff;color:#333;padding:0 10px}
       .agf-send-col{display:flex;flex-direction:column;justify-content:space-between;align-self:stretch;height:100%}
-      #agfAddFullTextBtn{height:auto;min-height:28px;padding:3px 2px;font-size:10px;line-height:12px;white-space:normal;word-break:normal;overflow-wrap:anywhere;width:40px;text-align:center;margin-top:8px}
+      #agfAddFullTextBtn{height:auto;min-height:28px;padding:3px 1px;font-size:10px;line-height:12px;white-space:nowrap;word-break:normal;overflow-wrap:normal;width:40px;text-align:center;margin-top:8px}
       #agfAddFullTextBtn.active{background:#1a73e8;color:#fff;border-color:#1a73e8}
       .agf-settings{display:flex;flex-direction:column;gap:12px}
       .agf-settings{height:100%;min-height:0}
@@ -2904,7 +2904,7 @@ class ADHDHighlighter {
       .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
       .agf-top-context-tools{display:inline-flex;align-items:center;margin-left:0}
       .agf-chat-header-actions{display:inline-flex;align-items:center;gap:4px;margin-left:0}
-      .agf-chat-header-actions button{height:24px;min-width:28px;padding:0 8px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:12px;cursor:pointer}
+      .agf-chat-header-actions button{height:24px;min-width:28px;padding:0 6px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;font-size:11px;line-height:22px;white-space:nowrap;word-break:normal;overflow-wrap:normal;cursor:pointer}
       .agf-ai-controls{gap:4px}
       .agf-ai-controls button,.agf-ai-tabs button{height:26px;min-width:26px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
@@ -2974,7 +2974,7 @@ class ADHDHighlighter {
       .agf-composer-body .agf-input-editor{grid-column:1!important;grid-row:2!important;min-width:0!important;width:auto!important;box-sizing:border-box!important}
       .agf-composer-body .agf-send-col{grid-column:2!important;grid-row:2!important;width:52px!important;min-width:52px!important;box-sizing:border-box!important;height:auto!important;gap:4px!important}
       .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
-      .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important;padding:3px 2px!important;font-size:10px!important;line-height:12px!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important}
+      .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important;padding:3px 1px!important;font-size:10px!important;line-height:12px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
     `;
     document.documentElement.appendChild(style);
     const overlay = document.createElement('div');
