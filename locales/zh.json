@@ -133,7 +133,7 @@
     "collapse": { "goFull": "去看全文", "expand": "展开全文", "collapse": "收起" },
     "fulltext": { "pdfTitle": "pdf全文", "webTitle": "网页全文", "none": "无补充文本", "noStructured": "无结构化内容" },
     "mode": { "persistent": "常驻", "manual": "手动" },
-    "save": "保存",
+    "save": "保存", "deleteKey": "删除 Key", "deleteKeyConfirm": "确定删除当前供应商的 API Key？", "keyDeleted": "API Key 已删除",
     "unnamed": "未命名",
     "date": { "yearSuffix": "年", "monthSuffix": "月", "daySuffix": "日" },
     "prompts": {

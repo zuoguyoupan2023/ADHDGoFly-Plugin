@@ -133,7 +133,7 @@
     "collapse": { "goFull": "Go to full text", "expand": "Expand full text", "collapse": "Collapse" },
     "fulltext": { "pdfTitle": "PDF Full Text", "webTitle": "Web Page Full Text", "none": "No supplementary text", "noStructured": "No structured content" },
     "mode": { "persistent": "Pin", "manual": "Manual" },
-    "save": "Save",
+    "save": "Save", "deleteKey": "Delete key", "deleteKeyConfirm": "Delete the API key for the current provider?", "keyDeleted": "API key deleted",
     "unnamed": "Untitled",
     "date": { "yearSuffix": "", "monthSuffix": "", "daySuffix": "" },
     "prompts": {

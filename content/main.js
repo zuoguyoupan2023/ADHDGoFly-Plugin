@@ -3118,6 +3118,7 @@ class ADHDHighlighter {
                         <div style="display:flex;align-items:center;gap:8px;">
                           <input id="agfApiKeyInput" class="agf-input" type="password" placeholder="••••••••••••••••••••••••••••••••" />
                           <button id="agfSaveKeyBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.save">保存</button>
+                          <button id="agfDeleteKeyBtn" class="agf-input" style="height:28px;min-width:64px;" data-i18n="aiPanel.deleteKey">删除</button>
                           <button id="agfKeySavedBtn" class="agf-ok-btn">✓</button>
                         </div>
                       </div>
@@ -3358,6 +3359,7 @@ class ADHDHighlighter {
     const baseUrlInput = document.getElementById('agfBaseUrlInput');
     const apiKeyInput = document.getElementById('agfApiKeyInput');
     const saveKeyBtn = document.getElementById('agfSaveKeyBtn');
+    const deleteKeyBtn = document.getElementById('agfDeleteKeyBtn');
     const keySavedBtn = document.getElementById('agfKeySavedBtn');
     if (keySavedBtn) keySavedBtn.style.display = 'none';
     const tempInput = document.getElementById('agfTempInput');
@@ -5333,11 +5335,14 @@ class ADHDHighlighter {
       renderButtons(modelList, models, presetModel || models[0], (val, btn) => {
         Array.from(modelList.querySelectorAll('.agf-btn')).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        currentModel = val;
         save({ aiModel: val });
+        initComposerSelects();
       });
     };
 
     let currentProvider = null;
+    let currentModel = '';
     let aiKeysState = {};
     let aiBaseUrlsState = {};
     let fallbackProvider = '';
@@ -5352,13 +5357,16 @@ class ADHDHighlighter {
         btn.classList.add('active');
         try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         currentProvider = val;
-        fillModels(val);
+        currentModel = PROVIDERS_CONFIG[val]?.models?.[0] || '';
+        fillModels(val, currentModel);
         const base = (aiBaseUrlsState && aiBaseUrlsState[val]) || (PROVIDERS_CONFIG[val]?.baseUrl || '');
         if (baseUrlInput) baseUrlInput.value = base;
-        save({ aiProvider: val, aiModel: PROVIDERS_CONFIG[val]?.models?.[0] || '' });
+        save({ aiProvider: val, aiModel: currentModel });
+        initComposerSelects();
         if (!aiBaseUrlsState[val]) { aiBaseUrlsState[val] = base; try { chrome.storage.local.set({ aiBaseUrls: aiBaseUrlsState }); } catch(_){} }
         if (keySavedBtn) keySavedBtn.style.display = 'none';
         if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[val]) ? '••••••••••••••••••••••••••••••••' : '';
+        if (deleteKeyBtn) deleteKeyBtn.disabled = !(aiKeysState && aiKeysState[val]);
         if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[val] ? (window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试') : (window.i18n?.t?.('aiPanel.settings.unconfigured') || '未配置 API Key');
         if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[val])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[val])); }
       }, labelMap);
@@ -5391,6 +5399,7 @@ class ADHDHighlighter {
           renderProviderButtons(currentProvider);
           const availableModels = PROVIDERS_CONFIG[currentProvider]?.models || [];
           const selectedModel = availableModels.includes(res.aiModel) ? res.aiModel : (availableModels[0] || '');
+          currentModel = selectedModel;
           fillModels(currentProvider, selectedModel);
           if (selectedModel && selectedModel !== res.aiModel) save({ aiModel: selectedModel });
           const base = (aiBaseUrlsState && aiBaseUrlsState[currentProvider]) || (PROVIDERS_CONFIG[currentProvider]?.baseUrl || '');
@@ -5401,6 +5410,7 @@ class ADHDHighlighter {
           if (apiKeyInput) apiKeyInput.placeholder = (aiKeysState && aiKeysState[currentProvider]) ? '••••••••••••••••••••••••••••••••' : '';
           if (providerStatus) providerStatus.textContent = aiKeysState && aiKeysState[currentProvider] ? (window.i18n?.t?.('jixia.settingsUi.configuredPendingTest') || '已配置，待测试') : (window.i18n?.t?.('aiPanel.settings.unconfigured') || '未配置 API Key');
           if (providerDot) { providerDot.classList.toggle('ready', !!(aiKeysState && aiKeysState[currentProvider])); providerDot.classList.toggle('warn', !(aiKeysState && aiKeysState[currentProvider])); }
+          if (deleteKeyBtn) deleteKeyBtn.disabled = !(aiKeysState && aiKeysState[currentProvider]);
           const defaults = { qBg: '#f7f7f7', aBg: '#fffaf0', displayBg: '#ffffff', qText: '#333333', aText: '#333333' };
           const c = res.chatColors || defaults;
           overlay.style.setProperty('--agf-q-bg', c.qBg || defaults.qBg);
@@ -5486,6 +5496,7 @@ class ADHDHighlighter {
                 if (apiKeyInput) apiKeyInput.value = '';
                 renderProviderButtons(currentProvider);
                 initComposerSelects();
+                if (deleteKeyBtn) deleteKeyBtn.disabled = false;
               });
             });
           } catch (_) {}
@@ -5495,6 +5506,32 @@ class ADHDHighlighter {
         if (e.key === 'Enter') {
           saveKeyBtn.click();
         }
+      });
+    }
+    if (deleteKeyBtn) {
+      deleteKeyBtn.addEventListener('click', () => {
+        const provider = currentProvider;
+        if (!provider || !(aiKeysState && aiKeysState[provider])) return;
+        const message = window.i18n?.t?.('aiPanel.deleteKeyConfirm') || '确定删除当前供应商的 API Key？';
+        if (!window.confirm(message)) return;
+        const keys = { ...(aiKeysState || {}) };
+        delete keys[provider];
+        try {
+          chrome.storage.local.set({ aiKeys: keys }, () => {
+            aiKeysState = keys;
+            const availableProviders = Object.keys(PROVIDERS_CONFIG).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax' && aiKeysState[p]);
+            if (!availableProviders.includes(currentProvider)) {
+              currentProvider = availableProviders[0] || null;
+              currentModel = currentProvider ? (PROVIDERS_CONFIG[currentProvider]?.models?.[0] || '') : '';
+              save({ aiProvider: currentProvider || '', aiModel: currentModel });
+            }
+            if (apiKeyInput) { apiKeyInput.value = ''; apiKeyInput.placeholder = ''; }
+            if (deleteKeyBtn) deleteKeyBtn.disabled = true;
+            renderProviderButtons(currentProvider);
+            initComposerSelects();
+            showToast(window.i18n?.t?.('aiPanel.keyDeleted') || 'API Key 已删除');
+          });
+        } catch (_) {}
       });
     }
     if (saveGlmVisionKeyBtn && glmVisionKeyInput) {
@@ -5769,7 +5806,8 @@ class ADHDHighlighter {
           opt.textContent = m;
           sessionModelSelect.appendChild(opt);
         });
-        if (ms[0]) sessionModelSelect.value = ms[0];
+        const preferredModel = currentProvider === prov && ms.includes(currentModel) ? currentModel : ms[0];
+        if (preferredModel) sessionModelSelect.value = preferredModel;
       };
       if (selectedProv) fillModelsForProv(selectedProv);
       updateReasoningToggle();
