@@ -1022,16 +1022,9 @@ class ADHDHighlighter {
           } catch (e) { sendResponse && sendResponse({ ok: false }); }
           break;
         case 'showAiSettingPanel':
-          try {
-            this.ensureAiSettingPanel();
-            this.showAiSettingPanel();
-            sendResponse({ success: true });
-          } catch (error) {
-            console.error('Jixia 面板打开失败:', error);
-            this.__aiSettingPanelInitialized = false;
-            try { this.showAiSettingPanel(); } catch (_) {}
-            sendResponse({ success: false, error: String(error && error.message || error) });
-          }
+          this.ensureAiSettingPanel();
+          this.showAiSettingPanel();
+          sendResponse({ success: true });
           break;
         case 'hideAiSettingPanel':
           this.hideAiSettingPanel();
@@ -3460,7 +3453,7 @@ class ADHDHighlighter {
     document.addEventListener('languageChanged', () => { const label = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.textContent = label; chatImagePlusBtn.title = label; }, { passive: true });
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatImagePlusBtn, addFullBtn);
     const chatNewBtn = document.createElement('button');
-    chatNewBtn.type = 'button'; chatNewBtn.className = 'agf-send agf-workspace-clear'; chatNewBtn.dataset.i18n = 'jixia.ui.newConversation'; chatNewBtn.dataset.i18nTitle = 'jixia.ui.newConversationTitle'; chatNewBtn.textContent = window.i18n?.t?.('jixia.ui.newConversation') || '新对话'; chatNewBtn.title = window.i18n?.t?.('jixia.ui.newConversationTitle') || '新开对话，保留历史记录';
+    chatNewBtn.type = 'button'; chatNewBtn.className = 'agf-send agf-workspace-clear'; chatNewBtn.textContent = '新对话'; chatNewBtn.title = '新开对话，保留历史记录';
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatNewBtn, addFullBtn);
     const chatImageInput = document.createElement('input');
     chatImageInput.type = 'file'; chatImageInput.accept = 'image/*'; chatImageInput.style.display = 'none';
@@ -3534,18 +3527,16 @@ class ADHDHighlighter {
     const saveWorkspace = async (id, manual = true) => { const entry = workspaceSaveRegistry.get(id); if (!entry || entry.saving) return false; const snapshot = JSON.stringify(entry.getSnapshot()); if (!snapshot || snapshot === 'null') return false; entry.saving = true; try { await entry.save(JSON.parse(snapshot)); entry.lastSaved = snapshot; if (manual) showSaveToast('保存成功'); return true; } finally { entry.saving = false; } };
     const saveChangedWorkspaces = async () => { for (const [id, entry] of workspaceSaveRegistry) { const current = JSON.stringify(entry.getSnapshot()); if (current && current !== 'null' && current !== entry.lastSaved) await saveWorkspace(id, false); } };
     const removeLocalStorageKeys = keys => new Promise(resolve => chrome.storage.local.remove(keys, resolve));
-    const tr = (key, fallback) => window.i18n?.t?.(key) || fallback;
     const forgetWorkspaceSnapshot = async (id, keys) => {
       const entry = workspaceSaveRegistry.get(id);
       if (entry) entry.lastSaved = JSON.stringify(entry.getSnapshot());
       await removeLocalStorageKeys(Array.isArray(keys) ? keys : [keys]);
     };
-    const createWorkspaceClearButton = (labelKey = 'jixia.ui.clearWorkspace', fallback = '清除工作区') => {
+    const createWorkspaceClearButton = (label = '清除工作区') => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'agf-task-btn agf-workspace-clear';
-      button.dataset.i18n = labelKey;
-      button.textContent = tr(labelKey, fallback);
+      button.textContent = label;
       return button;
     };
     setInterval(() => { saveChangedWorkspaces().catch(() => {}); }, 60000);
@@ -3870,6 +3861,9 @@ class ADHDHighlighter {
       updateReasoningToggle();
       updateTaskBar(which);
       if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
+      if (which === 'chat' || which === 'quiz') {
+        try { chrome.storage.local.set({ agfJixiaLastModule: which }); } catch (_) {}
+      }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (tabReading) tabReading.classList.toggle('active', which === 'reading');
       if (tabWriting) tabWriting.classList.toggle('active', which === 'writing');
@@ -4450,9 +4444,9 @@ class ADHDHighlighter {
       chartHistoryState.selectedEdges.clear();
       chartHistoryState.edgeMode = false;
       if (chartCanvas) chartCanvas.innerHTML = '';
-      if (chartTitle) chartTitle.textContent = tr('jixia.chart.title', '图表工作区');
-      if (chartMeta) chartMeta.textContent = tr('jixia.chart.waiting', '未生成图表');
-      if (chartNotice) chartNotice.textContent = tr('jixia.ui.chartCleared', '图表工作区已清除，已保存图表仍保留');
+      if (chartTitle) chartTitle.textContent = '图表工作区';
+      if (chartMeta) chartMeta.textContent = '未生成图表';
+      if (chartNotice) chartNotice.textContent = '图表工作区已清除，已保存图表仍保留';
       if (chartSourceText) chartSourceText.value = '';
       if (chartAiEditInput) chartAiEditInput.value = '';
       Object.values(chartButtons).forEach(button => { if (button && button !== chartButtons.generate && button !== chartButtons.importJson && button !== chartButtons.clear) button.disabled = true; });
@@ -4978,7 +4972,7 @@ class ADHDHighlighter {
       currentMediaBatch = [];
       currentMediaContext = null;
       if (imageWorkspaceResult) imageWorkspaceResult.innerHTML = '';
-      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = tr('jixia.ui.imageCleared', '工作区已清除，识别历史仍保留');
+      if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '工作区已清除，识别历史仍保留';
       refreshImageWorkspaceActions();
       await forgetWorkspaceSnapshot('image', 'agfJixiaImageWorkspace').catch(() => {});
     };
@@ -5104,17 +5098,17 @@ class ADHDHighlighter {
       if (quizBackHistory) quizBackHistory.style.display = 'none';
       if (quizCard) quizCard.style.display = 'none';
       if (quizStartActions) quizStartActions.style.display = 'flex';
-      if (quizResult) { quizResult.style.display = 'block'; quizResult.innerHTML = `<p>${tr('jixia.ui.selectQuizDifficulty', '选择难度开始新的测试。')}</p>`; }
+      if (quizResult) { quizResult.style.display = 'block'; quizResult.innerHTML = '<p>选择难度开始新的测试。</p>'; }
       if (quizOptions) quizOptions.innerHTML = '';
       if (quizFeedback) { quizFeedback.style.display = 'none'; quizFeedback.innerHTML = ''; }
-      if (quizProgressText) quizProgressText.textContent = tr('jixia.settingsUi.ready', '准备中');
+      if (quizProgressText) quizProgressText.textContent = '准备中';
       if (quizProgressBar) quizProgressBar.style.width = '0%';
       if (quizDiscussion) quizDiscussion.style.display = 'none';
       if (quizDiscussionBody) quizDiscussionBody.style.display = 'none';
       if (quizDiscussionList) quizDiscussionList.innerHTML = '';
       if (quizQuestionInput) quizQuestionInput.value = '';
       await forgetWorkspaceSnapshot('quiz', 'agfJixiaQuizWorkspace').catch(() => {});
-      showToast(tr('jixia.ui.quizCleared', '测试工作区已清除，测试历史仍保留'));
+      showToast('测试工作区已清除，测试历史仍保留');
     };
     if (quizClear) quizClear.onclick = () => clearQuizWorkspace().catch(error => showToast(error.message || '清除失败'));
     const showQuizHistory = async () => {
@@ -5255,7 +5249,15 @@ class ADHDHighlighter {
     if (pendingOpen) {
       this.__openJixiaModule(pendingOpen);
     } else {
-      showChat();
+      try {
+        chrome.storage.local.get(['agfJixiaLastModule'], res => {
+          const last = res && res.agfJixiaLastModule;
+          if (last === 'quiz') showQuiz();
+          else showChat();
+        });
+      } catch (_) {
+        showChat();
+      }
     }
     let recordsScope = 'all';
     let recordsSearch = '';
@@ -5973,12 +5975,12 @@ class ADHDHighlighter {
       } catch (_) {}
       return (document.title || '').trim();
     };
-    function getCanonicalUrl() {
+    const getCanonicalUrl = () => {
       const pageUrl = window.location.href;
       let canonicalUrl = pageUrl;
       try { const link = document.querySelector('link[rel="canonical"]'); if (link && link.href) canonicalUrl = link.href; } catch (_) {}
       return { pageUrl, canonicalUrl };
-    }
+    };
     const isPdfPage = () => {
       try {
         const url = window.location.href;
@@ -6154,11 +6156,11 @@ class ADHDHighlighter {
       if (chatList) chatList.innerHTML = '';
       if (inputUser) inputUser.innerText = '';
       if (composerHidden) composerHidden.value = '';
-      if (statusText) statusText.textContent = tr('jixia.ui.newConversationDone', '已新开对话，历史记录仍保留');
+      if (statusText) statusText.textContent = '已新开对话，历史记录仍保留';
       try { rebuildConvIndex(); } catch (_) {}
       await forgetWorkspaceSnapshot('chat', 'agfJixiaChatWorkspace').catch(() => {});
       showChat();
-      showToast(tr('jixia.ui.newConversationDone', '已新开对话，历史记录仍保留'));
+      showToast('已新开对话，历史记录仍保留');
     };
     const loadUnifiedHistory = async () => {
       const getLocal = key => new Promise(resolve => chrome.storage.local.get([key], r => resolve(Array.isArray(r[key]) ? r[key] : [])));
@@ -7516,23 +7518,25 @@ class ADHDHighlighter {
     registerWorkspaceSave('vocab', () => vocabCards.length ? ({ source: vocabSceneMode, pageTitle: currentPageTitle, pageUrl: currentCanonicalUrl, cards: vocabCards, index: vocabIndex }) : null, snapshot => new Promise(resolve => chrome.storage.local.set({ [vocabWorkspaceKey]: { ...snapshot, savedAt: Date.now() } }, resolve)));
     const saveWorkspaceSnapshot = (key, snapshot) => new Promise(resolve => chrome.storage.local.set({ [key]: { ...snapshot, savedAt: Date.now() } }, resolve));
     registerWorkspaceSave('chat', () => currentConversationId && chatMessages.length ? ({ conversationId: currentConversationId, pageTitle: currentPageTitle, pageUrl: currentPageUrl, canonicalUrl: currentCanonicalUrl, messages: chatMessages }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaChatWorkspace', snapshot));
+    registerWorkspaceSave('reading', () => (readingSceneContext || readingSceneResult) ? ({ context: readingSceneContext, result: readingSceneResult }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaReadingWorkspace', snapshot));
+    registerWorkspaceSave('writing', () => (writingContext || writingOutput) ? ({ context: writingContext, result: writingOutput }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaWritingWorkspace', snapshot));
     registerWorkspaceSave('quiz', () => quizItems.length ? ({ context: quizContextRef, questions: quizItems, index: quizIndex, score: quizScore, difficulty: quizDifficulty, recordId: quizRecordId }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaQuizWorkspace', snapshot));
     registerWorkspaceSave('image', () => (currentMediaBatch.length || currentMediaContext) ? ({ batch: currentMediaBatch, current: currentMediaContext }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaImageWorkspace', snapshot));
     registerWorkspaceSave('chart', () => currentChartContext ? ({ context: currentChartContext }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaChartWorkspace', snapshot));
     const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
     const renderP1Result = (kind, result, ctx) => {
-      const labels = { structured: tr('jixia.ui.structuredReading', '结构化阅读'), writing: tr('jixia.ui.writingAssist', '写作辅助'), fact: tr('jixia.ui.factCheck', '事实辨识') }; p1Title.textContent = labels[kind]; p1Meta.textContent = `${String(ctx?.pageTitle || tr('jixia.ui.currentArticle', '当前文章')).slice(0, 40)} · ${new Date().toLocaleTimeString()}`;
-      if (kind === 'structured') { p1Result.innerHTML = `<h3>${tr('jixia.ui.thesis', '主旨')}</h3><p>${p1Esc(result.thesis)}</p><h3>${tr('jixia.ui.argumentsEvidence', '论点与证据')}</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>${tr('jixia.ui.evidence', '依据')}：${p1Esc(p1Text(item.evidence))}</p><small>${tr('jixia.ui.confidence', '置信度')}：${p1Esc(item.confidence ?? tr('jixia.ui.notProvided', '未提供'))}</small></article>`).join('') || `<p>${tr('jixia.ui.noArguments', '暂无论点。')}</p>`}<h3>${tr('jixia.ui.causalRelations', '因果关系')}</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} → ${p1Esc(item.effect)}<br>${tr('jixia.ui.evidence', '依据')}：${p1Esc(item.evidence)}</p>`).join('') || `<p>${tr('jixia.ui.noCausalRelations', '暂无明确因果关系。')}</p>`}<h3>${tr('jixia.ui.controversies', '争议点')}</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>${tr('jixia.ui.positions', '立场')}：${p1Esc(p1Text(item.positions))}<br>${tr('jixia.ui.uncertainty', '不确定性')}：${p1Esc(item.uncertainty)}</p>`).join('') || `<p>${tr('jixia.ui.noControversies', '未识别到争议点。')}</p>`}`; }
+      const labels = { structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' }; p1Title.textContent = labels[kind]; p1Meta.textContent = `${String(ctx?.pageTitle || '当前文章').slice(0, 40)} · ${new Date().toLocaleTimeString()}`;
+      if (kind === 'structured') { p1Result.innerHTML = `<h3>主旨</h3><p>${p1Esc(result.thesis)}</p><h3>论点与证据</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>证据：${p1Esc(p1Text(item.evidence))}</p><small>置信度：${p1Esc(item.confidence ?? '未提供')}</small></article>`).join('') || '<p>暂无论点。</p>'}<h3>因果关系</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} → ${p1Esc(item.effect)}<br>依据：${p1Esc(item.evidence)}</p>`).join('') || '<p>暂无明确因果关系。</p>'}<h3>争议点</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>立场：${p1Esc(p1Text(item.positions))}<br>不确定性：${p1Esc(item.uncertainty)}</p>`).join('') || '<p>未识别到争议点。</p>'}`; }
       else if (kind === 'writing') { p1Result.innerHTML = `<h3>${p1Esc(result.title || '写作结果')}</h3>${(result.sections || []).map(section => `<article><h4>${p1Esc(section.heading)}</h4><p>${p1Esc(section.content)}</p><ul>${(section.bullets || []).map(bullet => `<li>${p1Esc(bullet)}</li>`).join('')}</ul></article>`).join('')}<h3>草稿</h3><pre style="white-space:pre-wrap">${p1Esc(result.draft)}</pre>${(result.citations || []).length ? `<h3>引用卡片</h3>${result.citations.map(citation => `<blockquote>${p1Esc(citation.quote || citation.text)}<br><small>${p1Esc(citation.use || citation.locator)}</small></blockquote>`).join('')}` : ''}`; }
-      else { const names = { fact: tr('jixia.ui.fact', '事实'), inference: tr('jixia.ui.inference', '推论'), opinion: tr('jixia.ui.opinion', '观点'), unverified: tr('jixia.ui.unverified', '待验证') }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>：${p1Esc(item.text)}<p>${tr('jixia.ui.evidence', '依据')}：${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · ${tr('jixia.ui.confidence', '置信度')} ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || `<p>${tr('jixia.ui.noClassifiableClaims', '没有识别到可分类陈述。')}</p>`; }
+      else { const names = { fact: '事实', inference: '推论', opinion: '观点', unverified: '待验证' }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>：${p1Esc(item.text)}<p>依据：${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · 置信度 ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || '<p>没有识别到可分类陈述。</p>'; }
       highlightWorkspaceRoot(p1Result);
     };
-    const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, languageHint: getJixiaLangHint, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
-    const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, languageHint: getJixiaLangHint, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
-    const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, languageHint: getJixiaLangHint, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
+    const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
+    const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
+    const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
     const prepareP1 = kind => { p1ActionsEl.innerHTML = ''; p1Title.textContent = ({ structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' })[kind] || 'P1 阅读工具'; };
-    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = `<p>${tr('jixia.ui.analyzing', window.i18n?.t?.('aiPanel.processingText') || '正在分析，请稍候…')}</p>`; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = `<p>${window.i18n?.t?.('aiPanel.processingText') || '正在分析，请稍候…'}</p>`; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
     const chatModule = JixiaModules.createChatModule({
       context: jixiaContext,
@@ -7550,7 +7554,6 @@ class ADHDHighlighter {
     });
     let readingSceneContext = null;
     let readingSceneResult = '';
-    registerWorkspaceSave('reading', () => (readingSceneContext || readingSceneResult) ? ({ context: readingSceneContext, result: readingSceneResult }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaReadingWorkspace', snapshot));
     const readingScenePrompts = {
       summary: '请忠实总结文章，并列出核心要点。',
       beginner: '请用保姆级、循序渐进的方式解释文章，面向不了解背景的读者。',
@@ -7581,7 +7584,7 @@ class ADHDHighlighter {
       if (!silent) showSaveToast('写作结果已保存'); return true;
     };
     const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingSave) readingSave.disabled = false; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); else highlightWorkspaceRoot(p1Result); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; saveReadingResult(true).catch(() => {}); };
-    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = `<p>${tr('jixia.ui.analyzing', '正在分析，请稍候…')}</p>`; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? tr('jixia.ui.selectTextFirst', '请先在网页中选中一段文本。') : tr('jixia.ui.noArticleContent', '当前没有可用的文章内容。')); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? '请先在网页中选中文本。' : '当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const runArticleChatTask = options => chatModule.runTask(options);
     const readingScenes = p1View.querySelectorAll('[data-reading-scene]');
     readingScenes.forEach(button => { button.onclick = () => runReadingScene(button.dataset.readingScene); });
@@ -7598,16 +7601,16 @@ class ADHDHighlighter {
     readingClear.onclick = async () => {
       readingSceneContext = null;
       readingSceneResult = '';
-      p1Title.textContent = tr('jixia.ui.readingWorkspace', '阅读工作区');
+      p1Title.textContent = '阅读工作区';
       p1Meta.textContent = '';
-      p1Result.innerHTML = `<p>${tr('jixia.ui.selectScene', '选择一个阅读场景开始。')}</p>`;
+      p1Result.innerHTML = '<p>选择一个阅读场景开始。</p>';
       if (readingSave) readingSave.disabled = true;
       if (readingDiscussion) readingDiscussion.style.display = 'none';
       if (readingDiscussionBody) readingDiscussionBody.style.display = 'none';
       if (readingDiscussionList) readingDiscussionList.innerHTML = '';
       if (readingQuestion) readingQuestion.value = '';
       await forgetWorkspaceSnapshot('reading', 'agfJixiaReadingWorkspace').catch(() => {});
-      showToast(tr('jixia.ui.readingCleared', '阅读工作区已清除，历史记录仍保留'));
+      showToast('阅读工作区已清除，历史记录仍保留');
     };
     if (readingDiscussionToggle) readingDiscussionToggle.onclick = () => { readingDiscussionBody.style.display = readingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     if (readingDiscussionSend) readingDiscussionSend.onclick = async () => { const question = String(readingQuestion.value || '').trim(); if (!question || !readingSceneContext) return; readingDiscussionSend.disabled = true; try { const prompt = `你正在阅读工作区的深入讨论。请只基于原文、当前阅读结果和用户问题回答；原文没有证据时明确说明，不要编造。\n\n原文：\n${String(readingSceneContext.text || '').slice(0, 50000)}\n\n当前阅读结果：\n${readingSceneResult}\n\n用户问题：\n${question}`; const answer = await jixiaTask.requestJsonText({ prompt, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; readingDiscussionList.appendChild(turn); readingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } finally { readingDiscussionSend.disabled = false; } };
@@ -7619,10 +7622,9 @@ class ADHDHighlighter {
     const writingDiscussionList = writingView.querySelector('#agfWritingDiscussionList');
     let writingContext = null;
     let writingOutput = '';
-    registerWorkspaceSave('writing', () => (writingContext || writingOutput) ? ({ context: writingContext, result: writingOutput }) : null, snapshot => saveWorkspaceSnapshot('agfJixiaWritingWorkspace', snapshot));
     const writingScenePrompts = { translate: '请翻译以下文章，保留段落结构和关键术语。', news: '请将以下文章改写成客观、清晰的新闻稿，不能虚构事实。', 'style-summary': '请总结以下文章的语言风格、句式、语气、结构和常用表达。', 'style-copy': '请在保留事实的前提下，模仿以下文章的语言风格重写一版。' };
     const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${scene} · ${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; writingView.querySelector('#agfWritingSave').disabled = !writingOutput; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; highlightWorkspaceRoot(writingResult); writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; saveWritingResult(true).catch(() => {}); };
-    const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = `<p>${tr('jixia.ui.generating', '正在生成，请稍候…')}</p>`; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error(tr('jixia.ui.noArticleContent', '当前没有可用的文章内容。')); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || tr('jixia.ui.chartUnavailable', '无法调用图表能力'))); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = '<p>正在生成，请稍候…</p>'; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || '无法调用图表能力')); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     writingView.querySelectorAll('[data-writing-scene]').forEach(button => { button.onclick = () => runWritingScene(button.dataset.writingScene); });
     writingView.querySelector('#agfWritingDiscussToggle').onclick = () => { writingDiscussionBody.style.display = writingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     const writingSave = writingView.querySelector('#agfWritingSave');
@@ -7634,14 +7636,14 @@ class ADHDHighlighter {
       writingOutput = '';
       const writingMeta = writingView.querySelector('#agfWritingMeta');
       if (writingMeta) writingMeta.textContent = '';
-      if (writingResult) writingResult.innerHTML = `<p>${tr('jixia.ui.selectWritingScene', '选择一个写作场景开始。')}</p>`;
+      if (writingResult) writingResult.innerHTML = '<p>选择一个写作场景开始。</p>';
       if (writingSave) writingSave.disabled = true;
       if (writingDiscussion) writingDiscussion.style.display = 'none';
       if (writingDiscussionBody) writingDiscussionBody.style.display = 'none';
       if (writingDiscussionList) writingDiscussionList.innerHTML = '';
       if (writingQuestion) writingQuestion.value = '';
       await forgetWorkspaceSnapshot('writing', 'agfJixiaWritingWorkspace').catch(() => {});
-      showToast(tr('jixia.ui.writingCleared', '写作工作区已清除，历史记录仍保留'));
+      showToast('写作工作区已清除，历史记录仍保留');
     };
     writingView.querySelector('#agfWritingDiscussSend').onclick = async () => { const question = String(writingQuestion.value || '').trim(); if (!question || !writingContext) return; try { const answer = await jixiaTask.requestJsonText({ prompt: `你正在进行写作工作区的深入讨论。请基于原文、当前写作结果和用户问题回答；区分原文事实与改写建议。\n\n原文：\n${String(writingContext.text || '').slice(0, 50000)}\n\n当前写作结果：\n${writingOutput}\n\n用户问题：\n${question}`, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; writingDiscussionList.appendChild(turn); writingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } };
     if (tabWriting) tabWriting.addEventListener('click', () => setView('writing'));
@@ -7669,7 +7671,7 @@ class ADHDHighlighter {
       try { await explainSelection(); } catch (error) { setView('explain'); explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }
     });
     JixiaUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
-    JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); restoreVocabWorkspace().then(restored => { if (!restored) renderVocabHistory(); }).catch(() => renderVocabHistory()); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: async () => { vocabModule.reset(); vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = `<p>${tr('jixia.ui.vocabIntro', '基于当前文章生成一组复习词汇。')}</p>`; vocabStats.textContent = tr('jixia.ui.mastery', '基础掌握度 0%'); await forgetWorkspaceSnapshot('vocab', vocabWorkspaceKey).catch(() => {}); showToast(tr('jixia.ui.vocabCleared', '词汇工作区已清除，复习历史仍保留')); } } });
+    JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); restoreVocabWorkspace().then(restored => { if (!restored) renderVocabHistory(); }).catch(() => renderVocabHistory()); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: async () => { vocabModule.reset(); vocabCards = []; vocabIndex = 0; vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; await forgetWorkspaceSnapshot('vocab', vocabWorkspaceKey).catch(() => {}); showToast('词汇工作区已清除，复习历史仍保留'); } } });
     if (vocabSave) vocabSave.onclick = () => saveWorkspace('vocab', true).catch(error => showToast(error.message || '保存失败'));
     const deterministicVocabScenes = new Set(['雅思词汇','托福词汇','四六级词汇','高考词汇','K9词汇']);
     overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); const scene = button.dataset.vocabScene; if (deterministicVocabScenes.has(scene)) { vocabResult.innerHTML = `<p>${p1Esc(scene)}需要对应的本地词典文件进行确定性匹配。当前项目尚未安装该词库，因此不会让 AI 临时编造词表。</p>`; return; } vocabSceneMode = scene; if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(scene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
