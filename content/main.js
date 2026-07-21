@@ -3086,7 +3086,7 @@ class ADHDHighlighter {
                   <button id="agfSettingsTabColors" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.colors">颜色管理</button>
                   <button id="agfSettingsTabParse" class="agf-settings-tab" data-i18n="aiPanel.settings.tabs.parse">解析与过滤</button>
                   <button id="agfSettingsTabMedia" class="agf-settings-tab">媒体识别</button>
-                  <button id="agfSettingsTabSpeak" class="agf-settings-tab">朗读</button>
+                  <button id="agfSettingsTabSpeak" class="agf-settings-tab" data-i18n="jixia.settingsUi.speechSettings">朗读</button>
                   <button id="agfSettingsTabDisplay" class="agf-settings-tab">显示与折叠</button>
                 </div>
                 <div class="agf-settings-content">
@@ -3716,7 +3716,7 @@ class ADHDHighlighter {
         const normalizedSelectedModel = String(selectedModel || '').toLowerCase();
         const configuredCapabilities = this.getModelCapabilities(prov, selectedModel);
         const selectedModelIsReasoning = configuredCapabilities.reasoning === true || /reasoner|reasoning|thinking|deepseek-r1|kimi-k[2346]|glm-5/i.test(normalizedSelectedModel);
-        const fallbackModels = { deepseek: 'deepseek-chat', moonshot: 'moonshot-v1-128k', chatglm: 'glm-4.6' };
+        const fallbackModels = { deepseek: 'deepseek-v4-flash', moonshot: 'moonshot-v1-128k', chatglm: 'glm-4.6' };
         const model = !reasoningAllowed && selectedModelIsReasoning ? (fallbackModels[prov] || String(selectedModel).replace(/reasoner|reasoning|thinking|deepseek-r1/ig, 'chat')) : selectedModel;
         const stored = await new Promise(resolve => chrome.storage.local.get(['aiKeys','aiBaseUrls'], resolve));
         const key = String((stored.aiKeys || {})[prov] || '').trim();
@@ -3728,13 +3728,14 @@ class ADHDHighlighter {
         const buildRequest = (temp) => {
           if (prov === 'anthropic') {
             headers['x-api-key'] = key; headers['anthropic-version'] = '2023-06-01';
-            return { url: baseTemplate, body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) };
+            return { url: baseTemplate, body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }], ...(reasoningAllowed ? { thinking: { type: 'adaptive' } } : { thinking: { type: 'disabled' } }) }) };
           }
           if (prov === 'gemini') {
-            return { url: baseTemplate.replace('{model}', model) + '?key=' + encodeURIComponent(key), body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens, temperature: temp } }) };
+            return { url: baseTemplate.replace('{model}', model) + '?key=' + encodeURIComponent(key), body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens, temperature: temp, ...(reasoningAllowed ? { thinkingConfig: { thinkingBudget: 8192 } } : {}) } }) };
           }
           headers.Authorization = 'Bearer ' + key;
-          return { url: baseTemplate, body: JSON.stringify({ model, temperature: temp, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }) };
+          const reasoningBody = prov === 'deepseek' ? { thinking: { type: reasoningAllowed ? 'enabled' : 'disabled' } } : prov === 'chatglm' ? { thinking: { type: reasoningAllowed ? 'enabled' : 'disabled' } } : /^gpt-5\.6/i.test(model) ? { reasoning_effort: reasoningAllowed ? 'medium' : 'none' } : {};
+          return { url: baseTemplate, body: JSON.stringify({ model, temperature: temp, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }], ...reasoningBody }) };
         };
         let request = buildRequest(preferredTemperature);
         jixiaState.setTaskStatus('requesting');
@@ -3771,6 +3772,20 @@ class ADHDHighlighter {
     };
     window.JixiaTask = jixiaTask;
     window.TaixueTask = jixiaTask;
+    const updateReasoningToggle = () => {
+      if (!reasoningToggle) return;
+      const provider = sessionProviderSelect?.value || jixiaState.getProviderState().provider;
+      const model = sessionModelSelect?.value || jixiaState.getProviderState().model;
+      const supportsReasoning = jixiaTask.getModelCapabilities(provider, model)?.reasoning === true;
+      const visible = jixiaState.currentModule === 'chat' && supportsReasoning;
+      reasoningToggle.style.display = visible ? '' : 'none';
+      if (!visible) {
+        jixiaState.reasoningEnabled = false;
+        reasoningToggle.setAttribute('aria-pressed', 'false');
+        reasoningToggle.dataset.i18n = 'jixia.reasoning.off';
+        reasoningToggle.textContent = window.i18n?.t?.('jixia.reasoning.off') || '推理：关';
+      }
+    };
     let currentView = 'chat';
     const updateTaskBar = (which) => {
       const groups = { chat: [], reading: [], quiz: [], explain: [], vocab: [], image: [], chart: [], records: [] };
@@ -3783,7 +3798,7 @@ class ADHDHighlighter {
       currentView = which;
       jixiaState.setModule(which);
       if (topContextTools) topContextTools.style.display = which === 'chat' ? 'none' : 'inline-flex';
-      if (reasoningToggle) reasoningToggle.style.display = which === 'chat' ? '' : 'none';
+      updateReasoningToggle();
       updateTaskBar(which);
       if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
       if (which === 'chat' || which === 'quiz') {
@@ -5227,31 +5242,31 @@ class ADHDHighlighter {
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.1', 'gpt-4.1', 'gpt-4o'],
-        modelInfo: Object.fromEntries([['gpt-5.6-sol', 1050000], ['gpt-5.6-terra', 1050000], ['gpt-5.6-luna', 1050000], ['gpt-5.1', 400000], ['gpt-4.1', 1047576], ['gpt-4o', 128000]].map(([model, contextWindow]) => [model, { label: model.toUpperCase(), contextWindow, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
+        models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
+        modelInfo: Object.fromEntries([['gpt-5.6-sol', 1050000], ['gpt-5.6-terra', 1050000], ['gpt-5.6-luna', 1050000]].map(([model, contextWindow]) => [model, { label: model.toUpperCase(), contextWindow, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], status: 'stable' }]))
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
         models: ['claude-fable-5', 'claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'],
         modelInfo: {
-          'claude-fable-5': { label: 'Claude Fable 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
-          'claude-opus-4-8': { label: 'Claude Opus 4.8', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
-          'claude-sonnet-5': { label: 'Claude Sonnet 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'claude-fable-5': { label: 'Claude Fable 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['adaptive'], status: 'stable' },
+          'claude-opus-4-8': { label: 'Claude Opus 4.8', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['adaptive'], status: 'stable' },
+          'claude-sonnet-5': { label: 'Claude Sonnet 5', contextWindow: 1000000, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['adaptive'], status: 'stable' },
           'claude-haiku-4-5': { label: 'Claude Haiku 4.5', contextWindow: 200000, maxOutputTokens: 64000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: false, status: 'stable' }
         }
       },
       qwen: {
         baseUrl: 'https://dashscope.aliyuncs.com/api/v1/chat/completions',
-        models: ['qwen3.7-max', 'qwen3.6-plus', 'qwen3.6-flash', 'qwen3.5-plus', 'qwen3-coder-next', 'qwen3-vl-plus'],
+        models: ['qwen3.7-max', 'qwen3.5-plus', 'qwen3.5-flash', 'qwen3-next-80b-a3b-thinking', 'qwen3-next-80b-a3b-instruct', 'qwen3-vl-plus'],
         modelInfo: Object.fromEntries([
-          ['qwen3.7-max', true, 128000], ['qwen3.6-plus', true, 128000], ['qwen3.6-flash', false, 128000], ['qwen3.5-plus', true, 128000], ['qwen3-coder-next', false, 128000], ['qwen3-vl-plus', true, 128000]
+          ['qwen3.7-max', true, 256000], ['qwen3.5-plus', true, 1000000], ['qwen3.5-flash', true, 1000000], ['qwen3-next-80b-a3b-thinking', true, 128000], ['qwen3-next-80b-a3b-instruct', false, 128000], ['qwen3-vl-plus', true, 256000]
         ].map(([model, reasoning, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 32768, capabilities: { text: true, vision: model.includes('vl') || model.includes('plus'), audio: false, tools: true, json: true }, reasoning, status: 'stable' }]))
       },
       chatglm: {
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
         models: ['glm-5.2', 'glm-5.1', 'glm-5', 'glm-4.7', 'glm-4.6'],
         modelInfo: {
-          'glm-5.2': { label: 'GLM-5.2', contextWindow: 1000000, maxOutputTokens: 131072, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
+          'glm-5.2': { label: 'GLM-5.2', contextWindow: 1000000, maxOutputTokens: 131072, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['enabled', 'disabled'], status: 'stable' },
           'glm-5.1': { label: 'GLM-5.1', contextWindow: 200000, maxOutputTokens: 131072, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-5': { label: 'GLM-5', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
           'glm-4.7': { label: 'GLM-4.7', contextWindow: 128000, maxOutputTokens: 16384, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' },
@@ -5260,18 +5275,18 @@ class ADHDHighlighter {
       },
       minimax: {
         baseUrl: 'https://api.minimax.io/v1/chat/completions',
-        models: ['MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'],
-        modelInfo: Object.fromEntries(['MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'].map(model => [model, { label: model, contextWindow: 196608, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
+        models: ['MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'],
+        modelInfo: Object.fromEntries(['MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.1', 'MiniMax-M2'].map(model => [model, { label: model, contextWindow: 204800, maxOutputTokens: 32768, capabilities: { text: true, vision: false, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
       },
       gemini: {
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
         models: ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro', 'gemini-3-flash'],
-        modelInfo: Object.fromEntries([['gemini-3.5-flash', 1000000], ['gemini-3.1-flash-lite', 1000000], ['gemini-3.1-pro', 1000000], ['gemini-3-flash', 1000000]].map(([model, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 65536, capabilities: { text: true, vision: true, audio: true, tools: true, json: true }, reasoning: true, status: model === 'gemini-3.1-pro' ? 'preview' : 'stable' }]))
+        modelInfo: Object.fromEntries([['gemini-3.5-flash', 1000000], ['gemini-3.1-flash-lite', 1000000], ['gemini-3.1-pro', 1000000], ['gemini-3-flash', 1000000]].map(([model, contextWindow]) => [model, { label: model, contextWindow, maxOutputTokens: 65536, capabilities: { text: true, vision: true, audio: true, tools: true, json: true }, reasoning: true, status: model === 'gemini-3.1-pro' || model === 'gemini-3-flash' ? 'preview' : 'stable' }]))
       },
       grok: {
         baseUrl: 'https://api.x.ai/v1/chat/completions',
         models: ['grok-4.20', 'grok-4.5', 'grok-4.3'],
-        modelInfo: Object.fromEntries(['grok-4.20', 'grok-4.5', 'grok-4.3'].map(model => [model, { label: model, contextWindow: 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, status: 'stable' }]))
+        modelInfo: Object.fromEntries([['grok-4.5', true], ['grok-4.20', true], ['grok-4.3', false]].map(([model, reasoning]) => [model, { label: model, contextWindow: model === 'grok-4.20' ? 1000000 : 256000, maxOutputTokens: 32768, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning, status: 'stable' }]))
       },
       openrouter: {
         baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
@@ -5748,11 +5763,14 @@ class ADHDHighlighter {
         if (ms[0]) sessionModelSelect.value = ms[0];
       };
       if (selectedProv) fillModelsForProv(selectedProv);
+      updateReasoningToggle();
       sessionProviderSelect.addEventListener('change', () => {
         try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         const prov = sessionProviderSelect.value;
         fillModelsForProv(prov);
+        updateReasoningToggle();
       });
+      sessionModelSelect.addEventListener('change', updateReasoningToggle);
     }
     
     let autoScrollEnabled = true;
