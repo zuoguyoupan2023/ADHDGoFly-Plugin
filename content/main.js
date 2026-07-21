@@ -126,7 +126,7 @@ class ADHDHighlighter {
     
     // 颜色方案
     this.colorSchemes = {
-      default: { noun: '#0066cc', verb: '#cc0000', adj: '#009933' },
+      default: { noun: '#8b5cf6', verb: '#cc0000', adj: '#009933' },
       warm: { noun: '#8b4513', verb: '#dc143c', adj: '#ff8c00' },
       cool: { noun: '#191970', verb: '#008b8b', adj: '#4169E1' },
       pastel: { noun: '#da70d6', verb: '#20b2aa', adj: '#f0e68c' },
@@ -1595,6 +1595,18 @@ class ADHDHighlighter {
     }
     
     console.log('启用文本高亮...');
+
+    // 0.1.7 and 0.1.8 both used the storage key `default`, but the noun color
+    // changed from blue to purple. If a page was not refreshed between builds,
+    // old .adhd-processed nodes can survive and bypass the new renderer.
+    if (this.hasStaleHighlightStyles()) {
+      console.log('检测到旧版本高亮样式，先清理页面后重新渲染');
+      if (this.processingMode === 'streaming') {
+        this.streamingPageProcessor.removeAllHighlights();
+      } else {
+        this.pageProcessor.removeAllHighlights();
+      }
+    }
     
     // Edge浏览器调试信息
     const isEdge = navigator.userAgent.includes('Edg');
@@ -1683,6 +1695,39 @@ class ADHDHighlighter {
       if (isEdge) console.error('[Edge调试] 启用过程中发生错误:', error);
       throw error;
     }
+  }
+
+  /**
+   * 检查页面上是否存在由旧版本渲染的高亮。
+   * @returns {boolean} 是否需要先清理旧高亮
+   */
+  hasStaleHighlightStyles() {
+    const colors = this.colorSchemes[this.currentColorScheme];
+    if (!colors) return false;
+
+    const expected = {
+      noun: this.hexToRgb(colors.noun),
+      verb: this.hexToRgb(colors.verb),
+      adj: this.hexToRgb(colors.adj)
+    };
+    const selectors = [
+      ['noun', '.adhd-n'],
+      ['verb', '.adhd-v'],
+      ['adj', '.adhd-a']
+    ];
+
+    return selectors.some(([type, selector]) => Array.from(document.querySelectorAll(selector)).some(element => {
+      const color = window.getComputedStyle(element).color;
+      return color && color !== expected[type];
+    }));
+  }
+
+  hexToRgb(hex) {
+    const value = hex.replace('#', '');
+    const r = parseInt(value.slice(0, 2), 16);
+    const g = parseInt(value.slice(2, 4), 16);
+    const b = parseInt(value.slice(4, 6), 16);
+    return `rgb(${r}, ${g}, ${b})`;
   }
 
   /**
