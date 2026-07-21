@@ -2859,19 +2859,25 @@ class ADHDHighlighter {
       .agf-mode-btn.active{background:#333;color:#fff}
       .agf-records-panel{position:relative;height:100%;background:#fff;border:1px solid #e0e0e0;border-radius:4px;box-shadow:none;display:none;padding:12px;overflow:auto}
       .agf-colors-panel{position:absolute;inset:12px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;z-index:2;padding:12px;overflow:auto}
-      .agf-records-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:8px;background:#fff;border-bottom:1px solid #e0e0e0}
-      .agf-records-title{font-size:14px;color:#333;font-weight:600}
+      .agf-records-header{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:auto minmax(120px,180px) minmax(160px,1fr);align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:#fff;border-bottom:1px solid #e0e0e0}
+      .agf-records-title{display:inline-flex;align-items:center;gap:0;padding:2px;border:1px solid #dfe5f2;border-radius:9px;background:#f7f8fb;font-size:14px;color:#333;font-weight:600}
       .agf-records-close{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
       .agf-records-open{height:24px;min-width:48px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;font-size:12px}
       .agf-records-list{display:flex;flex-direction:column;gap:8px}
-      .agf-record-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333}
-      .agf-record-subject{font-size:12px;color:#666}
-      .agf-record-actions{display:inline-flex;gap:8px}
+      .agf-record-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid #e0e0e0;border-radius:6px;padding:8px;background:#fff;color:#333;min-width:0}
+      .agf-record-main{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;overflow:hidden}
+      .agf-record-date{font-size:11px;color:#8a94a6;line-height:1.3}
+      .agf-record-subject{max-width:100%;min-width:0;font-size:12px;color:#26345b;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .agf-record-preview{max-width:100%;min-width:0;font-size:11px;color:#687386;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .agf-record-actions{display:inline-flex;gap:6px;flex:0 0 auto}
       .agf-record-delete{height:24px;min-width:28px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333}
-      .agf-record-link{max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a73e8}
-      .agf-record-scope-btn{height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:8px}
+      .agf-record-link{display:block;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a73e8;text-decoration:none;font-size:11px;line-height:1.35}
+      .agf-record-link:hover{text-decoration:underline}
+      .agf-record-scope-btn{height:24px;min-width:64px;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;margin-left:0}
+      .agf-records-title .agf-record-scope-btn{border:0;border-radius:7px;background:transparent;color:#687386}
       .agf-record-scope-btn.active{background:#333;color:#fff;border-color:#333}
-      .agf-records-search{height:24px;border:1px solid #e0e0e0;border-radius:6px;padding:0 8px;width:40%}
+      .agf-records-title .agf-record-scope-btn.active{background:#315efb;color:#fff;box-shadow:0 2px 6px rgba(49,94,251,.18)}
+      .agf-records-search{height:24px;border:1px solid #e0e0e0;border-radius:6px;padding:0 8px;width:100%;min-width:0}
       .agf-group{border:1px dashed #e0e0e0;border-radius:6px}
       .agf-group-title{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;color:#333}
       .agf-group-body{padding:8px}
@@ -3019,6 +3025,10 @@ class ADHDHighlighter {
       .agf-composer-body .agf-send-col{grid-column:2!important;grid-row:2!important;width:52px!important;min-width:52px!important;box-sizing:border-box!important;height:auto!important;gap:4px!important}
       .agf-composer-body .agf-send-col .agf-send{width:52px!important;min-width:52px!important;box-sizing:border-box!important;padding:0 5px!important}
       .agf-composer-body .agf-send-col #agfAddFullTextBtn{width:52px!important;min-width:52px!important;margin-top:0!important;padding:3px 1px!important;font-size:10px!important;line-height:12px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
+      #agfAiSettingOverlay .agf-records-header{display:grid!important;grid-template-columns:auto minmax(120px,180px) minmax(160px,1fr)!important;align-items:center!important;gap:8px!important}
+      #agfAiSettingOverlay .agf-record-item{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;min-width:0!important}
+      #agfAiSettingOverlay .agf-record-main{min-width:0!important;max-width:100%!important;overflow:hidden!important}
+      #agfAiSettingOverlay .agf-record-subject,#agfAiSettingOverlay .agf-record-preview,#agfAiSettingOverlay .agf-record-link{max-width:100%!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
       #agfAiSettingOverlay .agf-function-bar{display:flex!important;align-items:center!important;gap:8px!important;padding:5px 12px!important}
       #agfAiSettingOverlay .agf-ai-tabs{display:inline-flex!important;align-items:center!important;gap:2px!important;margin-left:2px!important}
       #agfAiSettingOverlay .agf-ai-tabs button{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;min-height:26px!important;min-width:26px!important;width:auto!important;margin:0!important;padding:0 8px!important;border:1px solid transparent!important;border-radius:8px!important;background:transparent!important;color:#687386!important;font-size:12px!important;font-weight:400!important;line-height:24px!important;white-space:nowrap!important}
@@ -3247,7 +3257,7 @@ class ADHDHighlighter {
             </div>
           <div class="agf-records-panel" id="agfRecordsPanel">
             <div class="agf-records-header">
-              <div class="agf-records-title">
+              <div class="agf-records-title" role="group" aria-label="记录范围">
                 <button id="agfRecordsTabCurrent" class="agf-record-scope-btn active" data-i18n="jixia.ui.currentRecords">当前记录</button>
                 <button id="agfRecordsTabAll" class="agf-record-scope-btn" data-i18n="jixia.ui.allRecords">所有记录</button>
               </div>
@@ -6242,14 +6252,24 @@ class ADHDHighlighter {
         }
         return item.title || (prefix ? (prefix + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
       };
+      const compactRecordUrl = (value) => {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try {
+          const url = new URL(raw, window.location.href);
+          const path = (url.pathname || '').replace(/\/$/, '');
+          return url.hostname + (path && path !== '/' ? path : '');
+        } catch (_) {
+          return raw.replace(/^https?:\/\//i, '').split(/[?#]/)[0] || raw;
+        }
+      };
       const buildRecordItem = (item) => {
         const el = document.createElement('div');
         el.className = 'agf-record-item';
         const leftBox = document.createElement('div');
-        leftBox.style.display = 'flex';
-        leftBox.style.flexDirection = 'column';
-        leftBox.style.alignItems = 'flex-start';
+        leftBox.className = 'agf-record-main';
         const dateEl = document.createElement('div');
+        dateEl.className = 'agf-record-date';
         dateEl.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
         const subjEl = document.createElement('div');
         subjEl.className = 'agf-record-subject';
@@ -6265,18 +6285,23 @@ class ADHDHighlighter {
             if (m2) linkUrl = m2[1];
           } catch (_) {}
         }
+        const detailEl = document.createElement('div');
+        detailEl.className = 'agf-record-preview';
         if (linkUrl) {
           const a = document.createElement('a');
           a.className = 'agf-record-link';
-          a.textContent = linkUrl;
+          a.textContent = compactRecordUrl(linkUrl);
           a.href = linkUrl;
           a.target = '_blank';
           a.rel = 'noopener';
-          subjEl.appendChild(document.createTextNode(' '));
-          subjEl.appendChild(a);
+          a.title = linkUrl;
+          detailEl.appendChild(a);
+        } else if (item.preview) {
+          detailEl.textContent = String(item.preview || '');
         }
         leftBox.appendChild(dateEl);
         leftBox.appendChild(subjEl);
+        if (detailEl.textContent || detailEl.children.length) leftBox.appendChild(detailEl);
         const actions = document.createElement('div');
         actions.className = 'agf-record-actions';
         const openBtn = document.createElement('button');
