@@ -31,6 +31,26 @@
     return ('00000000' + (h >>> 0).toString(16)).slice(-8);
   }
 
+  function isRedditPostRoute(id) {
+    return Boolean(id && /reddit\.com/i.test(id.pageUrl || '') && /\/comments\//i.test(id.routeKey || ''));
+  }
+
+  function looksLikeRedditFeedText(text) {
+    const value = normalize(text);
+    if (!value) return false;
+    const lower = value.toLowerCase();
+    const score = [
+      /\br\/(popular|all|home)\b/i.test(value),
+      /\b(create post|log in|sign up|join)\b/i.test(value),
+      /\b(upvotes?|comments?|share|save|hide|report)\b/i.test(value),
+      (value.match(/\b\d+(\.\d+)?[km]?\s+(upvotes?|comments?)\b/gi) || []).length >= 2,
+      (value.match(/\br\/[a-z0-9_]+\b/gi) || []).length >= 3,
+      (value.match(/\bjoin\b/gi) || []).length >= 2
+    ].filter(Boolean).length;
+    const hasArticleSignals = /\n.{80,}\n/.test(String(text || '')) || /\b(op|original poster)\b/i.test(value);
+    return score >= 3 && !hasArticleSignals;
+  }
+
   function classify({ text, source, requestedSource, identity: id, record }) {
     const value = normalize(text);
     const origin = source || (record ? 'stored_segments' : 'dom_live');
@@ -38,9 +58,10 @@
     const routeMatches = !recordRoute || recordRoute === id.routeKey || recordRoute === id.canonicalRouteKey;
     const looksLikeList = /reddit\.com/i.test(id.pageUrl) && /\b(home|popular|all|r\/[^/]+)\b/i.test(id.routeKey) && !/\/comments\//i.test(id.routeKey);
     const isScoped = requestedSource === 'selection' || requestedSource === 'paragraph';
-    const isStale = !routeMatches || looksLikeList || (!isScoped && origin === 'fallback' && value.length < 200);
+    const redditFeedOnPost = !isScoped && isRedditPostRoute(id) && looksLikeRedditFeedText(value);
+    const isStale = !routeMatches || looksLikeList || redditFeedOnPost || (!isScoped && origin === 'fallback' && value.length < 200);
     const confidence = isStale ? 0 : (origin === 'dom_live' ? .9 : origin === 'stored_segments' ? .8 : origin === 'selection' || origin === 'manual' ? 1 : .35);
-    return { text: value, textHash: hash(value), textOrigin: origin, confidence, isStale, staleReason: isStale ? (!routeMatches ? 'route_mismatch' : looksLikeList ? 'list_page_text' : 'low_confidence') : '' };
+    return { text: value, textHash: hash(value), textOrigin: origin, confidence, isStale, staleReason: isStale ? (!routeMatches ? 'route_mismatch' : looksLikeList ? 'list_page_text' : redditFeedOnPost ? 'reddit_feed_on_post_route' : 'low_confidence') : '' };
   }
 
   function createMonitor({ getUrl, onRouteChange, rootNode, settleMs = 350 } = {}) {
@@ -79,5 +100,5 @@
     return { text: latest, stable: false, waitedMs: Date.now() - started };
   }
 
-  root.JixiaContextResolver = { normalize, routeKey, identity, hash, classify, createMonitor, waitForStableText };
+  root.JixiaContextResolver = { normalize, routeKey, identity, hash, classify, createMonitor, waitForStableText, looksLikeRedditFeedText };
 })(typeof window !== 'undefined' ? window : globalThis);

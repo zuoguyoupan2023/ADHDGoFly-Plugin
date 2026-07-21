@@ -35,3 +35,19 @@ test('text hash and origin are returned for diagnostics', () => {
   assert.match(result.textHash, /^[0-9a-f]{8}$/);
 });
 
+test('Reddit post route rejects feed/list text captured during SPA transition', () => {
+  const identity = resolver.identity('https://www.reddit.com/r/programming/comments/abc123/example_post/', 'https://www.reddit.com/');
+  const feedText = [
+    'r/popular',
+    'Join',
+    'What are you working on this week?',
+    '123 upvotes 45 comments',
+    'Another story from the front page',
+    '98 upvotes 12 comments',
+    'Log In',
+    'Create Post'
+  ].join('\n');
+  const result = resolver.classify({ text: feedText, source: 'dom_live', requestedSource: 'full_article', identity });
+  assert.equal(result.isStale, true);
+  assert.equal(result.staleReason, 'reddit_feed_on_post_route');
+});

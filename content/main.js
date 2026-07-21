@@ -2222,6 +2222,38 @@ class ADHDHighlighter {
     return this.normalizeText(el.innerText || el.textContent || '');
   }
 
+  extractRedditPostText() {
+    let id = '';
+    try {
+      const route = window.JixiaContextResolver?.routeKey?.(window.location.href) || window.location.href;
+      const match = String(route || '').match(/\/comments\/([^/?#]+)/i);
+      id = match ? match[1] : '';
+    } catch (_) {}
+    if (!id) return '';
+    const resolver = window.JixiaContextResolver;
+    const clean = text => this.normalizeText(String(text || '').replace(/\b(add a comment|sort by:.*|view all comments|log in|sign up)\b/gi, ' '));
+    const candidates = [];
+    const push = (el, weight = 0) => {
+      if (!el || this.isHiddenEl(el) || this.isExtensionUi(el)) return;
+      const text = clean(el.innerText || el.textContent || '');
+      if (!text || text.length < 40) return;
+      const hasIdLink = Boolean(el.querySelector?.(`a[href*="/comments/${CSS.escape(id)}"], a[href*="/${CSS.escape(id)}/"]`));
+      const hasPostMarkers = Boolean(el.querySelector?.('[slot="title"], [slot="text-body"], shreddit-post, shreddit-comment, [data-testid="post-container"]'));
+      const penalty = resolver?.looksLikeRedditFeedText?.(text) ? 5000 : 0;
+      candidates.push({ text, score: text.length + weight + (hasIdLink ? 4000 : 0) + (hasPostMarkers ? 2500 : 0) - penalty });
+    };
+    try {
+      document.querySelectorAll('shreddit-post, article, [data-testid="post-container"], [slot="text-body"], [id^="t3_"]').forEach(el => push(el, 1000));
+      document.querySelectorAll(`a[href*="/comments/${CSS.escape(id)}"], a[href*="/${CSS.escape(id)}/"]`).forEach(anchor => {
+        push(anchor.closest('shreddit-post, article, [data-testid="post-container"], [role="article"], main') || anchor.parentElement, 2000);
+      });
+    } catch (_) {}
+    candidates.sort((a, b) => b.score - a.score);
+    const best = candidates.find(item => item.score > 0 && item.text.length >= 80) || candidates[0];
+    if (!best || resolver?.looksLikeRedditFeedText?.(best.text)) return '';
+    return best.text;
+  }
+
   approxTokensPerChar(text) {
     const cjk = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/.test(text);
     return cjk ? 1.0 : 0.75;
@@ -5963,6 +5995,8 @@ class ADHDHighlighter {
       return lines.join('\n');
     };
     const buildStructuredFromLegacyOrHints = async () => {
+      const redditPostText = this.extractRedditPostText();
+      if (redditPostText) return redditPostText;
       if (typeof buildTStructuredText === 'function') {
         try { const s = await buildTStructuredText(); if (s) return s; } catch(_) {}
       }
@@ -7042,7 +7076,8 @@ class ADHDHighlighter {
 
     const ensureAutoCollect = async () => {
       const u = getCanonicalUrl();
-      const key = 'agfCollect:' + u.canonicalUrl;
+      const routeKey = window.JixiaContextResolver?.routeKey?.(u.pageUrl) || u.canonicalUrl;
+      const key = 'agfCollect:' + routeKey;
       let segs = [];
       try { segs = await getLatestStoredSegmentsForPage(); } catch (_) { segs = []; }
       if (segs.length > 0) { await updateStorageStatusUI(); return; }
