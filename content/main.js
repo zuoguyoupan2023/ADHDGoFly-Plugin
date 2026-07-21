@@ -5242,8 +5242,11 @@ class ADHDHighlighter {
       },
       openai: {
         baseUrl: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
-        modelInfo: Object.fromEntries([['gpt-5.6-sol', 1050000], ['gpt-5.6-terra', 1050000], ['gpt-5.6-luna', 1050000]].map(([model, contextWindow]) => [model, { label: model.toUpperCase(), contextWindow, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], status: 'stable' }]))
+        models: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
+        modelInfo: Object.fromEntries([
+          ['gpt-5.5', 1050000], ['gpt-5.4', 1050000], ['gpt-5.4-mini', 400000], ['gpt-5.4-nano', 400000],
+          ['gpt-5.6-sol', 1050000], ['gpt-5.6-terra', 1050000], ['gpt-5.6-luna', 1050000]
+        ].map(([model, contextWindow]) => [model, { label: model.toUpperCase(), contextWindow, maxOutputTokens: 128000, capabilities: { text: true, vision: true, audio: false, tools: true, json: true }, reasoning: true, reasoningModes: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], status: model.startsWith('gpt-5.6') ? 'preview' : 'stable' }]))
       },
       anthropic: {
         baseUrl: 'https://api.anthropic.com/v1/messages',
