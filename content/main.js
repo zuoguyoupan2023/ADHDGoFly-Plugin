@@ -2805,6 +2805,8 @@ class ADHDHighlighter {
       .agf-quiz-actions button{height:30px;padding:0 12px;border:1px solid #dfe5f2;border-radius:8px;background:#fff;color:#315efb;cursor:pointer;font-size:12px}
       .agf-quiz-actions button.primary{background:#315efb;color:#fff;border-color:#315efb}
       .agf-quiz-actions button:disabled{opacity:.45;cursor:not-allowed}
+      #agfQuizStartActions{display:grid;grid-template-columns:56px repeat(3,minmax(72px,1fr));align-items:center;justify-content:stretch}
+      #agfQuizStartActions .agf-quiz-select,#agfQuizStartActions button{width:100%;min-width:0;white-space:nowrap}
       .agf-quiz-result{display:none;text-align:center;padding:28px 12px}
       .agf-quiz-result h3{margin-bottom:8px;font-size:18px}
       .agf-quiz-result p{color:#687386;font-size:12px;line-height:1.6}
@@ -3048,7 +3050,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">稷下</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div><div class="agf-top-context-tools agf-highlight-toggle" aria-label="上下文范围"><button class="agf-mode-btn agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button><button class="agf-mode-btn agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button><button class="agf-mode-btn agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">稷下</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div><div class="agf-top-context-tools agf-highlight-toggle" aria-label="上下文范围"><button class="agf-mode-btn agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button><button class="agf-mode-btn agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button><!-- Paragraph context is wired, but hidden until the interaction model is ready. --><button class="agf-mode-btn agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button></div></div>
         <div class="agf-ai-controls">
           <button id="agfAiTabWrench" data-i18n-title="aiPanel.settings.general">🔧</button>
           <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
@@ -6270,7 +6272,7 @@ class ADHDHighlighter {
         if (item.type === 'reading' || item.type === 'writing') {
           return `${typeLabel(item.type)} · ${sceneLabel(cleanStoredTitle(item.scene || item.title) || (item.type === 'reading' ? tr('jixia.ui.readingResult', '阅读结果') : tr('jixia.ui.writingResult', '写作结果')))}`;
         }
-        if (item.type === 'quiz') return `${item.pageTitle || cleanStoredTitle(item.title) || tr('jixia.ui.quizTitle', lang === 'en' ? 'Article comprehension quiz' : '文章理解测试')} · ${item.score || 0}/${item.total || 0}`;
+        if (item.type === 'quiz') return `${typeLabel('quiz')} · ${item.pageTitle || cleanStoredTitle(item.title) || tr('jixia.ui.quizTitle', lang === 'en' ? 'Article comprehension quiz' : '文章理解测试')} · ${item.score || 0}/${item.total || 0}`;
         if (item.type === 'explain') return `${typeLabel('explain')} · ${item.pageTitle || cleanStoredTitle(item.title) || tr('jixia.ui.currentArticle', lang === 'en' ? 'Current article' : '当前文章')}`;
         if (item.type === 'image') return `${typeLabel('image')} · ${item.name || cleanStoredTitle(item.title) || (lang === 'en' ? 'Untitled image' : '未命名图片')}`;
         if (item.type === 'chart') return `${typeLabel('chart')} · ${item.chartModel?.title || cleanStoredTitle(item.title) || tr('aiPanel.unnamed', lang === 'en' ? 'Untitled' : '未命名')}`;
