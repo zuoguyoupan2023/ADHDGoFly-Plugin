@@ -2722,7 +2722,17 @@ class ADHDHighlighter {
       #agfAiViewImage .agf-page-image-body{min-width:0;font-size:12px;line-height:1.55}
       #agfAiViewImage .agf-page-image-status{margin-bottom:4px;color:#687386;font-size:11px}
       #agfAiViewImage .agf-page-image-result{max-height:160px;overflow:auto}
-      #agfAiViewChart .agf-chart-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+      #agfAiViewImage .agf-module-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:10px 12px}
+      #agfAiViewImage .agf-action-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+      #agfAiViewImage .agf-action-group--primary{grid-column:1 / -1;padding-bottom:8px;border-bottom:1px solid #edf0f6}
+      #agfAiViewImage .agf-action-label,#agfAiViewChart .agf-action-label{font-size:10px;letter-spacing:.04em;color:#8a94a6;font-weight:700;white-space:nowrap}
+      #agfAiViewImage .agf-image-select-all{margin-right:4px}
+      #agfAiViewImage .agf-image-filter-btn{border:1px solid #dfe5f2;border-radius:7px;background:#f8faff;color:#687386;padding:3px 7px;font-size:10px;cursor:pointer}
+      #agfAiViewChart .agf-chart-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:10px;border:1px solid #edf0f6;border-radius:10px;background:#fbfcff}
+      #agfAiViewChart .agf-action-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+      #agfAiViewChart .agf-action-group--wide{grid-column:1 / -1;padding-top:8px;border-top:1px solid #edf0f6}
+      #agfAiViewChart .agf-action-group .agf-task-btn{min-height:28px}
+      #agfAiViewChart .agf-action-group select{min-width:0;flex:1 1 110px}
       #agfAiViewChart .agf-chart-title{width:100%;box-sizing:border-box;margin-bottom:10px}
       #agfAiViewChart .agf-chart-canvas{overflow:auto;border:0;min-height:260px;padding:8px;background:#fff}
       #agfAiViewChart .agf-chart-canvas>svg{display:block;border:1px solid #cfd8e6;border-radius:3px;background:#fff;box-sizing:border-box}
@@ -2924,6 +2934,11 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#e8eeff;border-color:#d7e0ff;color:#315efb}
       .agf-settings-content{border:0;padding:0;background:transparent}
       .agf-module-actions button{height:26px;padding:0 8px;border-radius:7px;font-size:12px}
+      @media (max-width:560px){
+        #agfAiViewChart .agf-chart-toolbar{grid-template-columns:1fr}
+        #agfAiViewChart .agf-action-group--wide{grid-column:auto}
+        #agfAiViewImage .agf-module-actions{grid-template-columns:1fr}
+      }
       @media (max-width:560px){
         .agf-function-bar{flex-wrap:wrap;row-gap:4px;padding:4px 8px}
         .agf-function-bar .agf-ai-tabs{order:1;flex:1 1 auto;min-width:0;overflow:hidden;gap:2px}
@@ -3282,6 +3297,20 @@ class ADHDHighlighter {
     imageSelectPending.textContent = '未处理'; imageSelectFailed.textContent = '失败'; imageSelectCompleted.textContent = '已处理';
     [imageSelectPending, imageSelectFailed, imageSelectCompleted].forEach(button => { button.type = 'button'; button.className = 'agf-image-filter-btn'; });
     if (imageSelectAll?.parentElement) imageSelectAll.parentElement.after(imageSelectPending, imageSelectFailed, imageSelectCompleted);
+    (() => {
+      const actions = imageSelectAll?.closest('.agf-module-actions');
+      if (!actions || actions.dataset.grouped === 'true') return;
+      const makeGroup = (label, nodes, primary = false) => {
+        const group = document.createElement('div'); group.className = `agf-action-group${primary ? ' agf-action-group--primary' : ''}`;
+        const title = document.createElement('span'); title.className = 'agf-action-label'; title.textContent = label; group.appendChild(title);
+        nodes.forEach(node => node && group.appendChild(node)); return group;
+      };
+      const selectGroup = makeGroup('选择', [imageSelectAll?.parentElement, imageSelectPending, imageSelectFailed, imageSelectCompleted], true);
+      const processGroup = makeGroup('处理', [imageProcessSelected, imageAddToChat, imageWorkspaceRetry]);
+      const manageGroup = makeGroup('管理', [imageWorkspaceClearBtn, imageWorkspaceDeleteBtn, imageWorkspaceExportBtn, imageWorkspaceHistoryBtn]);
+      actions.replaceChildren(selectGroup, processGroup, manageGroup);
+      actions.dataset.grouped = 'true';
+    })();
     const vocabHistory = document.getElementById('agfVocabHistory');
     const quizCard = document.getElementById('agfQuizCard');
     const quizResult = document.getElementById('agfQuizResult');
@@ -3835,6 +3864,25 @@ class ADHDHighlighter {
     const chartAiEditInput = chartView.querySelector('#agfChartAiEditInput');
     chartButtons.addLane = chartView.querySelector('#agfChartAddLane') || (() => { const button = document.createElement('button'); button.id = 'agfChartAddLane'; button.className = 'agf-task-btn'; button.dataset.i18n = 'jixia.chart.addLane'; button.textContent = '添加泳道'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(button); return button; })();
     const chartTheme = chartView.querySelector('#agfChartTheme') || (() => { const select = document.createElement('select'); select.id = 'agfChartTheme'; select.className = 'agf-field'; select.innerHTML = '<option value="system" data-i18n="jixia.chart.system">跟随系统</option><option value="light" data-i18n="jixia.chart.light">浅色主题</option><option value="dark" data-i18n="jixia.chart.dark">深色主题</option>'; chartView.querySelector('.agf-chart-toolbar')?.appendChild(select); return select; })();
+    (() => {
+      const toolbar = chartView.querySelector('.agf-chart-toolbar');
+      if (!toolbar || toolbar.dataset.grouped === 'true') return;
+      const groups = [
+        ['生成', ['agfChartIntent', 'agfChartRenderer', 'agfChartGenerate']],
+        ['文件', ['agfChartSave', 'agfChartImport', 'agfChartSvg', 'agfChartJson', 'agfChartHtml', 'agfChartPng', 'agfChartAttach']],
+        ['编辑', ['agfChartUndo', 'agfChartRedo', 'agfChartAddNode', 'agfChartAddEdge', 'agfChartAddLane', 'agfChartDelete']],
+        ['视图', ['agfChartTheme', 'agfChartZoomOut', 'agfChartZoomReset', 'agfChartZoomIn']]
+      ];
+      const nodes = new Map(Array.from(toolbar.children).filter(node => node.id).map(node => [node.id, node]));
+      toolbar.replaceChildren();
+      groups.forEach(([label, ids], index) => {
+        const group = document.createElement('div'); group.className = `agf-action-group${index === 1 || index === 2 ? ' agf-action-group--wide' : ''}`;
+        const title = document.createElement('span'); title.className = 'agf-action-label'; title.textContent = label; group.appendChild(title);
+        ids.forEach(id => { const node = nodes.get(id); if (node) group.appendChild(node); });
+        toolbar.appendChild(group);
+      });
+      toolbar.dataset.grouped = 'true';
+    })();
     try { window.i18n?.applyTranslations?.(); } catch (_) {}
     const archifyOptions = [{ value: 'architecture', key: 'jixia.chart.intent.architecture' }, { value: 'workflow', key: 'jixia.chart.intent.workflow' }, { value: 'data_flow', key: 'jixia.chart.intent.data_flow' }, { value: 'lifecycle', key: 'jixia.chart.intent.lifecycle' }, { value: 'sequence', key: 'jixia.chart.intent.sequence' }];
     archifyOptions.forEach(option => { if (chartIntent && !chartIntent.querySelector(`option[value="${option.value}"]`)) { const item = document.createElement('option'); item.value = option.value; item.dataset.i18n = option.key; item.textContent = window.i18n?.t?.(option.key) || option.value; chartIntent.appendChild(item); } });
