@@ -7108,11 +7108,12 @@ class ADHDHighlighter {
     const loadVocab = () => new Promise(resolve => chrome.storage.local.get([vocabKey], r => resolve(Array.isArray(r[vocabKey]) ? r[vocabKey] : [])));
     const saveVocab = records => new Promise(resolve => chrome.storage.local.set({ [vocabKey]: records.slice(0, 200) }, resolve));
     const renderVocabCard = () => {
-      const card = vocabCards[vocabIndex]; if (!card) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
-      const mastery = Number(card.mastery || 0); vocabStats.textContent = `基础掌握度 ${mastery}% · ${vocabIndex + 1}/${vocabCards.length}`;
-      vocabResult.innerHTML = `<div class="agf-vocab-card"><strong>${String(card.word)}</strong><small>词性：${String(card.pos || card.partOfSpeech || '待补充')}</small><p>${String(card.meaning || '请回忆这个词的含义')}</p><p><em>${String(card.example || '')}</em></p><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
+      if (!vocabCards.length || vocabIndex >= vocabCards.length) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
+      const card = vocabCards[vocabIndex]; const mastery = Number(card.mastery || 0); vocabStats.textContent = `已提取 ${vocabCards.length} 词 · 当前掌握度 ${mastery}%`;
+      vocabResult.innerHTML = `<div class="agf-vocab-list"><table><thead><tr><th>词汇</th><th>词性</th><th>中文解释</th><th>英文解释</th><th>例句</th><th>操作</th></tr></thead><tbody>${vocabCards.map((item, index) => `<tr><td>${p1Esc(item.word)}</td><td>${p1Esc(item.pos || item.partOfSpeech || '待补充')}</td><td>${p1Esc(item.meaning || '')}</td><td>${p1Esc(item.definition || item.englishMeaning || '')}</td><td>${p1Esc(item.example || '')}</td><td><button class="agf-task-btn" data-vocab-sentence="${index}">造句</button></td></tr>`).join('')}</tbody></table></div><div class="agf-vocab-review-current"><span>当前复习：${p1Esc(card.word)}</span><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
       const answer = remembered => vocabModule ? vocabModule.answer(remembered) : Promise.resolve();
       document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
+      vocabResult.querySelectorAll('[data-vocab-sentence]').forEach(button => { button.onclick = async () => { const item = vocabCards[Number(button.dataset.vocabSentence)]; button.disabled = true; try { const language = /[A-Za-z]/.test(item.word) ? '英文' : '中文'; const output = await jixiaTask.requestJsonText({ prompt: `请用词汇“${item.word}”造一个自然、符合语境的${language}句子，只返回句子，并附带简短中文解释。`, maxTokens: 500, temperature: .4 }); button.parentElement.innerHTML = p1Esc(output); } catch (error) { showToast(error.message || '造句失败'); } finally { button.disabled = false; } }; });
     };
     const startVocabReviewLegacy = async () => {
       setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>';
@@ -7122,7 +7123,9 @@ class ADHDHighlighter {
       vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), pos: x.pos || x.partOfSpeech || '待补充', mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
       vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
-    vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: jixiaTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards.map(card => ({ ...card, pos: card.pos || card.partOfSpeech || '待补充' })); vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
+    let vocabSceneMode = '全文关键词';
+    const vocabTask = { ...jixiaTask, requestJsonText: options => jixiaTask.requestJsonText({ ...options, prompt: `${vocabSceneMode === '逐段关键词' ? '请按文章段落分别提取关键词，词条中标记所属段落。' : '请从全文提取核心关键词。'}\n${String(options.prompt || '').replace('word,meaning,example', 'word,pos,meaning,definition,example')}` }) };
+    vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: vocabTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards.map(card => ({ ...card, pos: card.pos || card.partOfSpeech || '待补充' })); vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
     const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
     const renderP1Result = (kind, result, ctx) => {
@@ -7215,7 +7218,8 @@ class ADHDHighlighter {
     });
     JixiaUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
     JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
-    overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(button.dataset.vocabScene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
+    const deterministicVocabScenes = new Set(['雅思词汇','托福词汇','四六级词汇','高考词汇','K9词汇']);
+    overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); const scene = button.dataset.vocabScene; if (deterministicVocabScenes.has(scene)) { vocabResult.innerHTML = `<p>${p1Esc(scene)}需要对应的本地词典文件进行确定性匹配。当前项目尚未安装该词库，因此不会让 AI 临时编造词表。</p>`; return; } vocabSceneMode = scene; if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(scene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
     if (vocabSaveDictionary) vocabSaveDictionary.onclick = () => showToast('词典保存入口已保留，下一步接入统一 DictionaryTool。');
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
