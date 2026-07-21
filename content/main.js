@@ -2966,7 +2966,6 @@ class ADHDHighlighter {
           <button id="agfAiTabReading">阅读</button>
           <button id="agfAiTabWriting">写作</button>
           <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
-          <button id="agfAiTabExplain" data-i18n="jixia.tabs.explain">解释</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
           <button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button>
         </div>
@@ -3033,13 +3032,7 @@ class ADHDHighlighter {
               </div>
               <div class="agf-quiz-result" id="agfQuizResult"></div>
               <div class="agf-quiz-actions" id="agfQuizStartActions"><select id="agfQuizCount" class="agf-quiz-select"><option value="3">3题</option><option value="5">5题</option><option value="10">10题</option></select><button id="agfQuizEasy">简单一些</button><button id="agfQuizStart" class="primary">生成测试</button><button id="agfQuizHard">难一些</button></div>
-            </div>
-          </div>
-          <div class="agf-ai-view-module" id="agfAiViewExplain" style="display:none">
-            <div class="agf-module-card">
-              <div class="agf-module-heading"><span>选区解释</span><span id="agfExplainSource" class="agf-module-meta"></span></div>
-              <div id="agfExplainResult" class="agf-module-result"><p>请先在网页中选中文本，再点击“选区解释”。</p></div>
-              <div class="agf-module-actions"><button id="agfExplainToChat" class="primary" disabled>带解释追问 Chat</button><button id="agfExplainRetry" disabled>重新解释</button></div><div id="agfExplainHistory" class="agf-module-history" style="display:none"></div>
+              <div id="agfQuizDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfQuizDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfQuizDiscussionBody" style="display:none"><textarea id="agfQuizQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前题目或整套测试提问"></textarea><button id="agfQuizDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfQuizDiscussionList" class="agf-module-result"></div></div></div>
             </div>
           </div>
           <div class="agf-ai-view-module" id="agfAiViewImage" style="display:none"><div class="agf-module-card"><div class="agf-module-heading"><span data-i18n="jixia.image.title">图像工作区</span><span id="agfImageWorkspaceStatus" class="agf-module-meta" data-i18n="jixia.image.waiting">等待添加图片</span></div><div id="agfImageDropzone" class="agf-image-dropzone"><p data-i18n="jixia.image.drop">拖动图片到这里进行识别</p><button id="agfImageChooseBtn" class="primary" data-i18n="jixia.image.choose">选择图片</button><button id="agfPageImageDiscoverBtn" type="button" data-i18n="jixia.context.discoverImages">发现网页图片</button><input id="agfWorkspaceImageInput" type="file" accept="image/*" multiple style="display:none"></div><div class="agf-image-workspace-controls"><select id="agfMediaModeSelect" class="agf-select" data-i18n-title="jixia.context.mediaMode"><option value="auto" data-i18n="jixia.context.auto">自动判断</option><option value="recognition_only" data-i18n="jixia.context.recognitionOnly">仅识别结果</option><option value="image_and_recognition" data-i18n="jixia.context.imageAndRecognition">图片+识别结果</option></select><span id="agfMediaStrategy" class="agf-context-summary"></span></div><div id="agfImageWorkspaceResult" class="agf-module-result"></div><div id="agfImageWorkspaceHistoryList" class="agf-module-history" style="display:none"></div><div class="agf-module-actions"><label class="agf-image-select-all"><input id="agfImageSelectAll" type="checkbox"> <span data-i18n="jixia.image.selectAll">全选</span></label><button id="agfImageProcessSelected" class="primary" disabled data-i18n="jixia.image.process">发送勾选图片识别</button><button id="agfImageAddToChat" class="primary" disabled data-i18n="jixia.image.addToChat">添加到对话框</button><button id="agfImageWorkspaceRetry" disabled data-i18n="jixia.image.retry">重新识别</button><button id="agfImageWorkspaceClear" data-i18n="jixia.image.clear">清除工作区</button><button id="agfImageWorkspaceDelete" data-i18n="jixia.image.delete">删除并清理历史</button><button id="agfImageWorkspaceExport" data-i18n="jixia.image.export">导出</button><button id="agfImageWorkspaceHistory" data-i18n="jixia.image.history">识别历史</button></div></div></div>
@@ -3047,8 +3040,9 @@ class ADHDHighlighter {
           <div class="agf-ai-view-module" id="agfAiViewVocab" style="display:none">
             <div class="agf-module-card">
               <div class="agf-module-heading"><span>词汇复习</span><span id="agfVocabStats" class="agf-module-meta">基础掌握度 0%</span></div>
+              <div class="agf-vocab-scenes"><button class="agf-task-btn" data-vocab-scene="全文关键词">全文关键词</button><button class="agf-task-btn" data-vocab-scene="逐段关键词">逐段关键词</button><button class="agf-task-btn" data-vocab-scene="雅思词汇">雅思词汇</button><button class="agf-task-btn" data-vocab-scene="托福词汇">托福词汇</button><button class="agf-task-btn" data-vocab-scene="四六级词汇">四六级词汇</button><button class="agf-task-btn" data-vocab-scene="高考词汇">高考词汇</button><button class="agf-task-btn" data-vocab-scene="K9词汇">K9词汇</button></div>
               <div id="agfVocabResult" class="agf-module-result"><p>基于当前文章生成一组复习词汇。</p></div>
-              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history" style="display:none"></div>
+              <div class="agf-module-actions"><button id="agfVocabStart" class="primary">生成复习卡</button><button id="agfVocabSaveDictionary" class="agf-task-btn">保存为词典</button><button id="agfVocabReset">重置本轮</button></div><div id="agfVocabHistory" class="agf-module-history" style="display:none"></div>
             </div>
           </div>
           <div id="agfFulltextPanel" class="agf-fulltext-panel">
@@ -3253,6 +3247,7 @@ class ADHDHighlighter {
     const vocabResult = document.getElementById('agfVocabResult');
     const vocabStats = document.getElementById('agfVocabStats');
     const vocabStart = document.getElementById('agfVocabStart');
+    const vocabSaveDictionary = document.getElementById('agfVocabSaveDictionary');
     const vocabReset = document.getElementById('agfVocabReset');
     const imageDropzone = document.getElementById('agfImageDropzone');
     const imageChooseBtn = document.getElementById('agfImageChooseBtn');
@@ -3287,6 +3282,10 @@ class ADHDHighlighter {
     const quizNext = document.getElementById('agfQuizNext');
     const quizProgressText = document.getElementById('agfQuizProgressText');
     const quizProgressBar = document.getElementById('agfQuizProgressBar');
+    const quizDiscussion = document.getElementById('agfQuizDiscussion');
+    const quizDiscussionBody = document.getElementById('agfQuizDiscussionBody');
+    const quizQuestionInput = document.getElementById('agfQuizQuestion');
+    const quizDiscussionList = document.getElementById('agfQuizDiscussionList');
     const quizHistoryBtn = document.getElementById('agfQuizHistory');
     const quizCountSelect = document.getElementById('agfQuizCount');
     const contextSummary = document.getElementById('agfContextSummary');
@@ -3718,7 +3717,7 @@ class ADHDHighlighter {
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (taskBar) taskBar.style.display = 'none';
-      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['chat','reading','quiz','explain','vocab','records'].includes(which) ? '' : 'none';
+      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['chat','reading','writing','quiz','explain','vocab','records'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
       currentView = which;
@@ -4914,11 +4913,16 @@ class ADHDHighlighter {
     const showQuiz = () => { setView('quiz'); if (quizItems.length) renderQuizQuestion(); };
     const startQuiz = async (difficulty = quizDifficulty) => {
       quizFromHistory = false; if (quizBackHistory) quizBackHistory.style.display = 'none'; quizDifficulty = difficulty; quizStartedAt = Date.now(); quizRecordId = ''; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = '<p>正在基于当前上下文生成题目...</p>';
-      try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; renderQuizQuestion(); }
+      try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; if (quizDiscussion) quizDiscussion.style.display = 'block'; renderQuizQuestion(); }
       catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
     };
     const submitQuizAnswer = async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; };
     const nextQuizQuestion = async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } };
+    const quizDiscussionPayload = () => quizIndex < quizItems.length - 1 || !quizItems[quizIndex]?.isCorrect ? { question: quizItems[quizIndex], scope: '当前题目' } : { questions: quizItems, score: quizScore, scope: '整套测试' };
+    const quizDiscussionToggle = document.getElementById('agfQuizDiscussToggle');
+    if (quizDiscussionToggle) quizDiscussionToggle.onclick = () => { quizDiscussionBody.style.display = quizDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
+    const quizDiscussionSend = document.getElementById('agfQuizDiscussSend');
+    if (quizDiscussionSend) quizDiscussionSend.onclick = async () => { const question = String(quizQuestionInput?.value || '').trim(); if (!question || !quizItems.length) return; const payload = quizDiscussionPayload(); quizDiscussionSend.disabled = true; try { const answer = await jixiaTask.requestJsonText({ prompt: `你正在进行测试工作区的深入讨论。请解释题目、选项、正确答案和用户选择之间的关系，引用原文依据，不要修改成绩。\n\n测试数据：\n${JSON.stringify(payload, null, 2)}\n\n用户问题：\n${question}`, maxTokens: 2200, temperature: .3 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; quizDiscussionList.appendChild(turn); quizQuestionInput.value = ''; } catch (error) { showToast(error.message || '测试讨论失败'); } finally { quizDiscussionSend.disabled = false; } };
     JixiaUiModules.bindQuizEvents({ elements: { submit: quizSubmit, next: quizNext, backHistory: quizBackHistory, tab: quizTab, start: document.getElementById('agfQuizStart'), easy: document.getElementById('agfQuizEasy'), hard: document.getElementById('agfQuizHard'), history: quizHistoryBtn }, actions: { submit: submitQuizAnswer, next: nextQuizQuestion, backHistory: () => { quizCard.style.display = 'none'; showQuizHistory(); }, show: showQuiz, start: startQuiz, history: showQuizHistory } });
     const rebuildConvIndex = () => {
       const ci = document.getElementById('agfConvIndex');
@@ -5908,7 +5912,7 @@ class ADHDHighlighter {
             if (item.type === 'quiz') {
               const record = item; quizItems = record.questions || []; quizIndex = Math.max(0, quizItems.findIndex(q => typeof q.isCorrect !== 'boolean')); quizScore = Number(record.score || 0); quizDifficulty = record.difficulty || 'easy'; quizContextRef = record.context || null; quizRecordId = record.id; quizFromHistory = true; setView('quiz'); quizCard.style.display = quizItems.length ? 'block' : 'none'; quizStartActions.style.display = 'none'; renderQuizQuestion();
             } else if (item.type === 'explain') {
-              explainContext = item.context; setView('explain'); explainSource.textContent = `${String(item.text || '').length} 字 · ${item.context?.pageTitle || '当前页面'}`; explainResult.innerHTML = typeof markdownToHtml === 'function' ? markdownToHtml(item.output || '') : String(item.output || '').replace(/\n/g, '<br>'); explainToChat.disabled = false; explainRetry.disabled = false;
+              setView('reading'); showToast('解释记录已归入阅读工作区；请在阅读场景中继续处理。');
             } else if (item.type === 'image') {
               currentMediaContext = item.context; currentMediaBatch = [item.context]; setView('image'); renderMediaAttachment();
             } else if (item.type === 'chart') {
@@ -7106,7 +7110,7 @@ class ADHDHighlighter {
     const renderVocabCard = () => {
       const card = vocabCards[vocabIndex]; if (!card) { vocabResult.innerHTML = '<p>本轮复习完成。</p>'; return; }
       const mastery = Number(card.mastery || 0); vocabStats.textContent = `基础掌握度 ${mastery}% · ${vocabIndex + 1}/${vocabCards.length}`;
-      vocabResult.innerHTML = `<div class="agf-vocab-card"><strong>${String(card.word)}</strong><p>${String(card.meaning || '请回忆这个词的含义')}</p><p><em>${String(card.example || '')}</em></p><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
+      vocabResult.innerHTML = `<div class="agf-vocab-card"><strong>${String(card.word)}</strong><small>词性：${String(card.pos || card.partOfSpeech || '待补充')}</small><p>${String(card.meaning || '请回忆这个词的含义')}</p><p><em>${String(card.example || '')}</em></p><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
       const answer = remembered => vocabModule ? vocabModule.answer(remembered) : Promise.resolve();
       document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
     };
@@ -7115,10 +7119,10 @@ class ADHDHighlighter {
       const ctx = await jixiaContext.resolve('full_article');
       const output = await jixiaTask.requestJsonText({ prompt: `从材料中挑选最多8个适合学习的核心词汇，返回严格JSON数组，每项包含 word,meaning,example。不要Markdown。\n\n材料：\n${limitJixiaText(ctx.text, 30000).text}`, maxTokens: 1400, temperature: .25 });
       const parsed = parseJsonPayload(output); const old = await loadVocab();
-      vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
+      vocabCards = (Array.isArray(parsed) ? parsed : []).filter(x => x && String(x.word).trim()).slice(0, 8).map(x => { const prior = old.find(y => y.word === x.word); return { ...x, word: String(x.word).trim(), pos: x.pos || x.partOfSpeech || '待补充', mastery: prior ? Number(prior.mastery || 0) : 0, reviewCount: prior ? Number(prior.reviewCount || 0) : 0, pageUrl: ctx.canonicalUrl }; });
       vocabIndex = 0; if (!vocabCards.length) throw new Error('没有生成有效词汇，请重试。'); renderVocabCard(); renderVocabHistory();
     };
-    vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: jixiaTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards; vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
+    vocabModule = JixiaModules.createVocabularyReviewModule({ context: jixiaContext, task: jixiaTask, load: loadVocab, save: saveVocab, onCards: (cards, index) => { vocabCards = cards.map(card => ({ ...card, pos: card.pos || card.partOfSpeech || '待补充' })); vocabIndex = index; renderVocabCard(); renderVocabHistory(); } });
     const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
     const renderP1Result = (kind, result, ctx) => {
@@ -7211,6 +7215,8 @@ class ADHDHighlighter {
     });
     JixiaUiModules.bindExplainEvents({ elements: { tab: explainTab, retry: explainRetry, toChat: explainToChat }, actions: { open: () => { if (getSelectedTextSafe()) explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }); else setView('explain'); }, retry: () => explainSelection().catch(error => { explainResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), toChat: () => { if (explainContext) runArticleChatTask({ title: '请基于下面的选区解释继续回答我的问题。', prefix: '选区解释追问', contextSource: 'selection', extra: '先复述解释要点，再等待用户追问。' }); } } });
     JixiaUiModules.bindVocabularyEvents({ elements: { tab: vocabTab, start: vocabStart, reset: vocabReset }, actions: { open: () => { setView('vocab'); renderVocabHistory(); }, start: () => startVocabReview().catch(error => { vocabResult.innerHTML = `<p>${String(error.message || error)}</p>`; }), reset: () => { vocabModule.reset(); vocabResult.innerHTML = '<p>基于当前文章生成一组复习词汇。</p>'; vocabStats.textContent = '基础掌握度 0%'; } } });
+    overlay.querySelectorAll('[data-vocab-scene]').forEach(button => { button.onclick = () => { setView('vocab'); if (vocabResult) vocabResult.innerHTML = `<p>正在生成${p1Esc(button.dataset.vocabScene)}…</p>`; startVocabReview().catch(error => { if (vocabResult) vocabResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; }); }; });
+    if (vocabSaveDictionary) vocabSaveDictionary.onclick = () => showToast('词典保存入口已保留，下一步接入统一 DictionaryTool。');
     if (visionOcrBtn) visionOcrBtn.onclick = async () => {
       if (!currentMediaContext || currentMediaContext.source !== 'image') { showToast('请先选择一张图片。'); return; }
       try { showChat(); const output = await jixiaTask.requestGlmVision({ imageDataUrl: currentMediaContext.image.dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出“图片文字”部分，尽量逐行保留原文；再输出“图片说明”部分，说明图片中的主要内容、布局和重要视觉信息。无法确认的内容请明确标注不确定。' }); if (inputUser) inputUser.innerText = output; if (composerHidden) composerHidden.value = output; nextPromptIsGenerated = true; currentPrefix = '图片识别/OCR'; sendChat(); } catch (e) { showToast(e.message || '图片识别失败'); }
