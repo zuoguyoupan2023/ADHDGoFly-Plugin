@@ -1048,6 +1048,7 @@ class ADHDHighlighter {
           break;
         case 'aiChatStreamError':
           try {
+            setAiWaiting(false);
             const err = (message && typeof message.error === 'string' && message.error) ? message.error : '请求失败';
             showStickyToast(err);
             const aIndex = chatMessages.length;
@@ -2858,6 +2859,9 @@ class ADHDHighlighter {
       .agf-settings-content{border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fff;min-height:0;height:100%;overflow:auto}
       #agfSettingsContentApi{min-height:0;height:100%;overflow:auto}
       .agf-status-fixed{display:none}
+      .agf-ai-waiting{display:inline-flex;align-items:center;gap:5px;color:#687386;font-size:11px;margin-left:8px}
+      .agf-ai-waiting-spinner{width:12px;height:12px;border:2px solid #dfe5f2;border-top-color:#315efb;border-radius:50%;animation:agf-ai-spin .8s linear infinite;box-sizing:border-box}
+      @keyframes agf-ai-spin{to{transform:rotate(360deg)}}
       .agf-conv-index{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
@@ -3002,7 +3006,7 @@ class ADHDHighlighter {
         </div>
         <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
-          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
+          <div class="agf-fixed-bar"><div class="agf-fixed-line"><span id="agfStatusText"></span><span id="agfAiWaiting" class="agf-ai-waiting" hidden><span class="agf-ai-waiting-spinner" aria-hidden="true"></span><span data-i18n="aiPanel.waiting">等待中…</span></span><span id="agfConvRounds" class="agf-conv-rounds"></span><div id="agfConvIndex" class="agf-conv-index"></div><div id="agfCarryWrap" class="agf-rounds-wrap agf-carry-top" style="display:none"><span class="agf-rounds-label" data-i18n="aiPanel.carry">携带</span><input class="agf-field" id="agfCarryInput" type="text" value="2" style="width:24px;text-align:center" /><span class="agf-rounds-label" data-i18n="aiPanel.qnaSuffix">轮问答</span></div></div></div>
       <div class="agf-ai-body">
         <div class="agf-ai-content">
           <div class="agf-ai-view-chat" id="agfAiViewChat">
@@ -3342,6 +3346,8 @@ class ADHDHighlighter {
     const mediaStrategy = document.getElementById('agfMediaStrategy');
     if (mediaModeSelect) mediaModeSelect.disabled = true;
     const statusText = document.getElementById('agfStatusText');
+    const aiWaiting = document.getElementById('agfAiWaiting');
+    const setAiWaiting = visible => { if (aiWaiting) aiWaiting.hidden = !visible; };
     const viewSettings = document.getElementById('agfAiViewSettings');
     const providerList = document.getElementById('agfProviderList');
     const modelList = document.getElementById('agfModelList');
@@ -5730,7 +5736,7 @@ class ADHDHighlighter {
 
     function initComposerSelects() {
       if (!sessionProviderSelect || !sessionModelSelect) return;
-      if (sessionProviderSelect.dataset.initialized === 'true') return;
+      const alreadyInitialized = sessionProviderSelect.dataset.initialized === 'true';
       sessionProviderSelect.dataset.initialized = 'true';
       const providers = Object.keys(PROVIDERS_CONFIG).filter(p => aiKeysState && aiKeysState[p]).filter(p => p !== 'openrouter' && p !== 'siliconflow' && p !== 'groq' && p !== 'minimax');
       sessionProviderSelect.title = providers.length > 1 ? '切换 AI 服务商' : '当前 AI 服务商已在插件设置中配置';
@@ -5767,13 +5773,13 @@ class ADHDHighlighter {
       };
       if (selectedProv) fillModelsForProv(selectedProv);
       updateReasoningToggle();
-      sessionProviderSelect.addEventListener('change', () => {
+      if (!alreadyInitialized) sessionProviderSelect.addEventListener('change', () => {
         try { if (typeof saveConversationSnapshot === 'function' && ((currentConversationId && currentConversationId.length) || (Array.isArray(chatMessages) && chatMessages.length))) { saveConversationSnapshot().catch(()=>{}); } } catch(_){}
         const prov = sessionProviderSelect.value;
         fillModelsForProv(prov);
         updateReasoningToggle();
       });
-      sessionModelSelect.addEventListener('change', updateReasoningToggle);
+      if (!alreadyInitialized) sessionModelSelect.addEventListener('change', updateReasoningToggle);
     }
     
     let autoScrollEnabled = true;
@@ -6648,6 +6654,7 @@ class ADHDHighlighter {
 
     const startAssistantStream = () => {
       if (!chatList) return;
+      setAiWaiting(true);
       const wrap = document.createElement('div');
       wrap.className = 'agf-msg assistant';
       const bubbleEl = document.createElement('div');
@@ -7251,6 +7258,7 @@ class ADHDHighlighter {
 
     this.__onAiStreamDelta = (delta) => {
       if (typeof delta !== 'string' || !delta) return;
+      setAiWaiting(false);
       streamingText += delta;
       if (streamingBubble) {
         const html = markdownToHtml(streamingText);
@@ -7260,6 +7268,7 @@ class ADHDHighlighter {
       }
     };
     this.__onAiStreamDone = () => {
+      setAiWaiting(false);
       if (streamingText) {
         const idx = chatMessages.length;
         chatMessages.push({ role: 'assistant', content: streamingText, provider: currentReplyProvider, model: currentReplyModel });

@@ -57,7 +57,7 @@
     "statusHintOk": "绿色: 已获取该页面文本",
     "statusHintProcessing": "处理中: 正在获取该页面文本",
     "statusFailed": "处理失败，请刷新以重新处理",
-    "processingText": "正在处理文本",
+    "processingText": "正在处理文本", "waiting": "等待中…",
     "summary": "总结",
     "more": "更多",
     "structured": "结构化摘要",

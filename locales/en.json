@@ -57,7 +57,7 @@
     "statusHintOk": "Green: Page text loaded",
     "statusHintProcessing": "Processing: Fetching page text",
     "statusFailed": "Processing failed, refresh to retry",
-    "processingText": "Processing text",
+    "processingText": "Processing text", "waiting": "Waiting…",
     "summary": "Summary",
     "more": "More",
     "structured": "Structured Summary",
