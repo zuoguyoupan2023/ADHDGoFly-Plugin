@@ -4070,6 +4070,7 @@ class ADHDHighlighter {
       applyChartZoom();
       attachChartInteractions();
       renderChartSourceLinks();
+      highlightWorkspaceRoot(chartView);
       updateChartHistoryButtons();
     };
     if (chartZoomOut) chartZoomOut.onclick = () => setChartZoom(chartZoom - 0.15);
@@ -4557,7 +4558,7 @@ class ADHDHighlighter {
       if (mediaStrategy) mediaStrategy.textContent = '图片已加入，等待发送时判断模型能力';
       if (contextSummary) contextSummary.textContent = `${window.i18n?.t?.('jixia.context.summary', { label: window.i18n?.t?.(`jixia.context.${kind}`) || (kind === 'image' ? '图片' : '音频') }) || `当前上下文：${kind === 'image' ? '图片' : '音频'}`} · ${file.name}`;
       if (kind === 'image' && imageWorkspaceStatus) { imageWorkspaceStatus.textContent = '识别中…'; imageWorkspaceResult.innerHTML = `<p>已添加：${String(file.name)}</p><img src="${dataUrl}" alt="待识别图片" style="max-width:180px;max-height:120px;border-radius:8px"/>`; }
-      if (kind === 'image') { try { const output = await jixiaTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfJixiaImageRecognitionHistory'], r => resolve(Array.isArray(r.agfJixiaImageRecognitionHistory) ? r.agfJixiaImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfJixiaImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
+      if (kind === 'image') { try { const output = await jixiaTask.requestGlmVision({ imageDataUrl: dataUrl, prompt: '请完成图片 OCR 与视觉理解。先输出图片文字，再输出图片说明；不确定内容请明确标注。' }); currentMediaContext.recognition = { model: 'glm-4v-flash', status: 'completed', text: output, ocrText: output, createdAt: Date.now() }; const history = await new Promise(resolve => chrome.storage.local.get(['agfJixiaImageRecognitionHistory'], r => resolve(Array.isArray(r.agfJixiaImageRecognitionHistory) ? r.agfJixiaImageRecognitionHistory : []))); const historyId = `image-${Date.now()}`; currentMediaContext.metadata = { ...(currentMediaContext.metadata || {}), historyId }; history.unshift({ id: historyId, name: file.name, output, context: currentMediaContext, createdAt: Date.now() }); await new Promise(resolve => chrome.storage.local.set({ agfJixiaImageRecognitionHistory: history.slice(0, 30) }, resolve)); if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别完成'; if (imageWorkspaceResult) imageWorkspaceResult.innerHTML += `<div style="margin-top:12px"><strong>识别结果</strong><div>${typeof markdownToHtml === 'function' ? markdownToHtml(output) : String(output).replace(/\n/g,'<br>')}</div></div>`; highlightWorkspaceRoot(imageWorkspaceResult); if (imageAddToChat) imageAddToChat.disabled = false; if (imageWorkspaceRetry) imageWorkspaceRetry.disabled = false; } catch (e) { if (imageWorkspaceStatus) imageWorkspaceStatus.textContent = '识别失败'; showToast(e.message || '图片识别失败'); } }
       else showToast('音频已加入上下文，音频转写功能尚未开启。');
     };
     const processImageBatch = async (files) => {
@@ -4950,6 +4951,7 @@ class ADHDHighlighter {
         quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}${Array.isArray(q.optionReasons) ? `<details><summary>查看每个选项的原因</summary><div>${q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('')}</div></details>` : ''}`;
         quizNext.style.display = quizIndex + 1 < quizItems.length ? 'inline-block' : 'none';
       }
+      highlightWorkspaceRoot(quizCard);
     };
     const showQuiz = () => { setView('quiz'); if (quizItems.length) renderQuizQuestion(); };
     const startQuiz = async (difficulty = quizDifficulty) => {
@@ -4957,7 +4959,7 @@ class ADHDHighlighter {
       try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; if (quizDiscussion) quizDiscussion.style.display = 'block'; renderQuizQuestion(); }
       catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
     };
-    const submitQuizAnswer = async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; };
+    const submitQuizAnswer = async () => { const q = quizItems[quizIndex]; if (!q || quizSelected < 0) return; quizAnswered = true; const answer = Number(q.answer); q.selected = quizSelected; q.isCorrect = quizSelected === answer; if (q.isCorrect) quizScore++; await saveQuizHistory(false); quizOptions.querySelectorAll('button').forEach((b, i) => { b.disabled = true; if (i === answer) b.classList.add('correct'); if (i === quizSelected && i !== answer) b.classList.add('wrong'); }); quizFeedback.style.display = 'block'; quizFeedback.innerHTML = `<strong>${q.isCorrect ? '回答正确' : '回答不正确'}</strong><div>${String(q.explanation || '')}</div>${q.evidence?.quote ? `<div class="agf-quiz-evidence">原文依据：${String(q.evidence.quote)}</div>` : ''}<details><summary>查看每个选项的原因</summary><div>${Array.isArray(q.optionReasons) ? q.optionReasons.map((reason, i) => `<p>${String.fromCharCode(65 + i)}. ${String(reason)}</p>`).join('') : '暂无逐项原因'}</div></details>`; quizSubmit.style.display = 'none'; quizNext.style.display = 'inline-block'; highlightWorkspaceRoot(quizCard); };
     const nextQuizQuestion = async () => { if (quizIndex + 1 < quizItems.length) { quizIndex++; quizSubmit.style.display = 'inline-block'; renderQuizQuestion(); } else { await saveQuizHistory(true); quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<h3>完成测试</h3><p>答对 ${quizScore} / ${quizItems.length} 题</p><div class="agf-quiz-actions"><button id="agfQuizEasyResult">简单一些</button><button id="agfQuizHardResult">难一些</button><button id="agfQuizHistoryResult">测试历史</button><button id="agfQuizChat">返回聊天</button></div>`; document.getElementById('agfQuizEasyResult').onclick = () => startQuiz('easy'); document.getElementById('agfQuizHardResult').onclick = () => startQuiz('hard'); document.getElementById('agfQuizHistoryResult').onclick = showQuizHistory; document.getElementById('agfQuizChat').onclick = showChat; } };
     const quizDiscussionPayload = () => quizIndex < quizItems.length - 1 || !quizItems[quizIndex]?.isCorrect ? { question: quizItems[quizIndex], scope: '当前题目' } : { questions: quizItems, score: quizScore, scope: '整套测试' };
     const quizDiscussionToggle = document.getElementById('agfQuizDiscussToggle');
@@ -5420,6 +5422,7 @@ class ADHDHighlighter {
     const highlightOnBtn = overlay.querySelector('#agfHighlightOn');
     const highlightOffBtn = overlay.querySelector('#agfHighlightOff');
     let highlightEnabled = true;
+    const workspaceHighlightRoots = new Set();
     let highlightInitPhase = true;
     const setHighlightEnabled = (on, persist) => {
       highlightEnabled = !!on;
@@ -5429,6 +5432,7 @@ class ADHDHighlighter {
       if (!highlightInitPhase) {
         if (on) { rehighlightAllBubbles(); }
         else { cancelAllHighlightJobs(); clearAllHighlights(); renderPlainAllBubbles(); }
+        workspaceHighlightRoots.forEach(root => { if (on) highlightWorkspaceRoot(root); else clearWorkspaceHighlights(root); });
       }
     };
     setHighlightEnabled(true, false);
@@ -6307,6 +6311,20 @@ class ADHDHighlighter {
       setTimeout(run, 0);
       return { cancel: () => { canceled = true; } };
     };
+    const clearWorkspaceHighlights = (root) => {
+      if (!root) return;
+      root.querySelectorAll('.adhd-processed').forEach(element => {
+        try {
+          const originalText = element.getAttribute('data-original-text') || element.textContent;
+          element.replaceWith(document.createTextNode(originalText));
+        } catch (_) {}
+      });
+    };
+    const highlightWorkspaceRoot = (root) => {
+      if (!root) return;
+      workspaceHighlightRoots.add(root);
+      if (highlightEnabled) scheduleIncrementalHighlight(root);
+    };
 
     const rehighlightAllBubbles = () => {
       if (!highlightEnabled) return;
@@ -7171,14 +7189,14 @@ class ADHDHighlighter {
     };
     const renderVocabSummary = () => {
       vocabStats.textContent = `已完成 ${vocabCards.length} 词复习`;
-      vocabResult.innerHTML = `<p>本轮复习完成，下面是总览。</p><div class="agf-vocab-list"><table><thead><tr><th>词汇</th><th>词性</th><th>含义</th><th>例句</th></tr></thead><tbody>${vocabCards.map(item => { const latin = /[A-Za-z]/.test(String(item.word || '')); const meaning = latin ? (item.definition || item.englishMeaning || item.meaning || '') : (item.meaning || item.definition || item.englishMeaning || ''); return `<tr><td>${p1Esc(item.word)}</td><td>${p1Esc(item.pos || item.partOfSpeech || '待补充')}</td><td>${p1Esc(meaning)}</td><td>${p1Esc(item.example || '')}</td></tr>`; }).join('')}</tbody></table></div>`;
+      vocabResult.innerHTML = `<p>本轮复习完成，下面是总览。</p><div class="agf-vocab-list"><table><thead><tr><th>词汇</th><th>词性</th><th>含义</th><th>例句</th></tr></thead><tbody>${vocabCards.map(item => { const latin = /[A-Za-z]/.test(String(item.word || '')); const meaning = latin ? (item.definition || item.englishMeaning || item.meaning || '') : (item.meaning || item.definition || item.englishMeaning || ''); return `<tr><td>${p1Esc(item.word)}</td><td>${p1Esc(item.pos || item.partOfSpeech || '待补充')}</td><td>${p1Esc(meaning)}</td><td>${p1Esc(item.example || '')}</td></tr>`; }).join('')}</tbody></table></div>`; highlightWorkspaceRoot(vocabResult);
     };
     const renderVocabCard = () => {
       if (!vocabCards.length) { vocabResult.innerHTML = '<p>请先选择“全文关键词”或“逐段关键词”。</p>'; return; }
       if (vocabIndex >= vocabCards.length) { renderVocabSummary(); return; }
       const card = vocabCards[vocabIndex]; const mastery = Number(card.mastery || 0); vocabStats.textContent = `已提取 ${vocabCards.length} 词 · 当前掌握度 ${mastery}%`;
       const latin = /[A-Za-z]/.test(String(card.word || '')); const meaning = latin ? (card.definition || card.englishMeaning || card.meaning || '') : (card.meaning || card.definition || card.englishMeaning || '');
-      vocabResult.innerHTML = `<article class="agf-vocab-card"><h3>${p1Esc(card.word)}</h3><p><strong>词性：</strong>${p1Esc(card.pos || card.partOfSpeech || '待补充')}</p><p><strong>含义：</strong>${p1Esc(meaning)}</p><p><strong>例句：</strong>${p1Esc(card.example || '')}</p><button class="agf-task-btn" data-vocab-sentence="${vocabIndex}">造句</button></article><div class="agf-vocab-review-current"><span>第 ${vocabIndex + 1} / ${vocabCards.length} 词</span><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`;
+      vocabResult.innerHTML = `<article class="agf-vocab-card"><h3>${p1Esc(card.word)}</h3><p><strong>词性：</strong>${p1Esc(card.pos || card.partOfSpeech || '待补充')}</p><p><strong>含义：</strong>${p1Esc(meaning)}</p><p><strong>例句：</strong>${p1Esc(card.example || '')}</p><button class="agf-task-btn" data-vocab-sentence="${vocabIndex}">造句</button></article><div class="agf-vocab-review-current"><span>第 ${vocabIndex + 1} / ${vocabCards.length} 词</span><button id="agfVocabRemember">我记住了</button><button id="agfVocabForget">还不熟</button></div>`; highlightWorkspaceRoot(vocabResult);
       const answer = remembered => vocabModule ? vocabModule.answer(remembered) : Promise.resolve();
       document.getElementById('agfVocabRemember').onclick = () => answer(true); document.getElementById('agfVocabForget').onclick = () => answer(false);
       vocabResult.querySelectorAll('[data-vocab-sentence]').forEach(button => { button.onclick = async () => { const item = vocabCards[Number(button.dataset.vocabSentence)]; button.disabled = true; try { const language = /[A-Za-z]/.test(item.word) ? '英文' : '中文'; const output = await jixiaTask.requestJsonText({ prompt: `请用词汇“${item.word}”造一个自然、符合语境的${language}句子，只返回句子，并附带简短中文解释。`, maxTokens: 500, temperature: .4 }); button.parentElement.innerHTML = p1Esc(output); } catch (error) { showToast(error.message || '造句失败'); } finally { button.disabled = false; } }; });
@@ -7209,6 +7227,7 @@ class ADHDHighlighter {
       if (kind === 'structured') { p1Result.innerHTML = `<h3>主旨</h3><p>${p1Esc(result.thesis)}</p><h3>论点与证据</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>证据：${p1Esc(p1Text(item.evidence))}</p><small>置信度：${p1Esc(item.confidence ?? '未提供')}</small></article>`).join('') || '<p>暂无论点。</p>'}<h3>因果关系</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} → ${p1Esc(item.effect)}<br>依据：${p1Esc(item.evidence)}</p>`).join('') || '<p>暂无明确因果关系。</p>'}<h3>争议点</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>立场：${p1Esc(p1Text(item.positions))}<br>不确定性：${p1Esc(item.uncertainty)}</p>`).join('') || '<p>未识别到争议点。</p>'}`; }
       else if (kind === 'writing') { p1Result.innerHTML = `<h3>${p1Esc(result.title || '写作结果')}</h3>${(result.sections || []).map(section => `<article><h4>${p1Esc(section.heading)}</h4><p>${p1Esc(section.content)}</p><ul>${(section.bullets || []).map(bullet => `<li>${p1Esc(bullet)}</li>`).join('')}</ul></article>`).join('')}<h3>草稿</h3><pre style="white-space:pre-wrap">${p1Esc(result.draft)}</pre>${(result.citations || []).length ? `<h3>引用卡片</h3>${result.citations.map(citation => `<blockquote>${p1Esc(citation.quote || citation.text)}<br><small>${p1Esc(citation.use || citation.locator)}</small></blockquote>`).join('')}` : ''}`; }
       else { const names = { fact: '事实', inference: '推论', opinion: '观点', unverified: '待验证' }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>：${p1Esc(item.text)}<p>依据：${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · 置信度 ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || '<p>没有识别到可分类陈述。</p>'; }
+      highlightWorkspaceRoot(p1Result);
     };
     const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
     const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
@@ -7261,7 +7280,7 @@ class ADHDHighlighter {
       if (!duplicate) { rows.unshift(record); await writeHistory(writingHistoryKey, rows); }
       if (!silent) showSaveToast('写作结果已保存'); return true;
     };
-    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingSave) readingSave.disabled = false; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; saveReadingResult(true).catch(() => {}); };
+    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingSave) readingSave.disabled = false; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); else highlightWorkspaceRoot(p1Result); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; saveReadingResult(true).catch(() => {}); };
     const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? '请先在网页中选中文本。' : '当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const runArticleChatTask = options => chatModule.runTask(options);
     const readingScenes = p1View.querySelectorAll('[data-reading-scene]');
@@ -7285,7 +7304,7 @@ class ADHDHighlighter {
     let writingContext = null;
     let writingOutput = '';
     const writingScenePrompts = { translate: '请翻译以下文章，保留段落结构和关键术语。', news: '请将以下文章改写成客观、清晰的新闻稿，不能虚构事实。', 'style-summary': '请总结以下文章的语言风格、句式、语气、结构和常用表达。', 'style-copy': '请在保留事实的前提下，模仿以下文章的语言风格重写一版。' };
-    const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${scene} · ${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; writingView.querySelector('#agfWritingSave').disabled = !writingOutput; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; saveWritingResult(true).catch(() => {}); };
+    const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${scene} · ${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; writingView.querySelector('#agfWritingSave').disabled = !writingOutput; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; highlightWorkspaceRoot(writingResult); writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; saveWritingResult(true).catch(() => {}); };
     const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = '<p>正在生成，请稍候…</p>'; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || '无法调用图表能力')); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     writingView.querySelectorAll('[data-writing-scene]').forEach(button => { button.onclick = () => runWritingScene(button.dataset.writingScene); });
     writingView.querySelector('#agfWritingDiscussToggle').onclick = () => { writingDiscussionBody.style.display = writingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
