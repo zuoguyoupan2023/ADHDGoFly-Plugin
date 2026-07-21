@@ -2889,11 +2889,11 @@ class ADHDHighlighter {
       .agf-resize-left{position:absolute;top:0;left:0;width:8px;height:100%;cursor:ew-resize}
       /* Jixia floating workspace: keep the existing capabilities, clarify the reading flow. */
       .agf-ai-overlay{background:#f7f8fb;border:1px solid #dfe5f2;border-radius:16px;box-shadow:0 22px 60px rgba(23,32,51,.24);overflow:hidden}
-      .agf-ai-header{min-height:58px;padding:12px 16px;background:#fff;border-bottom:1px solid #e5e9f0}
+      .agf-ai-header{min-height:0;height:auto;padding:6px 10px;background:#fff;border-bottom:1px solid #e5e9f0;box-sizing:border-box}
       .agf-ai-title{gap:8px;color:#172033;font-size:15px}
       .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
       .agf-ai-controls{gap:4px}
-      .agf-ai-controls button,.agf-ai-tabs button{height:28px;min-width:28px;border:1px solid transparent;border-radius:8px;color:#687386}
+      .agf-ai-controls button,.agf-ai-tabs button{height:26px;min-width:26px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
       .agf-fixed-bar{margin:0 12px;padding:8px 10px;border:1px solid #e1e6ef;border-radius:10px;background:#fff;color:#687386;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-ai-body{padding:12px;gap:10px;background:#f7f8fb}
@@ -2920,6 +2920,15 @@ class ADHDHighlighter {
       .agf-settings-tab:hover{background:#edf2ff;color:#315efb}
       .agf-settings-tab.active{background:#e8eeff;border-color:#d7e0ff;color:#315efb}
       .agf-settings-content{border:0;padding:0;background:transparent}
+      .agf-module-actions button{height:26px;padding:0 8px;border-radius:7px;font-size:12px}
+      @media (max-width:560px){
+        .agf-function-bar{flex-wrap:wrap;row-gap:4px;padding:4px 8px}
+        .agf-function-bar .agf-ai-tabs{order:1;flex:1 1 auto;min-width:0;overflow:hidden;gap:2px}
+        .agf-function-bar .agf-ai-tabs button{padding:0 6px;min-width:0}
+        .agf-function-bar .agf-context-tools{position:static;order:2;transform:none;flex:1 1 auto;min-width:0;justify-content:flex-start}
+        .agf-function-bar .agf-media-context-tools{order:3;flex:0 0 100%;justify-content:flex-end;margin-left:0;gap:3px}
+        .agf-function-bar .agf-media-context-tools .agf-context-btn{padding:0 6px}
+      }
       .agf-settings-row{gap:10px;margin-top:10px;align-items:flex-start}
       .agf-label{min-width:72px;padding-top:7px;color:#687386;font-size:11px}
       .agf-provider-meta{font-size:11px}
@@ -3738,7 +3747,7 @@ class ADHDHighlighter {
       const visible = new Set(groups[which] || []);
       ['agfQuickSummaryBtn','agfBeginnerExplainBtn','agfBtnTranslate','agfBtnSelectionExplain','agfBtnKeywords','agfBtnStructured','agfBtnExplain','agfBtnOutline','agfBtnVisionOcr','agfBtnChartSkill','agfBtnStructuredReading','agfBtnWriting','agfBtnFactCheck'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = visible.has(id) ? '' : 'none'; });
       if (taskBar) taskBar.style.display = 'none';
-      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['chat','reading','writing','quiz','explain','vocab','records'].includes(which) ? '' : 'none';
+      if (moduleHistoryBtn) moduleHistoryBtn.style.display = ['chat','reading','writing','quiz','explain','vocab','image','chart','records'].includes(which) ? '' : 'none';
     };
     const setView = (which) => {
       currentView = which;
@@ -3798,8 +3807,8 @@ class ADHDHighlighter {
       ['agfBtnFactCheck', '事实辨识']
     ];
     p1Actions.forEach(([id, label]) => { if (!document.getElementById(id) && taskActions) { const button = document.createElement('button'); button.id = id; button.className = 'agf-task-btn'; button.textContent = label; button.disabled = true; taskActions.appendChild(button); } });
-    const p1View = document.createElement('div'); p1View.id = 'agfAiViewP1'; p1View.className = 'agf-ai-view-module'; p1View.style.display = 'none'; p1View.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfP1Title">阅读</span><span id="agfP1Meta" class="agf-module-meta"></span></div><div class="agf-reading-scenes" id="agfReadingScenes">${[['summary','总结'],['beginner','保姆级解读'],['structured','结构化摘要'],['outline','提取大纲'],['explain','简明解释'],['keywords','提取关键词'],['fact','事实辨识'],['structuredReading','结构化阅读']].map(([id,label]) => `<button class="agf-task-btn" data-reading-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions" id="agfP1Actions"><button id="agfReadingSave" class="agf-task-btn" disabled>保存结果</button></div><div id="agfP1Result" class="agf-module-result"><p>选择一个阅读场景开始。</p></div><div id="agfReadingDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfReadingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfReadingDiscussionBody" style="display:none"><textarea id="agfReadingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前阅读结果提问"></textarea><button id="agfReadingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfReadingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(p1View);
-    const writingView = document.createElement('div'); writingView.id = 'agfAiViewWriting'; writingView.className = 'agf-ai-view-module'; writingView.style.display = 'none'; writingView.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfWritingTitle">写作</span><span id="agfWritingMeta" class="agf-module-meta"></span></div><div class="agf-writing-scenes">${[['translate','翻译'],['chart','做图表'],['news','改写成新闻'],['style-summary','文风总结'],['style-copy','文风仿写']].map(([id,label]) => `<button class="agf-task-btn" data-writing-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions"><button id="agfWritingSave" class="agf-task-btn" disabled>保存结果</button></div><div id="agfWritingResult" class="agf-module-result"><p>选择一个写作场景开始。</p></div><div id="agfWritingDiscussion" style="display:none"><button id="agfWritingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfWritingDiscussionBody" style="display:none"><textarea id="agfWritingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前写作结果提问"></textarea><button id="agfWritingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfWritingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(writingView);
+    const p1View = document.createElement('div'); p1View.id = 'agfAiViewP1'; p1View.className = 'agf-ai-view-module'; p1View.style.display = 'none'; p1View.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfP1Title">阅读</span><span id="agfP1Meta" class="agf-module-meta"></span></div><div class="agf-reading-scenes" id="agfReadingScenes">${[['summary','总结'],['beginner','保姆级解读'],['structured','结构化摘要'],['outline','提取大纲'],['explain','简明解释'],['keywords','提取关键词'],['fact','事实辨识'],['structuredReading','结构化阅读']].map(([id,label]) => `<button class="agf-task-btn" data-reading-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions" id="agfP1Actions"><button id="agfReadingSave" class="agf-task-btn" disabled>保存</button></div><div id="agfP1Result" class="agf-module-result"><p>选择一个阅读场景开始。</p></div><div id="agfReadingDiscussion" class="agf-reading-discussion" style="display:none"><button id="agfReadingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfReadingDiscussionBody" style="display:none"><textarea id="agfReadingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前阅读结果提问"></textarea><button id="agfReadingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfReadingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(p1View);
+    const writingView = document.createElement('div'); writingView.id = 'agfAiViewWriting'; writingView.className = 'agf-ai-view-module'; writingView.style.display = 'none'; writingView.innerHTML = `<div class="agf-module-card"><div class="agf-module-heading"><span id="agfWritingTitle">写作</span><span id="agfWritingMeta" class="agf-module-meta"></span></div><div class="agf-writing-scenes">${[['translate','翻译'],['chart','做图表'],['news','改写成新闻'],['style-summary','文风总结'],['style-copy','文风仿写']].map(([id,label]) => `<button class="agf-task-btn" data-writing-scene="${id}">${label}</button>`).join('')}</div><div class="agf-module-actions"><button id="agfWritingSave" class="agf-task-btn" disabled>保存</button></div><div id="agfWritingResult" class="agf-module-result"><p>选择一个写作场景开始。</p></div><div id="agfWritingDiscussion" style="display:none"><button id="agfWritingDiscussToggle" class="agf-task-btn">深入讨论</button><div id="agfWritingDiscussionBody" style="display:none"><textarea id="agfWritingQuestion" class="agf-field" style="width:100%;min-height:70px;margin-top:8px;box-sizing:border-box" placeholder="针对当前写作结果提问"></textarea><button id="agfWritingDiscussSend" class="agf-task-btn" style="margin-top:6px">发送</button><div id="agfWritingDiscussionList" class="agf-module-result"></div></div></div></div>`; viewChart?.parentElement?.appendChild(writingView);
     const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
     const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
