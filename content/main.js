@@ -2892,6 +2892,7 @@ class ADHDHighlighter {
       .agf-ai-header{min-height:0;height:auto;padding:6px 10px;background:#fff;border-bottom:1px solid #e5e9f0;box-sizing:border-box}
       .agf-ai-title{gap:8px;color:#172033;font-size:15px}
       .agf-ai-title > span:first-child{display:inline-flex;align-items:center;gap:6px}
+      .agf-top-context-tools{display:inline-flex;align-items:center;margin-left:0}
       .agf-ai-controls{gap:4px}
       .agf-ai-controls button,.agf-ai-tabs button{height:26px;min-width:26px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
@@ -2964,7 +2965,7 @@ class ADHDHighlighter {
     overlay.className = 'agf-ai-overlay';
     overlay.innerHTML = `
       <div class="agf-ai-header">
-        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">稷下</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div></div>
+        <div class="agf-ai-title"><span id="agfTitleLabel" data-i18n="aiPanel.title" data-i18n-attr="title:aiPanel.returnToChat">稷下</span><div class="agf-mode-toggle"><button class="agf-mode-btn" data-i18n="aiPanel.mode.persistent">常驻</button><button class="agf-mode-btn active" data-i18n="aiPanel.mode.manual">手动</button></div><div class="agf-highlight-toggle"><button class="agf-mode-btn active" id="agfHighlightOn" data-i18n="aiPanel.highlight.on">高亮</button><button class="agf-mode-btn" id="agfHighlightOff" data-i18n="aiPanel.highlight.off">不亮</button></div><div class="agf-top-context-tools agf-highlight-toggle" aria-label="上下文范围"><button class="agf-mode-btn agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button><button class="agf-mode-btn agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button><button class="agf-mode-btn agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button></div></div>
         <div class="agf-ai-controls">
           <button id="agfAiTabWrench" data-i18n-title="aiPanel.settings.general">🔧</button>
           <button id="agfAiFull" data-i18n="aiPanel.size.full">全</button>
@@ -2981,11 +2982,6 @@ class ADHDHighlighter {
           <button id="agfAiTabQuiz" data-i18n="jixia.tabs.quiz">测试</button>
           <button id="agfAiTabVocab" data-i18n="jixia.tabs.vocab">词汇</button>
           <button id="agfModuleHistoryBtn" class="agf-context-btn" data-i18n="jixia.tasks.history">历史记录</button>
-        </div>
-        <div class="agf-context-tools" aria-label="上下文范围">
-          <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button>
-          <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
-          <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
         </div>
         <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
