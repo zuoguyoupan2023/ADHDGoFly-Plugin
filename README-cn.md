@@ -6,6 +6,46 @@ ADHDGoFly 是一个面向 ADHD 用户、语言学习者和重度网页阅读者�
 
 当前版本：`0.1.8`
 
+## OpenAI Build Week 投稿说明
+
+ADHDGoFly 在 OpenAI Build Week 之前已经是一个面向 ADHD 用户的网页阅读高亮插件，包含基础 AI 面板、Chat、全文上下文和 Provider 设置。Build Week 提交期内，我使用 Codex 和 GPT-5.6 对稷下 Jixia 进行了有意义的扩展，把原来的 AI 面板升级为多工作区学习助手。这里描述的是 Build Week 期间新增的工作，不把整个既有项目冒充成从零开始完成。
+
+### Build Week 期间新增的能力
+
+- 建立 `JixiaContext`、`JixiaTask`、`JixiaState` 边界，分别管理页面上下文、AI 任务和界面状态。
+- 增加阅读、写作、测试、词汇、解释、图像、图表和历史记录工作区。
+- 增加带答案解释、校验和历史恢复的文章理解测试。
+- 增加网页图片发现、批量选择、OCR/视觉理解、历史、导出和添加到 Chat。
+- 使用结构化 `ChartModel` 生成和编辑图表，支持 SVG、JSON、HTML、PNG 导出。
+- 增加统一历史、工作区保存/恢复、i18n 更新和针对性回归测试。
+
+### Codex 与 GPT-5.6 如何被使用
+
+Codex 是本次 Build Week 开发的主要开发伙伴。我采用的是迭代循环：先描述产品目标或实际 Bug，检查现有仓库，确定一个小的实现边界，修改代码，运行检查，在浏览器中测试，再根据新的现象继续反馈并审查 diff。产品方向、用户体验、兼容性和“哪些算完成”由我决定；Codex 加速了调查、实现、调试和验证。
+
+本轮使用 Codex 完成的具体工作包括：
+
+- 将旧的网页悬浮 AI 面板发展为 Jixia 工作台，并明确插件 Side Panel 与网页内工作台的职责。
+- 建立 `JixiaContext`、`JixiaTask`、`JixiaState`，把大型 content script 中的 Chat、Quiz、Explain、Vocabulary 和 UI 事件拆成独立模块。
+- 实现文章阅读、写作、文章理解测试、词汇、历史记录、图像和图表工作流。
+- 设计网页图片发现、筛选、批量选择、GLM-4V-Flash OCR/视觉识别、进度/失败状态，以及把识别结果加入 Chat 的图像流程。
+- 建立结构化 `ChartModel`、确定性渲染、本地 Mermaid/Rough/ECharts 运行时、节点/连线/lane 编辑、自然语言修改、来源引用和 SVG/JSON/HTML/PNG 导出。
+- 调试真实浏览器问题：Reddit SPA 路由/上下文错误、Provider/Model 状态、推理开关、硬编码中文、历史记录渲染、宿主页 CSS 污染、窄面板布局、初始化顺序和等待状态。
+- 增加上下文解析、Jixia 模块、UI 绑定、图表、图片筛选、CSS 隔离、i18n、导出和运行时相关检查。
+
+GPT-5.6 在 Codex 中参与了核心开发会话，具体涉及稷下架构、工作区实现、图像流程、图表模型、界面迭代、Bug 调试、测试和文档。部分辅助 Codex 线程使用了 GPT-5.5；这些线程不应被描述成 GPT-5.6 线程。插件本身仍然是多 Provider 架构：GPT-5.6 用于开发当前版本，但不是用户运行插件时必须配置的 Provider。
+
+本轮关键决策包括：显式管理页面上下文；分离 AI 任务状态与 UI 状态；保留可恢复历史；区分清空工作区和删除已保存记录；使用结构化图表模型而不是执行 AI 生成脚本；区分纯文本模型和视觉模型；保持既有存储键和 Provider 设置兼容。相关实现见 `content/jixia-context-resolver.js`、`content/jixia-modules.js`、`content/chart-model.js`、`content/chart-workspace.js`、`content/page-image-filter.js` 及对应测试。
+
+### Build Week 证据与测试
+
+- 赛前基线：`0.1.8` 已有词性高亮、基础 AI 面板/Chat、全文上下文和设置。
+- Build Week 证据：提交期内带日期的 Git 提交记录，以及与赛前版本基线的前后差异对比。
+- 核心检查：`node --check content/main.js`、`node test-jixia-modules.js`、`node test-jixia-ui-modules.js`、`node test-chart-workspace.js`、`node test-i18n-regression.js`。
+- Devpost 投稿：在表单中填写主 Codex 线程的 `/feedback` Session ID。
+
+评委建议路径：加载未打包扩展，打开一篇文章，启动稷下，把全文加入 Chat，生成阅读结果或测试，识别一张图片，再生成并导出图表。公开 Demo 视频应在三分钟内展示这条路径，并明确说明 Codex/GPT-5.6 的使用方式。
+
 ## 核心能力
 
 ### 多语言词性高亮

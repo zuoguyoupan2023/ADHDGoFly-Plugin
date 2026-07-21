@@ -6,6 +6,46 @@ ADHDGoFly is a browser reading assistant for ADHD users, language learners, and 
 
 Current version: `0.1.8`
 
+## OpenAI Build Week Submission
+
+ADHDGoFly existed before OpenAI Build Week as an ADHD-friendly browser highlighter with a basic AI panel, chat, full-page context, and provider settings. During the Build Week submission period, I used Codex with GPT-5.6 to meaningfully extend the Jixia panel into a multi-workspace learning assistant. The submission focuses on the work added during Build Week, not on claiming that the entire pre-existing project was built from scratch during the event.
+
+### What was added during Build Week
+
+- Clear `JixiaContext`, `JixiaTask`, and `JixiaState` boundaries for page context, AI work, and UI state.
+- Reading, writing, quiz, vocabulary, explanation, image, chart, and records workspaces.
+- Article comprehension quizzes with answer explanations, validation, and history restore.
+- Image discovery, batch selection, OCR/visual understanding, history, export, and Chat attachment.
+- Structured `ChartModel` generation and editing with SVG, JSON, HTML, and PNG export.
+- Unified history, workspace save/restore behavior, i18n updates, and focused regression tests.
+
+### How Codex and GPT-5.6 were used
+
+Codex was the primary development partner for the Build Week work. I used it in an iterative loop: describe a product or bug, inspect the existing repository, agree on a small implementation boundary, edit the code, run checks, test in the browser, report the next observed issue, and review the resulting diff. I made the product, UX, compatibility, and “what is finished” decisions; Codex accelerated the investigation, implementation, debugging, and verification loop.
+
+The concrete Build Week work completed with Codex included:
+
+- Turning the old floating AI panel into the Jixia workspace model and separating the plugin Side Panel from the in-page workspace.
+- Defining `JixiaContext`, `JixiaTask`, and `JixiaState`, then extracting Chat, Quiz, Explain, Vocabulary, and UI event modules from the large content script.
+- Building article reading, writing, comprehension quiz, vocabulary, history, image, and chart workflows.
+- Designing the image pipeline around page-image discovery, filtering, batch selection, GLM-4V-Flash OCR/visual recognition, progress/failure states, and adding recognition results to Chat.
+- Building the structured `ChartModel` path, deterministic rendering, Mermaid/Rough/ECharts local runtimes, node/edge/lane editing, natural-language chart changes, source references, and SVG/JSON/HTML/PNG export.
+- Debugging real browser issues: Reddit SPA route/context errors, provider/model state, reasoning controls, hardcoded Chinese strings, history rendering, host-page CSS pollution, narrow-panel layout, initialization-order failures, and loading states.
+- Adding focused checks for context resolution, Jixia modules, UI bindings, chart behavior, image filtering, CSS isolation, i18n, and export/runtime behavior.
+
+GPT-5.6 was used inside Codex for the core development sessions that worked through the Jixia architecture, workspace implementation, multimodal/image flow, chart model, UI iterations, debugging, tests, and documentation. Some supporting Codex sessions used GPT-5.5; they should not be described as GPT-5.6 sessions. The extension itself remains multi-provider: GPT-5.6 was used to build this version, but it is not a required runtime provider for users.
+
+Key decisions made during this work included keeping page context explicit, separating AI task state from UI state, preserving recoverable history, separating workspace clearing from saved-record deletion, using a structured chart model instead of executing generated scripts, treating pure-text and vision models differently, and preserving the existing extension's storage and provider settings. These decisions are visible in `content/jixia-context-resolver.js`, `content/jixia-modules.js`, `content/chart-model.js`, `content/chart-workspace.js`, `content/page-image-filter.js`, and the related tests.
+
+### Build Week evidence and testing
+
+- Pre-existing baseline: the `0.1.8` extension already provided highlighting, a basic AI panel/chat, full-page context, and settings.
+- Build Week evidence: the repository's dated commit history during the submission period, together with the before/after comparison against the pre-existing release baseline.
+- Core checks: `node --check content/main.js`, `node test-jixia-modules.js`, `node test-jixia-ui-modules.js`, `node test-chart-workspace.js`, and `node test-i18n-regression.js`.
+- Devpost submission: include the primary Codex thread's `/feedback` Session ID in the submission form.
+
+For the judging path, load the unpacked extension, open an article, launch Jixia, add full text to Chat, generate a reading result or quiz, inspect an image, and generate/export a chart. The public demo video keeps this path under three minutes and includes the required Codex/GPT-5.6 explanation.
+
 ## Core Features
 
 ### Multilingual Highlighting
