@@ -3012,6 +3012,7 @@ class ADHDHighlighter {
                   <div class="agf-send-col">
                     <button class="agf-send" id="agfComposerSend" data-i18n="aiPanel.send">发送</button>
                     <button class="agf-send" id="agfAddFullTextBtn" data-i18n="aiPanel.addFullText">添加全文</button>
+                    <button class="agf-send" id="agfChatChartBtn">做图表</button>
                   </div>
                 </div>
                 <input type="hidden" id="agfComposerHidden" />
@@ -3764,9 +3765,8 @@ class ADHDHighlighter {
     let currentChartContext = null;
     let currentChartSourceContext = null;
     let currentChartSkill = null;
-    const chartButton = document.createElement('button');
-    chartButton.id = 'agfBtnChartSkill'; chartButton.className = 'agf-task-btn'; chartButton.dataset.i18n = 'jixia.actions.chart'; chartButton.dataset.i18nTitle = 'jixia.actions.chartTitle'; chartButton.textContent = '做图表'; chartButton.title = '用内置图表 Skill 解释当前上下文';
-    if (taskActions) taskActions.appendChild(chartButton);
+    const chartButton = document.getElementById('agfChatChartBtn');
+    if (chartButton) { chartButton.dataset.i18n = 'jixia.actions.chart'; chartButton.dataset.i18nTitle = 'jixia.actions.chartTitle'; chartButton.title = '用内置图表 Skill 解释当前上下文'; }
     const p1Actions = [
       ['agfBtnStructuredReading', '结构化阅读'],
       ['agfBtnWriting', '写作辅助'],
@@ -7153,8 +7153,8 @@ class ADHDHighlighter {
       keywords: '请提取文章中的核心关键词和术语，并给出简要定义。'
     };
     const readingResultText = value => typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingScene === 'structuredReading' || readingScene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; };
-    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { const ctx = await jixiaContext.resolve('full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; };
+    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? '请先在网页中选中文本。' : '当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const runArticleChatTask = options => chatModule.runTask(options);
     const readingScenes = p1View.querySelectorAll('[data-reading-scene]');
     readingScenes.forEach(button => { button.onclick = () => runReadingScene(button.dataset.readingScene); });
