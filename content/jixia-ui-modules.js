@@ -8,11 +8,11 @@
     const run = (name, fallback = {}) => () => actions.runArticleChatTask?.({ ...fallback, ...(actions.chatTasks?.[name] || {}) });
     bindClick(elements.quickSummary, run('summary', { prefix: actions.labels?.summary || '总结', includeLangHint: true }));
     bindClick(elements.beginnerExplain, run('beginner', { prefix: actions.labels?.beginner || '保姆级解读', includeLangHint: true }));
-    bindClick(elements.translate, run('translate', { title: '请翻译以下内容，保留术语和段落结构。', prefix: '翻译', extra: '输出要求：如果原文是中文，请翻译成英文；如果原文不是中文，请翻译成中文。' }));
-    bindClick(elements.structured, run('structured', { prefix: actions.labels?.structured || '结构化摘要' }));
-    bindClick(elements.explain, run('explain', { prefix: actions.labels?.explain || '简明解释' }));
-    bindClick(elements.outline, run('outline', { prefix: actions.labels?.outline || '提取大纲' }));
-    bindClick(elements.keywords, run('keywords', { prefix: actions.labels?.keywords || '提取关键词' }));
+    bindClick(elements.translate, run('translate', actions.chatTasks?.translate || { title: 'Translate the following content while preserving terminology and paragraph structure.', prefix: actions.labels?.translate || 'Translate', extra: 'Output requirement: if the original text is Chinese, translate it into English; if the original text is not Chinese, translate it into Chinese.' }));
+    bindClick(elements.structured, run('structured', { prefix: actions.labels?.structured || '结构化摘要', includeLangHint: true }));
+    bindClick(elements.explain, run('explain', { prefix: actions.labels?.explain || '简明解释', includeLangHint: true }));
+    bindClick(elements.outline, run('outline', { prefix: actions.labels?.outline || '提取大纲', includeLangHint: true }));
+    bindClick(elements.keywords, run('keywords', { prefix: actions.labels?.keywords || '提取关键词', includeLangHint: true }));
     bindClick(elements.tab, actions.showChat);
     return true;
   }

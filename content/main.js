@@ -3453,7 +3453,10 @@ class ADHDHighlighter {
     document.addEventListener('languageChanged', () => { const label = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.textContent = label; chatImagePlusBtn.title = label; }, { passive: true });
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatImagePlusBtn, addFullBtn);
     const chatNewBtn = document.createElement('button');
-    chatNewBtn.type = 'button'; chatNewBtn.className = 'agf-send agf-workspace-clear'; chatNewBtn.textContent = '新对话'; chatNewBtn.title = '新开对话，保留历史记录';
+    chatNewBtn.type = 'button'; chatNewBtn.className = 'agf-send agf-workspace-clear'; chatNewBtn.dataset.i18n = 'jixia.ui.newConversation'; chatNewBtn.dataset.i18nTitle = 'jixia.ui.newConversationTitle';
+    const updateChatNewLabel = () => { chatNewBtn.textContent = window.i18n?.t?.('jixia.ui.newConversation') || 'New chat'; chatNewBtn.title = window.i18n?.t?.('jixia.ui.newConversationTitle') || 'Start a new chat and keep history'; };
+    updateChatNewLabel();
+    document.addEventListener('languageChanged', updateChatNewLabel, { passive: true });
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatNewBtn, addFullBtn);
     const chatImageInput = document.createElement('input');
     chatImageInput.type = 'file'; chatImageInput.accept = 'image/*'; chatImageInput.style.display = 'none';
@@ -3523,8 +3526,16 @@ class ADHDHighlighter {
     const showToast = (msg) => { if (!toastEl) return; if (toastSticky) { toastEl.querySelector('.agf-toast-msg') ? (toastEl.querySelector('.agf-toast-msg').textContent = msg) : (toastEl.textContent = msg); toastEl.style.display = 'block'; return; } toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 2000); };
     const workspaceSaveRegistry = new Map();
     const showSaveToast = msg => { if (!toastEl) return; toastSticky = false; toastEl.textContent = msg; toastEl.style.display = 'block'; if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 3000); };
+    const tr = (key, fallback, params) => {
+      try {
+        const value = window.i18n?.t?.(key, params);
+        return value && value !== key ? value : fallback;
+      } catch (_) {
+        return fallback;
+      }
+    };
     const registerWorkspaceSave = (id, getSnapshot, save) => { workspaceSaveRegistry.set(id, { getSnapshot, save, lastSaved: null, saving: false }); };
-    const saveWorkspace = async (id, manual = true) => { const entry = workspaceSaveRegistry.get(id); if (!entry || entry.saving) return false; const snapshot = JSON.stringify(entry.getSnapshot()); if (!snapshot || snapshot === 'null') return false; entry.saving = true; try { await entry.save(JSON.parse(snapshot)); entry.lastSaved = snapshot; if (manual) showSaveToast('保存成功'); return true; } finally { entry.saving = false; } };
+    const saveWorkspace = async (id, manual = true) => { const entry = workspaceSaveRegistry.get(id); if (!entry || entry.saving) return false; const snapshot = JSON.stringify(entry.getSnapshot()); if (!snapshot || snapshot === 'null') return false; entry.saving = true; try { await entry.save(JSON.parse(snapshot)); entry.lastSaved = snapshot; if (manual) showSaveToast(tr('jixia.ui.saveSuccess', 'Saved')); return true; } finally { entry.saving = false; } };
     const saveChangedWorkspaces = async () => { for (const [id, entry] of workspaceSaveRegistry) { const current = JSON.stringify(entry.getSnapshot()); if (current && current !== 'null' && current !== entry.lastSaved) await saveWorkspace(id, false); } };
     const removeLocalStorageKeys = keys => new Promise(resolve => chrome.storage.local.remove(keys, resolve));
     const forgetWorkspaceSnapshot = async (id, keys) => {
@@ -3532,7 +3543,7 @@ class ADHDHighlighter {
       if (entry) entry.lastSaved = JSON.stringify(entry.getSnapshot());
       await removeLocalStorageKeys(Array.isArray(keys) ? keys : [keys]);
     };
-    const createWorkspaceClearButton = (label = '清除工作区') => {
+    const createWorkspaceClearButton = (label = tr('jixia.ui.clearWorkspace', 'Clear workspace')) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'agf-task-btn agf-workspace-clear';
@@ -3861,8 +3872,9 @@ class ADHDHighlighter {
       updateReasoningToggle();
       updateTaskBar(which);
       if (fixedBar) fixedBar.style.display = which === 'chat' ? '' : 'none';
-      if (which === 'chat' || which === 'quiz') {
-        try { chrome.storage.local.set({ agfJixiaLastModule: which }); } catch (_) {}
+      const moduleToStore = which === 'p1' ? 'reading' : which;
+      if (['chat','reading','writing','quiz','explain','vocab','image','chart'].includes(moduleToStore)) {
+        try { chrome.storage.local.set({ agfJixiaLastModule: moduleToStore }); } catch (_) {}
       }
       if (viewChat) viewChat.style.display = which === 'chat' ? 'grid' : 'none';
       if (tabReading) tabReading.classList.toggle('active', which === 'reading');
@@ -5242,6 +5254,12 @@ class ADHDHighlighter {
     this.__openJixiaModule = (request = {}) => {
       updateContextControls(request.contextSource || 'full_article');
       if (request.module === 'quiz') showQuiz();
+      else if (request.module === 'reading') setView('reading');
+      else if (request.module === 'writing') setView('writing');
+      else if (request.module === 'explain') setView('explain');
+      else if (request.module === 'vocab') setView('vocab');
+      else if (request.module === 'image') setView('image');
+      else if (request.module === 'chart') setView('chart');
       else showChat();
     };
     const pendingOpen = this.__pendingJixiaOpen || null;
@@ -5253,6 +5271,7 @@ class ADHDHighlighter {
         chrome.storage.local.get(['agfJixiaLastModule'], res => {
           const last = res && res.agfJixiaLastModule;
           if (last === 'quiz') showQuiz();
+          else if (['reading','writing','explain','vocab','image','chart'].includes(last)) setView(last);
           else showChat();
         });
       } catch (_) {
@@ -7526,17 +7545,17 @@ class ADHDHighlighter {
     const p1Esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const p1Text = value => { if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join('\n'); return String(value || ''); };
     const renderP1Result = (kind, result, ctx) => {
-      const labels = { structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' }; p1Title.textContent = labels[kind]; p1Meta.textContent = `${String(ctx?.pageTitle || '当前文章').slice(0, 40)} · ${new Date().toLocaleTimeString()}`;
-      if (kind === 'structured') { p1Result.innerHTML = `<h3>主旨</h3><p>${p1Esc(result.thesis)}</p><h3>论点与证据</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>证据：${p1Esc(p1Text(item.evidence))}</p><small>置信度：${p1Esc(item.confidence ?? '未提供')}</small></article>`).join('') || '<p>暂无论点。</p>'}<h3>因果关系</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} → ${p1Esc(item.effect)}<br>依据：${p1Esc(item.evidence)}</p>`).join('') || '<p>暂无明确因果关系。</p>'}<h3>争议点</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>立场：${p1Esc(p1Text(item.positions))}<br>不确定性：${p1Esc(item.uncertainty)}</p>`).join('') || '<p>未识别到争议点。</p>'}`; }
-      else if (kind === 'writing') { p1Result.innerHTML = `<h3>${p1Esc(result.title || '写作结果')}</h3>${(result.sections || []).map(section => `<article><h4>${p1Esc(section.heading)}</h4><p>${p1Esc(section.content)}</p><ul>${(section.bullets || []).map(bullet => `<li>${p1Esc(bullet)}</li>`).join('')}</ul></article>`).join('')}<h3>草稿</h3><pre style="white-space:pre-wrap">${p1Esc(result.draft)}</pre>${(result.citations || []).length ? `<h3>引用卡片</h3>${result.citations.map(citation => `<blockquote>${p1Esc(citation.quote || citation.text)}<br><small>${p1Esc(citation.use || citation.locator)}</small></blockquote>`).join('')}` : ''}`; }
-      else { const names = { fact: '事实', inference: '推论', opinion: '观点', unverified: '待验证' }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>：${p1Esc(item.text)}<p>依据：${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · 置信度 ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || '<p>没有识别到可分类陈述。</p>'; }
+      const labels = { structured: tr('jixia.ui.structuredReading', 'Structured reading'), writing: tr('jixia.ui.writingResult', 'Writing result'), fact: tr('jixia.ui.factCheck', 'Fact check') }; p1Title.textContent = labels[kind]; p1Meta.textContent = `${String(ctx?.pageTitle || tr('jixia.ui.currentArticle', 'Current article')).slice(0, 40)} · ${new Date().toLocaleTimeString()}`;
+      if (kind === 'structured') { p1Result.innerHTML = `<h3>${p1Esc(tr('jixia.ui.thesis', 'Thesis'))}</h3><p>${p1Esc(result.thesis)}</p><h3>${p1Esc(tr('jixia.ui.argumentsEvidence', 'Arguments and evidence'))}</h3>${(result.arguments || []).map(item => `<article><strong>${p1Esc(item.claim)}</strong><p>${p1Esc(tr('jixia.ui.evidence', 'Evidence'))}: ${p1Esc(p1Text(item.evidence))}</p><small>${p1Esc(tr('jixia.ui.confidence', 'Confidence'))}: ${p1Esc(item.confidence ?? tr('jixia.ui.notProvided', 'Not provided'))}</small></article>`).join('') || `<p>${p1Esc(tr('jixia.ui.noArguments', 'No arguments found.'))}</p>`}<h3>${p1Esc(tr('jixia.ui.causalRelations', 'Causal relations'))}</h3>${(result.causalRelations || []).map(item => `<p>${p1Esc(item.cause)} -> ${p1Esc(item.effect)}<br>${p1Esc(tr('jixia.ui.evidence', 'Evidence'))}: ${p1Esc(item.evidence)}</p>`).join('') || `<p>${p1Esc(tr('jixia.ui.noCausalRelations', 'No clear causal relations found.'))}</p>`}<h3>${p1Esc(tr('jixia.ui.controversies', 'Controversies'))}</h3>${(result.controversies || []).map(item => `<p>${p1Esc(item.claim)}<br>${p1Esc(tr('jixia.ui.position', 'Position'))}: ${p1Esc(p1Text(item.positions))}<br>${p1Esc(tr('jixia.ui.uncertainty', 'Uncertainty'))}: ${p1Esc(item.uncertainty)}</p>`).join('') || `<p>${p1Esc(tr('jixia.ui.noControversies', 'No controversies found.'))}</p>`}`; }
+      else if (kind === 'writing') { p1Result.innerHTML = `<h3>${p1Esc(result.title || tr('jixia.ui.writingResult', 'Writing result'))}</h3>${(result.sections || []).map(section => `<article><h4>${p1Esc(section.heading)}</h4><p>${p1Esc(section.content)}</p><ul>${(section.bullets || []).map(bullet => `<li>${p1Esc(bullet)}</li>`).join('')}</ul></article>`).join('')}<h3>${p1Esc(tr('jixia.ui.writingDraft', 'Draft'))}</h3><pre style="white-space:pre-wrap">${p1Esc(result.draft)}</pre>${(result.citations || []).length ? `<h3>${p1Esc(tr('jixia.ui.citations', 'Citation cards'))}</h3>${result.citations.map(citation => `<blockquote>${p1Esc(citation.quote || citation.text)}<br><small>${p1Esc(citation.use || citation.locator)}</small></blockquote>`).join('')}` : ''}`; }
+      else { const names = { fact: tr('jixia.ui.claimFact', 'Fact'), inference: tr('jixia.ui.claimInference', 'Inference'), opinion: tr('jixia.ui.claimOpinion', 'Opinion'), unverified: tr('jixia.ui.claimUnverified', 'Unverified') }; p1Result.innerHTML = (result.claims || []).map(item => `<article><strong>${p1Esc(names[item.classification] || item.classification)}</strong>: ${p1Esc(item.text)}<p>${p1Esc(tr('jixia.ui.evidence', 'Evidence'))}: ${p1Esc(item.evidence)}</p><small>${p1Esc(item.reason)} · ${p1Esc(tr('jixia.ui.confidence', 'Confidence'))} ${Math.round(Number(item.confidence || 0) * 100)}%${item.locator ? ` · ${p1Esc(item.locator)}` : ''}</small></article>`).join('') || `<p>${p1Esc(tr('jixia.ui.noClaims', 'No classifiable claims found.'))}</p>`; }
       highlightWorkspaceRoot(p1Result);
     };
     const structuredReadingModule = JixiaModules.createStructuredReadingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('structured', result, ctx) });
     const writingModule = JixiaModules.createWritingModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('writing', result, ctx) });
-    const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
-    const prepareP1 = kind => { p1ActionsEl.innerHTML = ''; p1Title.textContent = ({ structured: '结构化阅读', writing: '写作辅助', fact: '事实辨识' })[kind] || 'P1 阅读工具'; };
-    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = `<p>${window.i18n?.t?.('aiPanel.processingText') || '正在分析，请稍候…'}</p>`; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const factCheckModule = JixiaModules.createFactCheckModule({ context: jixiaContext, task: jixiaTask, languageHint: getJixiaLangHint, onResult: (result, ctx) => renderP1Result('fact', result, ctx) });
+    const prepareP1 = kind => { p1ActionsEl.innerHTML = ''; p1Title.textContent = ({ structured: tr('jixia.ui.structuredReading', 'Structured reading'), writing: tr('jixia.ui.writingResult', 'Writing result'), fact: tr('jixia.ui.factCheck', 'Fact check') })[kind] || tr('jixia.ui.p1Title', 'Reading tool'); };
+    const runP1 = async (kind, action) => { prepareP1(kind); setView('p1'); p1Result.innerHTML = `<p>${p1Esc(tr('jixia.ui.processingAnalysis', 'Analyzing, please wait...'))}</p>`; try { await action(); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const startVocabReview = () => { setView('vocab'); vocabResult.innerHTML = '<p>正在生成复习卡…</p>'; return vocabModule.startReview(); };
     const chatModule = JixiaModules.createChatModule({
       context: jixiaContext,
@@ -7583,8 +7602,8 @@ class ADHDHighlighter {
       if (!duplicate) { rows.unshift(record); await writeHistory(writingHistoryKey, rows); }
       if (!silent) showSaveToast('写作结果已保存'); return true;
     };
-    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: '总结', beginner: '保姆级解读', structured: '结构化摘要', outline: '提取大纲', explain: '简明解释', keywords: '提取关键词', fact: '事实辨识', structuredReading: '结构化阅读' })[scene] || '阅读结果'; p1Meta.textContent = `${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingSave) readingSave.disabled = false; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); else highlightWorkspaceRoot(p1Result); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; saveReadingResult(true).catch(() => {}); };
-    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = '<p>正在分析，请稍候…</p>'; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? '请先在网页中选中文本。' : '当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const renderReadingScene = (scene, output, ctx) => { readingSceneContext = ctx; readingSceneResult = readingResultText(output); p1Title.textContent = ({ summary: tr('aiPanel.summary', 'Summary'), beginner: tr('aiPanel.beginnerExplain', 'Beginner-Friendly'), structured: tr('aiPanel.structured', 'Structured Summary'), outline: tr('aiPanel.outline', 'Extract Outline'), explain: tr('aiPanel.explain', 'Plain Explanation'), keywords: tr('aiPanel.keywords', 'Extract Keywords'), fact: tr('jixia.ui.factCheck', 'Fact check'), structuredReading: tr('jixia.ui.structuredReading', 'Structured reading') })[scene] || tr('jixia.ui.readingResult', 'Reading result'); p1Meta.textContent = `${ctx?.pageTitle || tr('jixia.ui.currentArticle', 'Current article')} · ${new Date().toLocaleTimeString()}`; p1Result.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(readingSceneResult)}</pre>`; if (readingSave) readingSave.disabled = false; if (scene === 'structuredReading' || scene === 'fact') renderP1Result(scene === 'fact' ? 'fact' : 'structured', output, ctx); else highlightWorkspaceRoot(p1Result); readingDiscussion.style.display = 'block'; readingDiscussionBody.style.display = 'none'; readingDiscussionList.innerHTML = ''; readingQuestion.value = ''; saveReadingResult(true).catch(() => {}); };
+    const runReadingScene = async scene => { setView('reading'); p1Result.innerHTML = `<p>${p1Esc(tr('jixia.ui.processingAnalysis', 'Analyzing, please wait...'))}</p>`; try { const source = jixiaState.contextSource || 'full_article'; const ctx = await jixiaContext.resolve(source); if (!ctx.text) throw new Error(source === 'selection' ? '请先在网页中选中文本。' : '当前没有可用的文章内容。'); if (scene === 'structuredReading') { const data = await structuredReadingModule.run(); renderReadingScene(scene, data.result, data.context); return; } if (scene === 'fact') { const data = await factCheckModule.run(); renderReadingScene(scene, data.result, data.context); return; } const output = await jixiaTask.requestJsonText({ prompt: `${readingScenePrompts[scene] || readingScenePrompts.summary}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .3 }); renderReadingScene(scene, output, ctx); } catch (error) { p1Result.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     const runArticleChatTask = options => chatModule.runTask(options);
     const readingScenes = p1View.querySelectorAll('[data-reading-scene]');
     readingScenes.forEach(button => { button.onclick = () => runReadingScene(button.dataset.readingScene); });
@@ -7595,22 +7614,22 @@ class ADHDHighlighter {
     const readingDiscussionSend = p1View.querySelector('#agfReadingDiscussSend');
     const readingDiscussionList = p1View.querySelector('#agfReadingDiscussionList');
     const readingSave = p1View.querySelector('#agfReadingSave');
-    if (readingSave) readingSave.onclick = () => saveReadingResult().catch(error => showToast(error.message || '阅读结果保存失败'));
+    if (readingSave) readingSave.onclick = () => saveReadingResult().catch(error => showToast(error.message || tr('jixia.ui.readingSaveFailed', 'Failed to save reading result')));
     const readingClear = createWorkspaceClearButton();
     if (readingSave?.parentElement) readingSave.insertAdjacentElement('afterend', readingClear);
     readingClear.onclick = async () => {
       readingSceneContext = null;
       readingSceneResult = '';
-      p1Title.textContent = '阅读工作区';
+      p1Title.textContent = tr('jixia.ui.readingTitle', 'Reading');
       p1Meta.textContent = '';
-      p1Result.innerHTML = '<p>选择一个阅读场景开始。</p>';
+      p1Result.innerHTML = `<p>${p1Esc(tr('jixia.ui.selectScene', 'Choose a reading scene to begin.'))}</p>`;
       if (readingSave) readingSave.disabled = true;
       if (readingDiscussion) readingDiscussion.style.display = 'none';
       if (readingDiscussionBody) readingDiscussionBody.style.display = 'none';
       if (readingDiscussionList) readingDiscussionList.innerHTML = '';
       if (readingQuestion) readingQuestion.value = '';
       await forgetWorkspaceSnapshot('reading', 'agfJixiaReadingWorkspace').catch(() => {});
-      showToast('阅读工作区已清除，历史记录仍保留');
+      showToast(tr('jixia.ui.readingCleared', 'Reading workspace cleared. History is kept.'));
     };
     if (readingDiscussionToggle) readingDiscussionToggle.onclick = () => { readingDiscussionBody.style.display = readingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     if (readingDiscussionSend) readingDiscussionSend.onclick = async () => { const question = String(readingQuestion.value || '').trim(); if (!question || !readingSceneContext) return; readingDiscussionSend.disabled = true; try { const prompt = `你正在阅读工作区的深入讨论。请只基于原文、当前阅读结果和用户问题回答；原文没有证据时明确说明，不要编造。\n\n原文：\n${String(readingSceneContext.text || '').slice(0, 50000)}\n\n当前阅读结果：\n${readingSceneResult}\n\n用户问题：\n${question}`; const answer = await jixiaTask.requestJsonText({ prompt, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; readingDiscussionList.appendChild(turn); readingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } finally { readingDiscussionSend.disabled = false; } };
@@ -7623,12 +7642,12 @@ class ADHDHighlighter {
     let writingContext = null;
     let writingOutput = '';
     const writingScenePrompts = { translate: '请翻译以下文章，保留段落结构和关键术语。', news: '请将以下文章改写成客观、清晰的新闻稿，不能虚构事实。', 'style-summary': '请总结以下文章的语言风格、句式、语气、结构和常用表达。', 'style-copy': '请在保留事实的前提下，模仿以下文章的语言风格重写一版。' };
-    const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${scene} · ${ctx?.pageTitle || '当前文章'} · ${new Date().toLocaleTimeString()}`; writingView.querySelector('#agfWritingSave').disabled = !writingOutput; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; highlightWorkspaceRoot(writingResult); writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; saveWritingResult(true).catch(() => {}); };
-    const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = '<p>正在生成，请稍候…</p>'; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || '无法调用图表能力')); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
+    const renderWritingResult = (scene, output, ctx) => { writingContext = ctx; writingOutput = String(output || ''); writingView.querySelector('#agfWritingMeta').textContent = `${scene} · ${ctx?.pageTitle || tr('jixia.ui.currentArticle', 'Current article')} · ${new Date().toLocaleTimeString()}`; writingView.querySelector('#agfWritingSave').disabled = !writingOutput; writingResult.innerHTML = `<pre style="white-space:pre-wrap;margin:0">${p1Esc(writingOutput)}</pre>`; highlightWorkspaceRoot(writingResult); writingDiscussion.style.display = 'block'; writingDiscussionBody.style.display = 'none'; writingDiscussionList.innerHTML = ''; writingQuestion.value = ''; saveWritingResult(true).catch(() => {}); };
+    const runWritingScene = async scene => { setView('writing'); writingResult.innerHTML = `<p>${p1Esc(tr('jixia.ui.processingGeneration', 'Generating, please wait...'))}</p>`; try { const ctx = await jixiaContext.resolve(jixiaState.contextSource || 'full_article'); if (!ctx.text) throw new Error('当前没有可用的文章内容。'); if (scene === 'chart') { fillChartWorkspace({ useSkill: true }).catch(error => showToast(error.message || '无法调用图表能力')); return; } if (scene === 'style-summary' || scene === 'style-copy') { const instruction = scene === 'style-summary' ? writingScenePrompts['style-summary'] : writingScenePrompts['style-copy']; const output = await jixiaTask.requestJsonText({ prompt: `${instruction}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 2600, temperature: .35 }); renderWritingResult(scene, output, ctx); return; } const output = await jixiaTask.requestJsonText({ prompt: `${writingScenePrompts[scene] || writingScenePrompts.news}\n${getJixiaLangHint()}\n\n文章：\n${String(ctx.text).slice(0, 60000)}`, maxTokens: 3000, temperature: .3 }); renderWritingResult(scene, output, ctx); } catch (error) { writingResult.innerHTML = `<p>${p1Esc(error.message || error)}</p>`; } };
     writingView.querySelectorAll('[data-writing-scene]').forEach(button => { button.onclick = () => runWritingScene(button.dataset.writingScene); });
     writingView.querySelector('#agfWritingDiscussToggle').onclick = () => { writingDiscussionBody.style.display = writingDiscussionBody.style.display === 'none' ? 'block' : 'none'; };
     const writingSave = writingView.querySelector('#agfWritingSave');
-    if (writingSave) writingSave.onclick = () => saveWritingResult().catch(error => showToast(error.message || '写作结果保存失败'));
+    if (writingSave) writingSave.onclick = () => saveWritingResult().catch(error => showToast(error.message || tr('jixia.ui.writingSaveFailed', 'Failed to save writing result')));
     const writingClear = createWorkspaceClearButton();
     if (writingSave?.parentElement) writingSave.insertAdjacentElement('afterend', writingClear);
     writingClear.onclick = async () => {
@@ -7636,14 +7655,14 @@ class ADHDHighlighter {
       writingOutput = '';
       const writingMeta = writingView.querySelector('#agfWritingMeta');
       if (writingMeta) writingMeta.textContent = '';
-      if (writingResult) writingResult.innerHTML = '<p>选择一个写作场景开始。</p>';
+      if (writingResult) writingResult.innerHTML = `<p>${p1Esc(tr('jixia.ui.selectWritingScene', 'Choose a writing scene to begin.'))}</p>`;
       if (writingSave) writingSave.disabled = true;
       if (writingDiscussion) writingDiscussion.style.display = 'none';
       if (writingDiscussionBody) writingDiscussionBody.style.display = 'none';
       if (writingDiscussionList) writingDiscussionList.innerHTML = '';
       if (writingQuestion) writingQuestion.value = '';
       await forgetWorkspaceSnapshot('writing', 'agfJixiaWritingWorkspace').catch(() => {});
-      showToast('写作工作区已清除，历史记录仍保留');
+      showToast(tr('jixia.ui.writingCleared', 'Writing workspace cleared. History is kept.'));
     };
     writingView.querySelector('#agfWritingDiscussSend').onclick = async () => { const question = String(writingQuestion.value || '').trim(); if (!question || !writingContext) return; try { const answer = await jixiaTask.requestJsonText({ prompt: `你正在进行写作工作区的深入讨论。请基于原文、当前写作结果和用户问题回答；区分原文事实与改写建议。\n\n原文：\n${String(writingContext.text || '').slice(0, 50000)}\n\n当前写作结果：\n${writingOutput}\n\n用户问题：\n${question}`, maxTokens: 2200, temperature: .35 }); const turn = document.createElement('article'); turn.innerHTML = `<p><strong>问：</strong>${p1Esc(question)}</p><p><strong>答：</strong>${p1Esc(answer)}</p>`; writingDiscussionList.appendChild(turn); writingQuestion.value = ''; } catch (error) { showToast(error.message || '深入讨论失败'); } };
     if (tabWriting) tabWriting.addEventListener('click', () => setView('writing'));
@@ -7652,9 +7671,10 @@ class ADHDHighlighter {
     JixiaUiModules.bindChatEvents({ elements: { quickSummary: quickSummaryBtn, beginnerExplain: beginnerExplainBtn, translate: btnTranslate, structured: btnStructured, explain: btnExplain, outline: btnOutline, keywords: btnKeywords, tab: tabChat }, actions: {
       runArticleChatTask,
       showChat: () => { hideFulltextPanel(); showChat(); },
-      labels: { summary: translate('aiPanel.summary') || '总结', beginner: translate('aiPanel.beginnerExplain') || '保姆级解读', structured: translate('aiPanel.structured') || '结构化摘要', explain: translate('aiPanel.explain') || '简明解释', outline: translate('aiPanel.outline') || '提取大纲', keywords: translate('aiPanel.keywords') || '提取关键词' },
+      labels: { summary: translate('aiPanel.summary') || '总结', beginner: translate('aiPanel.beginnerExplain') || '保姆级解读', translate: translate('jixia.tasks.translate') || '翻译', structured: translate('aiPanel.structured') || '结构化摘要', explain: translate('aiPanel.explain') || '简明解释', outline: translate('aiPanel.outline') || '提取大纲', keywords: translate('aiPanel.keywords') || '提取关键词' },
       chatTasks: {
         summary: { title: translate('aiPanel.prompts.summaryTitle') || '帮我总结这篇文章: ' },
+        translate: { title: 'Translate the following content while preserving terminology and paragraph structure.', prefix: translate('jixia.tasks.translate') || '翻译', extra: 'Output requirement: if the original text is Chinese, translate it into English; if the original text is not Chinese, translate it into Chinese.' },
         beginner: { title: translate('aiPanel.prompts.beginnerTitle') || '请用最通俗、循序渐进的方式解读这篇文章。', extra: translate('aiPanel.prompts.beginnerOutput') || '' },
         structured: { title: translate('aiPanel.prompts.structuredTitle') || '请基于以下正文生成结构化摘要，要求分章节要点与 TL;DR。' },
         explain: { title: translate('aiPanel.prompts.explainTitle') || '请用简明方式解释以下正文的核心内容与关键点。' },

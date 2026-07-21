@@ -31,8 +31,11 @@ const structured = createStructuredReadingModule({ context: fakeContext, task: {
 assert.equal((await structured.run()).result.thesis, '主旨');
 const writing = createWritingModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ title: '摘要', sections: [], citations: [], draft: '草稿' }) } });
 assert.equal((await writing.run('summary')).result.draft, '草稿');
-const facts = createFactCheckModule({ context: fakeContext, task: { requestJsonText: async () => JSON.stringify({ claims: [{ text: '说法', classification: 'fact', confidence: 1.2 }] }) } });
+let factPrompt = '';
+const facts = createFactCheckModule({ context: fakeContext, languageHint: () => 'Please respond in English.', task: { requestJsonText: async ({ prompt }) => { factPrompt = prompt; return JSON.stringify({ claims: [{ text: 'claim', classification: 'fact', confidence: 1.2 }] }); } } });
 assert.equal((await facts.run()).result.claims[0].confidence, 1);
+assert.match(factPrompt, /Please respond in English\./);
+assert.doesNotMatch(factPrompt, /请识别文章中的陈述/);
 let factAttempts = 0;
 const retryFacts = createFactCheckModule({ context: fakeContext, task: { requestJsonText: async () => { factAttempts += 1; if (factAttempts === 1) throw new Error('AI 返回了空内容（finish_reason: length）'); return JSON.stringify([{ text: '简短说法', classification: 'opinion', confidence: .5 }]); } } });
 assert.equal((await retryFacts.run()).result.claims.length, 1); assert.equal(factAttempts, 2);
