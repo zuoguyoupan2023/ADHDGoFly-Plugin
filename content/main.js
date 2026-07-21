@@ -3405,7 +3405,8 @@ class ADHDHighlighter {
     const composerSend = document.getElementById('agfComposerSend');
     const addFullBtn = document.getElementById('agfAddFullTextBtn');
     const chatImagePlusBtn = document.createElement('button');
-    chatImagePlusBtn.type = 'button'; chatImagePlusBtn.className = 'agf-send'; chatImagePlusBtn.textContent = '+'; chatImagePlusBtn.title = '添加图片到当前对话';
+    chatImagePlusBtn.type = 'button'; chatImagePlusBtn.className = 'agf-send'; chatImagePlusBtn.dataset.i18n = 'aiPanel.addImage'; chatImagePlusBtn.dataset.i18nTitle = 'aiPanel.addImage'; chatImagePlusBtn.textContent = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.title = chatImagePlusBtn.textContent;
+    document.addEventListener('languageChanged', () => { const label = window.i18n?.t?.('aiPanel.addImage') || '添加图像'; chatImagePlusBtn.textContent = label; chatImagePlusBtn.title = label; }, { passive: true });
     if (addFullBtn?.parentElement) addFullBtn.parentElement.insertBefore(chatImagePlusBtn, addFullBtn);
     const chatImageInput = document.createElement('input');
     chatImageInput.type = 'file'; chatImageInput.accept = 'image/*'; chatImageInput.style.display = 'none';
@@ -3512,10 +3513,11 @@ class ADHDHighlighter {
         const link = String(ctx.canonicalUrl || ctx.pageUrl || (location && location.href) || '');
         const previewRaw = String(addedFullText||'');
         const preview = previewRaw.slice(0, 20) + (previewRaw.length > 20 ? '...' : '');
-        addedFullDisplayPrefix = '我的问题是： ';
-        addedFullLinkPreview = '，基于当前全文（' + link + '+' + preview + '）';
+        addedFullDisplayPrefix = window.i18n?.t?.('aiPanel.fullTextPrefix') || '我的问题是： ';
+        const basedOnFullText = window.i18n?.t?.('aiPanel.basedOnFullText') || '基于当前页面全文， ';
+        addedFullLinkPreview = basedOnFullText + '(' + link + '+' + preview + ')';
         addFullBtn.classList.add('active');
-        if (inputPrefix) { inputPrefix.style.display = 'inline'; }
+        if (inputPrefix) { inputPrefix.textContent = addedFullDisplayPrefix; inputPrefix.style.display = 'inline'; }
         if (inputAffix) { inputAffix.textContent = addedFullLinkPreview; inputAffix.style.display = 'inline'; }
         addedFullActive = true;
         focusUserCaretEnd();
@@ -6728,7 +6730,10 @@ class ADHDHighlighter {
       let prompt = q;
       let displayPrompt = q;
       if (addedFullText && addedFullText.trim().length > 0) {
-        prompt = normPrefix + q + ',我和你的讨论是基于{' + addedFullText + '}';
+        const fullTextPrompt = window.i18n?.getCurrentLanguage?.() === 'en'
+          ? `Our discussion is based on the current page's full text: {${addedFullText}}`
+          : `我和你的讨论是基于{${addedFullText}}`;
+        prompt = normPrefix + q + ', ' + fullTextPrompt;
         displayPrompt = normPrefix + q + (addedFullLinkPreview || '');
       }
       if (mediaPlan.mode === 'recognition_only' && mediaPlan.contexts?.length) {

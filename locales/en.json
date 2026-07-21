@@ -70,7 +70,7 @@
     "highlight": { "on": "Color", "off": "Off" },
     "compose": { "placeholder": "Type your question, Enter to send, Shift+Enter for newline" },
       "send": "Send",
-      "addFullText": "Add Full Text",
+      "addFullText": "Add Text", "addImage": "Add Image", "fullTextPrefix": "My question is: ",
       "basedOnFullText": "Based on the current page's full text, ",
     "refreshHint": "Refresh to fetch full text",
     "close": "Close",
