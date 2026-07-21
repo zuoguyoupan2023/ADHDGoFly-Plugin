@@ -2723,8 +2723,8 @@ class ADHDHighlighter {
       #agfAiViewImage .agf-page-image-body{min-width:0;font-size:12px;line-height:1.55}
       #agfAiViewImage .agf-page-image-status{margin-bottom:4px;color:#687386;font-size:11px}
       #agfAiViewImage .agf-page-image-result{max-height:160px;overflow:auto}
-      #agfAiViewImage .agf-module-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:10px 12px}
-      #agfAiViewImage .agf-action-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+      #agfAiViewImage .agf-module-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 12px}
+      #agfAiViewImage .agf-action-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;width:100%;grid-column:1 / -1}
       #agfAiViewImage .agf-action-group--primary{grid-column:1 / -1;padding-bottom:8px;border-bottom:1px solid #edf0f6}
       #agfAiViewImage .agf-action-label,#agfAiViewChart .agf-action-label{font-size:10px;letter-spacing:.04em;color:#8a94a6;font-weight:700;white-space:nowrap}
       #agfAiViewImage .agf-image-select-all{margin-right:4px}
@@ -2942,7 +2942,10 @@ class ADHDHighlighter {
       @media (max-width:560px){
         #agfAiViewChart .agf-chart-toolbar{grid-template-columns:1fr}
         #agfAiViewChart .agf-action-group--wide{grid-column:auto}
-        #agfAiViewImage .agf-module-actions{grid-template-columns:1fr}
+        #agfAiViewImage .agf-module-actions{grid-template-columns:1fr;align-items:center}
+        #agfAiViewImage .agf-action-group:not(.agf-action-group--primary){grid-column:1 / -1;width:100%;flex-direction:column;align-items:stretch;gap:5px}
+        #agfAiViewImage .agf-action-group:not(.agf-action-group--primary) .agf-action-label{flex:0 0 auto;align-self:flex-start}
+        #agfAiViewImage .agf-action-group:not(.agf-action-group--primary) button{width:100%;min-width:0;padding-left:8px;padding-right:8px;font-size:11px;white-space:nowrap;text-align:left}
       }
       @media (max-width:560px){
         .agf-function-bar{flex-wrap:wrap;row-gap:4px;padding:4px 8px}
