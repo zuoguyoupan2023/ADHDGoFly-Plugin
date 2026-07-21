@@ -5202,7 +5202,7 @@ class ADHDHighlighter {
     };
     const showQuiz = () => { setView('quiz'); if (quizItems.length) renderQuizQuestion(); };
     const startQuiz = async (difficulty = quizDifficulty) => {
-      quizFromHistory = false; if (quizBackHistory) quizBackHistory.style.display = 'none'; quizDifficulty = difficulty; quizStartedAt = Date.now(); quizRecordId = ''; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = '<p>正在基于当前上下文生成题目...</p>';
+      quizFromHistory = false; if (quizBackHistory) quizBackHistory.style.display = 'none'; quizDifficulty = difficulty; quizStartedAt = Date.now(); quizRecordId = ''; quizStartActions.style.display = 'none'; quizCard.style.display = 'none'; quizResult.style.display = 'block'; quizResult.innerHTML = `<p>${p1Esc(tr('jixia.ui.quizGenerating', 'Generating questions from the current context...'))}</p>`;
       try { quizItems = await requestQuiz(difficulty); if (!quizItems.length) throw new Error('没有生成有效题目'); quizIndex = 0; quizScore = 0; quizItems.forEach(q => { delete q.selected; delete q.isCorrect; }); await saveQuizHistory(false); quizResult.style.display = 'none'; quizCard.style.display = 'block'; if (quizDiscussion) quizDiscussion.style.display = 'block'; renderQuizQuestion(); }
       catch (error) { quizResult.innerHTML = `<p>${String(error.message || error)}</p><div class="agf-quiz-actions"><button id="agfQuizRetry" class="primary">重试</button></div>`; const retry = document.getElementById('agfQuizRetry'); if (retry) retry.onclick = () => startQuiz(quizDifficulty); }
     };
