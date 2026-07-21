@@ -2728,13 +2728,13 @@ class ADHDHighlighter {
       #agfAiViewChart .agf-chart-canvas>svg{display:block;border:1px solid #cfd8e6;border-radius:3px;background:#fff;box-sizing:border-box}
       #agfAiViewChart .agf-chart-history-row{display:flex;gap:8px;align-items:center;border-bottom:1px solid #f0f2f6;padding:7px 0;font-size:12px}
       #agfAiViewChart .agf-chart-history-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .agf-reading-scenes,.agf-writing-scenes,.agf-vocab-scenes{position:static;display:flex;flex-wrap:wrap;gap:8px;margin:0 -2px 14px;padding:5px 2px 10px;background:rgba(255,255,255,.97);border-bottom:1px solid #edf0f6}
+      .agf-reading-scenes,.agf-writing-scenes,.agf-vocab-scenes{position:sticky;top:-1px;z-index:5;display:flex;flex-wrap:wrap;gap:8px;margin:0 -2px 14px;padding:5px 2px 10px;background:rgba(255,255,255,.97);border-bottom:1px solid #edf0f6}
       .agf-reading-scenes .agf-task-btn,.agf-writing-scenes .agf-task-btn,.agf-vocab-scenes .agf-task-btn{min-height:36px;padding:0 13px;border-radius:11px;font-size:13px;font-weight:600}
-      #agfAiViewP1,#agfAiViewWriting,#agfAiViewVocab{flex:1 1 auto;padding:0 4px 16px;box-sizing:border-box;position:static;min-height:0;overflow:auto}
+      #agfAiViewP1,#agfAiViewWriting,#agfAiViewVocab{padding:0 4px 16px}
       #agfAiViewP1 .agf-module-heading,#agfAiViewWriting .agf-module-heading,#agfAiViewVocab .agf-module-heading{display:none}
       .agf-media-attachment{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:5px;border:1px solid #dfe5f2;border-radius:9px;background:#f8faff;max-width:100%}.agf-media-attachment img{width:54px;height:54px;object-fit:cover;border-radius:6px}.agf-media-attachment-body{min-width:0;flex:1;font-size:11px;color:#4b5870}.agf-media-attachment-result{max-height:48px;overflow:auto;margin-top:3px;line-height:1.4}.agf-media-attachment-remove{border:0;background:transparent;color:#d33;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
-      .agf-ai-content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;position:static}
+      .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
       .agf-ai-view-chat{display:grid;grid-template-rows:1fr auto;gap:8px;height:calc(100% - 8px);box-sizing:border-box;min-height:0}
       .agf-ai-view-quiz{display:none;height:100%;min-height:0;overflow:auto}
       .agf-quiz-shell{max-width:680px;margin:0 auto;padding:8px 4px 20px;color:#172033}
@@ -2852,7 +2852,7 @@ class ADHDHighlighter {
       .agf-conv-rounds{color:#666}
       .agf-conv-item{border:1px solid #e0e0e0;border-radius:4px;padding:2px 6px;background:#fff;color:#333;font-size:12px;cursor:pointer}
       .agf-status-row{display:none}
-      .agf-fixed-bar{position:static;z-index:auto;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%;box-sizing:border-box}
+      .agf-fixed-bar{position:sticky;top:48px;z-index:98;border:1px solid #e0e0e0;border-radius:6px;background:#fff;color:#333;padding:4px 8px;font-size:12px;margin:0;width:100%;box-sizing:border-box}
       .agf-fixed-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
       .agf-carry-top{margin-left:auto;display:inline-flex;align-items:center;gap:4px}
       
@@ -2895,7 +2895,7 @@ class ADHDHighlighter {
       .agf-ai-controls{gap:4px}
       .agf-ai-controls button,.agf-ai-tabs button{height:28px;min-width:28px;border:1px solid transparent;border-radius:8px;color:#687386}
       .agf-ai-controls button:hover,.agf-ai-tabs button:hover{background:#edf2ff;border-color:#dfe5f2;color:#315efb}
-      .agf-fixed-bar{margin:0 12px;padding:8px 10px;border:1px solid #e1e6ef;border-radius:10px;background:#fff;color:#687386;box-shadow:0 2px 8px rgba(23,32,51,.04)}
+      .agf-fixed-bar{top:58px;margin:0 12px;padding:8px 10px;border:1px solid #e1e6ef;border-radius:10px;background:#fff;color:#687386;box-shadow:0 2px 8px rgba(23,32,51,.04)}
       .agf-ai-body{padding:12px;gap:10px;background:#f7f8fb}
       .agf-ai-view-chat{height:100%;gap:10px}
       .agf-ai-display{border:1px solid #e1e6ef;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(23,32,51,.04)}
