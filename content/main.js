@@ -2732,6 +2732,10 @@ class ADHDHighlighter {
       .agf-reading-scenes .agf-task-btn,.agf-writing-scenes .agf-task-btn,.agf-vocab-scenes .agf-task-btn{min-height:36px;padding:0 13px;border-radius:11px;font-size:13px;font-weight:600}
       #agfAiViewP1,#agfAiViewWriting,#agfAiViewVocab{padding:0 4px 16px}
       #agfAiViewP1 .agf-module-heading,#agfAiViewWriting .agf-module-heading,#agfAiViewVocab .agf-module-heading{display:none}
+      #agfAiViewP1 > .agf-module-card,#agfAiViewWriting > .agf-module-card,#agfAiViewVocab > .agf-module-card{border:2px solid #e53935;box-sizing:border-box}
+      #agfAiViewP1,#agfAiViewWriting,#agfAiViewVocab{position:absolute;top:48px;right:0;bottom:0;left:0;width:100%;height:auto;box-sizing:border-box}
+      #agfAiViewP1,#agfAiViewWriting,#agfAiViewVocab{z-index:1;overflow:auto}
+      .agf-function-bar,.agf-fixed-bar{position:relative;z-index:20}
       .agf-media-attachment{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:5px;border:1px solid #dfe5f2;border-radius:9px;background:#f8faff;max-width:100%}.agf-media-attachment img{width:54px;height:54px;object-fit:cover;border-radius:6px}.agf-media-attachment-body{min-width:0;flex:1;font-size:11px;color:#4b5870}.agf-media-attachment-result{max-height:48px;overflow:auto;margin-top:3px;line-height:1.4}.agf-media-attachment-remove{border:0;background:transparent;color:#d33;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
       .agf-ai-body{flex:1;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
       .agf-ai-content{flex:1;overflow:hidden;min-height:0;position:relative}
