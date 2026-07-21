@@ -2921,29 +2921,13 @@ class ADHDHighlighter {
       .agf-settings-tab.active{background:#e8eeff;border-color:#d7e0ff;color:#315efb}
       .agf-settings-content{border:0;padding:0;background:transparent}
       .agf-module-actions button{height:26px;padding:0 8px;border-radius:7px;font-size:12px}
-      .agf-function-main-row{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto}
-      .agf-function-main-row .agf-context-tools{position:static;transform:none;margin-left:auto;flex:0 0 auto}
-      .agf-function-bar > .agf-media-context-tools{position:static;flex:0 0 auto;margin-left:auto}
       @media (max-width:560px){
-        .agf-function-bar{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:4px 8px}
-        .agf-function-main-row{width:100%;flex:0 0 auto;gap:8px}
-        .agf-function-bar .agf-ai-tabs{display:flex;flex-wrap:nowrap;flex:1 1 auto;min-width:0;overflow:hidden;gap:2px}
-        .agf-function-bar .agf-ai-tabs button{flex:0 0 auto;padding:0 6px;min-width:0}
-        .agf-function-main-row .agf-context-tools{position:static;display:flex;flex:0 0 auto;min-width:max-content;justify-content:flex-end}
-        .agf-function-bar > .agf-media-context-tools{display:flex;flex-wrap:nowrap;justify-content:flex-end;margin-left:0;gap:3px;min-width:0;width:100%;overflow:visible}
-        .agf-function-bar .agf-media-context-tools .agf-context-btn{flex:0 0 auto;padding:0 6px;white-space:nowrap}
-      }
-      .agf-function-bar{container-type:inline-size;display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;padding:5px 12px!important}
-      .agf-function-main-row{display:flex!important;align-items:center!important;min-width:0!important;flex:1 1 auto!important;gap:8px!important}
-      .agf-function-main-row .agf-ai-tabs{position:static!important;display:flex!important;flex:1 1 auto!important;min-width:0!important;overflow:hidden!important;gap:2px!important}
-      .agf-function-main-row .agf-ai-tabs button{flex:0 0 auto!important;white-space:nowrap!important}
-      .agf-function-main-row .agf-context-tools{position:static!important;display:flex!important;flex:0 0 auto!important;transform:none!important;margin-left:auto!important;min-width:max-content!important}
-      .agf-function-bar > .agf-media-context-tools{position:static!important;display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;align-self:center!important;width:auto!important;min-width:max-content!important;margin-left:0!important;gap:3px!important;overflow:visible!important}
-      .agf-function-bar > .agf-media-context-tools .agf-context-btn{flex:0 0 auto!important;white-space:nowrap!important}
-      @container (max-width:700px){
-        .agf-function-bar{flex-direction:column!important;align-items:stretch!important;gap:4px!important;padding:4px 8px!important}
-        .agf-function-main-row{width:100%!important;flex:0 0 auto!important}
-        .agf-function-bar > .agf-media-context-tools{align-self:flex-end!important}
+        .agf-function-bar{flex-wrap:wrap;row-gap:4px;padding:4px 8px}
+        .agf-function-bar .agf-ai-tabs{order:1;flex:1 1 auto;min-width:0;overflow:hidden;gap:2px}
+        .agf-function-bar .agf-ai-tabs button{padding:0 6px;min-width:0}
+        .agf-function-bar .agf-context-tools{position:static;order:2;transform:none;flex:1 1 auto;min-width:0;justify-content:flex-start}
+        .agf-function-bar .agf-media-context-tools{order:3;flex:0 0 100%;justify-content:flex-end;margin-left:0;gap:3px}
+        .agf-function-bar .agf-media-context-tools .agf-context-btn{padding:0 6px}
       }
       .agf-settings-row{gap:10px;margin-top:10px;align-items:flex-start}
       .agf-label{min-width:72px;padding-top:7px;color:#687386;font-size:11px}
@@ -2990,7 +2974,6 @@ class ADHDHighlighter {
         </div>
       </div>
       <div class="agf-function-bar">
-        <div class="agf-function-main-row">
         <div class="agf-ai-tabs">
           <button id="agfAiTabChat" data-i18n="jixia.tabs.chat">Chat</button>
           <button id="agfAiTabReading">阅读</button>
@@ -3003,7 +2986,6 @@ class ADHDHighlighter {
           <button class="agf-context-btn active" id="agfCtxFull" data-source="full_article" data-context-hint="使用当前页面主要正文" data-i18n="jixia.context.full">全文</button>
           <button class="agf-context-btn" id="agfCtxSelection" data-source="selection" data-context-hint="使用鼠标当前选中的文本" data-i18n="jixia.context.selection">选中</button>
           <button class="agf-context-btn" id="agfCtxParagraph" data-source="paragraph" data-context-hint="使用鼠标所在内容块或段落" data-i18n="jixia.context.paragraph" style="display:none" aria-hidden="true" tabindex="-1">段落</button>
-        </div>
         </div>
         <div class="agf-media-context-tools" aria-label="功能支持"><button id="agfImageContextBtn" class="agf-context-btn" data-i18n="jixia.context.image">图像</button><button id="agfChartWorkspaceBtn" class="agf-context-btn" data-i18n="jixia.context.chart" data-i18n-title="jixia.chart.title">图表</button><button id="agfBtnSpeak" class="agf-context-btn" disabled data-i18n="jixia.tasks.speak">朗读</button><button id="agfPageScreenshotBtn" class="agf-context-btn" data-i18n="jixia.context.screenshot">截图</button><input id="agfImageContextInput" type="file" accept="image/*" style="display:none"><input id="agfAudioContextInput" type="file" accept="audio/*" style="display:none"></div>
       </div>
