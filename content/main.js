@@ -3858,7 +3858,7 @@ class ADHDHighlighter {
         '文风仿写': 'jixia.ui.styleCopy', 'Style imitation': 'jixia.ui.styleCopy', '全部类型': 'jixia.ui.allTypes', 'All types': 'jixia.ui.allTypes',
         '选择一个阅读场景开始。': 'jixia.ui.selectScene', 'Choose a reading scene to begin.': 'jixia.ui.selectScene',
         '选择一个写作场景开始。': 'jixia.ui.selectWritingScene', 'Choose a writing scene to begin.': 'jixia.ui.selectWritingScene',
-        '保存': 'jixia.ui.save', 'Save': 'jixia.ui.save', '选择': 'jixia.ui.choose', 'Choose': 'jixia.ui.choose',
+        '保存': 'jixia.ui.save', 'Save': 'jixia.ui.save', '选择': 'jixia.ui.choose', 'Choose': 'jixia.ui.choose', '基于当前文章生成一组复习词汇。': 'jixia.ui.vocabIntro', 'Generate a vocabulary review set from the current article.': 'jixia.ui.vocabIntro',
         '处理': 'jixia.ui.process', 'Process': 'jixia.ui.process', '管理': 'jixia.ui.manage', 'Manage': 'jixia.ui.manage',
         '全选': 'jixia.ui.selectAll', 'Select all': 'jixia.ui.selectAll', '未处理': 'jixia.ui.pending', 'Pending': 'jixia.ui.pending',
         '失败': 'jixia.ui.failed', 'Failed': 'jixia.ui.failed', '已处理': 'jixia.ui.completed', 'Completed': 'jixia.ui.completed'
@@ -3872,7 +3872,6 @@ class ADHDHighlighter {
       try { window.i18n?.applyTranslations?.(); } catch (_) {}
     };
     localizeJixiaViews();
-    window.addEventListener('languageChanged', localizeJixiaViews);
     const p1Title = p1View.querySelector('#agfP1Title'), p1Meta = p1View.querySelector('#agfP1Meta'), p1ActionsEl = p1View.querySelector('#agfP1Actions'), p1Result = p1View.querySelector('#agfP1Result');
     const p1Button = id => document.getElementById(id);
     const chartView = viewChart;
@@ -3897,16 +3896,16 @@ class ADHDHighlighter {
       const toolbar = chartView.querySelector('.agf-chart-toolbar');
       if (!toolbar || toolbar.dataset.grouped === 'true') return;
       const groups = [
-        ['生成', ['agfChartIntent', 'agfChartRenderer', 'agfChartGenerate']],
-        ['文件', ['agfChartSave', 'agfChartImport', 'agfChartSvg', 'agfChartJson', 'agfChartHtml', 'agfChartPng', 'agfChartAttach']],
-        ['编辑', ['agfChartUndo', 'agfChartRedo', 'agfChartAddNode', 'agfChartAddEdge', 'agfChartAddLane', 'agfChartDelete']],
-        ['视图', ['agfChartTheme', 'agfChartZoomOut', 'agfChartZoomReset', 'agfChartZoomIn']]
+        ['生成', 'jixia.ui.groupGenerate', ['agfChartIntent', 'agfChartRenderer', 'agfChartGenerate']],
+        ['文件', 'jixia.ui.groupFile', ['agfChartSave', 'agfChartImport', 'agfChartSvg', 'agfChartJson', 'agfChartHtml', 'agfChartPng', 'agfChartAttach']],
+        ['编辑', 'jixia.ui.groupEdit', ['agfChartUndo', 'agfChartRedo', 'agfChartAddNode', 'agfChartAddEdge', 'agfChartAddLane', 'agfChartDelete']],
+        ['视图', 'jixia.ui.groupView', ['agfChartTheme', 'agfChartZoomOut', 'agfChartZoomReset', 'agfChartZoomIn']]
       ];
       const nodes = new Map(Array.from(toolbar.children).filter(node => node.id).map(node => [node.id, node]));
       toolbar.replaceChildren();
-      groups.forEach(([label, ids], index) => {
+      groups.forEach(([label, key, ids], index) => {
         const group = document.createElement('div'); group.className = `agf-action-group${index === 1 || index === 2 ? ' agf-action-group--wide' : ''}`;
-        const title = document.createElement('span'); title.className = 'agf-action-label'; title.textContent = label; group.appendChild(title);
+        const title = document.createElement('span'); title.className = 'agf-action-label'; title.dataset.i18n = key; title.textContent = label; group.appendChild(title);
         ids.forEach(id => { const node = nodes.get(id); if (node) group.appendChild(node); });
         toolbar.appendChild(group);
       });
