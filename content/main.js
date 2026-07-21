@@ -6211,14 +6211,14 @@ class ADHDHighlighter {
       const getLocal = key => new Promise(resolve => chrome.storage.local.get([key], r => resolve(Array.isArray(r[key]) ? r[key] : [])));
       const rows = [];
       const chats = await dbListConversations(500).catch(() => []);
-      chats.forEach(item => rows.push({ ...item, type: 'chat', title: item.subject || item.pageTitle || 'Chat 对话', preview: String(item.messages?.find(m => m.role === 'user')?.content || '').slice(0, 100), storageRef: { kind: 'conversation', id: item.id }, resumable: true }));
-      const quizzes = await getLocal('agfQuizHistory'); quizzes.forEach(item => rows.push({ ...item, type: 'quiz', title: `${item.pageTitle || '文章测试'} · ${item.score || 0}/${item.total || 0}`, preview: `${item.difficulty === 'hard' ? '困难' : '简单'} · ${item.completedAt ? '已完成' : '未完成'}`, updatedAt: item.completedAt || item.createdAt, storageRef: { kind: 'quiz', id: item.id }, resumable: true }));
-      const explains = await getLocal('agfJixiaExplainHistory'); explains.forEach(item => rows.push({ ...item, type: 'explain', title: `解释 · ${item.context?.pageTitle || '当前页面'}`, preview: String(item.text || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'explain', id: item.id }, resumable: true }));
-      const images = await getLocal('agfJixiaImageRecognitionHistory'); images.forEach(item => rows.push({ ...item, type: 'image', title: `图像 · ${item.name || '未命名图片'}`, preview: String(item.output || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'image', id: item.id }, resumable: true }));
-      const readings = await getLocal('agfJixiaReadingHistory'); readings.forEach(item => rows.push({ ...item, type: 'reading', title: `阅读 · ${item.scene || '阅读结果'}`, preview: String(item.result || '').slice(0, 100), storageRef: { kind: 'reading', id: item.id }, resumable: true }));
-      const writings = await getLocal('agfJixiaWritingHistory'); writings.forEach(item => rows.push({ ...item, type: 'writing', title: `写作 · ${item.scene || '写作结果'}`, preview: String(item.result || '').slice(0, 100), storageRef: { kind: 'writing', id: item.id }, resumable: true }));
-      const vocab = await getLocal('agfJixiaVocabularyReview'); if (vocab.length) rows.push({ id: 'vocab-review', type: 'vocab', title: '词汇复习', preview: `${vocab.length} 个词汇卡片`, createdAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), updatedAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), storageRef: { kind: 'vocab' }, resumable: true });
-      try { const charts = await AgfChartWorkspace.list(); charts.forEach(item => rows.push({ ...item, type: 'chart', title: `图表 · ${item.chartModel?.title || '未命名图表'}`, preview: item.intent || '关系图', storageRef: { kind: 'chart', id: item.id }, resumable: true })); } catch (_) {}
+      chats.forEach(item => rows.push({ ...item, type: 'chat', title: item.subject || item.pageTitle || '', preview: String(item.messages?.find(m => m.role === 'user')?.content || '').slice(0, 100), storageRef: { kind: 'conversation', id: item.id }, resumable: true }));
+      const quizzes = await getLocal('agfQuizHistory'); quizzes.forEach(item => rows.push({ ...item, type: 'quiz', title: item.pageTitle || '', preview: `${item.difficulty || 'easy'} · ${item.completedAt ? 'completed' : 'pending'}`, updatedAt: item.completedAt || item.createdAt, storageRef: { kind: 'quiz', id: item.id }, resumable: true }));
+      const explains = await getLocal('agfJixiaExplainHistory'); explains.forEach(item => rows.push({ ...item, type: 'explain', title: item.context?.pageTitle || '', preview: String(item.text || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'explain', id: item.id }, resumable: true }));
+      const images = await getLocal('agfJixiaImageRecognitionHistory'); images.forEach(item => rows.push({ ...item, type: 'image', title: item.name || '', preview: String(item.output || '').slice(0, 100), pageTitle: item.context?.pageTitle, pageUrl: item.context?.pageUrl, storageRef: { kind: 'image', id: item.id }, resumable: true }));
+      const readings = await getLocal('agfJixiaReadingHistory'); readings.forEach(item => rows.push({ ...item, type: 'reading', title: item.scene || '', preview: String(item.result || '').slice(0, 100), storageRef: { kind: 'reading', id: item.id }, resumable: true }));
+      const writings = await getLocal('agfJixiaWritingHistory'); writings.forEach(item => rows.push({ ...item, type: 'writing', title: item.scene || '', preview: String(item.result || '').slice(0, 100), storageRef: { kind: 'writing', id: item.id }, resumable: true }));
+      const vocab = await getLocal('agfJixiaVocabularyReview'); if (vocab.length) rows.push({ id: 'vocab-review', type: 'vocab', title: '', preview: `${vocab.length}`, createdAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), updatedAt: Math.max(...vocab.map(x => Number(x.lastReviewedAt || x.createdAt || 0))), storageRef: { kind: 'vocab' }, resumable: true });
+      try { const charts = await AgfChartWorkspace.list(); charts.forEach(item => rows.push({ ...item, type: 'chart', title: item.chartModel?.title || '', preview: item.intent || 'relationship', storageRef: { kind: 'chart', id: item.id }, resumable: true })); } catch (_) {}
       return rows.sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
     };
     const openRecordsListPanel = async () => {
@@ -6233,6 +6233,48 @@ class ADHDHighlighter {
         }
       } catch (_) {}
       const deriveSubject = (item) => {
+        const tr = (key, fallback) => (window.i18n && window.i18n.t) ? window.i18n.t(key) : fallback;
+        const lang = (window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage()) === 'en' ? 'en' : 'zh';
+        const sceneKeyMap = {
+          '总结': 'aiPanel.summary', 'Summary': 'aiPanel.summary',
+          '保姆级解读': 'aiPanel.beginnerExplain', 'Beginner-Friendly': 'aiPanel.beginnerExplain',
+          '结构化摘要': 'aiPanel.structured', 'Structured Summary': 'aiPanel.structured',
+          '提取大纲': 'aiPanel.outline', 'Extract Outline': 'aiPanel.outline',
+          '简明解释': 'aiPanel.explain', 'Plain Explanation': 'aiPanel.explain',
+          '提取关键词': 'aiPanel.keywords', 'Extract Keywords': 'aiPanel.keywords',
+          '事实辨识': 'jixia.ui.factCheck', 'Fact Check': 'jixia.ui.factCheck',
+          '结构化阅读': 'jixia.ui.structuredReading', 'Structured Reading': 'jixia.ui.structuredReading',
+          '阅读结果': 'jixia.ui.readingResult', 'Reading result': 'jixia.ui.readingResult',
+          '写作结果': 'jixia.ui.writingResult', 'Writing result': 'jixia.ui.writingResult',
+          '改写成新闻': 'jixia.ui.rewriteNews', 'Rewrite as news': 'jixia.ui.rewriteNews',
+          '文风总结': 'jixia.ui.styleSummary', 'Style summary': 'jixia.ui.styleSummary',
+          '文风仿写': 'jixia.ui.styleCopy', 'Style imitation': 'jixia.ui.styleCopy',
+          '翻译': 'jixia.tasks.translate', 'Translate': 'jixia.tasks.translate'
+        };
+        const sceneLabel = value => {
+          const raw = String(value || '').trim();
+          if (!raw) return '';
+          return sceneKeyMap[raw] ? tr(sceneKeyMap[raw], raw) : raw;
+        };
+        const cleanStoredTitle = value => String(value || '').replace(/^(阅读|Reading|写作|Writing|解释|Explain|图像|Image|图表|Chart|词汇|Vocabulary)\s*·\s*/i, '').trim();
+        const typeLabel = type => ({
+          chat: 'Chat',
+          reading: tr('jixia.tabs.reading', lang === 'en' ? 'Reading' : '阅读'),
+          writing: tr('jixia.tabs.writing', lang === 'en' ? 'Writing' : '写作'),
+          quiz: tr('jixia.tabs.quiz', lang === 'en' ? 'Quiz' : '测试'),
+          explain: tr('jixia.tabs.explain', lang === 'en' ? 'Explain' : '解释'),
+          vocab: tr('jixia.tabs.vocab', lang === 'en' ? 'Vocabulary' : '词汇'),
+          image: tr('jixia.context.image', lang === 'en' ? 'Image' : '图像'),
+          chart: tr('jixia.context.chart', lang === 'en' ? 'Chart' : '图表')
+        }[type] || type);
+        if (item.type === 'reading' || item.type === 'writing') {
+          return `${typeLabel(item.type)} · ${sceneLabel(cleanStoredTitle(item.scene || item.title) || (item.type === 'reading' ? tr('jixia.ui.readingResult', '阅读结果') : tr('jixia.ui.writingResult', '写作结果')))}`;
+        }
+        if (item.type === 'quiz') return `${item.pageTitle || cleanStoredTitle(item.title) || tr('jixia.ui.quizTitle', lang === 'en' ? 'Article comprehension quiz' : '文章理解测试')} · ${item.score || 0}/${item.total || 0}`;
+        if (item.type === 'explain') return `${typeLabel('explain')} · ${item.pageTitle || cleanStoredTitle(item.title) || tr('jixia.ui.currentArticle', lang === 'en' ? 'Current article' : '当前文章')}`;
+        if (item.type === 'image') return `${typeLabel('image')} · ${item.name || cleanStoredTitle(item.title) || (lang === 'en' ? 'Untitled image' : '未命名图片')}`;
+        if (item.type === 'chart') return `${typeLabel('chart')} · ${item.chartModel?.title || cleanStoredTitle(item.title) || tr('aiPanel.unnamed', lang === 'en' ? 'Untitled' : '未命名')}`;
+        if (item.type === 'vocab') return tr('jixia.ui.vocabularyTitle', lang === 'en' ? 'Vocabulary review' : '词汇复习');
         let prefix = item.prefix || '';
         const msgs = item.messages || [];
         if (!prefix) {
@@ -6253,7 +6295,19 @@ class ADHDHighlighter {
           if (m) urlStr = m[1]; else urlStr = item.pageUrl || item.canonicalUrl || '';
           try { if (urlStr) { const u2 = new URL(urlStr, window.location.href); title = u2.hostname; } } catch (_) { title = urlStr || ''; }
         }
-        return item.title || (prefix ? (prefix + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
+        return cleanStoredTitle(item.title) || (prefix ? (sceneLabel(prefix) + ' · ') : '') + (title || ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.unnamed') : '未命名'));
+      };
+      const getRecordLocale = () => (window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage()) === 'en' ? 'en-US' : 'zh-CN';
+      const formatRecordDateTime = (value) => new Intl.DateTimeFormat(getRecordLocale(), { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(value));
+      const formatRecordGroupDate = (parts, granularity) => {
+        const locale = getRecordLocale();
+        const year = Number(parts[0]);
+        const month = Number(parts[1] || 1) - 1;
+        const day = Number(parts[2] || 1);
+        const date = new Date(year, month, day);
+        if (granularity === 'year') return new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(date);
+        if (granularity === 'month') return new Intl.DateTimeFormat(locale, { year: parts[0] ? 'numeric' : undefined, month: 'long' }).format(date);
+        return new Intl.DateTimeFormat(locale, { year: parts[0] ? 'numeric' : undefined, month: parts[1] ? 'long' : undefined, day: 'numeric' }).format(date);
       };
       const compactRecordUrl = (value) => {
         const raw = String(value || '').trim();
@@ -6273,7 +6327,7 @@ class ADHDHighlighter {
         leftBox.className = 'agf-record-main';
         const dateEl = document.createElement('div');
         dateEl.className = 'agf-record-date';
-        dateEl.textContent = new Date(item.updatedAt || item.createdAt).toLocaleString();
+        dateEl.textContent = formatRecordDateTime(item.updatedAt || item.createdAt);
         const subjEl = document.createElement('div');
         subjEl.className = 'agf-record-subject';
         const subjectText = item.subject || deriveSubject(item);
@@ -6407,7 +6461,7 @@ class ADHDHighlighter {
             const yTitle = document.createElement('div');
             yTitle.className = 'agf-group-title';
             const ySpan = document.createElement('span');
-            ySpan.textContent = String(y) + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年');
+            ySpan.textContent = formatRecordGroupDate([String(y)], 'year');
             const yBtn = document.createElement('button');
             yBtn.className = 'agf-records-close';
             yBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6430,7 +6484,7 @@ class ADHDHighlighter {
                   dTitle.className = 'agf-group-title';
                   const dSpan = document.createElement('span');
                   const parts = ymd.split('-');
-                  dSpan.textContent = parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月') + parts[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
+                  dSpan.textContent = formatRecordGroupDate(parts, 'day');
                   const dBtn = document.createElement('button');
                   dBtn.className = 'agf-records-close';
                   dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6451,7 +6505,7 @@ class ADHDHighlighter {
                 mTitle.className = 'agf-group-title';
                 const mSpan = document.createElement('span');
                 const parts = ym.split('-');
-                mSpan.textContent = parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
+                mSpan.textContent = formatRecordGroupDate(parts, 'month');
                 const mBtn = document.createElement('button');
                 mBtn.className = 'agf-records-close';
                 mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6473,7 +6527,7 @@ class ADHDHighlighter {
             const yTitle = document.createElement('div');
             yTitle.className = 'agf-group-title';
             const ySpan = document.createElement('span');
-            ySpan.textContent = String(y) + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年');
+            ySpan.textContent = formatRecordGroupDate([String(y)], 'year');
             const yBtn = document.createElement('button');
             yBtn.className = 'agf-records-close';
             yBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6504,7 +6558,7 @@ class ADHDHighlighter {
             mTitle.className = 'agf-group-title';
             const mSpan = document.createElement('span');
             const parts = ym.split('-');
-            mSpan.textContent = parts[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
+            mSpan.textContent = formatRecordGroupDate(parts, 'month');
             const mBtn = document.createElement('button');
             mBtn.className = 'agf-records-close';
             mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6522,7 +6576,7 @@ class ADHDHighlighter {
               dTitle.className = 'agf-group-title';
               const dSpan = document.createElement('span');
               const ps = ymd.split('-');
-              dSpan.textContent = ps[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
+              dSpan.textContent = formatRecordGroupDate(ps, 'day');
               const dBtn = document.createElement('button');
               dBtn.className = 'agf-records-close';
               dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6544,7 +6598,7 @@ class ADHDHighlighter {
             mTitle.className = 'agf-group-title';
             const mSpan = document.createElement('span');
             const parts = ym.split('-');
-            mSpan.textContent = parts[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + parts[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月');
+            mSpan.textContent = formatRecordGroupDate(parts, 'month');
             const mBtn = document.createElement('button');
             mBtn.className = 'agf-records-close';
             mBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
@@ -6571,7 +6625,7 @@ class ADHDHighlighter {
           dTitle.className = 'agf-group-title';
           const dSpan = document.createElement('span');
           const ps = ymd.split('-');
-          dSpan.textContent = ps[0] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.yearSuffix') : '年') + ps[1] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.monthSuffix') : '月') + ps[2] + ((window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.date.daySuffix') : '日');
+          dSpan.textContent = formatRecordGroupDate(ps, 'day');
           const dBtn = document.createElement('button');
           dBtn.className = 'agf-records-close';
           dBtn.textContent = (window.i18n && window.i18n.t) ? window.i18n.t('aiPanel.collapse.collapse') : '折叠';
