@@ -19,8 +19,8 @@
     <section class="section intro">
       <h2>{{ lang === 'zh' ? 'ADHDGoFly 是什么？' : 'What is ADHDGoFly?' }}</h2>
       <p>{{ lang === 'zh'
-        ? 'ADHDGoFly 是一款浏览器插件，通过智能词性高亮技术，自动为网页中的名词、动词、形容词、比较级/最高级等词性标注不同颜色，帮助你更快抓住句子结构、提升阅读效率。'
-        : 'ADHDGoFly is a browser extension that intelligently highlights parts of speech — nouns, verbs, adjectives, comparatives/superlatives — in different colors, helping you grasp sentence structure faster and read more efficiently.'
+        ? 'ADHDGoFly 是一款浏览器插件，通过智能词性高亮技术，自动为网页中的名词、动词、形容词、比较级/最高级等词性标注不同颜色，帮助你更快抓住句子结构、提升阅读效率。插件还包含网页内的稷下 Jixia AI 面板，为阅读、提问、复习和可视化提供增强能力。'
+        : 'ADHDGoFly is a browser extension that intelligently highlights parts of speech — nouns, verbs, adjectives, comparatives/superlatives — in different colors, helping you grasp sentence structure faster and read more efficiently. It also includes the in-page Jixia AI panel for enhanced reading, questions, review, and visualization.'
       }}</p>
     </section>
 
@@ -32,8 +32,8 @@
           <div class="feature-icon">🎨</div>
           <h3>{{ lang === 'zh' ? '智能词性高亮' : 'Smart POS Highlighting' }}</h3>
           <p>{{ lang === 'zh'
-            ? '自动识别并标注名词（紫色）、动词（红色）、形容词（绿色）、比较级（深蓝色），一目了然。'
-            : 'Auto-identifies nouns (purple), verbs (red), adjectives (green), comparatives (dark blue) at a glance.'
+            ? '自动识别并标注名词（紫色）、动词（红色）、形容词（绿色）、比较级（深蓝色），一目了然；支持多语言、缓存、流式处理和动态页面重新处理。'
+            : 'Auto-identifies nouns (purple), verbs (red), adjectives (green), and comparatives (dark blue) at a glance, with multilingual support, caching, streaming, and dynamic-page reprocessing.'
           }}</p>
           <div class="color-demo">
             <span class="demo-noun">{{ lang === 'zh' ? '名词' : 'noun' }}</span>
@@ -47,8 +47,8 @@
           <div class="feature-icon">🌐</div>
           <h3>{{ lang === 'zh' ? '多语言支持' : 'Multi-Language Support' }}</h3>
           <p>{{ lang === 'zh'
-            ? '支持英文、中文、法语、西班牙语、俄语、日语等多种语言的词性分析。'
-            : 'Supports English, Chinese, French, Spanish, Russian, Japanese and more.'
+            ? '支持中文、英文、日文、法文、西班牙文、俄文等多语言词典和词性高亮。'
+            : 'Supports multilingual dictionaries and highlighting for Chinese, English, Japanese, French, Spanish, Russian, and more.'
           }}</p>
         </div>
 
@@ -56,17 +56,17 @@
           <div class="feature-icon">🎛️</div>
           <h3>{{ lang === 'zh' ? '多种配色方案' : 'Color Schemes' }}</h3>
           <p>{{ lang === 'zh'
-            ? '内置默认、暖色、冷色等多种配色方案，可根据个人偏好自由切换。'
-            : 'Built-in default, warm, cool, and other color schemes — switch freely to match your preference.'
+            ? '在 Side Panel 中切换颜色主题、文字样式、高亮和折叠设置，按自己的阅读习惯调整。'
+            : 'Adjust color themes, text styles, highlighting, and folding from the Side Panel.'
           }}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🤖</div>
-          <h3>{{ lang === 'zh' ? 'ExamRoom AI 学习室' : 'ExamRoom AI Panel' }}</h3>
+          <h3>{{ lang === 'zh' ? '稷下 Jixia AI 工作台' : 'Jixia AI Workspace' }}</h3>
           <p>{{ lang === 'zh'
-            ? '内置 AI 学习面板，支持页面总结、简明解释、大纲提取、关键词提取等功能。'
-            : 'Built-in AI panel with page summarization, plain explanations, outline extraction, keyword extraction, and more.'
+            ? '作为插件内的 AI 增强面板，稷下支持 Chat、阅读、写作、测试、词汇、图像、图表和历史记录，帮助你在当前网页中继续学习。'
+            : 'As an AI enhancement inside the extension, Jixia provides Chat, reading, writing, quizzes, vocabulary, image, chart, and recoverable history tools on the current page.'
           }}</p>
         </div>
 
@@ -74,17 +74,17 @@
           <div class="feature-icon">📄</div>
           <h3>{{ lang === 'zh' ? 'PDF 解析' : 'PDF Parsing' }}</h3>
           <p>{{ lang === 'zh'
-            ? '支持 PDF 文档的自动解析和高亮标注，论文阅读更轻松。'
-            : 'Auto-parse and highlight PDF documents — making paper reading effortless.'
+            ? '支持网页和 PDF 正文上下文；可以把全文、选中文本、段落或手动内容交给 AI。'
+            : 'Use webpage or PDF context, selected text, paragraphs, or manual input with AI.'
           }}</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">📤</div>
-          <h3>{{ lang === 'zh' ? '一键发送到 Reader' : 'Send to Reader' }}</h3>
+          <div class="feature-icon">🧠</div>
+          <h3>{{ lang === 'zh' ? '阅读与学习工作区' : 'Reading & Learning Workspaces' }}</h3>
           <p>{{ lang === 'zh'
-            ? '将网页内容一键发送到 ADHDGoFly Reader 进行深度阅读和管理。'
-            : 'One-click send page content to ADHDGoFly Reader for deep reading and management.'
+            ? '阅读支持总结、结构化阅读、事实辨识和深入讨论；写作支持翻译、新闻改写和文风辅助；测试与词汇支持复习。'
+            : 'Reading supports summaries, structured reading, fact checking, and discussion; writing supports translation and rewrites; quizzes and vocabulary support review.'
           }}</p>
         </div>
 
@@ -92,17 +92,17 @@
           <div class="feature-icon">📚</div>
           <h3>{{ lang === 'zh' ? '词典管理' : 'Dictionary Management' }}</h3>
           <p>{{ lang === 'zh'
-            ? '支持自定义词典扩展，满足专业领域词汇的标注需求。'
-            : 'Custom dictionary extensions for domain-specific terminology highlighting.'
+            ? '管理内置、自制和 AI 文章词典；词汇工作区可生成词义、词性和例句，并保存为本地词典。'
+            : 'Manage built-in, custom, and AI article dictionaries; generate vocabulary meanings, parts of speech, and examples.'
           }}</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">⚡</div>
-          <h3>{{ lang === 'zh' ? '一键开关' : 'One-Click Toggle' }}</h3>
+          <div class="feature-icon">📊</div>
+          <h3>{{ lang === 'zh' ? '图像与图表工作区' : 'Image & Chart Workspaces' }}</h3>
           <p>{{ lang === 'zh'
-            ? '点击插件图标即可开启/关闭高亮，随时切换阅读模式。'
-            : 'Click the extension icon to toggle highlighting on/off anytime.'
+            ? '发现和批量识别网页图片，或生成可编辑图表；支持历史、SVG/JSON/HTML/PNG 导出和 AI 修改。'
+            : 'Discover and recognize page images, or create editable charts with history, SVG/JSON/HTML/PNG export, and AI edits.'
           }}</p>
         </div>
       </div>
@@ -125,30 +125,30 @@
         <div class="step">
           <div class="step-number">2</div>
           <div class="step-content">
-            <h4>{{ lang === 'zh' ? '打开任意网页' : 'Open any webpage' }}</h4>
+            <h4>{{ lang === 'zh' ? '打开网页或 PDF' : 'Open a webpage or PDF' }}</h4>
             <p>{{ lang === 'zh'
-              ? '浏览任意网页，插件会自动分析并在文字上叠加词性高亮颜色。'
-              : 'Browse any webpage — the extension auto-analyzes and applies POS color highlights.'
+              ? '打开文章、帖子或 PDF，插件会处理页面内容并显示词性高亮；动态页面会继续跟随内容变化。'
+              : 'Open an article, post, or PDF. Highlighting follows the page and can reprocess dynamic content.'
             }}</p>
           </div>
         </div>
         <div class="step">
           <div class="step-number">3</div>
           <div class="step-content">
-            <h4>{{ lang === 'zh' ? '切换配色方案' : 'Choose color scheme' }}</h4>
+            <h4>{{ lang === 'zh' ? '打开稷下 Jixia' : 'Open Jixia' }}</h4>
             <p>{{ lang === 'zh'
-              ? '点击插件图标，在弹窗中选择你喜欢的配色方案。'
-              : 'Click the extension icon and pick your preferred color scheme in the popup.'
+              ? '点击插件图标打开 Side Panel；需要 AI 时，再从网页内打开稷下工作台。'
+              : 'Click the extension icon to open the Side Panel, then launch the in-page Jixia workspace when needed.'
             }}</p>
           </div>
         </div>
         <div class="step">
           <div class="step-number">4</div>
           <div class="step-content">
-            <h4>{{ lang === 'zh' ? '配置 AI 学习室（可选）' : 'Configure AI Panel (optional)' }}</h4>
+            <h4>{{ lang === 'zh' ? '开始阅读与复习' : 'Read and review' }}</h4>
             <p>{{ lang === 'zh'
-              ? '在设置中填入 API Key，即可使用 AI 总结、解释、提问等高级功能。'
-              : 'Fill in your API Key in settings to unlock AI summarization, explanation, and Q&A.'
+              ? '配置 Provider、Model 和 API Key 后，可使用 Chat、阅读、写作、测试、词汇、图像和图表工作区。'
+              : 'Configure a Provider, Model, and API Key to use Chat, reading, writing, quizzes, vocabulary, image, and chart workspaces.'
             }}</p>
           </div>
         </div>
@@ -174,8 +174,8 @@
           <div class="todo-text">
             <strong>{{ lang === 'zh' ? '配置 AI API Key（可选但推荐）' : 'Set up AI API Key (optional but recommended)' }}</strong>
             <p>{{ lang === 'zh'
-              ? '进入插件弹窗 → 设置 → API Key，配置 DeepSeek、OpenAI、Claude 等任意一个 API Key，解锁 ExamRoom AI 学习室全部功能。'
-              : 'Go to popup → Settings → API Key, configure any API Key (DeepSeek, OpenAI, Claude, etc.) to unlock the full ExamRoom AI Panel.'
+              ? '进入 Side Panel 或稷下设置，选择 Provider 和 Model，填写 API Key 与 Base URL。API Key 只保存在浏览器本地。'
+              : 'Open Side Panel or Jixia Settings, choose a Provider and Model, then enter the API Key and Base URL. Keys stay in local browser storage.'
             }}</p>
           </div>
         </div>
@@ -223,8 +223,8 @@
         <details class="faq-item">
           <summary>{{ lang === 'zh' ? '支持哪些网站？' : 'Which websites are supported?' }}</summary>
           <p>{{ lang === 'zh'
-            ? '支持所有网页（包括学术论文网站如 arXiv、Springer、Nature、Science、IEEE 等）。PDF 文件也支持自动解析。'
-            : 'All web pages are supported (including academic sites like arXiv, Springer, Nature, Science, IEEE). PDF files are also auto-parsed.'
+            ? '支持大多数普通网页、动态页面和 PDF；不同网站的正文结构可能影响自动识别结果。学术网站可直接尝试。'
+            : 'Most webpages, dynamic pages, and PDFs are supported. Site structure can affect automatic extraction, so try the page directly.'
           }}</p>
         </details>
         <details class="faq-item">
@@ -250,13 +250,13 @@
       <div class="version-card">
         <div class="version-header">
           <span class="version-tag">v0.1.8</span>
-          <span class="version-date">2026-05-04</span>
+          <span class="version-date">2026-07-22</span>
         </div>
-        <h4>{{ lang === 'zh' ? '颜色优化与品牌升级' : 'Color Optimization & Brand Upgrade' }}</h4>
+        <h4>{{ lang === 'zh' ? 'Jixia 工作台与多媒体能力' : 'Jixia Workspaces & Multimodal Tools' }}</h4>
         <ul>
-          <li>{{ lang === 'zh' ? '名词高亮由蓝色调整为紫色，比较级由紫色调整为深蓝色，提升词性区分度' : 'Noun highlight changed from blue to purple, comparative from purple to dark blue for better distinction' }}</li>
-          <li>{{ lang === 'zh' ? '官网域名切换至 adhdgofly.online' : 'Official website migrated to adhdgofly.online' }}</li>
-          <li>{{ lang === 'zh' ? '推荐新插件 EaText — 更主动的阅读工具' : 'Recommended new extension EaText — a more active reading tool' }}</li>
+          <li>{{ lang === 'zh' ? '稷下统一为 Chat、阅读、写作、测试、词汇、历史、图像和图表工作区。' : 'Jixia now includes Chat, reading, writing, quiz, vocabulary, records, image, and chart workspaces.' }}</li>
+          <li>{{ lang === 'zh' ? '新增图片 OCR/视觉理解、图表编辑与 SVG、JSON、HTML、PNG 导出。' : 'Added image OCR/visual understanding, chart editing, and SVG, JSON, HTML, and PNG export.' }}</li>
+          <li>{{ lang === 'zh' ? '统一历史记录、工作区恢复、i18n 和动态页面正文识别，并增强窄窗口与宿主页样式隔离。' : 'Improved records, workspace restore, i18n, dynamic-page extraction, narrow layouts, and host-page CSS isolation.' }}</li>
         </ul>
       </div>
     </section>
