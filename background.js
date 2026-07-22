@@ -869,8 +869,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         let base = 'https://v7.adhdgofly.online';
         try {
           const o = await chrome.storage.local.get(['agfReaderBaseUrl']);
-          if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl);
-          if (base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
+          const configuredBase = o && o.agfReaderBaseUrl ? String(o.agfReaderBaseUrl) : '';
+          if (configuredBase && !configuredBase.startsWith('http://localhost:')) base = configuredBase;
+          if (configuredBase.startsWith('http://localhost:') || base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
             base = 'https://v7.adhdgofly.online';
             await chrome.storage.local.set({ agfReaderBaseUrl: base });
           }

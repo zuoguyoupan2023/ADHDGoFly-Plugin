@@ -118,6 +118,56 @@ const getUiTokens = () => {
   return new Set(out);
 };
 
+const AGF_READER_STATUS_LABELS = {
+  AGF_DOC_PENDING: { text: 'Reader 已打开，请确认接受文章', color: '#2563eb', timeout: 6000 },
+};
+
+function showAgfReaderStatus(status, importId, extra = {}) {
+  const config = AGF_READER_STATUS_LABELS[status];
+  if (!config) return;
+  const id = 'agf-reader-import-status';
+  let toast = document.getElementById(id);
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = id;
+    toast.setAttribute('role', 'status');
+    Object.assign(toast.style, {
+      position: 'fixed',
+      right: '20px',
+      bottom: '20px',
+      zIndex: '2147483647',
+      maxWidth: 'min(360px, calc(100vw - 40px))',
+      padding: '11px 15px',
+      borderRadius: '9px',
+      color: '#fff',
+      fontSize: '13px',
+      lineHeight: '1.45',
+      boxShadow: '0 6px 22px rgba(0,0,0,.22)',
+      transition: 'opacity .2s ease',
+    });
+    document.documentElement.appendChild(toast);
+  }
+  toast.textContent = extra && extra.reason ? `${config.text}：${String(extra.reason).slice(0, 120)}` : config.text;
+  toast.style.background = config.color;
+  toast.style.opacity = '1';
+  if (window.__agfReaderStatusTimer) clearTimeout(window.__agfReaderStatusTimer);
+  if (config.timeout > 0) {
+    window.__agfReaderStatusTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 250);
+    }, config.timeout);
+  }
+  try {
+    chrome.storage.local.set({
+      agfReaderLastSend: {
+        status: 'opened',
+        importId: importId || null,
+        timestamp: Date.now(),
+      },
+    });
+  } catch (_) {}
+}
+
 // 主控制器模块
 class ADHDHighlighter {
   constructor() {
@@ -948,8 +998,9 @@ class ADHDHighlighter {
             let base = 'https://v7.adhdgofly.online';
             try {
               const o = await chrome.storage.local.get(['agfReaderBaseUrl']);
-              if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl);
-              if (base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
+              const configuredBase = o && o.agfReaderBaseUrl ? String(o.agfReaderBaseUrl) : '';
+              if (configuredBase && !configuredBase.startsWith('http://localhost:')) base = configuredBase;
+              if (configuredBase.startsWith('http://localhost:') || base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
                 base = 'https://v7.adhdgofly.online';
                 await chrome.storage.local.set({ agfReaderBaseUrl: base });
               }
@@ -996,6 +1047,8 @@ class ADHDHighlighter {
                 } catch (error) {
                   console.warn('AGF→Reader: 握手后发送失败', error);
                 }
+              } else if (AGF_READER_STATUS_LABELS[d.type]) {
+                showAgfReaderStatus(d.type, d.importId || importId, d);
               } else if (d.type === 'AGF_DOC_RECEIVED') {
                 confirmed = true;
                 console.log('AGF→Reader: V7已确认保存', { importId });
@@ -1043,6 +1096,12 @@ class ADHDHighlighter {
           try {
             const text = (message && message.text) ? String(message.text) : '';
             if (text) console.log('AGF→Reader:', text);
+            sendResponse && sendResponse({ ok: true });
+          } catch (e) { sendResponse && sendResponse({ ok: false }); }
+          break;
+        case 'showReaderStatus':
+          try {
+            showAgfReaderStatus(message.status, message.importId, message);
             sendResponse && sendResponse({ ok: true });
           } catch (e) { sendResponse && sendResponse({ ok: false }); }
           break;

@@ -266,6 +266,7 @@ class PopupController {
     
     // 绑定事件
     this.bindEvents();
+    this.bindReaderStatusUpdates();
 
     if (window.location.hash === '#settings') {
       this.showPage('settings');
@@ -275,6 +276,9 @@ class PopupController {
     
     // 检查状态
     await this.checkStatus();
+
+    // 恢复最近一次发送记录；Reader 本身负责确认和保存结果。
+    await this.loadReaderImportStatus();
     
     // 检查版本信息
     await this.checkVersion();
@@ -300,6 +304,41 @@ class PopupController {
     
     // 检查是否需要显示评价提醒
     await this.checkReviewLightTower();
+  }
+
+  async loadReaderImportStatus() {
+    try {
+      const stored = await new Promise(resolve => chrome.storage.local.get(['agfReaderLastSend'], resolve));
+      const last = stored && stored.agfReaderLastSend;
+      this.renderReaderImportStatus(last);
+    } catch (_) {}
+  }
+
+  renderReaderImportStatus(last) {
+    const statusEl = document.getElementById('readerImportStatus');
+    if (!statusEl || !last || last.status !== 'opened') return;
+    const time = last.timestamp ? new Date(last.timestamp).toLocaleString() : '';
+    statusEl.textContent = `Reader 已打开${time ? `（${time}）` : ''}；请在 Reader 中确认是否保存`;
+    statusEl.style.display = 'block';
+    statusEl.style.background = '#dbeafe';
+    statusEl.style.color = '#1d4ed8';
+  }
+
+  bindReaderStatusUpdates() {
+    if (!chrome.storage || !chrome.storage.onChanged) return;
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'local' && changes.agfReaderLastSend) {
+        this.renderReaderImportStatus(changes.agfReaderLastSend.newValue);
+      }
+    });
+  }
+
+  async recordReaderOpened(importId) {
+    const value = { status: 'opened', importId: importId || null, timestamp: Date.now() };
+    this.renderReaderImportStatus(value);
+    try {
+      await new Promise(resolve => chrome.storage.local.set({ agfReaderLastSend: value }, resolve));
+    } catch (_) {}
   }
 
   bindEvents() {
@@ -1721,16 +1760,24 @@ class PopupController {
           if (r && r.fallbackUrl) {
             await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id, fallbackUrl: r.fallbackUrl });
             fallbackOpened = true;
+            await this.recordReaderOpened(importId);
+            try { await chrome.tabs.sendMessage(tab.id, { action: 'showReaderStatus', status: 'AGF_DOC_PENDING', importId }); } catch (_) {}
             console.log('AGF→Reader: 已切换备用标签页导入');
           } else {
             throw new Error(r && r.error || 'content_send_failed');
           }
         } else {
+          await this.recordReaderOpened(importId);
+          try { await chrome.tabs.sendMessage(tab.id, { action: 'showReaderStatus', status: 'AGF_DOC_PENDING', importId }); } catch (_) {}
           console.log('AGF→Reader: Reader已打开，等待V7页面确认', { importId: r.importId || payload.importId });
         }
       } catch (e) {
         console.warn('AGF→Reader: 内容脚本发送失败，转交后台', e && e.message);
-        if (!fallbackOpened) await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
+        if (!fallbackOpened) {
+          await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
+          await this.recordReaderOpened(importId);
+          try { await chrome.tabs.sendMessage(tab.id, { action: 'showReaderStatus', status: 'AGF_DOC_PENDING', importId }); } catch (_) {}
+        }
       }
     } catch (error) {
       console.error('发送到Reader失败:', error);
