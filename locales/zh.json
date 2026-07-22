@@ -358,15 +358,22 @@
       "changelog": {
         "title": "更新日志",
         "v018": {
-          "title": "颜色优化与品牌升级",
+          "title": "稷下 AI 工作台与 Reader 联动",
           "feature1": "名词高亮由蓝色调整为紫色，比较级由紫色调整为深蓝色，提升词性区分度",
           "feature2": "官网域名切换至 adhdgofly.online",
-          "feature3": "推荐新插件 EaText — 更主动的阅读插件"
+          "feature3": "推荐新插件 EaText — 更主动的阅读插件",
+          "feature4": "增强稷下 AI 面板：新增并整理 Chat、阅读、写作、文章理解测试、词汇、图像和图表工作区",
+          "feature5": "改进动态网页、长文章、Reddit 和单页应用的正文识别与阅读上下文稳定性",
+          "feature6": "新增历史记录管理，支持查看和管理阅读、写作、测试、词汇、图像和图表结果",
+          "feature7": "改进内置词典、自定义词典和文章词典，支持从当前文章提取词汇并应用高亮",
+          "feature8": "支持将网页内容发送到 ADHDGoFly Reader，并由用户在 Reader 页面确认后保存",
+          "feature9": "新增图像工作区和图表工作区，辅助处理网页图片、OCR 和结构化信息",
+          "feature10": "改进多语言界面、网页样式隔离、窄窗口布局，并修复多项稳定性问题"
         },
         "v017": {
           "title": "V7 联动与站点切换",
           "feature1": "V7 版本与网站联动，可发送网页内容到网站保存",
-          "feature2": "站点调整：默认改为 readgofly.online；备用：adhdgofly.com"
+          "feature2": "Reader 正式地址统一为 v7.adhdgofly.online，旧配置会自动迁移"
         },
         "v014": {
           "title": "词典功能与性能提升",

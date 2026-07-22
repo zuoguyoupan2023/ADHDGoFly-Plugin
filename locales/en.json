@@ -357,15 +357,22 @@
       "changelog": {
         "title": "Update Log",
         "v018": {
-          "title": "Color Optimization & Brand Upgrade",
+          "title": "Jixia AI Workspace & Reader Integration",
           "feature1": "Noun highlight changed from blue to purple, comparative from purple to dark blue for better distinction",
           "feature2": "Official website switched to adhdgofly.online",
-          "feature3": "Recommended new extension EaText — a more active reading tool"
+          "feature3": "Recommended new extension EaText — a more active reading tool",
+          "feature4": "Expanded the Jixia AI Panel with organized Chat, reading, writing, comprehension quiz, vocabulary, image, and chart workspaces",
+          "feature5": "Improved article extraction and context stability on dynamic pages, long articles, Reddit, and single-page applications",
+          "feature6": "Added history management for reading, writing, quiz, vocabulary, image, and chart results",
+          "feature7": "Improved built-in, custom, and article dictionaries, including vocabulary extraction from the current webpage",
+          "feature8": "Added sending webpage content to ADHDGoFly Reader, with manual confirmation before saving",
+          "feature9": "Added image and chart workspaces for webpage images, OCR, and structured information",
+          "feature10": "Improved localization, host-page style isolation, and narrow-window layouts, and fixed multiple stability issues"
         },
         "v017": {
           "title": "V7 Integration & Site Switch",
           "feature1": "V7 release with website integration; send page content to site for saving",
-          "feature2": "Site update: default switched to readgofly.online; backup: adhdgofly.com"
+          "feature2": "Reader is now standardized at v7.adhdgofly.online; legacy settings are migrated automatically"
         },
         "v014": {
           "title": "Dictionary Features & Performance Enhancement",
