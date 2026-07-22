@@ -164,7 +164,7 @@
     "title": "词典"
   },
   "sendToReader": {
-    "title": "发送到V7",
+    "title": "发送到 Reader",
     "btn": "发送",
     "tooltipEnabled": "一键发送到Reader",
     "tooltipDisabled": "发送不可用：",
