@@ -39,7 +39,7 @@ Key decisions made during this work included keeping page context explicit, sepa
 
 ### Build Week evidence and testing
 
-- Pre-existing baseline: the `0.1.8` extension already provided highlighting, a basic AI panel/chat, full-page context, and settings.
+- Pre-existing baseline: the released `0.1.7` extension and the repository state before this development cycle already provided highlighting, a basic AI panel/chat, full-page context, and settings.
 - Build Week evidence: the repository's dated commit history during the submission period, together with the before/after comparison against the pre-existing release baseline.
 - Core checks: `node --check content/main.js`, `node test-jixia-modules.js`, `node test-jixia-ui-modules.js`, `node test-chart-workspace.js`, and `node test-i18n-regression.js`.
 - Devpost submission: include the primary Codex thread's `/feedback` Session ID in the submission form.
@@ -104,6 +104,24 @@ The codebase includes configuration and fallback logic for:
 API keys are stored in browser local storage. They are not committed to the repository and are not written into normal chat records.
 
 ## Installation
+
+### Supported platforms
+
+- Desktop Google Chrome with Manifest V3 and Side Panel support.
+- Desktop Microsoft Edge with Manifest V3 and Side Panel support.
+- Firefox, Safari, and mobile browsers are not currently supported or tested.
+
+### Devpost test package
+
+The attached `ADHDGoFly-Plugin-v0.1.8-devpost.zip` is a ready-to-load test build. Unzip it first; no build step is required for judges.
+
+1. Open `chrome://extensions/` or `edge://extensions/`.
+2. Enable Developer mode.
+3. Click `Load unpacked`.
+4. Select the unzipped package folder containing `manifest.json`.
+5. Open an article page and click the ADHDGoFly extension icon.
+
+The package does not contain API keys. AI workflows require a user-provided compatible provider, model, and API key in Jixia Settings; highlighting and the extension interface can be tested without an AI key.
 
 ### Chrome / Edge Developer Mode
 
@@ -186,6 +204,12 @@ Media recognition currently has a separate GLM-4V-Flash key setting for image OC
 ```
 
 ## Testing
+
+For source-code testing, install Node.js dependencies first:
+
+```bash
+npm install
+```
 
 Common checks:
 

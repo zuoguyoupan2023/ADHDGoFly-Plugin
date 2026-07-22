@@ -39,7 +39,7 @@ GPT-5.6 在 Codex 中参与了核心开发会话，具体涉及稷下架构、�
 
 ### Build Week 证据与测试
 
-- 赛前基线：`0.1.8` 已有词性高亮、基础 AI 面板/Chat、全文上下文和设置。
+- 赛前基线：已发布的 `0.1.7` 以及本轮开发前的仓库实际状态，已经包含词性高亮、基础 AI 面板/Chat、全文上下文和设置。
 - Build Week 证据：提交期内带日期的 Git 提交记录，以及与赛前版本基线的前后差异对比。
 - 核心检查：`node --check content/main.js`、`node test-jixia-modules.js`、`node test-jixia-ui-modules.js`、`node test-chart-workspace.js`、`node test-i18n-regression.js`。
 - Devpost 投稿：在表单中填写主 Codex 线程的 `/feedback` Session ID。
@@ -104,6 +104,24 @@ GPT-5.6 在 Codex 中参与了核心开发会话，具体涉及稷下架构、�
 API Key 存储在浏览器本地存储中，不写入仓库，也不会进入普通聊天记录。
 
 ## 安装方法
+
+### 支持平台
+
+- 支持桌面版 Google Chrome（Manifest V3 和 Side Panel）。
+- 支持桌面版 Microsoft Edge（Manifest V3 和 Side Panel）。
+- Firefox、Safari 和移动浏览器目前未支持或未测试。
+
+### Devpost 测试压缩包
+
+附件 `ADHDGoFly-Plugin-v0.1.8-devpost.zip` 是可以直接加载的测试版本。先解压，不需要重新构建：
+
+1. 打开 `chrome://extensions/` 或 `edge://extensions/`。
+2. 开启开发者模式。
+3. 点击“加载已解压的扩展程序”。
+4. 选择包含 `manifest.json` 的解压目录。
+5. 打开文章网页，点击 ADHDGoFly 插件图标。
+
+压缩包不包含 API Key。AI 功能需要评委在稷下设置中填写自己的 Provider、Model 和 API Key；没有 API Key 也可以测试词性高亮和插件界面。
 
 ### Chrome / Edge 开发者模式安装
 
@@ -186,6 +204,12 @@ API Key 存储在浏览器本地存储中，不写入仓库，也不会进入普
 ```
 
 ## 测试与验证
+
+如果从源码测试，先安装 Node.js 依赖：
+
+```bash
+npm install
+```
 
 常用检查：
 
