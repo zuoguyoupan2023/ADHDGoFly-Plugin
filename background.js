@@ -867,7 +867,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const log = async (text) => { try { if (sourceTabId) await chrome.tabs.sendMessage(sourceTabId, { action: 'agfLogProgress', text }); } catch(_){} };
         if (!payload || typeof payload !== 'object') { sendResponse({ success: false, error: 'no_payload' }); return; }
         const jsonStr = JSON.stringify(payload);
-        let base = 'https://v7.readgofly.online';
+        let base = 'https://v7.adhdgofly.online';
         try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
         await log('打开Reader标签页（主通道）');
         const created = await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin` });
