@@ -89,6 +89,15 @@
         </div>
 
         <div class="feature-card">
+          <div class="feature-icon">📤</div>
+          <h3>{{ lang === 'zh' ? '一键发送到 Reader' : 'Send to Reader' }}</h3>
+          <p>{{ lang === 'zh'
+            ? '将网页内容或选中文本一键发送到 ADHDGoFly Reader，进行深度阅读和管理。'
+            : 'Send webpage content or selected text to ADHDGoFly Reader for deeper reading and management.'
+          }}</p>
+        </div>
+
+        <div class="feature-card">
           <div class="feature-icon">📚</div>
           <h3>{{ lang === 'zh' ? '词典管理' : 'Dictionary Management' }}</h3>
           <p>{{ lang === 'zh'
