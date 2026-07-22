@@ -866,13 +866,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sourceTabId = request.sourceTabId || (sender && sender.tab && sender.tab.id);
         const log = async (text) => { try { if (sourceTabId) await chrome.tabs.sendMessage(sourceTabId, { action: 'agfLogProgress', text }); } catch(_){} };
         if (!payload || typeof payload !== 'object') { sendResponse({ success: false, error: 'no_payload' }); return; }
-        const jsonStr = JSON.stringify(payload);
         let base = 'https://v7.adhdgofly.online';
-        try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
+        try {
+          const o = await chrome.storage.local.get(['agfReaderBaseUrl']);
+          if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl);
+          if (base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
+            base = 'https://v7.adhdgofly.online';
+            await chrome.storage.local.set({ agfReaderBaseUrl: base });
+          }
+        } catch (_){ }
         await log('打开Reader标签页（主通道）');
-        const created = await chrome.tabs.create({ url: `${base}${base.endsWith('/') ? '' : '/'}?from=plugin` });
+        const fallbackUrl = request.fallbackUrl || `${base}${base.endsWith('/') ? '' : '/'}?from=plugin`;
+        const created = await chrome.tabs.create({ url: fallbackUrl });
         const readerTabId = created && created.id ? created.id : null;
         if (!readerTabId) { await log('Reader标签页创建失败'); sendResponse({ success: false, error: 'create_failed' }); return; }
+        // query 导入已经由 V7 页面自行解析；不要再通过 content script 重复发送一份。
+        if (/[?&](?:agf_import|agf-import)=/.test(fallbackUrl)) {
+          await log('已打开带内容的Reader导入页，等待用户确认');
+          sendResponse({ success: true, status: 'awaiting_confirmation', importId: payload.importId || null });
+          return;
+        }
         const handler = async (tabId, changeInfo) => {
           if (tabId === readerTabId && changeInfo.status === 'complete') {
             try { chrome.tabs.onUpdated.removeListener(handler); } catch (_) {}

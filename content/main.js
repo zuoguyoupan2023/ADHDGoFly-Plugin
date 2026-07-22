@@ -946,70 +946,95 @@ class ADHDHighlighter {
             
             const jsonStr = JSON.stringify(pl);
             let base = 'https://v7.adhdgofly.online';
-            try { const o = await chrome.storage.local.get(['agfReaderBaseUrl']); if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl); } catch (_){ }
+            try {
+              const o = await chrome.storage.local.get(['agfReaderBaseUrl']);
+              if (o && o.agfReaderBaseUrl) base = String(o.agfReaderBaseUrl);
+              if (base.replace(/\/$/, '') === 'https://v7.readgofly.online') {
+                base = 'https://v7.adhdgofly.online';
+                await chrome.storage.local.set({ agfReaderBaseUrl: base });
+              }
+            } catch (_){ }
             const url = base + (base.endsWith('/') ? '' : '/') + '?from=plugin';
+            const targetOrigin = (() => { try { return new URL(base).origin; } catch (_) { return ''; } })();
+            const buildFallbackUrl = () => {
+              const utf8 = new TextEncoder().encode(jsonStr);
+              let bin = '';
+              for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
+              const b64 = btoa(bin);
+              return base + (base.endsWith('/') ? '' : '/') + '?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
+            };
             console.log('AGF→Reader: 打开Reader窗口', { bytes: jsonStr.length });
-            const w = window.open(url);
+            let w = null;
+            let ready = false;
+            let sentOnce = false;
+            let confirmed = false;
+            let fallbackTimer = null;
+            let cleanupTimer = null;
+            const importId = pl.importId || null;
+            const cleanup = () => {
+              try { window.removeEventListener('message', handler); } catch (_) {}
+              if (fallbackTimer) clearTimeout(fallbackTimer);
+              if (cleanupTimer) clearTimeout(cleanupTimer);
+            };
+            const postFreshPayload = async () => {
+              if (!w || sentOnce) return false;
+              const freshPayload = await resignPayload(pl);
+              w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, targetOrigin || '*');
+              sentOnce = true;
+              return true;
+            };
+            const handler = async (e) => {
+              const d = e && e.data;
+              if (!d || typeof d !== 'object' || !w) return;
+              if (e.source !== w) return;
+              if (targetOrigin && e.origin !== targetOrigin) return;
+              if (d.type === 'AGF_READER_READY') {
+                console.log('AGF→Reader: 就绪握手收到', { importId });
+                ready = true;
+                try {
+                  if (await postFreshPayload()) console.log('AGF→Reader: 已发送，等待V7确认');
+                } catch (error) {
+                  console.warn('AGF→Reader: 握手后发送失败', error);
+                }
+              } else if (d.type === 'AGF_DOC_RECEIVED') {
+                confirmed = true;
+                console.log('AGF→Reader: V7已确认保存', { importId });
+                cleanup();
+              }
+            };
+            window.addEventListener('message', handler);
+            w = window.open(url);
             if (!w) {
+              cleanup();
               try {
-                const utf8 = new TextEncoder().encode(jsonStr);
-                let bin = '';
-                for (let i = 0; i < utf8.length; i++) bin += String.fromCharCode(utf8[i]);
-                const b64 = btoa(bin);
-                const fallbackUrl = base + (base.endsWith('/') ? '' : '/') + '?from=plugin&agf_import=' + encodeURIComponent(b64) + '&agf-import=' + encodeURIComponent(b64);
-                console.log('AGF→Reader: 无法建立opener，使用URL备通道', { bytes: jsonStr.length });
-                window.open(fallbackUrl);
-                sendResponse({ success: true, posted: false, fallback: true });
+                const fallbackUrl = buildFallbackUrl();
+                console.log('AGF→Reader: 无法建立opener，交给Popup走备用标签页', { importId });
+                sendResponse({ success: false, error: 'popup_blocked', fallbackUrl, importId });
               } catch (e) {
                 sendResponse({ success: false, error: 'window_open_failed' });
               }
               break;
             }
             console.log('AGF→Reader: Reader窗口已打开，等待就绪');
-            let ready = false;
-            let sentOnce = false;
-            let confirmed = false;
-            const handler = async (e) => {
-              const d = e && e.data;
-              if (!d || typeof d !== 'object') return;
-              if (d.type === 'AGF_READER_READY') {
-                console.log('AGF→Reader: 就绪握手收到');
-                ready = true;
-                if (!sentOnce) {
-                  try { 
-                    const freshPayload = await resignPayload(pl);
-                    w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
-                    sentOnce = true; 
-                    console.log('AGF→Reader: 已发送（新签名）'); 
-                  } catch (_) {}
-                }
-              } else if (d.type === 'AGF_DOC_RECEIVED') {
-                confirmed = true;
-                console.log('AGF→Reader: 已确认接收');
-                try { window.removeEventListener('message', handler); } catch (_){ }
+            // 首次加载可能较慢；等待应用层 READY，而不是用短固定延迟抢跑。
+            fallbackTimer = setTimeout(() => {
+              if (ready || sentOnce || !w) return;
+              try {
+                const fallbackUrl = buildFallbackUrl();
+                console.warn('AGF→Reader: V7未及时就绪，切换URL导入兜底', { importId });
+                w.location.href = fallbackUrl;
+              } catch (error) {
+                console.warn('AGF→Reader: URL导入兜底失败', error);
               }
-            };
-            window.addEventListener('message', handler);
-            setTimeout(async () => {
-              if (!ready && !sentOnce) {
-                try { 
-                  const freshPayload = await resignPayload(pl);
-                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
-                  sentOnce = true; 
-                  console.log('AGF→Reader: 超时未就绪，已发送（新签名）'); 
-                } catch (_) {}
+            }, 8000);
+            // 用户确认可能需要较长时间；这里只清理监听器，不影响Reader页面。
+            cleanupTimer = setTimeout(() => {
+              if (!confirmed) {
+                console.warn('AGF→Reader: 等待V7确认超时', { importId });
+                cleanup();
               }
-            }, 1200);
-            setTimeout(async () => {
-              if (!confirmed && sentOnce) {
-                try { 
-                  const freshPayload = await resignPayload(pl);
-                  w.postMessage({ type: 'AGF_DOC_V1', payload: freshPayload }, '*'); 
-                  console.log('AGF→Reader: 未确认，重试一次（新签名）'); 
-                } catch (_) {}
-              }
-            }, 2400);
-            sendResponse({ success: true, posted: true });
+            }, 5 * 60 * 1000);
+            sendResponse({ success: true, posted: true, status: 'awaiting_confirmation', importId });
           } catch (error) {
             sendResponse({ success: false, error: error && error.message || 'open_send_failed' });
           }

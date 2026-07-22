@@ -1684,9 +1684,13 @@ class PopupController {
       const title = res.title && typeof res.title === 'string' ? res.title : (tab.title || '未命名');
       const sourceUrl = tab.url || '';
       console.log('AGF→Reader: 文本与标题就绪', { title, length: (text || '').length });
+      const importId = (crypto && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : `agf-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
       let payload = {
         version: 'v1',
+        importId,
         title: title,
         content: `# ${title}\n\n${text}`,
         format: 'markdown',
@@ -1709,14 +1713,24 @@ class PopupController {
         console.warn('AGF→Reader: 签名失败，使用未签名payload', e);
       }
 
+      let fallbackOpened = false;
       try {
         console.log('AGF→Reader: 首选内容脚本window.open发送');
         const r = await chrome.tabs.sendMessage(tab.id, { action: 'openReaderAndSend', payload });
-        if (!r || r.success !== true) throw new Error(r && r.error || 'content_send_failed');
-        console.log('AGF→Reader: 内容脚本发送完成');
+        if (!r || r.success !== true) {
+          if (r && r.fallbackUrl) {
+            await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id, fallbackUrl: r.fallbackUrl });
+            fallbackOpened = true;
+            console.log('AGF→Reader: 已切换备用标签页导入');
+          } else {
+            throw new Error(r && r.error || 'content_send_failed');
+          }
+        } else {
+          console.log('AGF→Reader: Reader已打开，等待V7页面确认', { importId: r.importId || payload.importId });
+        }
       } catch (e) {
         console.warn('AGF→Reader: 内容脚本发送失败，转交后台', e && e.message);
-        await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
+        if (!fallbackOpened) await chrome.runtime.sendMessage({ action: 'agfOpenReaderAndSend', payload, sourceTabId: tab.id });
       }
     } catch (error) {
       console.error('发送到Reader失败:', error);
